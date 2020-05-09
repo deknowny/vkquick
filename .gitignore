@@ -1,0 +1,13 @@
+# MacOS Finder's
+.DS_Store
+
+# Tools
+__pycache__/
+env/
+upload.sh
+todo/
+
+# PyPI
+dist/
+build/
+vkdev.egg-info/
