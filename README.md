@@ -1,2 +1,3 @@
 # vkdev
-Create your VK bot quickly and esealy
+> Do less, get more
+Now is in develop
