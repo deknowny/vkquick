@@ -1,0 +1,11 @@
+Metadata-Version: 1.2
+Name: vkquick
+Version: 0.1.0
+Summary: Package for quick writing vk chat bots
+Home-page: UNKNOWN
+Author: Kurbatov Yan
+Author-email: deknowny@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.8,<4.0

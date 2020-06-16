@@ -1,0 +1,3 @@
+[console_scripts]
+bot = vkquick.console:bot
+
