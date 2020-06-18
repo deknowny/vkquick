@@ -45,7 +45,7 @@ class User:
         # Quick access
         self.fn = self.info.first_name
         self.ln = self.info.last_name
-        self.user_id = self.info.id
+        self.id = self.info.id
 
         return self
 
