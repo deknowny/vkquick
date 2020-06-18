@@ -10,6 +10,7 @@ import aiohttp
 import attrdict
 
 from . import exception as ex
+from .annotypes import Annotype
 
 
 @dataclass
@@ -46,8 +47,14 @@ class API:
         """
         Called after dot-getting
         """
-        result = self.method(name=self._method, data=kwargs)
+        meth_name = self._method
+        self._method = str()
+        result = self.method(name=meth_name, data=kwargs)
         return result
+
+    @staticmethod
+    def prepare(argname, event, func, bot, bin_stack):
+        return bot.api
 
     async def method(self, name: str, data):
         await self._waiting()
@@ -59,7 +66,7 @@ class API:
             ) as response:
                 response = await response.json()
                 self._check_errors(response)
-                self._method = str()
+
                 if isinstance(response["response"], dict):
                     return attrdict.AttrMap(response["response"])
                 return response["response"]
