@@ -6,6 +6,8 @@ class Validator(ABC):
         if hasattr(func, "validators"):
             func.validators.append(self)
 
+        return func
+
     @abstractmethod
     def isvalid(self, event, com, bot, bin_stack):
         """
