@@ -2,7 +2,8 @@ import datetime
 import os
 import subprocess
 import sys
-
+import shutil
+from pathlib import Path
 
 import click
 import vkquick as vq
@@ -33,8 +34,8 @@ SOFTWARE.
 """.strip()
 
 
-CONFIG_PY = r"""
-token = \"{token}\"
+CONFIG_PY = """
+token = "{token}"
 group_id = {group_id}
 """.strip()
 
@@ -45,22 +46,22 @@ VK Bot written on vkquick. Now is in developing.
 """.strip()
 
 
-COMMAND = r"""
+COMMAND = """
 import vkquick as vq
 
 from . import config
 
 
 @vq.Cmd(names=config.NAMES)
-@vq.Reaction(\"message_new\")
+@vq.Reaction("message_new")
 def {name}():
     return config.ANSWER
 """.strip()
 
 
-CONFIG = r"""
-NAMES = [\"{name}\"]
-ANSWER = \"You used \`{name}\` command!\"
+CONFIG = """
+NAMES = ["{name}"]
+ANSWER = "You used `{name}` command!"
 """.strip()
 
 
@@ -99,26 +100,25 @@ def new(owner, name, token, group_id, version):
     Create a new bot
     """
     year = datetime.datetime.now().year
-    os.system(
-        f"""
-        mkdir -p {name}/src
-        cd {name}
-        touch LICENSE README.md config.py src/__init__.py
-        echo "{MIT.format(
-            owner=owner, year=year
-        )}" >> LICENSE
-        echo "{
+    bot_path = Path(name)
+    src_path = Path(name) / "src"
+    os.makedirs(str(src_path))
+    with open(str(bot_path / "LICENSE"), "w+") as file:
+        file.write(
+            MIT.format(owner=owner, year=year)
+        )
+    with open(str(bot_path / "config.py"), "w+") as file:
+        file.write(
             CONFIG_PY.format(
                 token=token, version=version, group_id=group_id
-        )}" >> config.py
-        echo "{README.format(
-            name=name.title()
-        )}" >> README.md
-        """
-    )
-    """
-    Create folder to start easily writing bot
-    """
+            )
+        )
+    with open(str(bot_path / "README.py"), "w+") as file:
+        file.write(
+            README.format(name=name.title())
+        )
+
+    open(str(src_path / "__init__.py"), "w+")
 
 
 @click.option(
@@ -134,31 +134,28 @@ def com(name, delete):
     Create a new command in the bot
     """
     if delete:
-        os.system(
-            f"""
-            rm -r src/{name}
-            """
-        )
-        with open("src/__init__.py", "r") as file:
+        shutil.rmtree(str(Path("src") / name), ignore_errors=True)
+        with open(str(Path("src") / "__init__.py"), "r") as file:
             new_text = file.read().replace(f"from .{name} import {name}\n", "")
-        with open("src/__init__.py", "w") as file:
+        with open(str(Path("src") / "__init__.py"), "w") as file:
             file.write(new_text)
     else:
-        os.system(
-            f"""
-            mkdir -p src/{name}
-            cd $_
-            touch __init__.py config.py main.py
-            echo "{COMMAND.format(
-                name=name
-            )}" >> main.py
-            echo "{CONFIG.format(
-                name=name
-            )}" >> config.py
-            echo "from .{name} import {name}" >> ../__init__.py
-            echo "from .main import {name}" >> __init__.py
-            """
-        )
+        com_path = Path("src") / name
+        os.makedirs(str(com_path))
+        with open(str(com_path / "main.py"), "w+") as file:
+            file.write(
+                COMMAND.format(name=name)
+            )
+
+        with open(str(com_path / "config.py"), "w+") as file:
+            file.write(
+                CONFIG.format(name=name)
+            )
+        with open(str(com_path / "__init__.py"), "w+") as file:
+            file.write(f"from .main import {name}\n")
+
+        with open(str(Path("src") / "__init__.py"), "a+") as file:
+            file.write(f"from .{name} import {name}\n")
 
 
 @click.option(
@@ -256,17 +253,6 @@ def run(reload, once_time):
 
         bot = vq.Bot(reactions=reactions, signals=signals, **settings)
         bot.run()
-
-
-# Bin for my friend. No more
-# from functools import wraps
-#
-#
-# def prefix(*prefs):
-#     def wrapper(func):
-#         @wraps(func)
-#         def inside(*args, **kwargs):
-#             if
 
 
 if __name__ == "__main__":
