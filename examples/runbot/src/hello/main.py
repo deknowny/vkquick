@@ -8,5 +8,5 @@ from . import config
     names=config.NAMES
 )
 @vq.Reaction("message_new")
-def hello():
-    return config.ANSWER
+async def hello(sender: vq.Sender, event: vq.Event):
+    return f"{sender:<fn>}\n{event}"
