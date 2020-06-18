@@ -3,6 +3,7 @@ from random import randint
 from typing import Optional, List
 
 
+@dataclass
 class Message:
     """
     Return a message in your command
@@ -10,7 +11,7 @@ class Message:
     """
     message: Optional[int] = None
     peer_id: Optional[int] = None
-    random_id: Optional[int] = None
+    random_id: int = 0
     user_id: Optional[int] = None
     domain: Optional[str] = None
     chat_id: Optional[int] = None
@@ -30,6 +31,8 @@ class Message:
     expire_ttl: Optional[int] = None
     silent: Optional[bool] = None
 
+    def __post_init__(self):
+        self._set_path()
 
     def params(self):
         """
