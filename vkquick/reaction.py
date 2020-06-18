@@ -102,6 +102,7 @@ class ReactionsList(list):
                     validator.isvalid(event, reaction, bot, bin_stack)
                     for validator in reaction.validators
                 ):
+
                     comkwargs = {}
                     for name, value in reaction.args.items():
                         if icf(value.prepare):
@@ -124,8 +125,8 @@ class ReactionsList(list):
 
                     response = await reaction.run(comkwargs)
 
-
                     if isgeneratorfunction(reaction.code):
+
                         await self._send_message(
                             bot.api, event, "".join(response)
                         )
