@@ -1,8 +1,8 @@
 from .base import Annotype
-from .user import User
+from .user import User, UserAnno
 
 
-class Sender(Annotype):
+class Sender(Annotype, UserAnno):
     """
     User that sent a message
     """
@@ -10,4 +10,4 @@ class Sender(Annotype):
     async def prepare(argname, event, func, bot, bin_stack):
         return await User(
             user_id=event.object.message.from_id
-        ).get_info(bot.api)
+        ).get_info(bot.api, *self.fields)

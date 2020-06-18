@@ -10,4 +10,4 @@ from .command_types import CommandArgument
 from .event import Event
 from .sender import Sender
 
-from .user import User
+from .user import User, UserAnno

@@ -3,7 +3,7 @@ from asyncio import iscoroutinefunction as icf
 import re
 
 from .base import Annotype
-from .user import User
+from .user import User, UserAnno
 
 
 class CommandArgument(Annotype):
@@ -75,7 +75,7 @@ class List(CommandArgument):
             return [self.part.factory(val) for val in vals]
 
 
-class UserMention(CommandArgument):
+class UserMention(CommandArgument, UserAnno):
     """
     User mention
     """
@@ -83,10 +83,10 @@ class UserMention(CommandArgument):
     rexp = r"\[id\d+|.+?\]"
 
     async def factory(self, val):
-        return await User(mention=val).get_info(self.bot.api)
+        return await User(mention=val).get_info(self.bot.api, *self.fields)
 
     async def prepare(self, argname, event, func, bot, bin_stack):
         mention = bin_stack.command_frame.group(argname)
-        user = User(mention=mention)
-        user = await user.get_info(bot.api)
+        self.bot = bot
+        user = await self.factory(val=mention)
         return user
