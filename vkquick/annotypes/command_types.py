@@ -7,7 +7,7 @@ from .user import User, UserAnno
 
 
 class CommandArgument(Annotype):
-    fatcory = str
+    factory = str
 
 
 class Integer(CommandArgument):
