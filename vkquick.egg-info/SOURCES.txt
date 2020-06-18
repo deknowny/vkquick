@@ -17,6 +17,9 @@ vkquick.egg-info/top_level.txt
 vkquick/annotypes/__init__.py
 vkquick/annotypes/base.py
 vkquick/annotypes/command_types.py
+vkquick/annotypes/user.py
+vkquick/tools/__init__.py
+vkquick/tools/message.py
 vkquick/validators/__init__.py
 vkquick/validators/base.py
 vkquick/validators/cmd.py

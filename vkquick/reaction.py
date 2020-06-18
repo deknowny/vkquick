@@ -1,10 +1,10 @@
 from asyncio import create_task
 from asyncio import iscoroutinefunction as icf
 from inspect import signature, isgeneratorfunction
-from typing import List
 
 
 from . import annotypes
+from . import tools
 
 
 class Reaction:
@@ -15,11 +15,7 @@ class Reaction:
     def __init__(
         self, *events_name,
     ):
-        self.events_name = (
-            events_name
-            if events_name else
-            ...
-        )
+        self.events_name = events_name if events_name else ...
         self.validators = []
 
     def __call__(self, code):
@@ -35,22 +31,19 @@ class Reaction:
         self.payload_args = {}
         for name, value in signature(code).parameters.items():
             if (
-                isinstance(value.annotation, annotypes.CommandArgument) or
-                value.annotation is int or
-                value.annotation is str or
-                isinstance(value.annotation, list)
+                isinstance(value.annotation, annotypes.CommandArgument)
+                or value.annotation is int
+                or value.annotation is str
+                or isinstance(value.annotation, list)
             ):
                 self.command_args.update(
                     {name: Reaction.convert(value.annotation)}
                 )
 
-
             else:
                 conv = Reaction.convert(value.annotation)
 
-                self.payload_args.update(
-                    {name: value.annotation}
-                )
+                self.payload_args.update({name: conv})
 
             self.args.update({name: Reaction.convert(value.annotation)})
 
@@ -77,26 +70,31 @@ class Reaction:
             return conv
 
 
-
 class ReactionsList(list):
     """
     List with events handler
     """
+
     async def _send_message(self, api, event, message):
-        if isinstance(message, str):
+        """
+        Send a meessage by user's returning in reaction
+        """
+        if isinstance(message, tools.Message):
+            if message.peer_id is Ellipsis:
+                message.peer_id = event.object.message.peer_id
+            await api.messages.send(
+                **message.params()
+            )
+        else:
             await api.messages.send(
                 random_id=0,
                 peer_id=event.object.message.peer_id,
-                message=message
+                message=str(message)
             )
-
 
     async def resolve(self, event, bot):
         for reaction in self:
-            if (
-                event.type in reaction.events_name or
-                reaction.events_name is Ellipsis
-            ):
+            if event.type in reaction.events_name or reaction.events_name is Ellipsis:
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
                 if all(
@@ -118,6 +116,8 @@ class ReactionsList(list):
                     response = await reaction.run(comkwargs)
 
                     if isgeneratorfunction(reaction.code):
-                        await self._send_message(bot.api, event, "".join(response))
+                        await self._send_message(
+                            bot.api, event, "".join(response)
+                        )
                     else:
                         await self._send_message(bot.api, event, response)

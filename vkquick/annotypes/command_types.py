@@ -14,6 +14,7 @@ class Integer(CommandArgument):
     """
     Simple integer. Eq to `\d+`
     """
+
     rexp = r"\d+"
     factory = int
 
@@ -21,11 +22,11 @@ class Integer(CommandArgument):
         return self.factory(bin_stack.command_frame.group(argname))
 
 
-
 class String(CommandArgument):
     """
     String part. Eq to `.+`
     """
+
     rexp = r".+"
     factory = str
 
@@ -37,22 +38,25 @@ class Word(CommandArgument):
     """
     A word. Eq to `\S+`
     """
+
     rexp = r"\S+"
     factory = str
 
     def prepare(self, argname, event, func, bot, bin_stack):
         return self.factory(bin_stack.command_frame.group(argname))
 
+
 class List(CommandArgument):
     """
     List of smth separated by commas or whitespaces
     """
+
     def __init__(
         self,
         part: Annotype,
         sep: str = r"(?:\s*,\s|\s+)",
         min_: int = 1,
-        max_: int = ...
+        max_: int = ...,
     ):
         if max_ is ...:
             max_ = ""
@@ -65,28 +69,21 @@ class List(CommandArgument):
         self.part = part
 
     async def prepare(self, argname, event, func, bot, bin_stack):
-        vals = re.split(
-            self.sep,
-            bin_stack.command_frame.group(argname)
-        )
+        vals = re.split(self.sep, bin_stack.command_frame.group(argname))
         self.part.bot = bot
         if icf(self.part.factory):
-            return [
-                await self.part.factory(val)
-                for val in vals
-            ]
+            return [await self.part.factory(val) for val in vals]
         else:
-            return [
-                self.part.factory(val)
-                for val in vals
-            ]
+            return [self.part.factory(val) for val in vals]
 
 
 class UserMention(CommandArgument):
     """
     User mention
     """
+
     rexp = r"\[id\d+|.+?\]"
+
     async def factory(self, val):
         return await User(mention=val).get_info(self.bot.api)
 

@@ -7,6 +7,7 @@ from .reaction import Reaction, ReactionsList
 
 from .annotypes import *
 from .validators import *
+from .tools import *
 
 
 __version__ = "0.1.0a0"

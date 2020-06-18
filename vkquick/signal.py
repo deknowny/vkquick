@@ -1,7 +1,6 @@
 from asyncio import iscoroutinefunction as icf
 from asyncio import create_task
 from dataclasses import dataclass
-from typing import Callable
 from typing import Any
 
 
@@ -26,6 +25,7 @@ class SignalsList(list):
     """
     List with signals
     """
+    
     async def resolve(self, name: str):
         for signal in self:
             if signal.name == name:

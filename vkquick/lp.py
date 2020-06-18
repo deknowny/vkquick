@@ -1,8 +1,5 @@
-import asyncio
 import ssl
 from dataclasses import dataclass
-from typing import Optional
-from typing import Union
 
 import aiohttp
 import attrdict
@@ -15,6 +12,7 @@ class LongPoll(APIMerging):
     """
     LongPoll handler for groups
     """
+
     group_id: int
     wait: int = 25
 
@@ -28,16 +26,10 @@ class LongPoll(APIMerging):
 
     async def __anext__(self) -> attrdict.AttrMap:
         await self._get_info()
-        data = dict(
-            act="a_check",
-            wait=self.wait,
-            **self.info
-        )
+        data = dict(act="a_check", wait=self.wait, **self.info)
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.info.server,
-                data=data,
-                ssl=ssl.SSLContext()
+                url=self.info.server, data=data, ssl=ssl.SSLContext()
             ) as response:
                 response = await response.json()
                 response = attrdict.AttrMap(response)

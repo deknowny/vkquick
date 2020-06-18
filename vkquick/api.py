@@ -2,7 +2,6 @@ import asyncio
 import ssl
 import time
 import re
-from typing import Union
 from typing import Dict
 from typing import Any
 from dataclasses import dataclass
@@ -18,16 +17,17 @@ class API:
     """
     Send API requests
     """
+
     token: str
     version: float
 
     def __post_init__(self):
-        self.freeze: float = 1/20
+        self.freeze: float = 1 / 20
         self.URL: str = "https://api.vk.com/method/"
 
         self._method = str()
         self._last_request_time = 0
-        self._delay = 1/20
+        self._delay = 1 / 20
 
     def __getattr__(self, attr) -> "self":
         """
@@ -46,28 +46,16 @@ class API:
         """
         Called after dot-getting
         """
-        result = self.method(
-            name=self._method,
-            data=kwargs
-        )
+        result = self.method(name=self._method, data=kwargs)
         return result
 
-    async def method(
-        self,
-        name: str,
-        data
-    ):
+    async def method(self, name: str, data):
         await self._waiting()
 
-        data.update(
-            access_token=self.token,
-            v=self.version
-        )
+        data.update(access_token=self.token, v=self.version)
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.URL + name,
-                data=data,
-                ssl=ssl.SSLContext()
+                url=self.URL + name, data=data, ssl=ssl.SSLContext()
             ) as response:
                 response = await response.json()
                 self._check_errors(response)
@@ -75,8 +63,6 @@ class API:
                 if isinstance(response["response"], dict):
                     return attrdict.AttrMap(response["response"])
                 return response["response"]
-
-
 
     def _check_errors(self, resp: Dict[str, Any]) -> None:
         if "error" in resp:
@@ -90,7 +76,6 @@ class API:
             await asyncio.sleep(wait_time)
 
 
-
 class APIMerging:
     """
     Merge API instance to your class.
@@ -98,13 +83,14 @@ class APIMerging:
     token, group_id and etc or easily
     make async API requests
     """
+
     def merge(self, api: API) -> "self":
         """
         Merge API instance to class for adding
         API requests abilities
         """
         if not isinstance(api, API):
-            raise NotImplemented()
+            raise NotImplementedError()
         self._api = api
         return self
 

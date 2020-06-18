@@ -14,6 +14,7 @@ class Bot(APIMerging):
     """
     Main LongPoll, API, commands and signals handler
     """
+
     token: str
     group_id: int
     version: Union[float, int] = 5.124
@@ -22,19 +23,12 @@ class Bot(APIMerging):
     signals: List[Signal] = field(default_factory=SignalsList)
     reactions: List[Reaction] = field(default_factory=ReactionsList)
 
-
     def __post_init__(self):
         if self.version < 5.103:
-            raise ValueError(
-                "You can't use API version lower than 5.103"
-            )
+            raise ValueError("You can't use API version lower than 5.103")
         self.version = str(self.version)
-        self.merge(
-            API(token=self.token, version=self.version)
-        )
-        self.lp = LongPoll(
-            group_id=self.group_id, wait=self.wait
-        )
+        self.merge(API(token=self.token, version=self.version))
+        self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
         self.lp.merge(self.api)
         self.reaload_now = False
@@ -43,7 +37,6 @@ class Bot(APIMerging):
         while not self.reaload_now:
             await asyncio.sleep(0)
         raise RuntimeError()
-
 
     def run(self):
         """
@@ -55,10 +48,7 @@ class Bot(APIMerging):
 
     async def _process_handler(self):
         try:
-            await asyncio.gather(
-                self._files_changing_check(),
-                self._run()
-            )
+            await asyncio.gather(self._files_changing_check(), self._run())
         except RuntimeError:
             return
 

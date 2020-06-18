@@ -1,12 +1,8 @@
-import asyncio
-import os
-import sys
 import datetime
-import time
-import pathlib
-import importlib
-import types
+import os
 import subprocess
+import sys
+
 
 import click
 import vkquick as vq
@@ -68,15 +64,16 @@ ANSWER = \"You used \`{name}\` command!\"
 """.strip()
 
 
-
 @click.group()
-def bot(): ...
+def bot():
+    ...
 
 
 @click.option(
-    "-o", "--owner",
+    "-o",
+    "--owner",
     default="Anonymous",
-    help="Bot owner. Will be added to a license file"
+    help="Bot owner. Will be added to a license file",
 )
 @click.option(
     "-t", "--token",
@@ -97,10 +94,7 @@ def bot(): ...
 )
 @click.argument("name")
 @bot.command()
-def new(
-    owner, name, token,
-    group_id, version
-):
+def new(owner, name, token, group_id, version):
     """
     Create a new bot
     """
@@ -130,7 +124,8 @@ def new(
 @click.option(
     "-d", "--delete",
     is_flag=True,
-    default=False
+    default=False,
+    help="Delete the com"
 )
 @click.argument("name")
 @bot.command()
@@ -145,9 +140,7 @@ def com(name, delete):
             """
         )
         with open("src/__init__.py", "r") as file:
-                new_text = file.read().replace(
-                    f"from .{name} import {name}\n", ""
-                )
+            new_text = file.read().replace(f"from .{name} import {name}\n", "")
         with open("src/__init__.py", "w") as file:
             file.write(new_text)
     else:
@@ -169,14 +162,16 @@ def com(name, delete):
 
 
 @click.option(
-    "-r", "--reload",
+    "--reload",
     is_flag=True,
-    default=False
+    default=False,
+    help="Reload a bot after files changing"
 )
 @click.option(
     "-o-t", "--once-time", "once_time",
     is_flag=True,
-    default=False
+    default=False,
+    help="Used for one times bot running. Bot is stoped after files changing"
 )
 @bot.command()
 def run(reload, once_time):
@@ -191,8 +186,11 @@ def run(reload, once_time):
             args.remove("--reload")
         args.append("--once-time")
 
+        print("> All prints you see will be changed to logger later.")
         while True:
+            print("Run")
             subprocess.run(["bot", *args])
+            print("Reload...")
 
     elif once_time:
         # Your bot project path
@@ -201,15 +199,15 @@ def run(reload, once_time):
         class AllEventsHandler(PatternMatchingEventHandler):
             def on_any_event(self, event):
                 self.bot.reaload_now = True
-        event_handler = AllEventsHandler(ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True)
+
+        event_handler = AllEventsHandler(
+            ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True
+        )
         # Bot's
         import src
         import config
 
-        settings = dict(
-            token=config.token,
-            group_id=config.group_id
-        )
+        settings = dict(token=config.token, group_id=config.group_id)
         if hasattr(config, "version"):
             settings.update(version=config.version)
 
@@ -223,14 +221,9 @@ def run(reload, once_time):
         reactions = vq.ReactionsList(reactions)
         signals = vq.SignalsList(signals)
 
-        bot = vq.Bot(
-            reactions=reactions,
-            signals=signals,
-            **settings
-        )
+        bot = vq.Bot(reactions=reactions, signals=signals, **settings)
 
         AllEventsHandler.bot = bot
-
 
         observer = Observer()
         observer.schedule(event_handler, ".", recursive=True)
@@ -238,7 +231,6 @@ def run(reload, once_time):
         bot.run()
         observer.stop()
         observer.join()
-
 
     else:
         # Your bot project path
@@ -248,10 +240,7 @@ def run(reload, once_time):
         import src
         import config
 
-        settings = dict(
-            token=config.token,
-            group_id=config.group_id
-        )
+        settings = dict(token=config.token, group_id=config.group_id)
         if hasattr(config, "version"):
             settings.update(version=config.version)
 
@@ -265,12 +254,9 @@ def run(reload, once_time):
         reactions = vq.ReactionsList(reactions)
         signals = vq.SignalsList(signals)
 
-        bot = vq.Bot(
-            reactions=reactions,
-            signals=signals,
-            **settings
-        )
+        bot = vq.Bot(reactions=reactions, signals=signals, **settings)
         bot.run()
+
 
 # Bin for my friend. No more
 # from functools import wraps

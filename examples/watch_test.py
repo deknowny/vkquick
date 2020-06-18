@@ -27,6 +27,7 @@ class MyEventHandler(FileSystemEventHandler):
 
 
 import imp
+
 print(imp.b)
 
 with open("imp.py", "w") as file:
@@ -38,7 +39,6 @@ import importlib
 importlib.reload(imp)
 
 print(imp.a)
-
 
 
 # event_handler = MyEventHandler()
