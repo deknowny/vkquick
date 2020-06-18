@@ -7,7 +7,7 @@ from .user import User
 
 
 class CommandArgument(Annotype):
-    ...
+    fatcory = str
 
 
 class Integer(CommandArgument):
@@ -28,7 +28,6 @@ class String(CommandArgument):
     """
 
     rexp = r".+"
-    factory = str
 
     def prepare(self, argname, event, func, bot, bin_stack):
         return self.factory(bin_stack.command_frame.group(argname))
@@ -40,7 +39,6 @@ class Word(CommandArgument):
     """
 
     rexp = r"\S+"
-    factory = str
 
     def prepare(self, argname, event, func, bot, bin_stack):
         return self.factory(bin_stack.command_frame.group(argname))

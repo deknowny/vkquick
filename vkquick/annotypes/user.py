@@ -103,8 +103,8 @@ class User:
         )
         self.info = attrdict.AttrMap(self.info[0])
         # Quick access
-        self.name = self.info.first_name
-        self.lname = self.info.last_name
+        self.fn = self.info.first_name
+        self.ln = self.info.last_name
         self.user_id = self.info.id
 
         return self
