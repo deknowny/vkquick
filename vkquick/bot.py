@@ -7,10 +7,11 @@ from .api import APIMerging, API
 from .lp import LongPoll
 from .signal import SignalsList, Signal
 from .reaction import ReactionsList, Reaction
+from .annotypes import Annotype
 
 
 @dataclass
-class Bot(APIMerging):
+class Bot(APIMerging, Annotype):
     """
     Main LongPoll, API, commands and signals handler
     """
@@ -33,10 +34,9 @@ class Bot(APIMerging):
         self.lp.merge(self.api)
         self.reaload_now = False
 
-    async def _files_changing_check(self):
-        while not self.reaload_now:
-            await asyncio.sleep(0)
-        raise RuntimeError()
+    @staticmethod
+    def prepare(argname, event, func, bot, bin_stack):
+        return bot
 
     def run(self):
         """
@@ -45,6 +45,11 @@ class Bot(APIMerging):
         asyncio.run(self.signals.resolve("startup"))
         asyncio.run(self._process_handler())
         asyncio.run(self.signals.resolve("shutdown"))
+
+    async def _files_changing_check(self):
+        while not self.reaload_now:
+            await asyncio.sleep(0)
+        raise RuntimeError()
 
     async def _process_handler(self):
         try:
