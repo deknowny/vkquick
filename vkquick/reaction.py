@@ -51,7 +51,7 @@ class Reaction:
 
     async def run(self, comkwargs):
         if icf(self.code):
-            return create_task(self.code(**comkwargs))
+            return await create_task(self.code(**comkwargs))
         else:
             return self.code(**comkwargs)
 
@@ -94,6 +94,7 @@ class ReactionsList(list):
 
     async def resolve(self, event, bot):
         for reaction in self:
+
             if event.type in reaction.events_name or reaction.events_name is Ellipsis:
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
@@ -105,15 +106,24 @@ class ReactionsList(list):
                     for name, value in reaction.args.items():
                         if icf(value.prepare):
                             content = await value.prepare(
-                                name, event, reaction, bot, bin_stack
+                                argname=name,
+                                event=event,
+                                func=reaction,
+                                bot=bot,
+                                bin_stack=bin_stack
                             )
                         else:
                             content = value.prepare(
-                                name, event, reaction, bot, bin_stack
+                                argname=name,
+                                event=event,
+                                func=reaction,
+                                bot=bot,
+                                bin_stack=bin_stack
                             )
                         comkwargs.update({name: content})
 
                     response = await reaction.run(comkwargs)
+
 
                     if isgeneratorfunction(reaction.code):
                         await self._send_message(
