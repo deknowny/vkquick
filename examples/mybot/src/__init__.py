@@ -1,1 +1,1 @@
-from .hello_world import hello_world
+from . import hello_world

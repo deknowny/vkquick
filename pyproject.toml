@@ -13,6 +13,7 @@ python = "^3.8"
 click = "^7.1.2"
 attrdict = "^2.0.1"
 aiohttp = "^3.6.2"
+watchdog = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

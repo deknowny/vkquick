@@ -37,14 +37,30 @@ class Bot(APIMerging):
         )
 
         self.lp.merge(self.api)
+        self.reaload_now = False
+
+    async def _files_changing_check(self):
+        while not self.reaload_now:
+            await asyncio.sleep(0)
+        raise RuntimeError()
+
 
     def run(self):
         """
         Runs LP process
         """
         asyncio.run(self.signals.resolve("startup"))
-        asyncio.run(self._run())
+        asyncio.run(self._process_handler())
         asyncio.run(self.signals.resolve("shutdown"))
+
+    async def _process_handler(self):
+        try:
+            await asyncio.gather(
+                self._files_changing_check(),
+                self._run()
+            )
+        except RuntimeError:
+            return
 
     async def _run(self):
         """

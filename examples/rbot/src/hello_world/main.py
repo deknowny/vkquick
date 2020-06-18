@@ -11,4 +11,4 @@ from . import config
 def hello_world(users: [vq.UserMention()]):
     yield "Передаю привет:\n"
     for pos, user in enumerate(users, 1):
-        yield f"{user:{pos}) <name>+<lname>}\n"
+        yield f"{user:{pos}) <name>+++<lname>}\n"

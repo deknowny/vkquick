@@ -1,1 +1,1 @@
-from .main import hello_world
+from . import main

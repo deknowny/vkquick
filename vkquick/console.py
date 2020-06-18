@@ -1,10 +1,17 @@
+import asyncio
 import os
 import sys
 import datetime
+import time
 import pathlib
+import importlib
+import types
+import subprocess
 
 import click
 import vkquick as vq
+from watchdog.events import PatternMatchingEventHandler
+from watchdog.observers import Observer
 
 
 MIT = """
@@ -59,6 +66,7 @@ CONFIG = r"""
 NAMES = [\"{name}\"]
 ANSWER = \"You used \`{name}\` command!\"
 """.strip()
+
 
 
 @click.group()
@@ -138,7 +146,7 @@ def com(name, delete):
         )
         with open("src/__init__.py", "r") as file:
                 new_text = file.read().replace(
-                    f"from {name} import {name}\n", ""
+                    f"from .{name} import {name}\n", ""
                 )
         with open("src/__init__.py", "w") as file:
             file.write(new_text)
@@ -160,39 +168,119 @@ def com(name, delete):
         )
 
 
+@click.option(
+    "-r", "--reload",
+    is_flag=True,
+    default=False
+)
+@click.option(
+    "-o-t", "--once-time", "once_time",
+    is_flag=True,
+    default=False
+)
 @bot.command()
-def run():
+def run(reload, once_time):
     """
     Run procces in bot
     """
-    sys.path.append(str(pathlib.Path(os.getcwd())))
-    import src
-    import config
+    if reload:
+        args = sys.argv[1:]
+        if "-r" in args:
+            args.remove("-r")
+        if "--reload" in args:
+            args.remove("--reload")
+        args.append("--once-time")
 
-    settings = dict(
-        token=config.token,
-        group_id=config.group_id
-    )
-    if hasattr(config, "version"):
-        settings.update(version=config.version)
+        while True:
+            subprocess.run(["bot", *args])
 
-    reactions = []
-    signals = []
-    for var in src.__dict__.values():
-        if isinstance(var, vq.Reaction):
-            reactions.append(var)
-        elif isinstance(var, vq.Signal):
-            signals.append(var)
-    reactions = vq.ReactionsList(reactions)
-    signals = vq.SignalsList(signals)
+    elif once_time:
+        # Your bot project path
+        sys.path.append(os.getcwd())
+
+        class AllEventsHandler(PatternMatchingEventHandler):
+            def on_any_event(self, event):
+                self.bot.reaload_now = True
+        event_handler = AllEventsHandler(ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True)
+        # Bot's
+        import src
+        import config
+
+        settings = dict(
+            token=config.token,
+            group_id=config.group_id
+        )
+        if hasattr(config, "version"):
+            settings.update(version=config.version)
+
+        reactions = []
+        signals = []
+        for var in src.__dict__.values():
+            if isinstance(var, vq.Reaction):
+                reactions.append(var)
+            elif isinstance(var, vq.Signal):
+                signals.append(var)
+        reactions = vq.ReactionsList(reactions)
+        signals = vq.SignalsList(signals)
+
+        bot = vq.Bot(
+            reactions=reactions,
+            signals=signals,
+            **settings
+        )
+
+        AllEventsHandler.bot = bot
 
 
-    bot = vq.Bot(
-        reactions=reactions,
-        signals=signals,
-        **settings
-    )
-    bot.run()
+        observer = Observer()
+        observer.schedule(event_handler, ".", recursive=True)
+        observer.start()
+        bot.run()
+        observer.stop()
+        observer.join()
+
+
+    else:
+        # Your bot project path
+        sys.path.append(os.getcwd())
+
+        # Bot's
+        import src
+        import config
+
+        settings = dict(
+            token=config.token,
+            group_id=config.group_id
+        )
+        if hasattr(config, "version"):
+            settings.update(version=config.version)
+
+        reactions = []
+        signals = []
+        for var in src.__dict__.values():
+            if isinstance(var, vq.Reaction):
+                reactions.append(var)
+            elif isinstance(var, vq.Signal):
+                signals.append(var)
+        reactions = vq.ReactionsList(reactions)
+        signals = vq.SignalsList(signals)
+
+        bot = vq.Bot(
+            reactions=reactions,
+            signals=signals,
+            **settings
+        )
+        bot.run()
+
+# Bin for my friend. No more
+# from functools import wraps
+#
+#
+# def prefix(*prefs):
+#     def wrapper(func):
+#         @wraps(func)
+#         def inside(*args, **kwargs):
+#             if
 
 
 if __name__ == "__main__":

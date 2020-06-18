@@ -1,6 +1,6 @@
 from asyncio import create_task
 from asyncio import iscoroutinefunction as icf
-from inspect import signature
+from inspect import signature, isgeneratorfunction
 from typing import List
 
 
@@ -82,6 +82,15 @@ class ReactionsList(list):
     """
     List with events handler
     """
+    async def _send_message(self, api, event, message):
+        if isinstance(message, str):
+            await api.messages.send(
+                random_id=0,
+                peer_id=event.object.message.peer_id,
+                message=message
+            )
+
+
     async def resolve(self, event, bot):
         for reaction in self:
             if (
@@ -108,9 +117,7 @@ class ReactionsList(list):
 
                     response = await reaction.run(comkwargs)
 
-                    if isinstance(response, str):
-                        await bot.api.messages.send(
-                            random_id=0,
-                            peer_id=event.object.message.peer_id,
-                            message=response
-                        )
+                    if isgeneratorfunction(reaction.code):
+                        await self._send_message(bot.api, event, "".join(response))
+                    else:
+                        await self._send_message(bot.api, event, response)

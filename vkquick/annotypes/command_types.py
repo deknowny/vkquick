@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from asyncio import iscoroutinefunction as icf
 import re
 
-from .base import Annotypes
+from .base import Annotype
+from .user import User
 
 
-class CommandArgument(Annotypes):
+class CommandArgument(Annotype):
     ...
 
 
@@ -47,7 +49,7 @@ class List(CommandArgument):
     """
     def __init__(
         self,
-        part: Annotypes,
+        part: Annotype,
         sep: str = r"(?:\s*,\s|\s+)",
         min_: int = 1,
         max_: int = ...
@@ -62,12 +64,34 @@ class List(CommandArgument):
         self.sep = sep
         self.part = part
 
-    def prepare(self, argname, event, func, bot, bin_stack):
+    async def prepare(self, argname, event, func, bot, bin_stack):
         vals = re.split(
             self.sep,
             bin_stack.command_frame.group(argname)
         )
-        return [
-            self.part.factory(val)
-            for val in vals
-        ]
+        self.part.bot = bot
+        if icf(self.part.factory):
+            return [
+                await self.part.factory(val)
+                for val in vals
+            ]
+        else:
+            return [
+                self.part.factory(val)
+                for val in vals
+            ]
+
+
+class UserMention(CommandArgument):
+    """
+    User mention
+    """
+    rexp = r"\[id\d+|.+?\]"
+    async def factory(self, val):
+        return await User(mention=val).get_info(self.bot.api)
+
+    async def prepare(self, argname, event, func, bot, bin_stack):
+        mention = bin_stack.command_frame.group(argname)
+        user = User(mention=mention)
+        user = await user.get_info(bot.api)
+        return user

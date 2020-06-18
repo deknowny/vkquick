@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 
 
-class Annotypes(ABC):
+class Annotype(ABC):
     """
     Use for annotation types in your function
     """

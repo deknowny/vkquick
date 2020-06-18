@@ -30,7 +30,7 @@ class VkErrPreparing:
         error_params = err["error"]["request_params"]
 
         content = (
-            f"\n\n033[31m[{error_code}] {error_msg}\033[0m\n"
+            f"\n\n\033[31m[{error_code}] {error_msg}\033[0m\n"
             "Request params:"
         )
         for pair in err["error"]["request_params"]:
