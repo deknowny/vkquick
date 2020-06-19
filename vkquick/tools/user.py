@@ -48,14 +48,14 @@ class User:
         return self
 
     def mention(self, fstring):
-        return f"[id{self.user_id}|{self.__format__(fstring)}]"
+        return f"[id{self.id}|{self.__format__(fstring)}]"
 
     def __str__(self):
         return (
             "<"
             "vq.User "
-            f"user_id={self.user_id} "
-            f'name="{self.name} {self.lname}"'
+            f"user_id={self.id} "
+            f'name="{self.fn} {self.ln}"'
             ">"
         )
 
