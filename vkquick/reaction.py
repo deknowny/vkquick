@@ -86,6 +86,8 @@ class ReactionsList(list):
             await api.messages.send(
                 **message.params
             )
+        elif message is None:
+            return
         else:
             await api.messages.send(
                 random_id=0,
