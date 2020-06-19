@@ -1,0 +1,2 @@
+NAMES = ["greet"]
+ANSWER = "Hello"

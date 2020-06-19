@@ -2,10 +2,12 @@ from abc import abstractmethod, ABC
 
 
 class Validator(ABC):
+    """
+    Base for decorators under reaction handler
+    """
     def __call__(self, func):
         if hasattr(func, "validators"):
             func.validators.append(self)
-
         return func
 
     @abstractmethod

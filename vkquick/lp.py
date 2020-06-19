@@ -19,9 +19,8 @@ class LongPoll(APIMerging):
     def __aiter__(self):
         """
         Async itearation for
-        LongPoll listeting
+        LongPoll listening
         """
-        self.events = list()
         return self
 
     async def __anext__(self) -> attrdict.AttrMap:

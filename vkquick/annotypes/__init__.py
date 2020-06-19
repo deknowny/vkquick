@@ -10,5 +10,4 @@ from .command_types import CommandArgument
 from .event import Event
 from .sender import Sender
 from .replied_user import RepliedUser
-
-from .user import User, UserAnno
+from .fwd_users import FwdUsers

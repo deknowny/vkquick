@@ -1,5 +1,5 @@
 from .base import Annotype
-from .user import User, UserAnno
+from vkquick.tools import User, UserAnno
 
 
 class RepliedUser(Annotype, UserAnno):

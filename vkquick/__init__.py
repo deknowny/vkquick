@@ -1,3 +1,7 @@
+"""
+Package for quick writing vk chat bots
+"""
+
 from .api import API
 from .bot import Bot
 from .exception import VkErr

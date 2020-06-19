@@ -3,7 +3,7 @@ from asyncio import iscoroutinefunction as icf
 import re
 
 from .base import Annotype
-from .user import User, UserAnno
+from vkquick.tools import User, UserAnno
 
 
 class CommandArgument(Annotype):

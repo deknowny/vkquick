@@ -80,10 +80,11 @@ class ReactionsList(list):
         Send a meessage by user's returning in reaction
         """
         if isinstance(message, tools.Message):
-            if message.peer_id is Ellipsis:
-                message.peer_id = event.object.message.peer_id
+            if message.params.peer_id is Ellipsis:
+                message.params.peer_id = event.object.message.peer_id
+
             await api.messages.send(
-                **message.params()
+                **message.params
             )
         else:
             await api.messages.send(

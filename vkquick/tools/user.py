@@ -3,8 +3,6 @@ from typing import Optional
 
 import attrdict
 
-from .base import Annotype
-
 
 class User:
     def __init__(
@@ -66,6 +64,7 @@ class User:
             .replace("<", "{") \
             .replace(">", "}") \
             .format(**self.__dict__)
+
 
 class UserAnno:
     def __init__(self, *fields):

@@ -9,6 +9,7 @@ class Signal:
     """
     Called by own code
     """
+
     name: str
 
     def __call__(self, code):
@@ -25,7 +26,7 @@ class SignalsList(list):
     """
     List with signals
     """
-    
+
     async def resolve(self, name: str):
         for signal in self:
             if signal.name == name:

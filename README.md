@@ -20,6 +20,7 @@ python3 -m venv env
     source env/bin/activate
     ```
 После этого в начале ввода командой строки должно появиться `(env)`
+
 4. После чего установите `poetry`
 ```bash
 pip3 install poetry

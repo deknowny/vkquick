@@ -1,0 +1,21 @@
+from typing import Generator
+
+from .ui import UI
+from .element import Element
+
+
+class Template(UI):
+    """
+    messages.send templates
+    """
+    def __init__(self, type_: str = "carousel"):
+        self.info = dict(
+            type=type_,
+            elements=[]
+        )
+
+    def __call__(self, gen: Generator[Element, None, None]):
+        for elem in gen():
+            self.info["elements"].append(elem.info)
+
+        return self
