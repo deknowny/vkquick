@@ -101,37 +101,44 @@ class ReactionsList(list):
             if event.type in reaction.events_name or reaction.events_name is Ellipsis:
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
-                if all(
-                    validator.isvalid(event, reaction, bot, bin_stack)
-                    for validator in reaction.validators
-                ):
-
-                    comkwargs = {}
-                    for name, value in reaction.args.items():
-                        if icf(value.prepare):
-                            content = await value.prepare(
-                                argname=name,
-                                event=event,
-                                func=reaction,
-                                bot=bot,
-                                bin_stack=bin_stack
-                            )
-                        else:
-                            content = value.prepare(
-                                argname=name,
-                                event=event,
-                                func=reaction,
-                                bot=bot,
-                                bin_stack=bin_stack
-                            )
-                        comkwargs.update({name: content})
-
-                    response = await reaction.run(comkwargs)
-
-                    if isgeneratorfunction(reaction.code):
-
-                        await self._send_message(
-                            bot.api, event, "".join(response)
+                for validator in reaction.validators:
+                    if icf(validator.isvalid):
+                        val = await validator.isvalid(
+                            event, reaction, bot, bin_stack
                         )
                     else:
-                        await self._send_message(bot.api, event, response)
+                        val = validator.isvalid(
+                            event, reaction, bot, bin_stack
+                        )
+                    if not val:
+                        return
+
+                comkwargs = {}
+                for name, value in reaction.args.items():
+                    if icf(value.prepare):
+                        content = await value.prepare(
+                            argname=name,
+                            event=event,
+                            func=reaction,
+                            bot=bot,
+                            bin_stack=bin_stack
+                        )
+                    else:
+                        content = value.prepare(
+                            argname=name,
+                            event=event,
+                            func=reaction,
+                            bot=bot,
+                            bin_stack=bin_stack
+                        )
+                    comkwargs.update({name: content})
+
+                response = await reaction.run(comkwargs)
+
+                if isgeneratorfunction(reaction.code):
+
+                    await self._send_message(
+                        bot.api, event, "".join(response)
+                    )
+                else:
+                    await self._send_message(bot.api, event, response)
