@@ -1,3 +1,4 @@
+import datetime as dt
 from asyncio import create_task
 from asyncio import iscoroutinefunction as icf
 from inspect import signature, isgeneratorfunction
@@ -125,7 +126,15 @@ class ReactionsList(list):
         for reaction in self:
             if event.type in reaction.events_name or reaction.events_name is Ellipsis:
                 if not header_printed:
-                    bot.debug_out(click.style("[Reactions]", bold=True))
+                    bot.debug_out(
+                        click.style("[Reactions on ", bold=True) +\
+                        click.style(event.type, fg="cyan") +\
+                        "]" +\
+                        click.style(
+                            dt.datetime.now().strftime(" -- %Y-%m-%d %H:%M:%S"),
+                            fg="bright_black"
+                        )
+                    )
                 header_printed = True
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
@@ -152,7 +161,7 @@ class ReactionsList(list):
                             "   -> " +\
                             click.style(
                                 val[1], fg="red"
-                            ), end="\n\n\n"
+                            ), end="\n\n"
                         )
                         break
                     bot.debug_out(
@@ -189,7 +198,7 @@ class ReactionsList(list):
                             click.style(key, fg="yellow") +\
                             f" = {value!r}"
                         )
-                    print("\n")
+                    print()
                     response = await reaction.run(comkwargs)
 
                     if isgeneratorfunction(reaction.code):
