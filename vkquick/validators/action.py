@@ -20,4 +20,4 @@ class Action(Validator, Annotype):
             event.object.message.action.type in self.types
         ):
             return (True, "")
-        return (False, "No action or action.type another")
+        return (False, "No action or action.type is an another")

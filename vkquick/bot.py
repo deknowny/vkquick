@@ -107,6 +107,10 @@ class Bot(APIMerging, Annotype):
                         lexers.JsonLexer(),
                         formatters.TerminalFormatter(bg="light")
                     )
+                    print("=" * 18, "Below is the event\n", sep="\n", end="=" * 18 + "\n")
+                    print(data)
+                    print("=" * 18, "Above is the event\n", sep="\n", end="=" * 18 + "\n")
+                    click.clear()
                     print(
                         click.style(
                             dt.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]"),
@@ -114,7 +118,8 @@ class Bot(APIMerging, Annotype):
                         ), end="\n\n"
                     )
                     click.secho("[LongPoll]", bold=True)
-                    print("Event type:", click.style(event.type, fg="cyan"), end="\n\n")
+                    # print(data, end="\n\n")
+                    print(f"Event type:", click.style(event.type, fg="cyan"), end="\n\n")
 
 
-                await self.reactions.resolve(event, self)
+                show = await self.reactions.resolve(event, self)

@@ -114,6 +114,11 @@ class ReactionsList(list):
                 message=str(message)
             )
 
+    @staticmethod
+    def get_char(self):
+        print("Show full event? (key)")
+        return click.getchar()
+
     async def resolve(self, event, bot):
         header_printed = False
 
