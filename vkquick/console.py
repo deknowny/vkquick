@@ -6,6 +6,8 @@ import shutil
 from pathlib import Path
 
 import click
+import toml
+import attrdict
 import vkquick as vq
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
@@ -33,10 +35,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """.strip()
 
-
-CONFIG_PY = """
+# TODO: Add a link, where read more
+CONFIG_TOML = """
+[api]
 token = "{token}"
 group_id = {group_id}
+delay = 0.05
+version = 5.124
+
+
+[longpoll]
+wait = 25
 """.strip()
 
 
@@ -55,6 +64,9 @@ from . import config
 @vq.Cmd(names=config.NAMES)
 @vq.Reaction("message_new")
 def {name}():
+    \"""
+    Handler to command `{name}`
+    \"""
     return config.ANSWER
 """.strip()
 
@@ -62,6 +74,18 @@ def {name}():
 CONFIG = """
 NAMES = ["{name}"]
 ANSWER = "You used `{name}` command!"
+""".strip()
+
+
+SIGNAL = """
+import vkquick as vq
+
+
+@vq.Signal("{name}")
+def {name}():
+    \"""
+    Handler to signal `{name}`
+    \"""
 """.strip()
 
 
@@ -78,7 +102,7 @@ def bot():
 )
 @click.option(
     "-t", "--token",
-    default="Add token here",
+    default="",
     help="Token for group bot"
 )
 @click.option(
@@ -87,15 +111,9 @@ def bot():
     type=int,
     help="Token's group ID"
 )
-@click.option(
-    "-v", "--version",
-    default=5.124,
-    type=float,
-    help="Token for group bot"
-)
 @click.argument("name")
 @bot.command()
-def new(owner, name, token, group_id, version):
+def new(owner, name, token, group_id):
     """
     Create a new bot
     """
@@ -103,22 +121,47 @@ def new(owner, name, token, group_id, version):
     bot_path = Path(name)
     src_path = Path(name) / "src"
     os.makedirs(str(src_path))
-    with open(str(bot_path / "LICENSE"), "w+") as file:
+    with open(bot_path / "LICENSE", "w+") as file:
         file.write(
             MIT.format(owner=owner, year=year)
         )
-    with open(str(bot_path / "config.py"), "w+") as file:
+    with open(bot_path / "config.toml", "w+") as file:
         file.write(
-            CONFIG_PY.format(
-                token=token, version=version, group_id=group_id
+            CONFIG_TOML.format(
+                token=token, group_id=group_id
             )
         )
-    with open(str(bot_path / "README.py"), "w+") as file:
+    with open(bot_path / "README.md", "w+") as file:
         file.write(
             README.format(name=name.title())
         )
 
-    open(str(src_path / "__init__.py"), "w+")
+    open(src_path / "__init__.py", "w+")
+
+    click.echo(
+        click.style("Created ", fg="green") +\
+        click.style(name, fg="cyan", bold=True) +\
+        click.style(" bot. ", fg="green") +\
+        click.style("Don't forget `cd` to bot's directory", fg="green")
+    )
+    if not (token and group_id):
+        click.echo(
+            click.style("\nPlease, add following parameters to ", fg="yellow") +\
+            click.style(str(Path(name) / "config.toml"), fg="cyan", bold=True) +\
+            click.style(" under ", fg="yellow") +\
+            click.style("[api]", fg="cyan", bold=True) +\
+            click.style(" section", fg="yellow")
+        )
+        if not token:
+            click.echo(
+                " -- " +\
+                click.style("token", fg="red", bold=True)
+            )
+        if not group_id:
+            click.echo(
+                " -- " +\
+                click.style("group_id", fg="red", bold=True)
+            )
 
 
 @click.option(
@@ -134,30 +177,63 @@ def com(name, delete):
     Create a new command in the bot
     """
     if delete:
-        shutil.rmtree(str(Path("src") / name), ignore_errors=True)
-        with open(str(Path("src") / "__init__.py"), "r") as file:
-            new_text = file.read().replace(f"from .{name} import {name}\n", "")
-        with open(str(Path("src") / "__init__.py"), "w") as file:
-            file.write(new_text)
+        click.echo(
+            click.style("Command ", fg="yellow") +\
+            click.style(name, bold=True, fg="cyan") +\
+            click.style(" will be removed. Continue? ", fg="yellow") +\
+            click.style("(y/any)", bold=True),
+            nl=False
+        )
+        confirm = click.getchar()
+        click.echo()
+        if confirm == "y":
+            shutil.rmtree(Path("src") / name, ignore_errors=True)
+            with open(Path("src") / "__init__.py", "r") as file:
+                new_text = file.read().replace(f"from .{name} import {name}\n", "")
+            with open(Path("src") / "__init__.py", "w") as file:
+                file.write(new_text)
+
+            click.echo(
+                click.style("Command ", fg="green") +\
+                click.style(name, bold=True, fg="cyan") +\
+                click.style(" has been removed", fg="green")
+            )
+
+        else:
+            click.secho("Files haven't been changed", fg="red")
+
     else:
         com_path = Path("src") / name
         os.makedirs(str(com_path))
-        with open(str(com_path / "main.py"), "w+") as file:
+        with open(com_path / "main.py", "w+") as file:
             file.write(
                 COMMAND.format(name=name)
             )
 
-        with open(str(com_path / "config.py"), "w+") as file:
+        with open(com_path / "config.py", "w+") as file:
             file.write(
                 CONFIG.format(name=name)
             )
-        with open(str(com_path / "__init__.py"), "w+") as file:
+        with open(com_path / "__init__.py", "w+") as file:
             file.write(f"from .main import {name}\n")
 
-        with open(str(Path("src") / "__init__.py"), "a+") as file:
+        with open(Path("src") / "__init__.py", "a+") as file:
             file.write(f"from .{name} import {name}\n")
 
+        click.echo(
+            click.style("Added a command ", fg="green") +\
+            click.style(name, bold=True) +\
+            click.style(" into path ", fg="green") +\
+            click.style(str(Path("src") / f"{name}"), bold=True)
+        )
 
+
+@click.option(
+    "-d", "--debug",
+    is_flag=True,
+    default=False,
+    help="Debug mode (verbose output)"
+)
 @click.option(
     "--reload",
     is_flag=True,
@@ -171,7 +247,7 @@ def com(name, delete):
     help="Used for one times bot running. Bot is stoped after files changing"
 )
 @bot.command()
-def run(reload, once_time):
+def run(reload, once_time, debug):
     """
     Run procces in bot
     """
@@ -183,10 +259,24 @@ def run(reload, once_time):
             args.remove("--reload")
         args.append("--once-time")
 
+        # print("> All prints you see will be changed to logger later.")
+        # prev_out = None
+        # proc = subprocess.run(["bot", *args], stderr=subprocess.STDOUT)
+        # prev_out = proc.stderr
+        # while True:
+        #     print("Run")
+        #     proc = subprocess.run(["bot", *args], stderr=subprocess.STDOUT)
+        #     if prev_out == proc.stderr and prev_out is not None:
+        #         proc = subprocess.run(["bot", *args], capture_output=True)
+        #     else:
+        #         proc = subprocess.run(["bot", *args], stderr=subprocess.STDOUT)
+        #
+        #     prev_out = proc.stderr
+        #     print("Reload...")
         print("> All prints you see will be changed to logger later.")
         while True:
             print("Run")
-            subprocess.run(["bot", *args])
+            proc = subprocess.run(["bot", *args])
             print("Reload...")
 
     elif once_time:
@@ -198,15 +288,21 @@ def run(reload, once_time):
                 self.bot.reaload_now = True
 
         event_handler = AllEventsHandler(
-            ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True
+            ignore_patterns=["__pycache__", "*.pyc"],
+            ignore_directories=True
         )
         # Bot's
         import src
-        import config
+        config = attrdict.AttrMap(toml.load("config.toml"))
 
-        settings = dict(token=config.token, group_id=config.group_id)
-        if hasattr(config, "version"):
-            settings.update(version=config.version)
+        settings = dict(
+            token=config.api.token,
+            group_id=config.api.group_id,
+            version=config.api.version,
+            delay=config.api.delay,
+            wait=config.longpoll.wait,
+            debug=debug
+        )
 
         reactions = []
         signals = []
@@ -235,11 +331,16 @@ def run(reload, once_time):
 
         # Bot's
         import src
-        import config
+        config = attrdict.AttrMap(toml.load("config.toml"))
 
-        settings = dict(token=config.token, group_id=config.group_id)
-        if hasattr(config, "version"):
-            settings.update(version=config.version)
+        settings = dict(
+            token=config.api.token,
+            group_id=config.api.group_id,
+            version=config.api.version,
+            delay=config.api.delay,
+            wait=config.longpoll.wait,
+            debug=debug
+        )
 
         reactions = []
         signals = []
@@ -251,9 +352,45 @@ def run(reload, once_time):
         reactions = vq.ReactionsList(reactions)
         signals = vq.SignalsList(signals)
 
-        bot = vq.Bot(reactions=reactions, signals=signals, **settings)
+        bot = vq.Bot(
+            reactions=reactions,
+            signals=signals,
+            **settings
+        )
         bot.run()
 
+
+@click.option(
+    "-o", "--on", "on",
+    default=None,
+    help="Signal name. By default it's the handler name"
+)
+@click.argument("name")
+@bot.command()
+def signal(name, on):
+    """
+    Add a signal in your bot
+    """
+    sig_name = on or name
+    with open(Path("src") / f"{name}.py", "w+") as file:
+        file.write(SIGNAL.format(name=sig_name))
+
+    with open(Path("src") / "__init__.py", "a+") as file:
+        file.write(f"from .{name} import {name}\n")
+
+    click.echo(
+        click.style("Added a hander on a signal ", fg="green") +\
+        click.style(sig_name, bold=True) +\
+        click.style(" into path ", fg="green") +\
+        click.style(str(Path("src") / f"{name}.py"), bold=True)
+    )
+
+@bot.command()
+def foo():
+    click.echo(1)
+    click.echo(2)
+    click.clear()
+    click.echo(3)
 
 if __name__ == "__main__":
     bot()

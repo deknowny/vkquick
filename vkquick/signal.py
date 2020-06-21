@@ -27,7 +27,7 @@ class SignalsList(list):
     List with signals
     """
 
-    async def resolve(self, name: str):
+    async def resolve(self, name: str, /,  *args, **kwargs):
         for signal in self:
             if signal.name == name:
-                await signal.run()
+                await signal.run(*args, **kwargs)

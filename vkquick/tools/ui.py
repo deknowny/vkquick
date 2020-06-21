@@ -11,8 +11,8 @@ class UI:
         """
         Create for sending
         """
-        kb = dumps(self.info, ensure_ascii=False)
-        return str(kb)
+        return dumps(self.info, ensure_ascii=False)
+        
     @classmethod
     def by(cls, pre_json: dict):
         """

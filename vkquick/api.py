@@ -2,15 +2,21 @@ import asyncio
 import ssl
 import time
 import re
+import logging
 from typing import Dict
 from typing import Any
 from dataclasses import dataclass
 
 import aiohttp
 import attrdict
+import colorama
 
 from . import exception as ex
 from .annotypes import Annotype
+
+
+# colorama.init(reset=True)
+colorama.init()
 
 
 @dataclass
@@ -21,14 +27,13 @@ class API:
 
     token: str
     version: float
+    delay: float = 1/20
 
     def __post_init__(self):
-        self.freeze: float = 1 / 20
         self.URL: str = "https://api.vk.com/method/"
 
         self._method = str()
         self._last_request_time = 0
-        self._delay = 1 / 20
 
     def __getattr__(self, attr) -> "self":
         """
@@ -58,7 +63,6 @@ class API:
 
     async def method(self, name: str, data):
         await self._waiting()
-
         data.update(access_token=self.token, v=self.version)
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -66,7 +70,6 @@ class API:
             ) as response:
                 response = await response.json()
                 self._check_errors(response)
-
                 if isinstance(response["response"], dict):
                     return attrdict.AttrMap(response["response"])
                 return response["response"]
@@ -77,9 +80,9 @@ class API:
 
     async def _waiting(self):
         diff = time.time() - self._last_request_time
-        if diff < self._delay:
-            wait_time = self._delay - diff
-            self._last_request_time += self._delay
+        if diff < self.delay:
+            wait_time = self.delay - diff
+            self._last_request_time += self.delay
             await asyncio.sleep(wait_time)
 
 

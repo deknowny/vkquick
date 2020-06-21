@@ -34,7 +34,6 @@ class User:
 
     async def get_info(self, api, *fields):
         # TODO: Name cases
-        print(fields)
         self.info = await api.users.get(
             user_ids=[self._user_id],
             fields=",".join(fields)
@@ -58,6 +57,8 @@ class User:
             f'name="{self.fn} {self.ln}"'
             ">"
         )
+
+    __repr__ = __str__
 
     def __format__(self, fstring):
         return fstring \

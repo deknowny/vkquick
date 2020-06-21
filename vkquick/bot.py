@@ -1,13 +1,27 @@
 import asyncio
+import logging
+import json
+import datetime as dt
 from dataclasses import dataclass, field
 from typing import Union
 from typing import List
+
+import click
+from pygments import highlight, lexers, formatters
+from pygments.formatters.terminal import TERMINAL_COLORS
+from pygments.token import string_to_tokentype
 
 from .api import APIMerging, API
 from .lp import LongPoll
 from .signal import SignalsList, Signal
 from .reaction import ReactionsList, Reaction
 from .annotypes import Annotype
+
+
+TERMINAL_COLORS[string_to_tokentype("String")] =  ('gray', '_')
+TERMINAL_COLORS[string_to_tokentype("Token.Literal.Number")] = ('yellow', '_')
+TERMINAL_COLORS[string_to_tokentype("Token.Keyword.Constant")] = ('red', '_')
+TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] =  ('cyan', '_')
 
 
 @dataclass
@@ -18,17 +32,28 @@ class Bot(APIMerging, Annotype):
 
     token: str
     group_id: int
+
+    debug: bool
+
     version: Union[float, int] = 5.124
     wait: int = 25
+    delay: float = 1/20
 
     signals: List[Signal] = field(default_factory=SignalsList)
     reactions: List[Reaction] = field(default_factory=ReactionsList)
 
+
     def __post_init__(self):
-        if self.version < 5.103:
+        if float(self.version) < 5.103:
             raise ValueError("You can't use API version lower than 5.103")
         self.version = str(self.version)
-        self.merge(API(token=self.token, version=self.version))
+        self.merge(
+            API(
+                token=self.token,
+                version=self.version,
+                delay=self.delay
+            )
+        )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
         self.lp.merge(self.api)
@@ -37,6 +62,13 @@ class Bot(APIMerging, Annotype):
     @staticmethod
     def prepare(argname, event, func, bot, bin_stack):
         return bot
+
+    def debug_out(self, string, **kwargs):
+        """
+        Prins only if debug=True
+        """
+        if self.debug:
+            print(string, **kwargs)
 
     def run(self):
         """
@@ -47,6 +79,9 @@ class Bot(APIMerging, Annotype):
         asyncio.run(self.signals.resolve("shutdown"))
 
     async def _files_changing_check(self):
+        """
+        Raise RuntimeError after files changing to stop bot
+        """
         while not self.reaload_now:
             await asyncio.sleep(0)
         raise RuntimeError()
@@ -63,4 +98,23 @@ class Bot(APIMerging, Annotype):
         """
         async for events in self.lp:
             for event in events:
+
+                if self.debug and self.reactions.has_event(event.type):
+                    click.clear()
+                    data = json.dumps(event._mapping, ensure_ascii=False, indent=4)
+                    data = highlight(
+                        data,
+                        lexers.JsonLexer(),
+                        formatters.TerminalFormatter(bg="light")
+                    )
+                    print(
+                        click.style(
+                            dt.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]"),
+                            fg="bright_black"
+                        ), end="\n\n"
+                    )
+                    click.secho("[LongPoll]", bold=True)
+                    print("Event type:", click.style(event.type, fg="cyan"), end="\n\n")
+
+
                 await self.reactions.resolve(event, self)

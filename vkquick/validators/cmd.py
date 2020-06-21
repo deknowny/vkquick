@@ -37,5 +37,5 @@ class Cmd(Validator):
     def isvalid(self, event, com, bot, bin_stack):
         if matched := fullmatch(self.rexp, event.object.message.text):
             bin_stack.command_frame = matched
-            return True
-        return False
+            return (True, "")
+        return (False, f"String `{event.object.message.text}` isn't matched for pattern `{self.rexp}`")

@@ -2,6 +2,7 @@ from asyncio import create_task
 from asyncio import iscoroutinefunction as icf
 from inspect import signature, isgeneratorfunction
 
+import click
 
 from . import annotypes
 from . import tools
@@ -30,6 +31,17 @@ class Reaction:
         self.command_args = {}
         self.payload_args = {}
         for name, value in signature(code).parameters.items():
+            if (
+                isinstance(value.annotation, type) and
+                annotypes.CommandArgument in value.annotation.__bases__
+            ):
+                raise ValueError(
+                    "Annotype should be the instance, got "
+                    f"{value.annotation}\n"
+                    f"For example: "
+                    f"vq.{value.annotation.__name__}() instead "
+                    f"vq.{value.annotation.__name__}"
+                )
             if (
                 isinstance(value.annotation, annotypes.CommandArgument)
                 or value.annotation is int
@@ -74,6 +86,13 @@ class ReactionsList(list):
     """
     List with events handler
     """
+    def has_event(self, event_name):
+        for reaction in self:
+            # Special don't react on ...
+            if event_name in reaction.events_name:
+                return True
+
+        return False
 
     async def _send_message(self, api, event, message):
         """
@@ -96,49 +115,81 @@ class ReactionsList(list):
             )
 
     async def resolve(self, event, bot):
-        for reaction in self:
+        header_printed = False
 
+        for reaction in self:
             if event.type in reaction.events_name or reaction.events_name is Ellipsis:
+                if not header_printed:
+                    bot.debug_out(click.style("[Reactions]", bold=True))
+                header_printed = True
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
+                bot.debug_out(click.style(reaction.code.__name__, fg="cyan"))
                 for validator in reaction.validators:
                     if icf(validator.isvalid):
                         val = await validator.isvalid(
                             event, reaction, bot, bin_stack
                         )
+
                     else:
                         val = validator.isvalid(
                             event, reaction, bot, bin_stack
                         )
-                    if not val:
-                        return
 
-                comkwargs = {}
-                for name, value in reaction.args.items():
-                    if icf(value.prepare):
-                        content = await value.prepare(
-                            argname=name,
-                            event=event,
-                            func=reaction,
-                            bot=bot,
-                            bin_stack=bin_stack
+                    if not val[0]:
+                        bot.debug_out(
+                            f"-- {validator.__class__.__name__}: " +\
+                            click.style(
+                                "not valid", fg="red"
+                            )
                         )
-                    else:
-                        content = value.prepare(
-                            argname=name,
-                            event=event,
-                            func=reaction,
-                            bot=bot,
-                            bin_stack=bin_stack
+                        bot.debug_out(
+                            "   -> " +\
+                            click.style(
+                                val[1], fg="red"
+                            ), end="\n\n\n"
                         )
-                    comkwargs.update({name: content})
-
-                response = await reaction.run(comkwargs)
-
-                if isgeneratorfunction(reaction.code):
-
-                    await self._send_message(
-                        bot.api, event, "".join(response)
+                        break
+                    bot.debug_out(
+                        f"-- {validator.__class__.__name__}: " +\
+                        click.style(
+                            "valid", fg="green"
+                        )
                     )
                 else:
-                    await self._send_message(bot.api, event, response)
+                    comkwargs = {}
+                    for name, value in reaction.args.items():
+                        if icf(value.prepare):
+                            content = await value.prepare(
+                                argname=name,
+                                event=event,
+                                func=reaction,
+                                bot=bot,
+                                bin_stack=bin_stack
+                            )
+                        else:
+                            content = value.prepare(
+                                argname=name,
+                                event=event,
+                                func=reaction,
+                                bot=bot,
+                                bin_stack=bin_stack
+                            )
+                        comkwargs.update({name: content})
+
+
+                    for key, value in comkwargs.items():
+                        bot.debug_out(
+                            "> " +\
+                            click.style(key, fg="yellow") +\
+                            f" = {value!r}"
+                        )
+                    print("\n")
+                    response = await reaction.run(comkwargs)
+
+                    if isgeneratorfunction(reaction.code):
+                        await self._send_message(
+                            bot.api, event, "".join(response)
+                        )
+                    else:
+                        await self._send_message(bot.api, event, response)

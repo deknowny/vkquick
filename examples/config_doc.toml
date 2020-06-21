@@ -1,0 +1,29 @@
+# Describe a config for bot
+
+
+[api]
+# ID of group
+group_id = 12345
+
+# Access token (groups)
+token = "ae34bc323"
+
+# Delay between requests. 1/20 for group token, 1/3 for user token
+delay = 0.05
+
+# Version of API
+version = 5.124 # or "5.124"
+
+
+[longpoll]
+# Wait time after response getting
+wait = 25
+
+
+[bot]
+
+
+[payload]
+# Your own parameters. Get by `vq.Payload` in a command or by `bot.config.payload`
+
+[docs]

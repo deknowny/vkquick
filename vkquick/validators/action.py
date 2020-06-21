@@ -19,5 +19,5 @@ class Action(Validator, Annotype):
             "action" in event.object.message and
             event.object.message.action.type in self.types
         ):
-            return True
-        return False
+            return (True, "")
+        return (False, "No action or action.type another")
