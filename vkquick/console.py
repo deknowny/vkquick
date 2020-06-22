@@ -260,6 +260,10 @@ def run(reload, once_time, debug):
             args.remove("--reload")
         args.append("--once-time")
 
+        # I tried to do smth for stopping flood.
+        # Еhe best solution I can create is doing
+        # click.clear() before process start
+        #
         # print("> All prints you see will be changed to logger later.")
         # prev_out = None
         # proc = subprocess.run(["bot", *args], stderr=subprocess.STDOUT)
@@ -274,11 +278,10 @@ def run(reload, once_time, debug):
         #
         #     prev_out = proc.stderr
         #     print("Reload...")
-        print("> All prints you see will be changed to logger later.")
+        print("Run")
         while True:
-            print("Run")
             proc = subprocess.run(["bot", *args])
-            print("Reload...")
+            print("Reload")
 
     elif once_time:
         # Your bot project path
