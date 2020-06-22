@@ -1,4 +1,5 @@
 from typing import Generator
+from functools import wraps
 
 from .ui import UI
 from .element import Element
@@ -15,7 +16,11 @@ class Template(UI):
         )
 
     def __call__(self, gen: Generator[Element, None, None]):
-        for elem in gen():
-            self.info["elements"].append(elem.info)
+        @wraps(gen)
+        def wrapper(*args, **kwargs):
+            for elem in gen(*args, **kwargs):
+                self.info["elements"].append(elem.info)
 
-        return self
+            return self
+
+        return wrapper
