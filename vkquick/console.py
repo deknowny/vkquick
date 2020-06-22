@@ -251,6 +251,7 @@ def run(reload, once_time, debug):
     """
     Run procces in bot
     """
+    click.clear()
     if reload:
         args = sys.argv[1:]
         if "-r" in args:
