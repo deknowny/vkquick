@@ -53,7 +53,7 @@ class User:
         return (
             "<"
             "vq.User "
-            f"user_id={self.id} "
+            f"id={self.id} "
             f'name="{self.fn} {self.ln}"'
             ">"
         )
