@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import List
 from typing import Optional
 from re import fullmatch
+from re import IGNORECASE
 
 from .base import Validator
 from vkquick import Reaction
@@ -35,6 +36,11 @@ class Cmd(Validator):
         return func
 
     def isvalid(self, event, com, bot, bin_stack):
+        matched = (
+            fullmatch(self.rexp, event.object.message.text, flags=IGNORECASE)
+            if self.insensetive else
+            fullmatch(self.rexp, event.object.message.text)
+        )
         if matched := fullmatch(self.rexp, event.object.message.text):
             bin_stack.command_frame = matched
             return (True, "")
