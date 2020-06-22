@@ -5,7 +5,7 @@ description = "Package for quick writing vk chat bots"
 authors = ["Kurbatov Yan <deknowny@gmail.com>"]
 readme = "README.md"
 keywords = [
-    "vk", "async", "bots", "quick"
+    "vk", "async", "bots", "quick", "api"
 ]
 
 [tool.poetry.dependencies]
