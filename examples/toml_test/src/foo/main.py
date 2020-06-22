@@ -9,4 +9,15 @@ def foo(sender: vq.Sender()):
     """
     Handler to command `foo`
     """
-    return config.ANSWER
+    keyboard = vq.Keyboard(inline=True).generate(
+        vq.Button.by(
+            {
+                "action": {
+                    "type": "text",
+                    "label": "foo",
+                },
+                "color": "primary"
+            }
+        )
+    )
+    return vq.Message("foo", keyboard=keyboard)
