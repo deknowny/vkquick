@@ -1,7 +1,6 @@
 """
 VK API li
 """
-from dataclasses import dataclass, field
 from typing import List
 from typing import Optional
 from re import fullmatch
@@ -21,11 +20,13 @@ class Cmd(Validator):
         *,
         prefs: Optional[List[str]] = None,
         names: Optional[List[str]] = None,
+        argline: Optional[str] = None,
         insensetive: bool = True,
     ):
         self.prefs = [] if prefs is None else prefs
         self.names = [] if names is None else names
         self.insensetive = insensetive
+        self.argline = argline
 
         if not self.prefs:
             reprefs = ""
@@ -44,8 +45,15 @@ class Cmd(Validator):
 
 
     def __call__(self, func):
-        for name, value in func.command_args.items():
-            self.rexp += rf"\s*(?P<{name}>{Reaction.convert(value).rexp})"
+        if self.argline is None:
+            for name, value in func.command_args.items():
+                self.rexp += rf"\s*(?P<{name}>{Reaction.convert(value).rexp})"
+        else:
+            comkwargs = {}
+            for name, value in func.command_args.items():
+                comkwargs[name] = f"(?P<{name}>{Reaction.convert(value).rexp})"
+            self.rexp += self.argline.format(**comkwargs)
+
         super().__call__(func)
         return func
 
