@@ -32,7 +32,12 @@ class Keyboard(UI):
         Add a button or a line
         """
         if button.info is None:
-            self.info["buttons"].append([])
+            if self.info["buttons"][-1]:
+                self.info["buttons"].append([])
+            else:
+                raise ValueError(
+                    "Can't add Button.line() after Button.line()"
+                )
         else:
             self.info["buttons"][-1].append(button.info)
 
