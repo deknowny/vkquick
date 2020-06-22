@@ -106,9 +106,9 @@ class Bot(APIMerging, Annotype):
                         lexers.JsonLexer(),
                         formatters.TerminalFormatter(bg="light")
                     )
-                    print("=" * 18, "Below is the event\n", sep="\n", end="=" * 18 + "\n")
-                    print(data)
-                    print("=" * 18, "Above is the event\n", sep="\n", end="=" * 18 + "\n")
+                    print("=" * 35, "Below is the current handled event\n", sep="\n", end="=" * 35 + "\n")
+                    print(data.strip())
+                    print("=" * 35, "Above is the current handled event\n", sep="\n", end="=" * 35 + "\n")
                     click.clear()
 
 
