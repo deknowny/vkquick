@@ -27,7 +27,21 @@ class Cmd(Validator):
         self.names = [] if names is None else names
         self.insensetive = insensetive
 
-        self.rexp = rf"(?:{'|'.join(self.prefs)})" + rf"(?:{'|'.join(self.names)})"
+        if not self.prefs:
+            reprefs = ""
+        elif len(self.prefs) == 1:
+            reprefs = self.prefs[0]
+        else:
+            reprefs = f"(?:{'|'.join(self.prefs)})"
+
+        if not self.names:
+            renames = ""
+        elif len(self.names) == 1:
+            renames = self.names[0]
+        else:
+            renames = f"(?:{'|'.join(self.names)})"
+        self.rexp = reprefs + renames
+
 
     def __call__(self, func):
         for name, value in func.command_args.items():
