@@ -1,6 +1,9 @@
 from __future__ import annotations
 from typing import Union
-from json import dumps
+from typing import Optional
+from json import dumps, loads
+from json.decoder import JSONDecodeError
+from functools import wraps
 
 from .ui import UI
 
@@ -20,116 +23,138 @@ class Button(UI):
         )
         self.info = {"action": {**info}}
 
+    def _payload_convert(func):
+        """
+        Convert payload in button
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            action = func(*args, **kwargs)
+            action.update(type=func.__name__)
+            if action["payload"]is None:
+                del action["payload"]
+            else:
+                # Dumps to JSON
+                if isinstance(action["payload"], dict):
+                    action["payload"] = dumps(
+                        action["payload"], ensure_ascii=False
+                    )
+                # Check payload type
+                elif not isinstance(action["payload"], str):
+                    raise TypeError(
+                        "Payload should be "
+                        "dumped dict to string "
+                        "or dict, not "
+                        f"{type(action['payload'])}"
+                    )
+                # Check payload validations
+                try:
+                    loads(action["payload"])
+                except JSONDecodeError as err:
+                    raise ValueError(
+                        "Invalid payload struct, "
+                        "should be JSON format, "
+                        "but get JSONDecodeError: "
+                        f"{err}"
+                    )
+            obj = Button.__new__(Button, **action)
+            return obj
+
+        return wrapper
+
+    def _is_text_button(func):
+        @wraps(func)
+        def wrapper(self):
+            if self.info["action"]["type"] == "text":
+                self.info["color"] = func.__name__
+                return self
+            else:
+                raise TypeError(
+                    "Colors unsupposed "
+                    "for button type "
+                    f'{self.info["action"]["type"]}'
+                )
+        return wrapper
+
+    @_is_text_button
     def positive(self) -> Button:
         """
         Green button
         """
-        self.info["color"] = "positive"
-        return self
 
+    @_is_text_button
     def negative(self) -> Button:
         """
         Red button
         """
-        self.info["color"] = "negative"
-        return self
 
+    @_is_text_button
     def secondary(self) -> Button:
         """
         White button
         """
-        self.info["color"] = "secondary"
-        return self
 
+    @_is_text_button
     def primary(self) -> Button:
         """
         Blue button
         """
-        self.info["color"] = "primary"
-        return self
 
     @classmethod
     def line(cls) -> Button:
         """
         Add Buttons line
         """
-        self = cls._button_init()
+        self = object.__new__(cls)
         self.info = None
 
         return self
 
-    @classmethod
+    @staticmethod
+    @_payload_convert
     def text(
-        cls, label: str, *,
-        payload: Union[str, dict] = "{}"
+        label: str, *,
+        payload: Optional[Union[str, dict]] = None
     ) -> Button:
-        return cls.__new__(
-            cls,
-            type="text",
-            label=label,
-            payload=cls._payload_convert(payload)
-        )
+        return locals()
 
-    @classmethod
+    @staticmethod
+    @_payload_convert
     def open_link(
-        cls, *,
+        label: str, *,
         link: str,
-        label: str,
-        payload: Union[str, dict] = "{}"
+        payload: Optional[Union[str, dict]] = None
     ) -> Button:
-        return cls.__new__(
-            cls,
-            type="open_link",
-            link=link,
-            label=label,
-            payload=cls._payload_convert(payload)
-        )
+        return locals()
 
-    @classmethod
-    def location(
-        cls, *,
-        payload: Union[str, dict] = "{}"
+    @staticmethod
+    @_payload_convert
+    def location(*,
+        payload: Optional[Union[str, dict]] = None
     ) -> Button:
-        return cls.__new__(
-            cls,
-            type="location",
-            payload=cls._payload_convert(payload)
-        )
+        return locals()
 
-    @classmethod
-    def vkpay(
-        cls, *,
+    @staticmethod
+    @_payload_convert
+    def vkpay(*,
         hash_: str,
-        payload: Union[str, dict] = "{}"
+        payload: Optional[Union[str, dict]] = None
     ) -> Button:
-        return cls.__new__(
-            cls,
-            type="vkpay",
-            hash=hash_,
-            payload=cls._payload_convert(payload)
-        )
+        data = locals()
+        hash_ = data.pop("hash_")
+        data.update(hash=hash_)
+        return data
 
-    @classmethod
+    @staticmethod
+    @_payload_convert
     def open_app(
-        cls, label: str, *,
+        label: str, *,
         app_id: int,
         owner_id: int,
         hash_: str,
-        payload: Union[str, dict] = "{}"
+        payload: Optional[Union[str, dict]] = None
     ) -> Button:
-        return cls.__new__(
-            cls,
-            type="open_app",
-            label=label,
-            app_id=app_id,
-            owner_id=owner_id,
-            hash=hash_,
-            payload=cls._payload_convert(payload)
-        )
-
-    @staticmethod
-    def _payload_convert(data: Union[dict, str]):
-        if isinstance(data, dict):
-            return dumps(data, ensure_ascii=False)
-        else:
-            return str(data)
+        data = locals()
+        hash_ = data.pop("hash_")
+        data.update(hash=hash_)
+        return data
