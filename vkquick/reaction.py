@@ -198,7 +198,7 @@ class ReactionsList(list):
                             click.style(key, fg="yellow") +\
                             f" = {value!r}"
                         )
-                    print()
+                    bot.debug_out("")
                     response = await reaction.run(comkwargs)
 
                     if isgeneratorfunction(reaction.code):
