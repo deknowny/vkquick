@@ -83,7 +83,7 @@ class Cmd(Validator):
         prefs: Optional[List[str]] = None,
         names: Optional[List[str]] = None,
         argline: Optional[str] = None,
-        sensetive: bool = True,
+        sensetive: bool = False,
     ):
         self.prefs = [] if prefs is None else prefs
         self.names = [] if names is None else names
@@ -121,11 +121,11 @@ class Cmd(Validator):
 
     def isvalid(self, event, com, bot, bin_stack):
         matched = (
-            fullmatch(self.rexp, event.object.message.text, flags=IGNORECASE)
-            if self.sensetive else
             fullmatch(self.rexp, event.object.message.text)
+            if self.sensetive else
+            fullmatch(self.rexp, event.object.message.text, flags=IGNORECASE)
         )
-        if matched := fullmatch(self.rexp, event.object.message.text):
+        if matched:
             bin_stack.command_frame = matched
             return (True, "")
         return (False, f"String `{event.object.message.text}` isn't matched for pattern `{self.rexp}`")
