@@ -3,7 +3,7 @@ from .base import Annotype
 
 class ClientInfo:
     """
-    Info about user functionality
+    Возвращает информацию о пользователе из ```event.object.client_info```
     """
     @classmethod
     def prepare(cls, argname, event, func, bot, bin_stack):

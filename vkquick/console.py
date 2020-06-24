@@ -1,8 +1,16 @@
+"""
+Терминальный инструмент для менеджерования своих ботов. Подробности в
+```
+bot --help
+```
+"""
+
 import datetime
 import os
 import subprocess
 import sys
 import shutil
+import json
 from pathlib import Path
 
 import click
@@ -40,7 +48,7 @@ CONFIG_TOML = """
 [api]
 token = "{token}"
 group_id = {group_id}
-delay = 0.05
+owner = "group"
 version = 5.124
 
 
@@ -72,7 +80,7 @@ def {name}():
 
 
 CONFIG = """
-NAMES = ["{name}"]
+NAMES = {names}
 ANSWER = "You used `{name}` command!"
 """.strip()
 
@@ -91,6 +99,9 @@ def {name}():
 
 @click.group()
 def bot():
+    """
+    Менеджер Ваших ботов
+    """
     ...
 
 
@@ -98,24 +109,24 @@ def bot():
     "-o",
     "--owner",
     default="Anonymous",
-    help="Bot owner. Will be added to a license file",
+    help="Создатель бота. Добавляется как правообладатель в лицензионный файл",
 )
 @click.option(
     "-t", "--token",
     default="",
-    help="Token for group bot"
+    help="Токен группы/пользователя, у которого есть доступ к управлению нужны сообществом"
 )
 @click.option(
     "-gi", "--group-id", "group_id",
     default=0,
     type=int,
-    help="Token's group ID"
+    help="ID группы. Узнать можно здесь: https://regvk.com/id/"
 )
 @click.argument("name")
 @bot.command()
 def new(owner, name, token, group_id):
     """
-    Create a new bot
+    Создает нового бота
     """
     year = datetime.datetime.now().year
     bot_path = Path(name)
@@ -163,18 +174,29 @@ def new(owner, name, token, group_id):
                 click.style("group_id", fg="red", bold=True)
             )
 
-
+@click.option(
+    "-r", "--rename",
+    type=str,
+    default="",
+    help="Перемименновывает команду"
+)
+@click.option(
+    "-n", "--names",
+    multiple=True,
+    default=[],
+    help="Назначает имена для команды"
+)
 @click.option(
     "-d", "--delete",
     is_flag=True,
     default=False,
-    help="Delete the com"
+    help="Удаляет команду с таким именем"
 )
 @click.argument("name")
 @bot.command()
-def com(name, delete):
+def com(name, names, delete, rename):
     """
-    Create a new command in the bot
+    Создает команду в боте. Важно: находиться нужно внутри директории бота
     """
     if delete:
         click.echo(
@@ -202,6 +224,38 @@ def com(name, delete):
         else:
             click.secho("Files haven't been changed", fg="red")
 
+    elif rename:
+        com_path = Path("src") / name
+        with open(com_path / "main.py", "r") as file:
+            content = file.read() \
+                .replace(f"def {name}", f"def {rename}")
+        with open(com_path / "main.py", "w") as file:
+            file.write(content)
+
+        with open(com_path / "__init__.py", "r") as file:
+            content = file.read() \
+                .replace(
+                    f"from .main import {name}",
+                    f"from .main import {rename}",
+                )
+        with open(com_path / "__init__.py", "w") as file:
+            file.write(content)
+
+        with open(Path("src") / "__init__.py", "r") as file:
+            content = file.read() \
+                .replace(
+                    f"from .{name} import {name}",
+                    f"from .{rename} import {rename}",
+                )
+        with open(Path("src") / "__init__.py", "w") as file:
+            file.write(content)
+
+        os.rename(com_path, Path("src") / rename)
+        click.echo(
+            click.style("Command ", fg="green")+\
+            click.style(name, fg=...)
+        )
+
     else:
         com_path = Path("src") / name
         os.makedirs(str(com_path))
@@ -210,9 +264,11 @@ def com(name, delete):
                 COMMAND.format(name=name)
             )
 
+        if not names:
+            names = [name]
         with open(com_path / "config.py", "w+") as file:
             file.write(
-                CONFIG.format(name=name)
+                CONFIG.format(names=json.dumps(names, ensure_ascii=False), name=name)
             )
         with open(com_path / "__init__.py", "w+") as file:
             file.write(f"from .main import {name}\n")
@@ -222,9 +278,9 @@ def com(name, delete):
 
         click.echo(
             click.style("Added a command ", fg="green") +\
-            click.style(name, bold=True) +\
+            click.style(name, bold=True, fg="cyan") +\
             click.style(" into path ", fg="green") +\
-            click.style(str(Path("src") / f"{name}"), bold=True)
+            click.style(str(Path("src") / f"{name}"), bold=True, fg="cyan")
         )
 
 
@@ -232,24 +288,24 @@ def com(name, delete):
     "-d", "--debug",
     is_flag=True,
     default=False,
-    help="Debug mode (verbose output)"
+    help="Режим дебага (расширенный вывод)"
 )
 @click.option(
     "--reload",
     is_flag=True,
     default=False,
-    help="Reload a bot after files changing"
+    help="Автоматически перезагружает бота после изменений в файлах"
 )
 @click.option(
     "-o-t", "--once-time", "once_time",
     is_flag=True,
     default=False,
-    help="Used for one times bot running. Bot is stoped after files changing"
+    help="Используется для once time запсука бота. Сразу после изменений в файлах он выключается"
 )
 @bot.command()
 def run(reload, once_time, debug):
     """
-    Run procces in bot
+    Запускает бота
     """
     click.clear()
     if reload:
@@ -278,10 +334,10 @@ def run(reload, once_time, debug):
         #
         #     prev_out = proc.stderr
         #     print("Reload...")
-        print("Run")
         while True:
+            click.secho("Listen", fg="green")
             proc = subprocess.run(["bot", *args])
-            print("Reload")
+            click.secho("Fiund some changings in bot. Reload...", fg="yellow")
 
     elif once_time:
         # Your bot project path
@@ -303,7 +359,7 @@ def run(reload, once_time, debug):
             token=config.api.token,
             group_id=config.api.group_id,
             version=config.api.version,
-            delay=config.api.delay,
+            owner=config.api.owner,
             wait=config.longpoll.wait,
             debug=debug
         )
@@ -336,12 +392,11 @@ def run(reload, once_time, debug):
         # Bot's
         import src
         config = attrdict.AttrMap(toml.load("config.toml"))
-
         settings = dict(
             token=config.api.token,
             group_id=config.api.group_id,
             version=config.api.version,
-            delay=config.api.delay,
+            owner=config.api.owner,
             wait=config.longpoll.wait,
             debug=debug
         )
@@ -373,7 +428,7 @@ def run(reload, once_time, debug):
 @bot.command()
 def signal(name, on):
     """
-    Add a signal in your bot
+    Добавляет обработчки сигнала в бота
     """
     sig_name = on or name
     with open(Path("src") / f"{name}.py", "w+") as file:
@@ -384,17 +439,12 @@ def signal(name, on):
 
     click.echo(
         click.style("Added a hander on a signal ", fg="green") +\
-        click.style(sig_name, bold=True) +\
+        click.style(sig_name, bold=True, fg="cyan") +\
         click.style(" into path ", fg="green") +\
-        click.style(str(Path("src") / f"{name}.py"), bold=True)
+        click.style(str(Path("src") / f"{name}.py"), bold=True, fg="cyan")
     )
 
-@bot.command()
-def foo():
-    click.echo(1)
-    click.echo(2)
-    click.clear()
-    click.echo(3)
 
 if __name__ == "__main__":
+    # bot coms -> list of commands
     bot()

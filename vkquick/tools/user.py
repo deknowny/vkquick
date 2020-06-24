@@ -5,6 +5,36 @@ import attrdict
 
 
 class User:
+    """
+    Позволяет работать с полями пользователя.
+    Инициализируется 3мя способами:
+
+    1. `mention`: Строка с упоминанием пользователя. Например, "[id100|Имя Фамилия]"
+    1. `user_id`: ID пользователя
+    1. `screen_name`: screen_name пользователя. Например: "durov", "deknowny", "id2423423"
+
+    В себе содержит:
+
+    * `info`: Все, что было возвращено методом ```users.get```
+    * `fn`: Быстрый доступ к имени
+    * `ln`: Быстрый доступ к фамилии
+    * `id`: Быстрый доступ к ID
+
+    Пользователя можно быстро отформатировать в строку,
+    обозначая в <> атрибуты объекта. Например
+
+    `f"{user:<fn> <ln>}"`
+
+    -> `Павел Дуров`
+
+    `f"{user:<fn> (<info.screen_name>)}"`
+
+    -> `Павел (durov)`
+
+    `f"{user:<info.last_name> (<info.screen_name>)}"`
+
+    -> `Дуров (durov)`
+    """
     def __init__(
         self,
         *,
@@ -32,7 +62,10 @@ class User:
         else:
             raise ValueError("Argmunets haven't been passed")
 
-    async def get_info(self, api, *fields):
+    async def get_info(self, api: "vkquick.api.API", *fields) -> "self":
+        """
+        Получает всю нужную информацию о пользователе методом ```users.get```
+        """
         # TODO: Name cases
         self.info = await api.users.get(
             user_ids=[self._user_id],
@@ -46,7 +79,10 @@ class User:
 
         return self
 
-    def mention(self, fstring):
+    def mention(self, fstring: str) -> str:
+        """
+        Создает упоминание о пользователе под аллиасом `fstring`
+        """
         return f"[id{self.id}|{self.__format__(fstring)}]"
 
     def __str__(self):
@@ -68,5 +104,11 @@ class User:
 
 
 class UserAnno:
+    """
+    Для создания аннотационных типов,
+    работающие с ```users.get```.
+    ```__init__``` принимает *fields поле,
+    которое передается в ```users.get``` в параметре ```fields```
+    """
     def __init__(self, *fields):
         self.fields = fields

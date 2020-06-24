@@ -27,9 +27,10 @@ class Keyboard(UI):
                 inline=inline,
                 buttons=[[]]
             )
-    def add(self, button: Button):
+
+    def add(self, button: Button = Button.line()) -> Keyboard:
         """
-        Add a button or a line
+        Добавляют в клавиатуру кнопку или пустую строку
         """
         if button.info is None:
             if self.info["buttons"][-1]:
@@ -45,7 +46,7 @@ class Keyboard(UI):
 
     def generate(self, *buttons: Button) -> Keyboard:
         """
-        Create keyboard by Buttons instances
+        Создает клавиатуру по списку кнопок и `vkquick.tools.button.Button.line`'ов
         """
         for button in buttons:
             self.add(button)

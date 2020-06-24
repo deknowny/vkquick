@@ -1,3 +1,6 @@
+"""
+Реакции (обработчики LongPoll событий)
+"""
 import datetime as dt
 from asyncio import create_task
 from asyncio import iscoroutinefunction as icf

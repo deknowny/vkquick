@@ -1,3 +1,6 @@
+"""
+Обработчики сигналов (собственных событий)
+"""
 from asyncio import iscoroutinefunction as icf
 from asyncio import create_task
 from dataclasses import dataclass
@@ -7,7 +10,7 @@ from typing import Any
 @dataclass
 class Signal:
     """
-    Called by own code
+    Образец обработчика сигнала
     """
 
     name: str
@@ -24,7 +27,7 @@ class Signal:
 
 class SignalsList(list):
     """
-    List with signals
+    Список обрабатываемых сигналов
     """
 
     async def resolve(self, name: str, /,  *args, **kwargs):

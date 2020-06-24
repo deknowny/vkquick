@@ -1,19 +1,15 @@
 from .base import Annotype
 
+from attrdict import AttrMap
 
-class Event(Annotype):
+
+class Event(Annotype, AttrMap):
+    """
+    Событие LongPoll
+    """
     @classmethod
     def prepare(cls, argname, event, func, bot, bin_stack):
-        return cls.init(event)
-
-    @classmethod
-    def init(cls, event):
-        self = object.__new__(cls)
-        self.type = event.type
-        self.object = event.object
-        self.group_id = event.group_id
-
-        return self
+        return cls.__new__(cls, event._mapping)
 
     def __str__(self):
         return f"<vq.Event type=\"{self.type}\">"

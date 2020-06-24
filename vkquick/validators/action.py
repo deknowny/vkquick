@@ -4,7 +4,11 @@ from vkquick.annotypes import Annotype
 
 class Action(Validator, Annotype):
     """
-    Reaction to some message new actions
+    Декоратор для валидации сообщения
+    на параметр `action` в ```event.object.message```
+    (вход в беседу, выход из беседы...).
+
+    Принимает `*types`-- Список обрабатываемых ```action.type```
     """
 
     def __init__(self, *types):

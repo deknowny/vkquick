@@ -2,11 +2,14 @@ from .base import Annotype
 from vkquick.tools import User, UserAnno
 
 
+__pdoc__ = {"Sender.prepare": Annotype.prepare.__doc__}
+
+
 class Sender(Annotype, UserAnno):
     """
-    User that sent a message
+    Пользователь, отправивший сообщение
     """
-    async def prepare(self, argname, event, func, bot, bin_stack):
+    async def prepare(self, argname, event, func, bot, bin_stack) -> User:
         return await User(
             user_id=event.object.message.from_id
         ).get_info(bot.api, *self.fields)

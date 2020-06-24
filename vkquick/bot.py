@@ -1,3 +1,6 @@
+"""
+Основная точка запуска любого бота
+"""
 import asyncio
 import logging
 import json
@@ -26,20 +29,46 @@ TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] =  ('cyan', '_')
 @dataclass
 class Bot(APIMerging, Annotype):
     """
-    Main LongPoll, API, commands and signals handler
+    Основной менеджер событий LongPoll,
+    сигналов, API запросов и в целом работы бота
     """
 
     token: str
+    """
+    Токен пользователя/группы
+    """
     group_id: int
+    """
+    Айдификатор группы, с которым будут
+    связаны LongPoll события
+    """
 
     debug: bool
+    """
+    Режим дебага в терминале
+    """
 
     version: Union[float, int] = 5.124
+    """
+    Версия API
+    """
     wait: int = 25
-    delay: float = 1/20
+    """
+    Время ожидания ответа LongPoll события
+    """
+    owner: str = "group"
+    """
+    Тип владельца токена. group/user
+    """
 
     signals: List[Signal] = field(default_factory=SignalsList)
+    """
+    Список обрабатываемых сигналов
+    """
     reactions: List[Reaction] = field(default_factory=ReactionsList)
+    """
+    Список обрабатываемых реакций
+    """
 
 
     def __post_init__(self):
@@ -50,7 +79,7 @@ class Bot(APIMerging, Annotype):
             API(
                 token=self.token,
                 version=self.version,
-                delay=self.delay
+                owner=self.owner
             )
         )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
@@ -64,36 +93,50 @@ class Bot(APIMerging, Annotype):
 
     def debug_out(self, string, **kwargs):
         """
-        Prins only if debug=True
+        Проивзодит вывод, если включен режим дебага
         """
         if self.debug:
             print(string, **kwargs)
 
     def run(self):
         """
-        Runs LP process
+        Запускает LongPoll процесс,
+        вызывая перед этим `startup`,
+        а в конце и `shutdown` сигналы
         """
         asyncio.run(self.signals.resolve("startup"))
-        asyncio.run(self._process_handler())
-        asyncio.run(self.signals.resolve("shutdown"))
+        while True:
+            try:
+                asyncio.run(self._process_handler())
+            except (RuntimeError, KeyboardInterrupt):
+                break
+            finally:
+                asyncio.run(self.signals.resolve("shutdown"))
 
     async def _files_changing_check(self):
         """
-        Raise RuntimeError after files changing to stop bot
+        Поднимает RuntimeError после изменений
+        в директории бота для того, чтобы остановиться
         """
         while not self.reaload_now:
             await asyncio.sleep(0)
         raise RuntimeError()
 
     async def _process_handler(self):
-        try:
-            await asyncio.gather(self._files_changing_check(), self._run())
-        except RuntimeError:
-            return
+        """
+        Запускает две таски:
+
+        1. Процесс прослушивания LongPoll и обработки событий реакциями
+        1. Слежку за изменением файлов по "переменной состояния"
+        """
+        await asyncio.gather(
+            self._files_changing_check(),
+            self._run()
+        )
 
     async def _run(self):
         """
-        Run in `run` by self.run()
+        Процесс прослушивания LongPoll и обработки событий реакциями
         """
         async for events in self.lp:
             for event in events:

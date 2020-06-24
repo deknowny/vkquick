@@ -10,7 +10,19 @@ from .ui import UI
 
 class Button(UI):
     """
-    Keyboards button. Aviable for Keyboard and Templates
+    Клавиатурная кнопка.
+    Работает в `vkquick.tools.keyboard.Keyboard`
+    и `vkquick.tools.element.Element`
+
+    Пример текстовой кнопки цвета `primary`
+    ```python
+    Button.text("Текст кнопки").primary()
+    ```
+
+    Пример кнопки, открывающей страницу google
+    ```python
+    Button.open_link("google", link="https://google.com")
+    ```
     """
     def __new__(cls, **info):
         self = object.__new__(cls)
@@ -21,11 +33,10 @@ class Button(UI):
         self.info = dict(
             action=info
         )
-        self.info = {"action": {**info}}
 
     def _payload_convert(func):
         """
-        Convert payload in button
+        Конвертирует payload кнопки в нужный формат
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -79,31 +90,31 @@ class Button(UI):
     @_is_text_button
     def positive(self) -> Button:
         """
-        Green button
+        Зеленая кнопка (для обеих тем)
         """
 
     @_is_text_button
     def negative(self) -> Button:
         """
-        Red button
+        красная кнопка (для обеих тем)
         """
 
     @_is_text_button
     def secondary(self) -> Button:
         """
-        White button
+        Белая кнопка для светлой темы, серая для темной
         """
 
     @_is_text_button
     def primary(self) -> Button:
         """
-        Blue button
+        Синяя кнопка для белой, белая для темной
         """
 
     @classmethod
     def line(cls) -> Button:
         """
-        Add Buttons line
+        Воспринимается как новая линия в процессе генерации клаиватуры
         """
         self = object.__new__(cls)
         self.info = None
@@ -116,6 +127,9 @@ class Button(UI):
         label: str, *,
         payload: Optional[Union[str, dict]] = None
     ) -> Button:
+        """
+        Кнопка типа text
+        """
         return locals()
 
     @staticmethod
@@ -125,6 +139,9 @@ class Button(UI):
         link: str,
         payload: Optional[Union[str, dict]] = None
     ) -> Button:
+        """
+        Кнопка типа open_link
+        """
         return locals()
 
     @staticmethod
@@ -132,6 +149,9 @@ class Button(UI):
     def location(*,
         payload: Optional[Union[str, dict]] = None
     ) -> Button:
+        """
+        Кнопка типа
+        """
         return locals()
 
     @staticmethod
@@ -140,6 +160,9 @@ class Button(UI):
         hash_: str,
         payload: Optional[Union[str, dict]] = None
     ) -> Button:
+        """
+        Кнопка типа vkpay
+        """
         data = locals()
         hash_ = data.pop("hash_")
         data.update(hash=hash_)
@@ -154,6 +177,9 @@ class Button(UI):
         hash_: str,
         payload: Optional[Union[str, dict]] = None
     ) -> Button:
+        """
+        Кнопка типа open_app
+        """
         data = locals()
         hash_ = data.pop("hash_")
         data.update(hash=hash_)

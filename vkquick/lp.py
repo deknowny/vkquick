@@ -1,3 +1,6 @@
+"""
+Управление событиями LongPoll
+"""
 import ssl
 from dataclasses import dataclass
 

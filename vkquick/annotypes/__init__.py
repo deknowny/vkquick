@@ -1,3 +1,8 @@
+"""
+Аннотационные типы для реакций.
+Класс также является аннотационным,
+если наследуется `vkquick.annotypes.base.Annotype`
+"""
 from .base import Annotype
 
 from .command_types import Word

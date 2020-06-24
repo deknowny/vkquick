@@ -1,3 +1,6 @@
+"""
+Типы, используемые в аннотациях для построения текстовой команды в сообщении
+"""
 from abc import ABC, abstractmethod
 from asyncio import iscoroutinefunction as icf
 import re
@@ -6,48 +9,88 @@ from .base import Annotype
 from vkquick.tools import User, UserAnno
 
 
+__pdoc__ = {
+    "CommandArgument.rexp": "Шаблон аргумента, выраженный регуляркой",
+}
+
+
 class CommandArgument(Annotype):
+    """
+    Базовый класс для любого аннотационного типа,
+    являющего аргументом текстовой команды.
+    """
+
     factory = str
+    """
+    Callable структура, в которую __должно__
+    быть вами обернуто возвращаемое значение.
+    Принимает 1 аргумент. Создано для
+    совместимость с типомами более
+    __высшего__ порядка, например, `List`
+    Может быть корутиной.
+    """
+
+    @property
+    @abstractmethod
+    def rexp():
+        """
+        Шаблон аргумента текстовой
+        команды пользователя, выраженный регуляркой
+        """
+
+    def prepare(self, argname, event, func, bot, bin_stack) -> factory:
+        return self.factory(bin_stack.command_frame.group(argname))
 
 
 class Integer(CommandArgument):
     """
-    Simple integer. Eq to `\d+`
+    Просто __целое__ число.
+    Можете использовать `int` instead
     """
 
     rexp = r"\d+"
     factory = int
 
-    def prepare(self, argname, event, func, bot, bin_stack):
-        return self.factory(bin_stack.command_frame.group(argname))
-
 
 class String(CommandArgument):
     """
-    String part. Eq to `.+`
+    Строка, состоящая как из пробельных,
+    так и непробельных символов (`.+`).
+    Можете использовать `str` instead
     """
 
     rexp = r".+"
 
-    def prepare(self, argname, event, func, bot, bin_stack):
-        return self.factory(bin_stack.command_frame.group(argname))
-
 
 class Word(CommandArgument):
     """
-    A word. Eq to `\S+`
+    1 слово. Состоит из непробельнных символов,
+    т.е. цирфры, знаки препинания -- все это входит
     """
 
     rexp = r"\S+"
 
-    def prepare(self, argname, event, func, bot, bin_stack):
-        return self.factory(bin_stack.command_frame.group(argname))
-
 
 class List(CommandArgument):
     """
-    List of smth separated by commas or whitespaces
+    Список каких-либо типов, разделенные каким-либо образом
+
+    ## Параметры
+
+    * `part`: Элемент, который будет повторяться
+    (обязательно типа`CommandArgument`)
+
+    * `sep`: Раздделитель элементов. По умолчанию это запятые и пробелы
+
+    * `min_`: Минимальное кол-во элементов
+
+    * `max_`: Максимальное кол-во элементов.
+    `Ellipsis` означает, что максимального
+    кол-ва элементов нет
+
+    Вы также можете просто обернуть тип в [квадратные_скобки]
     """
+    factory = list
 
     def __init__(
         self,
@@ -77,12 +120,18 @@ class List(CommandArgument):
 
 class UserMention(CommandArgument, UserAnno):
     """
-    User mention
+    Упоминание пользователя.
+    Работает __только__ на упоминание,
+    т.е. поддержки ссылок и айдификаторов чиселками нет.
+    Возможно, добавятся позже
     """
 
     rexp = r"\[id\d+|.+?\]"
 
-    async def factory(self, val):
+    async def factory(self, val) -> User:
+        """
+        Возвращает объект пользователя
+        """
         return await User(mention=val).get_info(self.bot.api, *self.fields)
 
     async def prepare(self, argname, event, func, bot, bin_stack):
@@ -90,3 +139,13 @@ class UserMention(CommandArgument, UserAnno):
         self.bot = bot
         user = await self.factory(val=mention)
         return user
+
+
+
+class Literal(CommandArgument):
+    """
+    Один из возможных значений. Своего рода Enum.
+    Паттерн представляет собой переданный слова, разделенные `|` (или)
+    """
+    def __init__(self, *values):
+        self.rexp = "|".join(values)

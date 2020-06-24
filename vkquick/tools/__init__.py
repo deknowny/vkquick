@@ -1,3 +1,10 @@
+"""
+Набор полезных инструмеентов,
+встречающихся повсеместно как в ботах (клавиатуры, Message-объекты...),
+так и внутри vkquick
+"""
+from random import randint
+
 from .message import Message
 from .payload import Payload
 from .user import User, UserAnno
@@ -9,12 +16,18 @@ from .template import Template
 from .element import Element
 
 
-PEER = int(2e9)
+PEER: int = int(2e9)
+"""
+Число, разделающее peer_id на
+диалоги с пользователями и беседы.
+
+== 2_000_000_000
+"""
 
 
-def random_id(side: int = 2**31):
+def random_id(side: int = 2**31) -> int:
     """
-    Random int between +-`side` parametr.
-    Use for messages.send or Message class
+    Случайное число в дипазоне +-`side`.
+    Используется для метода ```messages.send``` или в классе `vkquick.tools.message.Message`
     """
     return randint(-side, +side)

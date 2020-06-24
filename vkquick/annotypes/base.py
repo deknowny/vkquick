@@ -1,14 +1,37 @@
+"""
+Основоположник всех аннотационных типов
+"""
 from abc import abstractmethod, ABC
+from typing import Callable
+
+from vkquick.reaction import Reaction
 
 
 class Annotype(ABC):
     """
-    Use for annotation types in your function
+    Позволяет создавать свои аннотационные типы
     """
 
     @abstractmethod
-    def prepare(self, argname, event, func, bot, bin_stack):
+    def prepare(
+        self,
+        argname: str,
+        event: "vkquick.annotypes.event.Event",
+        func: Reaction,
+        bot: "vkquick.bot.Bot",
+        bin_stack: type
+    ):
         """
-        Called before the argument
-        will be inserted to the function
+        Вызывается перед тем,
+        как аргументы попадут в код команды.
+        Метод должен вернуть значение для аргумента
+
+        ## Параметры:
+        * `argname`: Имя аргумента, на который будет вызван код команды
+        * `event`: Событие LongPoll
+        * `com`: Объект команды
+        * `bot`: Текущий инстанс, под которым запущен бот
+        * `bin_stack`: Поле, присутствующее только среди
+        проверки одной реакции на валидность и подготовки аргументов.
+        Помогает избегать гонку данных. Своего рода payload
         """

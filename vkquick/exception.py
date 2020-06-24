@@ -1,15 +1,21 @@
+"""
+Поднимаются от некорректного API запроса
+"""
 from __future__ import annotations
 from typing import Tuple, Dict, Any
 
 
 class VkErr(Exception):
+    """
+    Исключение, вызывается если VK API вернул ошибку в ответе
+    """
     def __init__(self, err_info: VkErrPreparing):
         self.info = err_info
 
 
 class VkErrPreparing:
     """
-    Prepare VK API error reponse for raising
+    Подготавливает __поля__ из ответа для ошибки
     """
 
     def __init__(self, err: Dict[str, Any]):

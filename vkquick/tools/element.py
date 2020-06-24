@@ -6,7 +6,7 @@ from .button import Button
 
 class Element(UI):
     """
-    Template element
+    Элемент карусели
     """
     def __init__(
         self, *,

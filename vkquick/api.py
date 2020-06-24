@@ -1,3 +1,6 @@
+"""
+Управление API запросами
+"""
 import asyncio
 import ssl
 import time
@@ -5,6 +8,8 @@ import re
 import logging
 from typing import Dict
 from typing import Any
+from typing import Optional
+from typing import Literal
 from dataclasses import dataclass
 
 import aiohttp
@@ -20,38 +25,64 @@ colorama.init()
 
 
 @dataclass
-class API:
+class API(Annotype):
     """
-    Send API requests
+    Отправляет запросы к API
+
+    Поддерживает конвертацию snake_case
+    в camelCase в именах у методов
     """
 
     token: str
+    """
+    Токен пользователя или группы
+    """
     version: float
-    delay: float = 1/20
+    """
+    Верия API
+    """
+    owner: Literal["group", "user"]
+    """
+    Тип обладателя токена
+    """
+    group_id: Optional[int] = None
+    """
+    Передавайте, только если нужен аргумент ```as_group_```
+    """
+    factory: type = attrdict.AttrMap
+    """
+    Фабрика для возвращаемых ответов
+    """
 
     def __post_init__(self):
         self.URL: str = "https://api.vk.com/method/"
 
-        self._method = str()
+        self._method = ""
         self._last_request_time = 0
+        self._delay = 1/20 if self.owner == "group" else 1/3
 
     def __getattr__(self, attr) -> "self":
         """
-        Build a method name
+        Выстраивает имя метода
         """
-        pycase = re.findall(r"_([a-z])", attr)
-        for low in pycase:
-            attr.replace(f"_{low}", low.upper())
+        attr = self._convert_name(attr)
         if self._method:
             self._method += f".{attr}"
         else:
             self._method = attr
         return self
 
-    def __call__(self, **kwargs):
+    def __call__(self, as_group_: bool = False, /, **kwargs):
         """
-        Called after dot-getting
+        Вызывает метод с полями из
+        **kwargs. При as_group_=True
+        автоматически добавится поле
+        group_id=<id группы>.
+        Сделано для обращений к методами
+        группы от лица пользователя
         """
+        if as_group_:
+            kwargs.update(group_id=self.group_id)
         meth_name = self._method
         self._method = str()
         result = self.method(name=meth_name, data=kwargs)
@@ -61,18 +92,36 @@ class API:
     def prepare(argname, event, func, bot, bin_stack):
         return bot.api
 
-    async def method(self, name: str, data):
+    async def method(self, name: str, data: dict):
+        """
+        Вызовает API метод с
+        именем меотда из параметра
+        ```name``` и полями из ```data```
+        """
+        name = self._convert_name(name)
         await self._waiting()
         data.update(access_token=self.token, v=self.version)
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.URL + name, data=data, ssl=ssl.SSLContext()
+                url=self.URL + name,
+                data=data,
+                ssl=ssl.SSLContext()
             ) as response:
                 response = await response.json()
                 self._check_errors(response)
                 if isinstance(response["response"], dict):
-                    return attrdict.AttrMap(response["response"])
+                    return self.factory(response["response"])
                 return response["response"]
+
+    def _convert_name(self, name):
+        """
+        Convert snake_case to camelCase
+        """
+        pycase = re.findall(r"_([a-z])", name)
+        for low in pycase:
+            name = name.replace(f"_{low}", low.upper())
+
+        return name
 
     def _check_errors(self, resp: Dict[str, Any]) -> None:
         if "error" in resp:
@@ -80,9 +129,9 @@ class API:
 
     async def _waiting(self):
         diff = time.time() - self._last_request_time
-        if diff < self.delay:
-            wait_time = self.delay - diff
-            self._last_request_time += self.delay
+        if diff < self._delay:
+            wait_time = self._delay - diff
+            self._last_request_time += self._delay
             await asyncio.sleep(wait_time)
 
 
@@ -112,17 +161,6 @@ class APIMerging:
 
     @api.getter
     def api(self) -> API:
-        # if self._api is None:
-        #     raise ValueError(
-        #         f"vkdev.API hasn't been merged "
-        #         f"for instance of class `{self.__class__}`. "
-        #         "Pass it by setting `api` attribute or "
-        #         "pass it into `.add()` or "
-        #         "add `API` instance by __radd__ (also works `__add__`) ",
-        #         "for example:\n"
-        #         f"hand = API('token') + {self.__class__}()\n"
-        #         f"{self.__class__}().add(API('token'))"
-        #     )
         return self._api
 
     @api.setter

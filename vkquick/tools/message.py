@@ -6,15 +6,24 @@ from attrdict import AttrMap
 
 class Message:
     """
-    Return a message in your command
-    with full `messages.send` parameters
+    Используйте в своей реакции,
+    чтобы отправить сообщение в диалог
+    со всеми возможными параметрами ```messages.send```,
+    откуда пришло событие, т.е. по умолчанию:
+
+    `peer_id=event.object.message.peer_id`
+    (если не был передан ни один из параметров
+    `"user_id", "domain", "chat_id",
+    "user_ids", "peer_ids"`)
+
+    `random_id=random.randint(-2**31, +2**31)`
     """
 
     def __init__(
         self,
         message: Optional[int] = None, *,
         peer_id: Optional[int] = None,
-        random_id: int = 0,
+        random_id: Optional[int] = None,
         user_id: Optional[int] = None,
         domain: Optional[str] = None,
         chat_id: Optional[int] = None,
@@ -36,6 +45,9 @@ class Message:
         silent: Optional[bool] = None,
         **kwargs
     ):
+        if random_id is None:
+            random_id = randint(-2*31, 2*31)
+
         preload_data = locals().copy()
         del preload_data["self"]
         kwargs_vals = preload_data.pop("kwargs")
@@ -53,14 +65,13 @@ class Message:
     @property
     def params(self):
         """
-        Returns params for `messages.send`.
-        Filters and gets without None in values
+        Возвращает параметры для ```messages.send```
         """
         return self._params
 
     def _set_path(self):
         """
-        Chooses should be `peer_id` default or not
+        Устанавливает peer_id в зависимости от того, были ли переданы другие параметры
         """
         if not (
             {"user_id", "domain", "chat_id", "user_ids", "peer_ids"} &
