@@ -1,9 +1,0 @@
-[api]
-token = "4c491b152bd3163c2e1162541c1e821a665706213490a56acf8a58fbc9c0515dc96a6e3b2da5ba1201d57"
-group_id = 192979547
-delay = 0.05
-version = 5.124
-
-
-[longpoll]
-wait = 25

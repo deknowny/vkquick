@@ -1,2 +1,0 @@
-NAMES = ["greet"]
-ANSWER = "Hello"
