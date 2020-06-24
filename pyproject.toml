@@ -20,6 +20,7 @@ pygments = "^2.6.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pdoc3 = "^0.8.1"
 
 [tool.poetry.scripts]
 bot = "vkquick.console:bot"
