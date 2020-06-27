@@ -8,8 +8,48 @@ from .ui import UI
 
 class Keyboard(UI):
     """
-    messages.send keyboard.
-    Create VK Keyboard by dict or buttons list
+    Клавиатура для messages.send.
+
+    Вы можете создать клаивиатуру вручную
+    через JSON по унаследованному `vkquick.tools.ui.UI.by`
+    либо воспользоваться конструктором `Keyboard.generate`
+
+    ## Пример
+    Инлайн клавиатура из 4 кнопок в два ряда,
+    присылаемая по команде ```/keyboard```
+
+        import vkquick as vq
+
+
+        @vq.Cmd(names=["keyboard"], prefs=["/"])
+        @vq.Reaction("message_new")
+        def keyboard():
+            kb = vq.Keyboard(inline=True).generate(
+                vq.Button.text("foo").positive(),
+                vq.Button.text("bar").negative(),
+                vq.Button.line(),
+                vq.Button.text("fizz").secondary(),
+                vq.Button.text("bazz").primary(),
+            )
+
+            return vq.Message("Your Keyboard:", keyboard=kb)
+
+    Аналогичная клавиатуры через метод `Keyboard.add`:
+
+        import vkquick as vq
+
+
+        @vq.Cmd(names=["keyboard"], prefs=["/"])
+        @vq.Reaction("message_new")
+        def keyboard():
+            kb = vq.Keyboard(inline=True)
+            kb.add(vq.Button.text("foo").positive())
+            kb.add(vq.Button.text("bar").negative())
+            kb.add(vq.Button.line())
+            kb.add(vq.Button.text("fizz").secondary())
+            kb.add(vq.Button.text("bazz").primary())
+            
+            return vq.Message("Your Keyboard:", keyboard=kb)
     """
     def __init__(
         self,
@@ -30,7 +70,7 @@ class Keyboard(UI):
 
     def add(self, button: Button = Button.line()) -> Keyboard:
         """
-        Добавляют в клавиатуру кнопку или пустую строку
+        Добавляет в клавиатуру кнопку или пустую строку
         """
         if button.info is None:
             if self.info["buttons"][-1]:

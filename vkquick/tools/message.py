@@ -3,6 +3,8 @@ from typing import Optional, List
 
 from attrdict import AttrMap
 
+from .uploader import Uploader
+
 
 class Message:
     """
@@ -17,6 +19,28 @@ class Message:
     "user_ids", "peer_ids"`)
 
     `random_id=random.randint(-2**31, +2**31)`
+
+
+    ## Пример
+    Классический hello world в ответ на пользовательскую команду ```hello``` или ```привет```
+
+        import vkquick as vq
+
+
+        @vq.Cmd(names=["hello", "привет"])
+        @vq.Reaction("message_new")
+        def hello_world():
+            return vq.Message("Hello world!")
+
+    Для ответов, содержащих только текст, вы можете просто вернуть текст
+
+        import vkquick as vq
+
+
+        @vq.Cmd(names=["hello", "привет"])
+        @vq.Reaction("message_new")
+        def hello_world():
+            return "Hello, world!"
     """
 
     def __init__(
@@ -61,6 +85,7 @@ class Message:
             )
         )
         self._set_path()
+        self._join_attach()
 
     @property
     def params(self):
@@ -69,9 +94,35 @@ class Message:
         """
         return self._params
 
+    def _join_attach(self):
+        """
+        Подготавливает вложения
+        """
+        if isinstance(self._params.attachment, str):
+            return
+
+        if (
+            isinstance(self._params.attachment, list) or
+            isinstance(self._params.attachment, tuple)
+        ):
+            new_attachments = []
+            for attach in self._params.attachment:
+                if isinstance(attach, Uploader):
+                    new_attachments.append(repr(attach))
+                elif isinstance(attach, str):
+                    new_attachments.append(attach)
+                else:
+                    raise ValueError(
+                        f"Invalid attachment type: {type(attach)}"
+                    )
+            self._params.attachment =\
+                ",".join(new_attachments)
+
+
     def _set_path(self):
         """
-        Устанавливает peer_id в зависимости от того, были ли переданы другие параметры
+        Устанавливает peer_id в зависимости от того,
+        были ли переданы другие параметры
         """
         if not (
             {"user_id", "domain", "chat_id", "user_ids", "peer_ids"} &

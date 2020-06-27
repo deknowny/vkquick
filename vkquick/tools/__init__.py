@@ -6,7 +6,6 @@
 from random import randint
 
 from .message import Message
-from .payload import Payload
 from .user import User, UserAnno
 
 # UI
@@ -14,6 +13,11 @@ from .button import Button
 from .keyboard import Keyboard
 from .template import Template
 from .element import Element
+
+# Uploaders
+from .photo import Photo
+from .uploader import Uploader
+from .doc import Doc
 
 
 PEER: int = int(2e9)

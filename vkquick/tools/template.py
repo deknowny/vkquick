@@ -7,7 +7,7 @@ from .element import Element
 
 class Template(UI):
     """
-    <later>
+    Карусель. Later 
     """
     def __init__(self, type_: str = "carousel"):
         self.info = dict(
