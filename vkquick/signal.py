@@ -18,11 +18,13 @@ class Signal:
     def __call__(self, code):
         self.code = code
 
-    async def run(self):
+        return self
+
+    async def run(self, *args, **kwargs):
         if icf(self.code):
-            create_task(self.code())
+            create_task(self.code(*args, **kwargs))
         else:
-            self.code()
+            self.code(*args, **kwargs)
 
 
 class SignalsList(list):
@@ -31,6 +33,7 @@ class SignalsList(list):
     """
 
     async def resolve(self, name: str, /,  *args, **kwargs):
+
         for signal in self:
             if signal.name == name:
                 await signal.run(*args, **kwargs)
