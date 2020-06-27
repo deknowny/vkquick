@@ -13,11 +13,12 @@ from pygments import highlight, lexers, formatters
 from pygments.formatters.terminal import TERMINAL_COLORS
 from pygments.token import string_to_tokentype
 
-from .api import APIMerging, API
+from .api import API
 from .lp import LongPoll
 from .signal import SignalsList, Signal
 from .reaction import ReactionsList, Reaction
 from .annotypes import Annotype
+from . import current
 
 
 TERMINAL_COLORS[string_to_tokentype("String")] =  ('gray', '_')
@@ -27,7 +28,7 @@ TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] =  ('cyan', '_')
 
 
 @dataclass
-class Bot(APIMerging, Annotype):
+class Bot(Annotype):
     """
     Основной менеджер событий LongPoll,
     сигналов, API запросов и в целом работы бота
@@ -46,6 +47,11 @@ class Bot(APIMerging, Annotype):
     debug: bool
     """
     Режим дебага в терминале
+    """
+
+    config: dict = field(default_factory=dict)
+    """
+    Общие настройки бота (дополнительно)
     """
 
     version: Union[float, int] = 5.124
@@ -72,24 +78,23 @@ class Bot(APIMerging, Annotype):
 
 
     def __post_init__(self):
+        current.bot = self
         if float(self.version) < 5.103:
             raise ValueError("You can't use API version lower than 5.103")
         self.version = str(self.version)
-        self.merge(
-            API(
-                token=self.token,
-                version=self.version,
-                owner=self.owner
-            )
+        current.api = API(
+            token=self.token,
+            version=self.version,
+            owner=self.owner,
+            group_id=self.group_id
         )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
-        self.lp.merge(self.api)
         self.reaload_now = False
 
     @staticmethod
-    def prepare(argname, event, func, bot, bin_stack):
-        return bot
+    def prepare(argname, event, func, bin_stack):
+        return current.bot
 
     def debug_out(self, string, **kwargs):
         """
@@ -105,8 +110,10 @@ class Bot(APIMerging, Annotype):
         а в конце и `shutdown` сигналы
         """
         asyncio.run(self.signals.resolve("startup"))
+
         while True:
             try:
+
                 asyncio.run(self._process_handler())
             except (RuntimeError, KeyboardInterrupt):
                 break
@@ -138,7 +145,9 @@ class Bot(APIMerging, Annotype):
         """
         Процесс прослушивания LongPoll и обработки событий реакциями
         """
+
         async for events in self.lp:
+
             for event in events:
 
                 if self.debug and self.reactions.has_event(event.type):
@@ -154,5 +163,6 @@ class Bot(APIMerging, Annotype):
                     print("=" * 35, "Above is the current handled event\n", sep="\n", end="=" * 35 + "\n")
                     click.clear()
 
-
-                show = await self.reactions.resolve(event, self)
+                asyncio.create_task(
+                    self.reactions.resolve(event)
+                )
