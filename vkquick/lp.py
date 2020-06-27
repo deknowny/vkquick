@@ -7,11 +7,11 @@ from dataclasses import dataclass
 import aiohttp
 import attrdict
 
-from .api import APIMerging
+from . import current
 
 
 @dataclass
-class LongPoll(APIMerging):
+class LongPoll:
     """
     LongPoll handler for groups
     """
@@ -46,7 +46,7 @@ class LongPoll(APIMerging):
         Set or update LongPoll info
         (key, server, ts)
         """
-        self.info = await self.api.groups.getLongPollServer(
+        self.info = await current.api.groups.getLongPollServer(
             group_id=self.group_id
         )
 
