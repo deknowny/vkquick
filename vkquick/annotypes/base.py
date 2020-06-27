@@ -18,7 +18,6 @@ class Annotype(ABC):
         argname: str,
         event: "vkquick.annotypes.event.Event",
         func: Reaction,
-        bot: "vkquick.bot.Bot",
         bin_stack: type
     ):
         """
@@ -30,7 +29,6 @@ class Annotype(ABC):
         * `argname`: Имя аргумента, на который будет вызван код команды
         * `event`: Событие LongPoll
         * `com`: Объект команды
-        * `bot`: Текущий инстанс, под которым запущен бот
         * `bin_stack`: Поле, присутствующее только среди
         проверки одной реакции на валидность и подготовки аргументов.
         Помогает избегать гонку данных. Своего рода payload

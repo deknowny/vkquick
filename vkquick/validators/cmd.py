@@ -119,7 +119,7 @@ class Cmd(Validator):
         super().__call__(func)
         return func
 
-    def isvalid(self, event, com, bot, bin_stack):
+    def isvalid(self, event, com, bin_stack):
         matched = (
             fullmatch(self.rexp, event.object.message.text)
             if self.sensetive else

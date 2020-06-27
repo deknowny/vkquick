@@ -15,10 +15,10 @@ class Action(Validator, Annotype):
         self.types = types
 
     @staticmethod
-    def prepare(argname, event, func, bot, bin_stack):
+    def prepare(argname, event, func, bin_stack):
         return event.object.message.action
 
-    def isvalid(self, event, com, bot, bin_stack):
+    def isvalid(self, event, com, bin_stack):
         if (
             "action" in event.object.message and
             event.object.message.action.type in self.types

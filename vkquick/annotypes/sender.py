@@ -9,7 +9,7 @@ class Sender(Annotype, UserAnno):
     """
     Пользователь, отправивший сообщение
     """
-    async def prepare(self, argname, event, func, bot, bin_stack) -> User:
+    async def prepare(self, argname, event, func, bin_stack) -> User:
         return await User(
             user_id=event.object.message.from_id
-        ).get_info(bot.api, *self.fields)
+        ).get_info(*self.fields)

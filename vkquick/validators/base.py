@@ -26,7 +26,6 @@ class Validator(ABC):
         self,
         event: Event,
         com: Reaction,
-        bot: Bot,
         bin_stack: type
     ):
         """
@@ -42,7 +41,6 @@ class Validator(ABC):
         ## Параметры
         * `event`: Событие LongPoll
         * `com`: Объект команды
-        * `bot`: Текущий инстанс, под которым запущен бот
         * `bin_stack`: Поле, присутствующее только среди
         проверки одной реакции на валидность и подготовки аргументов.
         Помогает избегать гонку данных. Своего рода payload

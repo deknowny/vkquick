@@ -15,13 +15,11 @@ class FwdUsers(Annotype, UserAnno):
     Если len(event.object.message.frw_messages) == 0,
     то передастся пустой список
     """
-    async def prepare(self, argname, event, func, bot, bin_stack) -> List[User]:
+    async def prepare(self, argname, event, func, bin_stack) -> List[User]:
         users = []
-        for msg in event.object.message.frw_messages:
+        for msg in event.object.message.fwd_messages:
             user_id = msg.from_id
-            user = await User(user_id=user_id).get_info(
-                bot.api, **self.fields
-            )
+            user = await User(user_id=user_id).get_info(*self.fields)
             users.append(user)
 
         return users

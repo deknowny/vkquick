@@ -38,7 +38,7 @@ class CommandArgument(Annotype):
         команды пользователя, выраженный регуляркой
         """
 
-    def prepare(self, argname, event, func, bot, bin_stack) -> factory:
+    def prepare(self, argname, event, func, bin_stack) -> factory:
         return self.factory(bin_stack.command_frame.group(argname))
 
 
@@ -91,6 +91,7 @@ class List(CommandArgument):
     Вы также можете просто обернуть тип в [квадратные_скобки]
     """
     factory = list
+    rexp = ""
 
     def __init__(
         self,
@@ -109,9 +110,8 @@ class List(CommandArgument):
         self.sep = sep
         self.part = part
 
-    async def prepare(self, argname, event, func, bot, bin_stack):
-        vals = re.split(self.sep, bin_stack.command_frame.group(argname))
-        self.part.bot = bot
+    async def prepare(self, argname, event, func, bin_stack):
+        vals = re.split(self.sep, bin_stack.command_frame.group(argname).rstrip())
         if icf(self.part.factory):
             return [await self.part.factory(val) for val in vals]
         else:
@@ -126,17 +126,16 @@ class UserMention(CommandArgument, UserAnno):
     Возможно, добавятся позже
     """
 
-    rexp = r"\[id\d+|.+?\]"
+    rexp = r"\[id\d+\|.+?\]"
 
     async def factory(self, val) -> User:
         """
         Возвращает объект пользователя
         """
-        return await User(mention=val).get_info(self.bot.api, *self.fields)
+        return await User(mention=val).get_info(*self.fields)
 
-    async def prepare(self, argname, event, func, bot, bin_stack):
+    async def prepare(self, argname, event, func, bin_stack):
         mention = bin_stack.command_frame.group(argname)
-        self.bot = bot
         user = await self.factory(val=mention)
         return user
 
@@ -147,5 +146,6 @@ class Literal(CommandArgument):
     Один из возможных значений. Своего рода Enum.
     Паттерн представляет собой переданный слова, разделенные `|` (или)
     """
+    rexp = ""
     def __init__(self, *values):
         self.rexp = "|".join(values)
