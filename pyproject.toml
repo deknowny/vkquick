@@ -17,6 +17,7 @@ watchdog = "^0.10.2"
 colorama = "^0.4.3"
 toml = "^0.10.1"
 pygments = "^2.6.1"
+requests = "^2.24.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
