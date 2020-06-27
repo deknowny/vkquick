@@ -253,7 +253,10 @@ def com(name, names, delete, rename):
         os.rename(com_path, Path("src") / rename)
         click.echo(
             click.style("Command ", fg="green")+\
-            click.style(name, fg=...)
+            click.style(name, bold=True) +\
+            click.style(" renamed to ", fg="green") +\
+            click.style(rename, bold=True)
+
         )
 
     else:
@@ -361,7 +364,8 @@ def run(reload, once_time, debug):
             version=config.api.version,
             owner=config.api.owner,
             wait=config.longpoll.wait,
-            debug=debug
+            debug=debug,
+            config=config
         )
 
         reactions = []
@@ -398,7 +402,8 @@ def run(reload, once_time, debug):
             version=config.api.version,
             owner=config.api.owner,
             wait=config.longpoll.wait,
-            debug=debug
+            debug=debug,
+            config=config
         )
 
         reactions = []
