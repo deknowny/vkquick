@@ -18,6 +18,7 @@ import colorama
 
 from . import exception as ex
 from .annotypes import Annotype
+from . import current
 
 
 # colorama.init(reset=True)
@@ -89,8 +90,8 @@ class API(Annotype):
         return result
 
     @staticmethod
-    def prepare(argname, event, func, bot, bin_stack):
-        return bot.api
+    def prepare(argname, event, func, bin_stack):
+        return current.api
 
     async def method(self, name: str, data: dict):
         """
@@ -100,7 +101,11 @@ class API(Annotype):
         """
         name = self._convert_name(name)
         await self._waiting()
-        data.update(access_token=self.token, v=self.version)
+        data = {
+            "access_token": self.token,
+            "v": self.version,
+            **data
+        }
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 url=self.URL + name,
@@ -128,41 +133,11 @@ class API(Annotype):
             raise ex.VkErr(ex.VkErrPreparing(resp))
 
     async def _waiting(self):
-        diff = time.time() - self._last_request_time
+        now = time.time()
+        diff = now - self._last_request_time
         if diff < self._delay:
             wait_time = self._delay - diff
             self._last_request_time += self._delay
             await asyncio.sleep(wait_time)
-
-
-class APIMerging:
-    """
-    Merge API instance to your class.
-    Use to get private parametrs like
-    token, group_id and etc or easily
-    make async API requests
-    """
-
-    def merge(self, api: API) -> "self":
-        """
-        Merge API instance to class for adding
-        API requests abilities
-        """
-        if not isinstance(api, API):
-            raise NotImplementedError()
-        self._api = api
-        return self
-
-    @property
-    def api(self):
-        """
-        API instance
-        """
-
-    @api.getter
-    def api(self) -> API:
-        return self._api
-
-    @api.setter
-    def api(self, inst: API):
-        self._api = inst
+        else:
+            self._last_request_time = now
