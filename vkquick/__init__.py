@@ -75,7 +75,11 @@ __одноименная__ функция, представляющая собо
 
 Если вы хотите переименновать команду, используйте
 
-<добавлю позже>
+```
+$ bot com -r <newname>
+```
+
+Это автоматически переименную вашу фукцию и перепишет все импорты
 
 Для удаления используйте фалг ```-d```:
 ```
@@ -112,13 +116,14 @@ def hello():
     __Валидатор__ `validators.cmd.Cmd` Указывает, каким образом
     должна обрабатываться команда.
 """
-
+from . import current
 from .api import API
 from .bot import Bot
 from .exception import VkErr
 from .lp import LongPoll
 from .signal import Signal, SignalsList
 from .reaction import Reaction, ReactionsList
+
 
 from .annotypes import *
 from .validators import *
