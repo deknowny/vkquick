@@ -1,7 +1,10 @@
+from __future__ import annotations
 import re
 from typing import Optional
 
 import attrdict
+
+from vkquick import current
 
 
 class User:
@@ -62,12 +65,12 @@ class User:
         else:
             raise ValueError("Argmunets haven't been passed")
 
-    async def get_info(self, api: "vkquick.api.API", *fields) -> "self":
+    async def get_info(self, *fields) -> User:
         """
         Получает всю нужную информацию о пользователе методом ```users.get```
         """
         # TODO: Name cases
-        self.info = await api.users.get(
+        self.info = await current.api.users.get(
             user_ids=[self._user_id],
             fields=",".join(fields)
         )
