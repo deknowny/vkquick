@@ -33,7 +33,9 @@ class SignalsList(list):
     """
 
     async def resolve(self, name: str, /,  *args, **kwargs):
-
+        """
+        Call a signal with name `name` and params *args and **kwargs
+        """
         for signal in self:
             if signal.name == name:
                 await signal.run(*args, **kwargs)
