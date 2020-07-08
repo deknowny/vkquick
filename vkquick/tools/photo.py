@@ -250,10 +250,6 @@ class Photo(Uploader):
     ):
         """
         Загружает фотографии для отправки в сообщение
-
-        ## Параметры
-
-
         """
         files = {
             f"file{ind}": ("file.png", Photo._get_photo(val), "multipart/form-data")
