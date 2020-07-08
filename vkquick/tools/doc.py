@@ -1,5 +1,5 @@
 from pathlib import Path
-from io import BytesIO
+from io import TextIOWrapper, BytesIO
 from dataclasses import dataclass
 from functools import partial, wraps
 from typing import Union, Literal
@@ -101,12 +101,15 @@ class Doc(Uploader):
         """
         Получает байты из переданного объекта под файл
         """
-        if isinstance(data, BytesIO):
+        if (
+            isinstance(data, TextIOWrapper) or
+            isinstance(data, BytesIO)
+        ):
             return data.read()
         elif isinstance(data, Path):
             with open(data, "rb") as file:
                 return file.read()
-        elif isinstance(data, bytes):
+        elif isinstance(data, bytes) or isinstance(data, str):
             return data
         else:
             raise ValueError("Invalid data format")
@@ -114,7 +117,7 @@ class Doc(Uploader):
     @staticmethod
     @_uploader("get_messages_upload_server", "save")
     def message(
-        file: Union[str, bytes, BytesIO, Path],
+        file: Union[str, bytes, TextIOWrapper, BytesIO, Path],
         type_: Literal["doc", "audio_message", "graffiti"],
         peer_id: int
     ):
@@ -128,7 +131,7 @@ class Doc(Uploader):
     @staticmethod
     @_uploader("get_wall_upload_server", "save")
     def wall(
-        file: Union[str, bytes, BytesIO, Path],
+        file: Union[str, bytes, TextIOWrapper, BytesIO, Path],
         group_id: int
     ):
         """
