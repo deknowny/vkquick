@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 from typing import Optional
+from typing import List
 
 import attrdict
 
@@ -15,6 +16,9 @@ class User:
     1. `mention`: Строка с упоминанием пользователя. Например, "[id100|Имя Фамилия]"
     1. `user_id`: ID пользователя
     1. `screen_name`: screen_name пользователя. Например: "durov", "deknowny", "id2423423"
+
+    После нужно вызвать крутинный метод `get_info`
+    и передать нужные поля, после чего вернется объект пользователя
 
     В себе содержит:
 
@@ -65,14 +69,15 @@ class User:
         else:
             raise ValueError("Argmunets haven't been passed")
 
-    async def get_info(self, *fields) -> User:
+    async def get_info(self, *fields, name_case: str = "nom") -> User:
         """
         Получает всю нужную информацию о пользователе методом ```users.get```
         """
         # TODO: Name cases
         self.info = await current.api.users.get(
             user_ids=[self._user_id],
-            fields=",".join(fields)
+            fields=",".join(fields),
+            name_case=name_case
         )
         self.info = attrdict.AttrMap(self.info[0])
         # Quick access
