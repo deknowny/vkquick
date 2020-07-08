@@ -5,8 +5,8 @@ env/
 __pycache__/
 vkquick.egg-info/
 todo/
-html/
 .pytest_cache/
+site/
 
 # Tests data
 tests/test_bot/config.toml
