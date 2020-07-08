@@ -4,6 +4,8 @@
 from __future__ import annotations
 from typing import Tuple, Dict, Any
 
+import click
+
 
 class VkErr(Exception):
     """
@@ -27,12 +29,15 @@ class VkErrPreparing:
         error_code = err["error"]["error_code"]
         error_params = err["error"]["request_params"]
 
-        content = f"\n\n\033[31m[{error_code}] \
-            {error_msg}\033[0m\n" "Request params:"
+        content =\
+            click.style(f"\n[{error_code}] ", fg="red") +\
+            click.style(f"{error_msg}\n\n", fg="red", bold=True) +\
+            click.style("Request params:", bold=True)
+
         for pair in err["error"]["request_params"]:
-            key = f"\n\033[33m{pair['key']}\033[0m"
-            value = f"\033[36m{pair['value']}\033[0m"
-            content += f"{key} = {value}"
+            key = click.style(pair["key"], fg="yellow")
+            value = click.style(pair["value"], fg="cyan")
+            content += f"\n{key} = {value}"
 
         return content, error_msg, error_code, error_params
 
