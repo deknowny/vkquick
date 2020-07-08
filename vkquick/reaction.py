@@ -4,7 +4,9 @@
 import datetime as dt
 from asyncio import create_task
 from asyncio import iscoroutinefunction as icf
-from inspect import signature, isgeneratorfunction
+from inspect import signature
+from inspect import isgeneratorfunction
+from inspect import isasyncgenfunction
 
 import click
 
@@ -28,10 +30,7 @@ class Reaction:
         self.code = code
         self.args = {}
 
-        if hasattr(code, "validators"):
-            PositionError = type("PositionError", (Exception,), {})
-            raise PositionError("Reaction decorator should be the first")
-            self.validators = code.validators
+        assert not hasattr(code, "validators"), "Invalid decorator position"
 
         self.command_args = {}
         self.payload_args = {}
@@ -99,6 +98,7 @@ class ReactionsList(list):
 
         return False
 
+
     async def _send_message(self, event, message):
         """
         Send a meessage by user's returning in reaction
@@ -119,10 +119,6 @@ class ReactionsList(list):
                 message=str(message)
             )
 
-    @staticmethod
-    def get_char(self):
-        print("Show full event? (key)")
-        return click.getchar()
 
     async def devalidate(self, event, reaction, bin_stack):
         TEXT = click.style(reaction.code.__name__, fg="cyan") + "\n"
@@ -140,14 +136,10 @@ class ReactionsList(list):
 
             if not val[0]:
                 TEXT += f"-- {validator.__class__.__name__}: " +\
-                    click.style(
-                        "not valid\n", fg="red"
-                    )
+                    click.style("not valid\n", fg="red")
 
                 TEXT += "   -> " +\
-                    click.style(
-                        val[1] + "\n", fg="red"
-                    )
+                    click.style(val[1] + "\n", fg="red")
 
                 current.bot.debug_out(TEXT)
                 break
@@ -186,7 +178,12 @@ class ReactionsList(list):
 
             if isgeneratorfunction(reaction.code):
                 await self._send_message(
-                    current.bot.api, event, "".join(response)
+                    event, "".join(response)
+                )
+            elif isasyncgenfunction(reaction.code):
+                await self._send_message(
+                    event,
+                    "".join([mes async for mes in response])
                 )
             else:
                 await self._send_message(event, response)
@@ -197,17 +194,19 @@ class ReactionsList(list):
         for reaction in self:
 
             if event.type in reaction.events_name or reaction.events_name is Ellipsis:
-
                 if not header_printed:
+                    if current.bot.debug:
+                        click.clear()
                     current.bot.debug_out(
                         click.style("[Reactions on ", bold=True) +\
                         click.style(event.type, fg="cyan") +\
-                        "]" +\
+                        click.style("]", bold=True) +\
                         click.style(
                             dt.datetime.now().strftime(" -- %Y-%m-%d %H:%M:%S"),
                             fg="bright_black"
                         )
                     )
+
                 header_printed = True
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
