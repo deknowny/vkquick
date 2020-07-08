@@ -98,25 +98,26 @@ class Message:
         """
         Подготавливает вложения
         """
-        if isinstance(self._params.attachment, str):
-            return
+        if "attachment" in self._params:
+            if isinstance(self._params.attachment, str):
+                return
 
-        if (
-            isinstance(self._params.attachment, list) or
-            isinstance(self._params.attachment, tuple)
-        ):
-            new_attachments = []
-            for attach in self._params.attachment:
-                if isinstance(attach, Uploader):
-                    new_attachments.append(repr(attach))
-                elif isinstance(attach, str):
-                    new_attachments.append(attach)
-                else:
-                    raise ValueError(
-                        f"Invalid attachment type: {type(attach)}"
-                    )
-            self._params.attachment =\
-                ",".join(new_attachments)
+            if (
+                isinstance(self._params.attachment, list) or
+                isinstance(self._params.attachment, tuple)
+            ):
+                new_attachments = []
+                for attach in self._params.attachment:
+                    if isinstance(attach, Uploader):
+                        new_attachments.append(repr(attach))
+                    elif isinstance(attach, str):
+                        new_attachments.append(attach)
+                    else:
+                        raise ValueError(
+                            f"Invalid attachment type: {type(attach)}"
+                        )
+                self._params.attachment =\
+                    ",".join(new_attachments)
 
 
     def _set_path(self):
