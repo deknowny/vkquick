@@ -340,7 +340,7 @@ def run(reload, once_time, debug):
         while True:
             click.secho("Listen", fg="green")
             proc = subprocess.run(["bot", *args])
-            click.secho("Fiund some changings in bot. Reload...", fg="yellow")
+            click.secho("Found some changes in bot's code. Reload...", fg="yellow")
 
     elif once_time:
         # Your bot project path
