@@ -9,11 +9,6 @@ from .base import Annotype
 from vkquick.tools import User, UserAnno
 
 
-__pdoc__ = {
-    "CommandArgument.rexp": "Шаблон аргумента, выраженный регуляркой",
-}
-
-
 class CommandArgument(Annotype):
     """
     Базовый класс для любого аннотационного типа,
@@ -44,7 +39,7 @@ class CommandArgument(Annotype):
 
 class Integer(CommandArgument):
     """
-    Просто __целое__ число.
+    __Целое__ число.
     Можете использовать `int` instead
     """
 
@@ -96,7 +91,7 @@ class List(CommandArgument):
     def __init__(
         self,
         part: Annotype,
-        sep: str = r"(?:\s*,\s|\s+)",
+        sep: str = r"(?:\s*,\s*|\s+)",
         min_: int = 1,
         max_: int = ...,
     ):
