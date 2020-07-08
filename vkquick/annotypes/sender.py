@@ -2,9 +2,6 @@ from .base import Annotype
 from vkquick.tools import User, UserAnno
 
 
-__pdoc__ = {"Sender.prepare": Annotype.prepare.__doc__}
-
-
 class Sender(Annotype, UserAnno):
     """
     Пользователь, отправивший сообщение

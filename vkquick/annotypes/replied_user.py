@@ -4,9 +4,6 @@ from .base import Annotype
 from vkquick.tools import User, UserAnno
 
 
-__pdoc__ = {"RepliedUser.prepare": Annotype.prepare.__doc__}
-
-
 class RepliedUser(Annotype, UserAnno):
     """
     Пользователь, находящийся в reply_message.
