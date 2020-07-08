@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vkquick"
-version = "0.1.0rc0"
+version = "0.1.0rc1"
 description = "Package for quick writing vk chat bots"
 authors = ["Kurbatov Yan <deknowny@gmail.com>"]
 readme = "README.md"
@@ -22,6 +22,8 @@ requests = "^2.24.0"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pdoc3 = "^0.8.1"
+mkdocs-material = "^5.4.0"
+flake8 = "^3.8.3"
 
 [tool.poetry.scripts]
 bot = "vkquick.console:bot"
