@@ -1,0 +1,64 @@
+site_name: VK Quick
+site_description: Async python package for creating VK chat bots
+repo_name: vkquick
+repo_url: https://github.com/Rhinik/vkquick
+
+remote_branch: master
+
+nav:
+    - Home: index.md
+    - Установка: installation.md
+    - hello world бот: hello-world-bot.md
+    - Всевозможные возможности:
+        - Введение: possible/index.md
+        - Структура проекта: possible/project-struct.md
+        - Структура команды: possible/command-struct.md
+        - Реакции: possible/reaction.md
+        - Payload-типы: possible/payload-args.md
+        - Валидаторы: possible/validators.md
+        - Быстрые ответы: possible/quick-answers.md
+        - Current-объекты: possible/current-obj.md
+        - Сигналы: possible/signals.md
+        - Инструменты:
+            - Что это: possible/tools/index.md
+            - Клавиатуры: possible/tools/keyboards.md
+            - Кнопки: possible/tools/buttons.md
+            - Карусели: possible/tools/templates.md
+            - Элементы: possible/tools/elements.md
+            - Загрузка фотографий: possible/tools/photos.md
+            - Загрузка документов, гс, граффити: possible/tools/docs-vm-graffiti.md
+            - Пользователь: possible/tools/user.md
+
+theme:
+    name: material
+    language: ru
+    font:
+        text: Ubuntu
+        code: Monaco
+    palette:
+        primary: blue grey
+        accent: teal
+
+markdown_extensions:
+    - toc:
+        permalink: true
+    - markdown.extensions.codehilite:
+        guess_lang: false
+    - admonition
+    - codehilite
+    - extra
+    - pymdownx.superfences:
+        custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format ''
+    - pymdownx.tabbed
+    - pymdownx.details
+    - pymdownx.tilde
+
+extra_css:
+    - css/termynal.css
+
+extra_javascript:
+    - js/termynal.js
+    - js/custom.js
