@@ -4,6 +4,7 @@
 import asyncio
 import logging
 import json
+import time
 from dataclasses import dataclass, field
 from typing import Union
 from typing import List
@@ -38,6 +39,7 @@ class Bot(Annotype):
     """
     Токен пользователя/группы
     """
+
     group_id: int
     """
     Айдификатор группы, с которым будут
@@ -54,14 +56,16 @@ class Bot(Annotype):
     Общие настройки бота (дополнительно)
     """
 
-    version: Union[float, int] = 5.124
+    version: Union[float, str] = 5.124
     """
     Версия API
     """
+
     wait: int = 25
     """
     Время ожидания ответа LongPoll события
     """
+
     owner: str = "group"
     """
     Тип владельца токена. group/user
@@ -71,6 +75,7 @@ class Bot(Annotype):
     """
     Список обрабатываемых сигналов
     """
+    
     reactions: List[Reaction] = field(default_factory=ReactionsList)
     """
     Список обрабатываемых реакций
@@ -80,7 +85,9 @@ class Bot(Annotype):
     def __post_init__(self):
         current.bot = self
         if float(self.version) < 5.103:
-            raise ValueError("You can't use API version lower than 5.103")
+            raise ValueError(
+                "You can't use API version lower than 5.103"
+            )
         self.version = str(self.version)
         current.api = API(
             token=self.token,
@@ -113,7 +120,6 @@ class Bot(Annotype):
 
         while True:
             try:
-
                 asyncio.run(self._process_handler())
             except (RuntimeError, KeyboardInterrupt):
                 break
@@ -152,16 +158,21 @@ class Bot(Annotype):
 
                 if self.debug and self.reactions.has_event(event.type):
                     click.clear()
+
                     data = json.dumps(event._mapping, ensure_ascii=False, indent=4)
                     data = highlight(
                         data,
                         lexers.JsonLexer(),
                         formatters.TerminalFormatter(bg="light")
                     )
-                    print("=" * 35, "Below is the current handled event\n", sep="\n", end="=" * 35 + "\n")
-                    print(data.strip())
-                    print("=" * 35, "Above is the current handled event\n", sep="\n", end="=" * 35 + "\n")
-                    click.clear()
+                    self.debug_out(
+                        f"{'=' * 35}\nBelow is the current handled event\n{'=' * 35}\n"
+                    )
+                    # print("=" * 35, "Below is the current handled event\n", sep="\n", end="=" * 35 + "\n")
+                    self.debug_out(data.strip())
+                    self.debug_out(
+                        f"{'=' * 35}\nAbove is the current handled event\n{'=' * 35}\n"
+                    )
 
                 asyncio.create_task(
                     self.reactions.resolve(event)
