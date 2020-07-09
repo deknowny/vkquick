@@ -10,6 +10,15 @@ from .base import Validator
 from vkquick import Reaction
 
 
+
+class _SafeDict(dict):
+    """
+    For formatting
+    """
+    def __missing__(self, key):
+        return '{' + key + '}'
+
+
 class Cmd(Validator):
     """
     Декоратор реакции для валидации
@@ -108,7 +117,7 @@ class Cmd(Validator):
             comkwargs = {}
             for name, value in func.command_args.items():
                 comkwargs[name] = f"(?P<{name}>{Reaction.convert(value).rexp})"
-            self.rexp += self.argline.format(**comkwargs)
+            self.rexp += self.argline.format_map(_SafeDict(comkwargs))
 
         super().__call__(func)
         return func

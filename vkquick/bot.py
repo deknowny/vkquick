@@ -75,7 +75,7 @@ class Bot(Annotype):
     """
     Список обрабатываемых сигналов
     """
-    
+
     reactions: List[Reaction] = field(default_factory=ReactionsList)
     """
     Список обрабатываемых реакций
