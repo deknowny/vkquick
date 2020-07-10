@@ -1,5 +1,7 @@
 """
-.. include:: ./guide.md
+Help you create the best VK chat-bots ever.
+
+More info [here](https://rhinik.github.io)
 """
 
 from . import current
@@ -16,4 +18,4 @@ from .validators import *
 from .tools import *
 
 
-__version__ = "0.1.0rc1"
+__version__ = "0.1.0"
