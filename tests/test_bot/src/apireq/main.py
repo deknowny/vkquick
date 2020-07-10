@@ -25,3 +25,5 @@ async def apireq(event: vq.Event(), api: vq.API):
         await api.asdasdasd.asdasd_asdasdSDFsdfgdfgsdfsadfsadfsdfsdfasd()
 
     cache("apireq")
+
+    return config.ANSWER
