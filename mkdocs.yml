@@ -5,11 +5,13 @@ repo_url: https://github.com/Rhinik/vkquick
 
 remote_branch: master
 
+google_analytics: ["UA-172364682-1", "rhinik.github.io"]
+
 nav:
     - Home: index.md
     - Установка: installation.md
     - hello world бот: hello-world-bot.md
-    - Всевозможные возможности:
+    - Инструкция:
         - Введение: possible/index.md
         - Структура проекта: possible/project-struct.md
         - Структура команды: possible/command-struct.md
@@ -19,6 +21,7 @@ nav:
         - Быстрые ответы: possible/quick-answers.md
         - Current-объекты: possible/current-obj.md
         - Сигналы: possible/signals.md
+        - bot: possible/bot.md
         - Инструменты:
             - Что это: possible/tools/index.md
             - Клавиатуры: possible/tools/keyboards.md
@@ -28,6 +31,12 @@ nav:
             - Загрузка фотографий: possible/tools/photos.md
             - Загрузка документов, гс, граффити: possible/tools/docs-vm-graffiti.md
             - Пользователь: possible/tools/user.md
+    - Примеры:
+        - Делаем бота: examples/index.md
+        - Техническое задание: examples/tech-task.md
+        - Создание: examples/create.md
+    - Контрибьюторам: contributing.md
+    - Релизы: releases.md
 
 theme:
     name: material
