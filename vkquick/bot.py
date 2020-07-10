@@ -151,9 +151,7 @@ class Bot(Annotype):
         """
         Процесс прослушивания LongPoll и обработки событий реакциями
         """
-
         async for events in self.lp:
-
             for event in events:
 
                 if self.debug and self.reactions.has_event(event.type):
