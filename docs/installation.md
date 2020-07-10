@@ -15,10 +15,10 @@ $ pip install vkquick
     ```console
     $ git clone https://github.com/Rhinik/vkquick
     $ cd vkquick
-    $ python -m venv env
+    $ python3 -m venv env
     $ source env/bin/activate
-    $ pip install poetry
-    $ poetry install
+    $ pip3 install poetry
+    $ poetry install --no-dev
     ```
     </div>
 
@@ -30,7 +30,7 @@ $ pip install vkquick
     $ python -m venv env
     $ env\Scripts\activate.bat
     $ pip install poetry
-    $ poetry install
+    $ poetry install --no-dev
     ```
     </div>
 
