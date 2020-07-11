@@ -2,7 +2,6 @@
 Обработчики сигналов (собственных событий)
 """
 from asyncio import iscoroutinefunction as icf
-from asyncio import create_task
 from dataclasses import dataclass
 from typing import Any
 
@@ -22,9 +21,9 @@ class Signal:
 
     async def run(self, *args, **kwargs):
         if icf(self.code):
-            create_task(self.code(*args, **kwargs))
+            return await self.code(*args, **kwargs)
         else:
-            self.code(*args, **kwargs)
+            return self.code(*args, **kwargs)
 
 
 class SignalsList(list):
@@ -38,4 +37,4 @@ class SignalsList(list):
         """
         for signal in self:
             if signal.name == name:
-                await signal.run(*args, **kwargs)
+                return await signal.run(*args, **kwargs)
