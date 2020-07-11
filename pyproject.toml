@@ -1,11 +1,24 @@
 [tool.poetry]
 name = "vkquick"
-version = "0.1.0"
+version = "0.2.0"
 description = "Package for quick writing vk chat bots"
+license = "MIT"
+homepage = "https://github.com/Rhinik/vkquick"
+documentation = "https://rhinik.github.io"
 authors = ["Kurbatov Yan <deknowny@gmail.com>"]
 readme = "README.md"
 keywords = [
     "vk", "async", "bots", "quick", "api"
+]
+classifiers = [
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Natural Language :: Russian",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Code Generators",
+    "Typing :: Typed",
+    "Topic :: Utilities"
 ]
 
 [tool.poetry.dependencies]
@@ -30,3 +43,7 @@ bot = "vkquick.console:bot"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry.urls]
+"VK group" = "https://vk.com/vkquick"
+"Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
