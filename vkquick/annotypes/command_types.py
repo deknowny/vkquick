@@ -135,6 +135,7 @@ class Literal(CommandArgument):
     def __init__(self, *values):
         self.rexp = "|".join(values)
 
+
 class Regex(CommandArgument):
     """
     Тип по регулярному выражению и фабрике.
@@ -152,6 +153,7 @@ class Regex(CommandArgument):
         return self.factory(
             bin_stack.command_frame.group(argname)
         )
+        
 
 class Optional(CommandArgument):
     """
