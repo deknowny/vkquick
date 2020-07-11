@@ -7,6 +7,7 @@ vkquick.egg-info/
 todo/
 .pytest_cache/
 site/
+dist/
 
 # Tests data
 tests/test_bot/config.toml
