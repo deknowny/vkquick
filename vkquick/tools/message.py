@@ -42,7 +42,6 @@ class Message:
         def hello_world():
             return "Hello, world!"
     """
-
     def __init__(
         self,
         message: Optional[int] = None, *,
