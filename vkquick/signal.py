@@ -1,6 +1,9 @@
 """
 Обработчики сигналов (собственных событий)
 """
+from vkquick import current
+
+
 from asyncio import iscoroutinefunction as icf
 from dataclasses import dataclass
 from typing import Any
@@ -38,3 +41,12 @@ class SignalsList(list):
         for signal in self:
             if signal.name == name:
                 return await signal.run(*args, **kwargs)
+
+
+async def signal(name, *args, **kwargs):
+    """
+    Вызов сигнала с именем name и параметрами `*args` и `**kwargs`
+    """
+    return await current.bot.signals.resolve(
+        name, *args, **kwargs
+    )
