@@ -118,5 +118,6 @@ class UserAnno:
     ```__init__``` принимает *fields поле,
     которое передается в ```users.get``` в параметре ```fields```
     """
-    def __init__(self, *fields):
+    def __init__(self, *fields, name_case: str = "nom"):
         self.fields = fields
+        self.name_case = name_case
