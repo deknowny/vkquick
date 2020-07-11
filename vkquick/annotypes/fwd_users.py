@@ -16,7 +16,9 @@ class FwdUsers(Annotype, UserAnno):
         users = []
         for msg in event.object.message.fwd_messages:
             user_id = msg.from_id
-            user = await User(user_id=user_id).get_info(*self.fields)
+            user = await User(user_id=user_id).get_info(
+                *self.fields, name_case=self.name_case
+            )
             users.append(user)
 
         return users

@@ -13,6 +13,6 @@ class RepliedUser(Annotype, UserAnno):
         if "reply_message" in event.object.message:
             return await User(
                 user_id=event.object.message.reply_message.from_id
-            ).get_info(*self.fields)
+            ).get_info(*self.fields, name_case=self.name_case)
         else:
             return None

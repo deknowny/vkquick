@@ -9,4 +9,7 @@ class Sender(Annotype, UserAnno):
     async def prepare(self, argname, event, func, bin_stack) -> User:
         return await User(
             user_id=event.object.message.from_id
-        ).get_info(*self.fields)
+        ).get_info(
+            *self.fields,
+            name_case=self.name_case
+        )
