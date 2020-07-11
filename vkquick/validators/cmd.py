@@ -8,6 +8,7 @@ from re import IGNORECASE
 
 from .base import Validator
 from vkquick import Reaction
+from vkquick.annotypes.command_types import Optional as CmdOptional
 
 
 
@@ -112,7 +113,11 @@ class Cmd(Validator):
     def __call__(self, func):
         if self.argline is None:
             for name, value in func.command_args.items():
-                self.rexp += rf"\s+(?P<{name}>{Reaction.convert(value).rexp})"
+                cmd_type = Reaction.convert(value)
+                if isinstance(cmd_type, CmdOptional):
+                    self.rexp += rf"(:?\s+(?P<{name}>{cmd_type.rexp}))?"
+                else:
+                    self.rexp += rf"\s+(?P<{name}>{cmd_type.rexp})"
         else:
             comkwargs = {}
             for name, value in func.command_args.items():
