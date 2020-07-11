@@ -52,7 +52,7 @@ class Keyboard(UI):
             return vq.Message("Your Keyboard:", keyboard=kb)
     """
     def __init__(
-        self,
+        self, *,
         one_time: bool = True,
         inline: bool = False
     ):
