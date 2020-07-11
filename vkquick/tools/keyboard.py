@@ -48,7 +48,7 @@ class Keyboard(UI):
             kb.add(vq.Button.line())
             kb.add(vq.Button.text("fizz").secondary())
             kb.add(vq.Button.text("bazz").primary())
-            
+
             return vq.Message("Your Keyboard:", keyboard=kb)
     """
     def __init__(
@@ -67,6 +67,14 @@ class Keyboard(UI):
                 inline=inline,
                 buttons=[[]]
             )
+
+    @classmethod
+    def empty(cls):
+        """
+        Возвращает пустую клавиатуру
+        (используется, чтобы убрать one_time=False кливиатуру)
+        """
+        return '{"buttons":[],"one_time":true}'
 
     def add(self, button: Button = Button.line()) -> Keyboard:
         """

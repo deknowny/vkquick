@@ -88,3 +88,11 @@ def test_info():
     assert kb1.info == kb1_dict
     assert kb2.info == kb2_dict
     assert kb3.info == kb3_dict
+
+
+def test_empty():
+    assert (
+        '{"buttons":[],"one_time":true}' ==
+        vq.Keyboard.empty() ==
+        vq.Keyboard().empty()
+    )
