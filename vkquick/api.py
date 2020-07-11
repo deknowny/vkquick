@@ -50,14 +50,16 @@ class API(Annotype):
     """
     Передавайте, только если нужен аргумент ```as_group_```
     """
+    URL: str = "https://api.vk.com/method/"
+    """
+    URL API запросов
+    """
     factory: type = attrdict.AttrMap
     """
     Фабрика для возвращаемых ответов
     """
 
     def __post_init__(self):
-        self.URL: str = "https://api.vk.com/method/"
-
         self._method = ""
         self._last_request_time = 0
         self._delay = 1/20 if self.owner == "group" else 1/3

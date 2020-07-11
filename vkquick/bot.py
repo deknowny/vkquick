@@ -71,6 +71,11 @@ class Bot(Annotype):
     Тип владельца токена. group/user
     """
 
+    URL: str = "https://api.vk.com/method/"
+    """
+    URL API запросов
+    """
+
     signals: List[Signal] = field(default_factory=SignalsList)
     """
     Список обрабатываемых сигналов
@@ -93,7 +98,8 @@ class Bot(Annotype):
             token=self.token,
             version=self.version,
             owner=self.owner,
-            group_id=self.group_id
+            group_id=self.group_id,
+            URL=self.URL
         )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
