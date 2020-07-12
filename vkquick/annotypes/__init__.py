@@ -12,7 +12,7 @@ from .command_types import String
 from .command_types import UserMention
 from .command_types import CommandArgument
 from .command_types import Literal
-from .command_types import Regex
+from .command_types import Custom
 from .command_types import Optional
 
 from .event import Event
@@ -23,3 +23,4 @@ from .client_info import ClientInfo
 from .peer_id import PeerID
 from .group_id import GroupID
 from .chat_id import ChatID
+from .callback_answer import CallbackAnswer

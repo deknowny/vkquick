@@ -136,7 +136,7 @@ class Literal(CommandArgument):
         self.rexp = "|".join(values)
 
 
-class Regex(CommandArgument):
+class Custom(CommandArgument):
     """
     Тип по регулярному выражению и фабрике.
     Своего рода быстрый кастомный тип без наследования
@@ -153,7 +153,7 @@ class Regex(CommandArgument):
         return self.factory(
             bin_stack.command_frame.group(argname)
         )
-        
+
 
 class Optional(CommandArgument):
     """
