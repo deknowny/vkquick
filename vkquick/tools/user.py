@@ -96,7 +96,7 @@ class User:
     def __str__(self):
         return (
             "<"
-            "vq.User "
+            "vq.tools.user.User "
             f"id={self.id} "
             f'name="{self.fn} {self.ln}"'
             ">"

@@ -10,7 +10,8 @@ class Event(Annotype, AttrMap):
     @classmethod
     def prepare(cls, argname, event, func, bin_stack):
         return cls(event._mapping)
+
     def __str__(self):
-        return f"<vq.Event type=\"{self.type}\">"
+        return f"<vkquick.annotypes.event.Event type=\"{self.type}\">"
 
     __repr__ = __str__
