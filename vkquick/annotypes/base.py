@@ -4,7 +4,7 @@
 from abc import abstractmethod, ABC
 from typing import Callable
 
-from vkquick.reaction import Reaction
+# from vkquick.reaction import Reaction
 
 
 class Annotype(ABC):
@@ -17,7 +17,7 @@ class Annotype(ABC):
         self,
         argname: str,
         event: "vkquick.annotypes.event.Event",
-        func: Reaction,
+        func: "vkquick.reaction.Reaction",
         bin_stack: type
     ):
         """
