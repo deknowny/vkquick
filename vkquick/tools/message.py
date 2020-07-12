@@ -4,9 +4,11 @@ from typing import Optional, List
 from attrdict import AttrMap
 
 from .uploader import Uploader
+from vkquick import current
+from vkquick.annotypes.base import Annotype
 
 
-class Message:
+class Message(Annotype):
     """
     Используйте в своей реакции,
     чтобы отправить сообщение в диалог
@@ -79,12 +81,34 @@ class Message:
         self._params = AttrMap(
             dict(
                 filter(
-                    lambda x: x[1] is not None, preload_data.items()
+                    lambda x: x[1] is not None,
+                    preload_data.items()
                 )
             )
         )
         self._set_path()
         self._join_attach()
+
+    def prepare(
+        self,
+        argname: str,
+        event: "vkquick.annotypes.event.Event",
+        func: "vkquick.reaction.Reaction",
+        bin_stack: type
+    ):
+        self._event = event
+        return self
+
+    async def __call__(self, *args, **kwargs):
+        """
+        Отправляет сообщение без `return`
+        """
+        self.__init__(*args, **kwargs)
+
+        if self.params.peer_id is Ellipsis:
+            self.params.peer_id = self._event.object.message.peer_id
+
+        return await current.api.messages.send(**self.params)
 
     @property
     def params(self):
