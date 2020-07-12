@@ -17,7 +17,7 @@ import attrdict
 import colorama
 
 from . import exception as ex
-from .annotypes import Annotype
+from .annotypes.base import Annotype
 from . import current
 
 
