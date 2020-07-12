@@ -358,6 +358,12 @@ def run(reload, once_time, debug):
         import src
         config = attrdict.AttrMap(toml.load("config.toml"))
 
+        URL = (
+            config.api.URL
+            if "URL" in config.api else
+            "https://api.vk.com/method/"
+        )
+
         settings = dict(
             token=config.api.token,
             group_id=config.api.group_id,
@@ -365,7 +371,7 @@ def run(reload, once_time, debug):
             owner=config.api.owner,
             wait=config.longpoll.wait,
             debug=debug,
-            URL=config.api.URL,
+            URL=URL,
             config=config
         )
 
@@ -397,12 +403,21 @@ def run(reload, once_time, debug):
         # Bot's
         import src
         config = attrdict.AttrMap(toml.load("config.toml"))
+
+        # Все эти конструкции дико костыльные.
+        # Глобальные изменения будут в 1.0
+        URL = (
+            config.api.URL
+            if "URL" in config.api else
+            "https://api.vk.com/method/"
+        )
         settings = dict(
             token=config.api.token,
             group_id=config.api.group_id,
             version=config.api.version,
             owner=config.api.owner,
             wait=config.longpoll.wait,
+            url=URL,
             debug=debug,
             config=config
         )
