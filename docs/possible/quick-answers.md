@@ -73,10 +73,26 @@
 
 
 !!! Note
-    Вы не можете использовать yield вместе с `vq.Message` или return. Но возможность "накапливания" аргументов для отправки появится позже
+    Вы не можете использовать yield вместе с `vq.Message` или return
+
+## Отправка сразу
+Вы также можете отправить сообщение внутри реакции сразу и продолжить выполнять какой-то код, предварительно используя `vq.Message()` как payload-тип
+
+```python
+import vkquick as vq
 
 
-Однако, вы все еще можете использовать "ручное" управление и отправить сообщение по старинке. Например, если нужно что-то сделать после отправки
+@vq.Reaction("message_new")
+async def foo(answer: vq.Message()):
+    """
+    Отправит 3 сообщения
+    """
+    await answer("Lorem ipsum", disable_mentions=True)
+    await answer("Ipsum lorem", keyboard=vq.Keyboard.empty())
+    return vq.Message("Star it pls: https://github.com/Rhinik/vkquick")
+```
+
+Однако, вы все еще можете использовать "ручное" управление и отправить сообщение по старинке
 
 ```python
 import vkquick as vq
@@ -93,8 +109,28 @@ async def hello(api: vq.API, event: vq.Event()):
     # Doing smth
 ```
 
-!!! todo
-    Для `vq.Message` в v0.2 планируется добавить метод `send`, чтобы была возможность быстрой отправки сообщения и исполнение какого-либо кода без использования подхода, показанного выше
-
 !!! Tip
     Для сообщений, отправленных от лица пользователя (хотя vkquick не подразумевает создание юзерботов) вручную, можете использовать функцию `random_id`, опционально принимающая диапазон генерируемого `±`числа  
+
+## Ответ на нажатие callback-кнопки
+Вместо вызова `messages.sendMessageEventAnswer` вы можете использовать payload-аргумент `CallbackAnswer`. Вызовите метод, соответствующий типу события, которое должно случиться и передайте соответствующие аргументы
+
+Всевозможные типы
+
+* `show_snackbar`
+* `open_link`
+* `open_app`
+
+принимает в себя соответствующие аргументы, требуемые для поля `event_data`
+
+!!! Example
+    ```python
+    import vkquick as vq
+
+
+    @vq.Reaction("message_event")
+    async def callback_handler(
+        cbanswer: vq.CallbackAnswer()
+    ):
+        await cbanswer.show_snackbar("Lorem ipsum")
+    ```
