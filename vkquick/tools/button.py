@@ -184,3 +184,14 @@ class Button(UI):
         hash_ = data.pop("hash_")
         data.update(hash=hash_)
         return data
+
+    @staticmethod
+    @_payload_convert
+    def callback(
+        label: str, *,
+        payload: Optional[Union[str, dict]] = None
+    ) -> Button:
+        """
+        Кнопка типа callback
+        """
+        return locals()
