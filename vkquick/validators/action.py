@@ -1,8 +1,7 @@
 from .base import Validator
-from vkquick.annotypes import Annotype
 
 
-class Action(Validator, Annotype):
+class Action(Validator):
     """
     Декоратор для валидации сообщения
     на параметр `action` в ```event.object.message```
@@ -13,10 +12,6 @@ class Action(Validator, Annotype):
 
     def __init__(self, *types):
         self.types = types
-
-    @staticmethod
-    def prepare(argname, event, func, bin_stack):
-        return event.object.message.action
 
     def isvalid(self, event, com, bin_stack):
         if (
