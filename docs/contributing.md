@@ -20,7 +20,7 @@
 === "Windows (cmd)"
     <div class="termy">
     ```console
-    $ git clone -b 0.1 https://github.com/Rhinik/vkquick/
+    $ git clone -b 0.2 https://github.com/Rhinik/vkquick/
     $ cd vkquick
     $ python -m venv env
     $ env\Scripts\activate.bat
