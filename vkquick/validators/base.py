@@ -13,6 +13,7 @@ class Validator(ABC):
     Базовый класс для всех валидаторов
     (Дектораторов над реакциями)
     """
+
     def __call__(self, func):
         """
         Вызывается по время декорирования
@@ -22,12 +23,7 @@ class Validator(ABC):
         return func
 
     @abstractmethod
-    def isvalid(
-        self,
-        event: Event,
-        com: Reaction,
-        bin_stack: type
-    ):
+    def isvalid(self, event: Event, com: Reaction, bin_stack: type):
         """
         Определяет, валидна ли команда (reaction) или нет.
         Возвращает кортеж из 2х элементов:

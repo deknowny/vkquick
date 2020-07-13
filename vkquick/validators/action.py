@@ -15,8 +15,8 @@ class Action(Validator):
 
     def isvalid(self, event, com, bin_stack):
         if (
-            "action" in event.object.message and
-            event.object.message.action.type in self.types
+            "action" in event.object.message
+            and event.object.message.action.type in self.types
         ):
             return (True, "")
         return (False, "No action or action.type is an another")

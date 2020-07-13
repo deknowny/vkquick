@@ -7,6 +7,7 @@ import asyncio
 import concurrent.futures
 
 import attrdict
+
 # But it's async via concurrent.futures.ThreadPoolExecutor()
 import requests
 
@@ -19,6 +20,7 @@ class _DocGetter:
     """
     Загрузчик и ~сохранятор~ фотографии
     """
+
     data_upload: dict
     method_save: str
     method_upload: str
@@ -28,24 +30,19 @@ class _DocGetter:
         """
         Передайте сюда аргументы для ```save``` метода
         """
-        resp = await current.api.method(
-            self.method_upload, self.data_upload
-        )
+        resp = await current.api.method(self.method_upload, self.data_upload)
         loop = asyncio.get_running_loop()
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
             resp = await loop.run_in_executor(
-                pool, partial(
-                    requests.post,
-                    url=resp["upload_url"],
-                    files=self.files
-                )
-        )
+                pool,
+                partial(
+                    requests.post, url=resp["upload_url"], files=self.files
+                ),
+            )
         resp = resp.json()
         resp.update(kwargs)
-        data = await current.api.method(
-            self.method_save, resp
-        )
+        data = await current.api.method(self.method_save, resp)
         data = Doc(data)
 
         return data
@@ -69,6 +66,7 @@ class Doc(Uploader):
     ```access_key``` -- он также добавится.
     Например: ```doc-34534_223453413+ab52364ce86```
     """
+
     def __init__(self, info: dict):
         self.info = attrdict.AttrMap(info)
         data = attrdict.AttrMap(self.info[self.info.type])
@@ -89,7 +87,7 @@ class Doc(Uploader):
                     data_upload=data_save,
                     method_save=f"docs.{method_save}",
                     method_upload=f"docs.{method_upload}",
-                    files=files
+                    files=files,
                 )
 
             return inside
@@ -101,10 +99,7 @@ class Doc(Uploader):
         """
         Получает байты из переданного объекта под файл
         """
-        if (
-            isinstance(data, TextIOWrapper) or
-            isinstance(data, BytesIO)
-        ):
+        if isinstance(data, TextIOWrapper) or isinstance(data, BytesIO):
             return data.read()
         elif isinstance(data, Path):
             with open(data, "rb") as file:
@@ -119,24 +114,37 @@ class Doc(Uploader):
     def message(
         file: Union[str, bytes, TextIOWrapper, BytesIO, Path],
         type_: Literal["doc", "audio_message", "graffiti"],
-        peer_id: int
+        peer_id: int,
     ):
         """
         Загружает документ для отправки в сообщение
         """
-        return {"peer_id": peer_id, "type": type_}, {
-            "file": ("file.txt", Doc._get_file(file), "multipart/form-data")
-        }
+        return (
+            {"peer_id": peer_id, "type": type_},
+            {
+                "file": (
+                    "file.txt",
+                    Doc._get_file(file),
+                    "multipart/form-data",
+                )
+            },
+        )
 
     @staticmethod
     @_uploader("get_wall_upload_server", "save")
     def wall(
-        file: Union[str, bytes, TextIOWrapper, BytesIO, Path],
-        group_id: int
+        file: Union[str, bytes, TextIOWrapper, BytesIO, Path], group_id: int
     ):
         """
         Загружает документ для поста
         """
-        return {"group_id": group_id}, {
-            "file": ("file.txt", Doc._get_file(file), "multipart/form-data")
-        }
+        return (
+            {"group_id": group_id},
+            {
+                "file": (
+                    "file.txt",
+                    Doc._get_file(file),
+                    "multipart/form-data",
+                )
+            },
+        )

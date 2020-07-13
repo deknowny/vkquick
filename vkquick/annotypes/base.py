@@ -18,7 +18,7 @@ class Annotype(ABC):
         argname: str,
         event: "vkquick.annotypes.event.Event",
         func: "vkquick.reaction.Reaction",
-        bin_stack: type
+        bin_stack: type,
     ):
         """
         Вызывается перед тем,

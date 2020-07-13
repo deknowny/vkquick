@@ -44,9 +44,11 @@ class Message(Annotype):
         def hello_world():
             return "Hello, world!"
     """
+
     def __init__(
         self,
-        message: Optional[int] = None, *,
+        message: Optional[int] = None,
+        *,
         peer_id: Optional[int] = None,
         random_id: Optional[int] = None,
         user_id: Optional[int] = None,
@@ -68,10 +70,10 @@ class Message(Annotype):
         intent: Optional[str] = None,
         expire_ttl: Optional[int] = None,
         silent: Optional[bool] = None,
-        **kwargs
+        **kwargs,
     ):
         if random_id is None:
-            random_id = randint(-2*31, 2*31)
+            random_id = randint(-2 * 31, 2 * 31)
 
         preload_data = locals().copy()
         del preload_data["self"]
@@ -79,12 +81,7 @@ class Message(Annotype):
         preload_data.update(kwargs_vals)
 
         self._params = AttrMap(
-            dict(
-                filter(
-                    lambda x: x[1] is not None,
-                    preload_data.items()
-                )
-            )
+            dict(filter(lambda x: x[1] is not None, preload_data.items()))
         )
         self._set_path()
         self._join_attach()
@@ -94,7 +91,7 @@ class Message(Annotype):
         argname: str,
         event: "vkquick.annotypes.event.Event",
         func: "vkquick.reaction.Reaction",
-        bin_stack: type
+        bin_stack: type,
     ):
         self._event = event
         return self
@@ -125,9 +122,8 @@ class Message(Annotype):
             if isinstance(self._params.attachment, str):
                 return
 
-            if (
-                isinstance(self._params.attachment, list) or
-                isinstance(self._params.attachment, tuple)
+            if isinstance(self._params.attachment, list) or isinstance(
+                self._params.attachment, tuple
             ):
                 new_attachments = []
                 for attach in self._params.attachment:
@@ -139,9 +135,7 @@ class Message(Annotype):
                         raise ValueError(
                             f"Invalid attachment type: {type(attach)}"
                         )
-                self._params.attachment =\
-                    ",".join(new_attachments)
-
+                self._params.attachment = ",".join(new_attachments)
 
     def _set_path(self):
         """
@@ -149,7 +143,7 @@ class Message(Annotype):
         были ли переданы другие параметры
         """
         if not (
-            {"user_id", "domain", "chat_id", "user_ids", "peer_ids"} &
-            set(self._params)
+            {"user_id", "domain", "chat_id", "user_ids", "peer_ids"}
+            & set(self._params)
         ):
             self._params.peer_id = Ellipsis

@@ -11,6 +11,7 @@ class UI:
     возможнсть генерации по словарю (напрямую в JSON)
     и саму конфертацию через __repr__
     """
+
     def __repr__(self) -> str:
         """
         Create for sending

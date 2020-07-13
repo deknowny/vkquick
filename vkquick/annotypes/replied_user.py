@@ -9,7 +9,10 @@ class RepliedUser(Annotype, UserAnno):
     Пользователь, находящийся в reply_message.
     Если такого нет -- возвращается None
     """
-    async def prepare(self, argname, event, func, bin_stack) -> Union[User, None]:
+
+    async def prepare(
+        self, argname, event, func, bin_stack
+    ) -> Union[User, None]:
         if "reply_message" in event.object.message:
             return await User(
                 user_id=event.object.message.reply_message.from_id

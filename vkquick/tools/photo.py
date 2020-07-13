@@ -18,12 +18,12 @@ from vkquick import current
 from .uploader import Uploader
 
 
-
 @dataclass
 class _PhotosGetter:
     """
     ~Сохранятор~ и загрузчик фотографий
     """
+
     data_upload: dict
     method_save: str
     method_upload: str
@@ -33,24 +33,19 @@ class _PhotosGetter:
         """
         Передайте сюда параметры для ```save``` метода
         """
-        resp = await current.api.method(
-            self.method_upload, self.data_upload
-        )
+        resp = await current.api.method(self.method_upload, self.data_upload)
         loop = asyncio.get_running_loop()
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
             resp = await loop.run_in_executor(
-                pool, partial(
-                    requests.post,
-                    url=resp["upload_url"],
-                    files=self.files
-                )
-        )
+                pool,
+                partial(
+                    requests.post, url=resp["upload_url"], files=self.files
+                ),
+            )
         resp = resp.json()
         resp.update(kwargs)
-        data = await current.api.method(
-            self.method_save, resp
-        )
+        data = await current.api.method(self.method_save, resp)
         data = [Photo(i) for i in data]
 
         return data
@@ -128,13 +123,13 @@ class Photo(Uploader):
 
 
     """
+
     def __init__(self, info: dict):
         self.info = attrdict.AttrMap(info)
         self.full_id = f"{self.info.owner_id}_{self.info.id}"
         self.as_attach = f"photo{self.full_id}"
         if "access_key" in self.info:
             self.as_attach += f"_{self.info.access_key}"
-
 
     def __repr__(self):
         return self.as_attach
@@ -145,10 +140,7 @@ class Photo(Uploader):
         Скачивает фотографию и возвращает ее байты по ссылке ```url```
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url=url,
-                ssl=ssl.SSLContext()
-            ) as resp:
+            async with session.get(url=url, ssl=ssl.SSLContext()) as resp:
                 return await resp.read()
 
     def _uploader(method_upload, method_save):
@@ -160,7 +152,7 @@ class Photo(Uploader):
                     data_upload=data_save,
                     method_save=f"photos.{method_save}",
                     method_upload=f"photos.{method_upload}",
-                    files=files
+                    files=files,
                 )
 
             return inside
@@ -182,7 +174,6 @@ class Photo(Uploader):
         else:
             raise ValueError("Invalid data format")
 
-
     @staticmethod
     @_uploader("get_upload_server", "save")
     def album(
@@ -192,72 +183,96 @@ class Photo(Uploader):
         file4: Optional[Union[str, bytes, Path]] = None,
         file5: Optional[Union[str, bytes, Path]] = None,
         album_id: Optional[int] = None,
-        group_id: Optional[int] = None
+        group_id: Optional[int] = None,
     ):
         """
         Загружает фотографии в альбом
         """
         files = {
-            "file1": ("file.png", Photo._get_photo(file1), "multipart/form-data"),
-            "file2": ("file.png", Photo._get_photo(file2), "multipart/form-data"),
-            "file3": ("file.png", Photo._get_photo(file3), "multipart/form-data"),
-            "file4": ("file.png", Photo._get_photo(file4), "multipart/form-data"),
-            "file5": ("file.png", Photo._get_photo(file5), "multipart/form-data")
+            "file1": (
+                "file.png",
+                Photo._get_photo(file1),
+                "multipart/form-data",
+            ),
+            "file2": (
+                "file.png",
+                Photo._get_photo(file2),
+                "multipart/form-data",
+            ),
+            "file3": (
+                "file.png",
+                Photo._get_photo(file3),
+                "multipart/form-data",
+            ),
+            "file4": (
+                "file.png",
+                Photo._get_photo(file4),
+                "multipart/form-data",
+            ),
+            "file5": (
+                "file.png",
+                Photo._get_photo(file5),
+                "multipart/form-data",
+            ),
         }
         files = filter(lambda x: x[1] is not None, files.items())
         files = dict(files)
-        data = dict(
-            album_id=album_id,
-            group_id=group_id
-        )
+        data = dict(album_id=album_id, group_id=group_id)
 
         return data, files
 
-
     @staticmethod
     @_uploader("get_wall_upload_server", "save_wall_photo")
-    def wall(
-        photo: Union[str, bytes, Path],
-        group_id: Optional[int] = None
-    ):
+    def wall(photo: Union[str, bytes, Path], group_id: Optional[int] = None):
         """
         Загружает фотографию на стену
         """
-        return {
-            "group_id": group_id
-        }, {"file": ("file.png", Photo._get_photo(photo), "multipart/form-data")}
-
+        return (
+            {"group_id": group_id},
+            {
+                "file": (
+                    "file.png",
+                    Photo._get_photo(photo),
+                    "multipart/form-data",
+                )
+            },
+        )
 
     @staticmethod
     @_uploader("get_owner_photo_upload_server", "save_owner_photo")
     def page_ava(
-        photo: Union[str, bytes, Path],
-        owner_id: Optional[int] = None
+        photo: Union[str, bytes, Path], owner_id: Optional[int] = None
     ):
         """
         Загружает фотографию на аватар пользователя/сообщества
         """
-        return {
-            "owner_id": owner_id
-        }, {"photo": ("file.png", Photo._get_photo(photo), "multipart/form-data")}
-
+        return (
+            {"owner_id": owner_id},
+            {
+                "photo": (
+                    "file.png",
+                    Photo._get_photo(photo),
+                    "multipart/form-data",
+                )
+            },
+        )
 
     @staticmethod
     @_uploader("get_messages_upload_server", "save_messages_photo")
-    def message(
-        *files: Union[str, bytes, Path],
-        peer_id: int
-    ):
+    def message(*files: Union[str, bytes, Path], peer_id: int):
         """
         Загружает фотографии для отправки в сообщение
         """
         files = {
-            f"file{ind}": ("file.png", Photo._get_photo(val), "multipart/form-data")
+            f"file{ind}": (
+                "file.png",
+                Photo._get_photo(val),
+                "multipart/form-data",
+            )
             for ind, val in enumerate(files[:10])
         }
 
         return {"peer_id": peer_id}, files
-
 
     @staticmethod
     @_uploader("get_chat_upload_server", "set_chat_photo")
@@ -271,13 +286,15 @@ class Photo(Uploader):
         """
         Загружает фотографию на аватар чата
         """
-        return {
-            "chat_id": chat_id,
-            "crop_x": crop_x,
-            "crop_y": crop_y,
-            "crop_width": crop_width,
-        }, {"file": Photo._get_photo(file)}
-
+        return (
+            {
+                "chat_id": chat_id,
+                "crop_x": crop_x,
+                "crop_y": crop_y,
+                "crop_width": crop_width,
+            },
+            {"file": Photo._get_photo(file)},
+        )
 
     @staticmethod
     @_uploader("get_market_upload_server", "save_market_photo")
@@ -292,23 +309,35 @@ class Photo(Uploader):
         """
         Загружает фотографию товара
         """
-        return {
-            "chat_id": chat_id,
-            "crop_x": crop_x,
-            "crop_y": crop_y,
-            "crop_width": crop_width,
-        }, {"file": ("file.png", Photo._get_photo(file), "multipart/form-data")}
-
+        return (
+            {
+                "chat_id": chat_id,
+                "crop_x": crop_x,
+                "crop_y": crop_y,
+                "crop_width": crop_width,
+            },
+            {
+                "file": (
+                    "file.png",
+                    Photo._get_photo(file),
+                    "multipart/form-data",
+                )
+            },
+        )
 
     @staticmethod
     @_uploader("get_market_album_upload_server", "save_market_album_photo")
-    def market_album(
-        file: Union[str, bytes, Path],
-        group_id: int
-    ):
+    def market_album(file: Union[str, bytes, Path], group_id: int):
         """
         Загружает фотографию в альбом товара
         """
-        return {
-            "group_id": group_id
-        }, {"file": ("file.png", Photo._get_photo(file), "multipart/form-data")}
+        return (
+            {"group_id": group_id},
+            {
+                "file": (
+                    "file.png",
+                    Photo._get_photo(file),
+                    "multipart/form-data",
+                )
+            },
+        )

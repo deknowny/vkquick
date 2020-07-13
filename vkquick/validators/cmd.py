@@ -11,13 +11,13 @@ from vkquick import Reaction
 from vkquick.annotypes.command_types import Optional as CmdOptional
 
 
-
 class _SafeDict(dict):
     """
     For formatting
     """
+
     def __missing__(self, key):
-        return '{' + key + '}'
+        return "{" + key + "}"
 
 
 class Cmd(Validator):
@@ -109,7 +109,6 @@ class Cmd(Validator):
             renames = f"(?:{'|'.join(self.names)})"
         self.rexp = reprefs + renames
 
-
     def __call__(self, func):
         if self.argline is None:
             for name, value in func.command_args.items():
@@ -121,7 +120,9 @@ class Cmd(Validator):
         else:
             comkwargs = {}
             for name, value in func.command_args.items():
-                comkwargs[name] = f"(?P<{name}>{Reaction.convert(value).rexp})"
+                comkwargs[
+                    name
+                ] = f"(?P<{name}>{Reaction.convert(value).rexp})"
             self.rexp += self.argline.format_map(_SafeDict(comkwargs))
 
         super().__call__(func)
@@ -130,10 +131,15 @@ class Cmd(Validator):
     def isvalid(self, event, com, bin_stack):
         matched = (
             fullmatch(self.rexp, event.object.message.text)
-            if self.sensetive else
-            fullmatch(self.rexp, event.object.message.text, flags=IGNORECASE)
+            if self.sensetive
+            else fullmatch(
+                self.rexp, event.object.message.text, flags=IGNORECASE
+            )
         )
         if matched:
             bin_stack.command_frame = matched
             return (True, "")
-        return (False, f"String `{event.object.message.text}` isn't matched for pattern `{self.rexp}`")
+        return (
+            False,
+            f"String `{event.object.message.text}` isn't matched for pattern `{self.rexp}`",
+        )

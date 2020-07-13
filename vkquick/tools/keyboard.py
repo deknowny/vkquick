@@ -51,22 +51,12 @@ class Keyboard(UI):
 
             return vq.Message("Your Keyboard:", keyboard=kb)
     """
-    def __init__(
-        self, *,
-        one_time: bool = True,
-        inline: bool = False
-    ):
+
+    def __init__(self, *, one_time: bool = True, inline: bool = False):
         if inline:
-            self.info = dict(
-                inline=inline,
-                buttons=[[]]
-            )
+            self.info = dict(inline=inline, buttons=[[]])
         else:
-            self.info = dict(
-                one_time=one_time,
-                inline=inline,
-                buttons=[[]]
-            )
+            self.info = dict(one_time=one_time, inline=inline, buttons=[[]])
 
     @classmethod
     def empty(cls):

@@ -77,6 +77,7 @@ class List(CommandArgument):
 
     Вы также можете просто обернуть тип в [квадратные_скобки]
     """
+
     factory = list
 
     def __init__(
@@ -92,12 +93,16 @@ class List(CommandArgument):
             max_ = str(max_)
         min_ = str(min_)
 
-        self.rexp = f"(?:{part.rexp}(?:{sep}|$))" + "{" + f"{min_},{max_}" + "}"
+        self.rexp = (
+            f"(?:{part.rexp}(?:{sep}|$))" + "{" + f"{min_},{max_}" + "}"
+        )
         self.sep = sep
         self.part = part
 
     async def prepare(self, argname, event, func, bin_stack):
-        vals = re.split(self.sep, bin_stack.command_frame.group(argname).rstrip())
+        vals = re.split(
+            self.sep, bin_stack.command_frame.group(argname).rstrip()
+        )
         if icf(self.part.factory):
             return [await self.part.factory(val) for val in vals]
         else:
@@ -126,12 +131,12 @@ class UserMention(CommandArgument, UserAnno):
         return user
 
 
-
 class Literal(CommandArgument):
     """
     Один из возможных значений. Своего рода Enum.
     Паттерн представляет собой переданный слова, разделенные `|` (или)
     """
+
     def __init__(self, *values):
         self.rexp = "|".join(values)
 
@@ -141,18 +146,15 @@ class Custom(CommandArgument):
     Тип по регулярному выражению и фабрике.
     Своего рода быстрый кастомный тип без наследования
     """
+
     def __init__(self, rexp, factory: callable = str, /):
         self.rexp = rexp
         self.factory = factory
 
     async def prepare(self, argname, event, func, bin_stack):
         if icf(self.factory):
-            return await self.factory(
-                bin_stack.command_frame.group(argname)
-            )
-        return self.factory(
-            bin_stack.command_frame.group(argname)
-        )
+            return await self.factory(bin_stack.command_frame.group(argname))
+        return self.factory(bin_stack.command_frame.group(argname))
 
 
 class Optional(CommandArgument):
@@ -161,10 +163,11 @@ class Optional(CommandArgument):
     в случае пропуска возвращает переданный объект,
     обозначенный для умолчания, либо None
     """
-    def __init__(self, elem, default = None, /):
+
+    def __init__(self, elem, default=None, /):
         self.elem = elem
         self.default = default
-        self.rexp = f"(?:{elem.rexp})" # Optional made in Cmd
+        self.rexp = f"(?:{elem.rexp})"  # Optional made in Cmd
 
     async def prepare(self, argname, event, func, bin_stack):
         captured = bin_stack.command_frame.groupdict()
@@ -172,9 +175,5 @@ class Optional(CommandArgument):
             return self.default
 
         if icf(self.elem.factory):
-            return await self.elem.factory(
-                captured[argname]
-            )
-        return self.elem.factory(
-            captured[argname]
-        )
+            return await self.elem.factory(captured[argname])
+        return self.elem.factory(captured[argname])

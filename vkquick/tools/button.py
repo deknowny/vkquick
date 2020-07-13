@@ -24,25 +24,25 @@ class Button(UI):
     Button.open_link("google", link="https://google.com")
     ```
     """
+
     def __new__(cls, **info):
         self = object.__new__(cls)
         self.__init__(info)
         return self
 
     def __init__(self, info) -> None:
-        self.info = dict(
-            action=info
-        )
+        self.info = dict(action=info)
 
     def _payload_convert(func):
         """
         Конвертирует payload кнопки в нужный формат
         """
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             action = func(*args, **kwargs)
             action.update(type=func.__name__)
-            if action["payload"]is None:
+            if action["payload"] is None:
                 del action["payload"]
             else:
                 # Dumps to JSON
@@ -85,6 +85,7 @@ class Button(UI):
                     "for button type "
                     f'{self.info["action"]["type"]}'
                 )
+
         return wrapper
 
     @_is_text_button
@@ -124,8 +125,7 @@ class Button(UI):
     @staticmethod
     @_payload_convert
     def text(
-        label: str, *,
-        payload: Optional[Union[str, dict]] = None
+        label: str, *, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа text
@@ -135,9 +135,7 @@ class Button(UI):
     @staticmethod
     @_payload_convert
     def open_link(
-        label: str, *,
-        link: str,
-        payload: Optional[Union[str, dict]] = None
+        label: str, *, link: str, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа open_link
@@ -146,9 +144,7 @@ class Button(UI):
 
     @staticmethod
     @_payload_convert
-    def location(*,
-        payload: Optional[Union[str, dict]] = None
-    ) -> Button:
+    def location(*, payload: Optional[Union[str, dict]] = None) -> Button:
         """
         Кнопка типа
         """
@@ -156,9 +152,8 @@ class Button(UI):
 
     @staticmethod
     @_payload_convert
-    def vkpay(*,
-        hash_: str,
-        payload: Optional[Union[str, dict]] = None
+    def vkpay(
+        *, hash_: str, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа vkpay
@@ -171,11 +166,12 @@ class Button(UI):
     @staticmethod
     @_payload_convert
     def open_app(
-        label: str, *,
+        label: str,
+        *,
         app_id: int,
         owner_id: int,
         hash_: str,
-        payload: Optional[Union[str, dict]] = None
+        payload: Optional[Union[str, dict]] = None,
     ) -> Button:
         """
         Кнопка типа open_app
@@ -188,8 +184,7 @@ class Button(UI):
     @staticmethod
     @_payload_convert
     def callback(
-        label: str, *,
-        payload: Optional[Union[str, dict]] = None
+        label: str, *, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа callback

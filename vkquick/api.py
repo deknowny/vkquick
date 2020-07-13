@@ -62,7 +62,7 @@ class API(Annotype):
     def __post_init__(self):
         self._method = ""
         self._last_request_time = 0
-        self._delay = 1/20 if self.owner == "group" else 1/3
+        self._delay = 1 / 20 if self.owner == "group" else 1 / 3
 
     def __getattr__(self, attr) -> "self":
         """
@@ -103,16 +103,10 @@ class API(Annotype):
         """
         name = self._convert_name(name)
         await self._waiting()
-        data = {
-            "access_token": self.token,
-            "v": self.version,
-            **data
-        }
+        data = {"access_token": self.token, "v": self.version, **data}
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.URL + name,
-                data=data,
-                ssl=ssl.SSLContext()
+                url=self.URL + name, data=data, ssl=ssl.SSLContext()
             ) as response:
                 response = await response.json()
                 self._check_errors(response)

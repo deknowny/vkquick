@@ -9,11 +9,9 @@ class Template(UI):
     """
     Карусель. Later 
     """
+
     def __init__(self, type_: str = "carousel"):
-        self.info = dict(
-            type=type_,
-            elements=[]
-        )
+        self.info = dict(type=type_, elements=[])
 
     def __call__(self, gen: Generator[Element, None, None]):
         @wraps(gen)

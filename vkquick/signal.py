@@ -1,12 +1,11 @@
 """
 Обработчики сигналов (собственных событий)
 """
-from vkquick import current
-
-
 from asyncio import iscoroutinefunction as icf
 from dataclasses import dataclass
 from typing import Any
+
+from vkquick import current
 
 
 @dataclass
@@ -34,7 +33,7 @@ class SignalsList(list):
     Список обрабатываемых сигналов
     """
 
-    async def resolve(self, name: str, /,  *args, **kwargs):
+    async def resolve(self, name: str, /, *args, **kwargs):
         """
         Call a signal with name `name` and params *args and **kwargs
         """
@@ -47,6 +46,4 @@ async def signal(name, *args, **kwargs):
     """
     Вызов сигнала с именем name и параметрами `*args` и `**kwargs`
     """
-    return await current.bot.signals.resolve(
-        name, *args, **kwargs
-    )
+    return await current.bot.signals.resolve(name, *args, **kwargs)

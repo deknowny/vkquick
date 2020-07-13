@@ -42,6 +42,7 @@ class User:
 
     -> `Дуров (durov)`
     """
+
     def __init__(
         self,
         *,
@@ -51,9 +52,8 @@ class User:
     ):
         if mention is not None:
             if (
-                (prep := re.fullmatch(r"\[id(?P<id>\d+)\|.+?\]", mention))
-                is not None
-            ):
+                prep := re.fullmatch(r"\[id(?P<id>\d+)\|.+?\]", mention)
+            ) is not None:
                 user_id = prep.group("id")
                 user_id = int(user_id)
                 self._user_id = user_id
@@ -77,7 +77,7 @@ class User:
         self.info = await current.api.users.get(
             user_ids=[self._user_id],
             fields=",".join(fields),
-            name_case=name_case
+            name_case=name_case,
         )
         self.info = attrdict.AttrMap(self.info[0])
         # Quick access
@@ -105,10 +105,11 @@ class User:
     __repr__ = __str__
 
     def __format__(self, fstring):
-        return fstring \
-            .replace("<", "{") \
-            .replace(">", "}") \
+        return (
+            fstring.replace("<", "{")
+            .replace(">", "}")
             .format(**self.__dict__)
+        )
 
 
 class UserAnno:
@@ -118,6 +119,7 @@ class UserAnno:
     ```__init__``` принимает *fields поле,
     которое передается в ```users.get``` в параметре ```fields```
     """
+
     def __init__(self, *fields, name_case: str = "nom"):
         self.fields = fields
         self.name_case = name_case

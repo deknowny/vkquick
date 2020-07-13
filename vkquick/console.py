@@ -112,15 +112,18 @@ def bot():
     help="Создатель бота. Добавляется как правообладатель в лицензионный файл",
 )
 @click.option(
-    "-t", "--token",
+    "-t",
+    "--token",
     default="",
-    help="Токен группы/пользователя, у которого есть доступ к управлению нужны сообществом"
+    help="Токен группы/пользователя, у которого есть доступ к управлению нужны сообществом",
 )
 @click.option(
-    "-gi", "--group-id", "group_id",
+    "-gi",
+    "--group-id",
+    "group_id",
     default=0,
     type=int,
-    help="ID группы. Узнать можно здесь: https://regvk.com/id/"
+    help="ID группы. Узнать можно здесь: https://regvk.com/id/",
 )
 @click.argument("name")
 @bot.command()
@@ -133,64 +136,52 @@ def new(owner, name, token, group_id):
     src_path = Path(name) / "src"
     os.makedirs(str(src_path))
     with open(bot_path / "LICENSE", "w+") as file:
-        file.write(
-            MIT.format(owner=owner, year=year)
-        )
+        file.write(MIT.format(owner=owner, year=year))
     with open(bot_path / "config.toml", "w+") as file:
-        file.write(
-            CONFIG_TOML.format(
-                token=token, group_id=group_id
-            )
-        )
+        file.write(CONFIG_TOML.format(token=token, group_id=group_id))
     with open(bot_path / "README.md", "w+") as file:
-        file.write(
-            README.format(name=name.title())
-        )
+        file.write(README.format(name=name.title()))
 
     open(src_path / "__init__.py", "w+")
 
     click.echo(
-        click.style("Created ", fg="green") +\
-        click.style(name, fg="cyan", bold=True) +\
-        click.style(" bot. ", fg="green") +\
-        click.style("Don't forget `cd` to bot's directory", fg="green")
+        click.style("Created ", fg="green")
+        + click.style(name, fg="cyan", bold=True)
+        + click.style(" bot. ", fg="green")
+        + click.style("Don't forget `cd` to bot's directory", fg="green")
     )
     if not (token and group_id):
         click.echo(
-            click.style("\nPlease, add following parameters to ", fg="yellow") +\
-            click.style(str(Path(name) / "config.toml"), fg="cyan", bold=True) +\
-            click.style(" under ", fg="yellow") +\
-            click.style("[api]", fg="cyan", bold=True) +\
-            click.style(" section", fg="yellow")
+            click.style("\nPlease, add following parameters to ", fg="yellow")
+            + click.style(
+                str(Path(name) / "config.toml"), fg="cyan", bold=True
+            )
+            + click.style(" under ", fg="yellow")
+            + click.style("[api]", fg="cyan", bold=True)
+            + click.style(" section", fg="yellow")
         )
         if not token:
-            click.echo(
-                " -- " +\
-                click.style("token", fg="red", bold=True)
-            )
+            click.echo(" -- " + click.style("token", fg="red", bold=True))
         if not group_id:
-            click.echo(
-                " -- " +\
-                click.style("group_id", fg="red", bold=True)
-            )
+            click.echo(" -- " + click.style("group_id", fg="red", bold=True))
+
 
 @click.option(
-    "-r", "--rename",
-    type=str,
-    default="",
-    help="Перемименновывает команду"
+    "-r", "--rename", type=str, default="", help="Перемименновывает команду"
 )
 @click.option(
-    "-n", "--names",
+    "-n",
+    "--names",
     multiple=True,
     default=[],
-    help="Назначает имена для команды (по умолчанию команда откликается только на свое имя)"
+    help="Назначает имена для команды (по умолчанию команда откликается только на свое имя)",
 )
 @click.option(
-    "-d", "--delete",
+    "-d",
+    "--delete",
     is_flag=True,
     default=False,
-    help="Удаляет команду с таким именем"
+    help="Удаляет команду с таким именем",
 )
 @click.argument("name")
 @bot.command()
@@ -200,25 +191,27 @@ def com(name, names, delete, rename):
     """
     if delete:
         click.echo(
-            click.style("Command ", fg="yellow") +\
-            click.style(name, bold=True, fg="cyan") +\
-            click.style(" will be removed. Continue? ", fg="yellow") +\
-            click.style("(y/any)", bold=True),
-            nl=False
+            click.style("Command ", fg="yellow")
+            + click.style(name, bold=True, fg="cyan")
+            + click.style(" will be removed. Continue? ", fg="yellow")
+            + click.style("(y/any)", bold=True),
+            nl=False,
         )
         confirm = click.getchar()
         click.echo()
         if confirm == "y":
             shutil.rmtree(Path("src") / name, ignore_errors=True)
             with open(Path("src") / "__init__.py", "r") as file:
-                new_text = file.read().replace(f"from .{name} import {name}\n", "")
+                new_text = file.read().replace(
+                    f"from .{name} import {name}\n", ""
+                )
             with open(Path("src") / "__init__.py", "w") as file:
                 file.write(new_text)
 
             click.echo(
-                click.style("Command ", fg="green") +\
-                click.style(name, bold=True, fg="cyan") +\
-                click.style(" has been removed", fg="green")
+                click.style("Command ", fg="green")
+                + click.style(name, bold=True, fg="cyan")
+                + click.style(" has been removed", fg="green")
             )
 
         else:
@@ -227,51 +220,46 @@ def com(name, names, delete, rename):
     elif rename:
         com_path = Path("src") / name
         with open(com_path / "main.py", "r") as file:
-            content = file.read() \
-                .replace(f"def {name}", f"def {rename}")
+            content = file.read().replace(f"def {name}", f"def {rename}")
         with open(com_path / "main.py", "w") as file:
             file.write(content)
 
         with open(com_path / "__init__.py", "r") as file:
-            content = file.read() \
-                .replace(
-                    f"from .main import {name}",
-                    f"from .main import {rename}",
-                )
+            content = file.read().replace(
+                f"from .main import {name}", f"from .main import {rename}",
+            )
         with open(com_path / "__init__.py", "w") as file:
             file.write(content)
 
         with open(Path("src") / "__init__.py", "r") as file:
-            content = file.read() \
-                .replace(
-                    f"from .{name} import {name}",
-                    f"from .{rename} import {rename}",
-                )
+            content = file.read().replace(
+                f"from .{name} import {name}",
+                f"from .{rename} import {rename}",
+            )
         with open(Path("src") / "__init__.py", "w") as file:
             file.write(content)
 
         os.rename(com_path, Path("src") / rename)
         click.echo(
-            click.style("Command ", fg="green")+\
-            click.style(name, bold=True) +\
-            click.style(" renamed to ", fg="green") +\
-            click.style(rename, bold=True)
-
+            click.style("Command ", fg="green")
+            + click.style(name, bold=True)
+            + click.style(" renamed to ", fg="green")
+            + click.style(rename, bold=True)
         )
 
     else:
         com_path = Path("src") / name
         os.makedirs(str(com_path))
         with open(com_path / "main.py", "w+") as file:
-            file.write(
-                COMMAND.format(name=name)
-            )
+            file.write(COMMAND.format(name=name))
 
         if not names:
             names = [name]
         with open(com_path / "config.py", "w+") as file:
             file.write(
-                CONFIG.format(names=json.dumps(names, ensure_ascii=False), name=name)
+                CONFIG.format(
+                    names=json.dumps(names, ensure_ascii=False), name=name
+                )
             )
         with open(com_path / "__init__.py", "w+") as file:
             file.write(f"from .main import {name}\n")
@@ -280,30 +268,33 @@ def com(name, names, delete, rename):
             file.write(f"from .{name} import {name}\n")
 
         click.echo(
-            click.style("Added a command ", fg="green") +\
-            click.style(name, bold=True, fg="cyan") +\
-            click.style(" into path ", fg="green") +\
-            click.style(str(Path("src") / f"{name}"), bold=True, fg="cyan")
+            click.style("Added a command ", fg="green")
+            + click.style(name, bold=True, fg="cyan")
+            + click.style(" into path ", fg="green")
+            + click.style(str(Path("src") / f"{name}"), bold=True, fg="cyan")
         )
 
 
 @click.option(
-    "-d", "--debug",
+    "-d",
+    "--debug",
     is_flag=True,
     default=False,
-    help="Режим дебага (расширенный вывод). Выводит состояние каждого валидатора для каждой команды. Если команда была возвана с аргументами -- вы также увидите эти аргументы. Если валидатор вернул False, вы вувидите отчет о его действиях (например, команда не прошла под шалбон). Если проскроллить вверх после вывода информации о реакциях, можно увидеть объект LongPoll события в виде JSON."
+    help="Режим дебага (расширенный вывод). Выводит состояние каждого валидатора для каждой команды. Если команда была возвана с аргументами -- вы также увидите эти аргументы. Если валидатор вернул False, вы вувидите отчет о его действиях (например, команда не прошла под шалбон). Если проскроллить вверх после вывода информации о реакциях, можно увидеть объект LongPoll события в виде JSON.",
 )
 @click.option(
     "--reload",
     is_flag=True,
     default=False,
-    help="Автоматически перезагружает бота после изменений в файлах"
+    help="Автоматически перезагружает бота после изменений в файлах",
 )
 @click.option(
-    "-o-t", "--once-time", "once_time",
+    "-o-t",
+    "--once-time",
+    "once_time",
     is_flag=True,
     default=False,
-    help="Используется для once time запсука бота. Сразу после изменений в файлах он выключается"
+    help="Используется для once time запсука бота. Сразу после изменений в файлах он выключается",
 )
 @bot.command()
 def run(reload, once_time, debug):
@@ -340,7 +331,9 @@ def run(reload, once_time, debug):
         while True:
             click.secho("Listen", fg="green")
             proc = subprocess.run(["bot", *args])
-            click.secho("Found some changes in bot's code. Reload...", fg="yellow")
+            click.secho(
+                "Found some changes in bot's code. Reload...", fg="yellow"
+            )
 
     elif once_time:
         # Your bot project path
@@ -351,17 +344,17 @@ def run(reload, once_time, debug):
                 self.bot.reaload_now = True
 
         event_handler = AllEventsHandler(
-            ignore_patterns=["__pycache__", "*.pyc"],
-            ignore_directories=True
+            ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True
         )
         # Bot's
         import src
+
         config = attrdict.AttrMap(toml.load("config.toml"))
 
         URL = (
             config.api.URL
-            if "URL" in config.api else
-            "https://api.vk.com/method/"
+            if "URL" in config.api
+            else "https://api.vk.com/method/"
         )
 
         settings = dict(
@@ -372,7 +365,7 @@ def run(reload, once_time, debug):
             wait=config.longpoll.wait,
             debug=debug,
             URL=URL,
-            config=config
+            config=config,
         )
 
         reactions = []
@@ -402,14 +395,15 @@ def run(reload, once_time, debug):
 
         # Bot's
         import src
+
         config = attrdict.AttrMap(toml.load("config.toml"))
 
         # Все эти конструкции дико костыльные.
         # Глобальные изменения будут в 1.0
         URL = (
             config.api.URL
-            if "URL" in config.api else
-            "https://api.vk.com/method/"
+            if "URL" in config.api
+            else "https://api.vk.com/method/"
         )
         settings = dict(
             token=config.api.token,
@@ -419,7 +413,7 @@ def run(reload, once_time, debug):
             wait=config.longpoll.wait,
             url=URL,
             debug=debug,
-            config=config
+            config=config,
         )
 
         reactions = []
@@ -432,18 +426,16 @@ def run(reload, once_time, debug):
         reactions = vq.ReactionsList(reactions)
         signals = vq.SignalsList(signals)
 
-        bot = vq.Bot(
-            reactions=reactions,
-            signals=signals,
-            **settings
-        )
+        bot = vq.Bot(reactions=reactions, signals=signals, **settings)
         bot.run()
 
 
 @click.option(
-    "-o", "--on", "on",
+    "-o",
+    "--on",
+    "on",
     default=None,
-    help="Signal name. By default it's the handler name"
+    help="Signal name. By default it's the handler name",
 )
 @click.argument("name")
 @bot.command()
@@ -459,10 +451,10 @@ def signal(name, on):
         file.write(f"from .{name} import {name}\n")
 
     click.echo(
-        click.style("Added a hander on a signal ", fg="green") +\
-        click.style(sig_name, bold=True, fg="cyan") +\
-        click.style(" into path ", fg="green") +\
-        click.style(str(Path("src") / f"{name}.py"), bold=True, fg="cyan")
+        click.style("Added a hander on a signal ", fg="green")
+        + click.style(sig_name, bold=True, fg="cyan")
+        + click.style(" into path ", fg="green")
+        + click.style(str(Path("src") / f"{name}.py"), bold=True, fg="cyan")
     )
 
 

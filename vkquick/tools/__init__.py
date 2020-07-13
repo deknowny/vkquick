@@ -29,7 +29,7 @@ PEER: int = int(2e9)
 """
 
 
-def random_id(side: int = 2**31) -> int:
+def random_id(side: int = 2 ** 31) -> int:
     """
     Случайное число в дипазоне +-`side`.
     Используется для метода ```messages.send``` или в классе `vkquick.tools.message.Message`

@@ -36,8 +36,8 @@ class Reaction:
         self.payload_args = {}
         for name, value in signature(code).parameters.items():
             if (
-                isinstance(value.annotation, type) and
-                annotypes.CommandArgument in value.annotation.__bases__
+                isinstance(value.annotation, type)
+                and annotypes.CommandArgument in value.annotation.__bases__
             ):
                 raise ValueError(
                     "Annotype should be the instance, got "
@@ -90,6 +90,7 @@ class ReactionsList(list):
     """
     Список с обработчиками корректных событий
     """
+
     def has_event(self, event_name):
         for reaction in self:
             # Special don't react on ...
@@ -97,7 +98,6 @@ class ReactionsList(list):
                 return True
 
         return False
-
 
     async def _send_message(self, event, message):
         """
@@ -107,47 +107,39 @@ class ReactionsList(list):
             if message.params.peer_id is Ellipsis:
                 message.params.peer_id = event.object.message.peer_id
 
-            await current.api.messages.send(
-                **message.params
-            )
+            await current.api.messages.send(**message.params)
         elif message is None:
             return
         else:
             await current.api.messages.send(
                 random_id=0,
                 peer_id=event.object.message.peer_id,
-                message=str(message)
+                message=str(message),
             )
-
 
     async def devalidate(self, event, reaction, bin_stack):
         TEXT = click.style(reaction.code.__name__, fg="cyan") + "\n"
 
         for validator in reaction.validators:
             if icf(validator.isvalid):
-                val = await validator.isvalid(
-                    event, reaction, bin_stack
-                )
+                val = await validator.isvalid(event, reaction, bin_stack)
 
             else:
-                val = validator.isvalid(
-                    event, reaction, bin_stack
-                )
+                val = validator.isvalid(event, reaction, bin_stack)
 
             if not val[0]:
-                TEXT += f"-- {validator.__class__.__name__}: " +\
-                    click.style("not valid\n", fg="red")
+                TEXT += f"-- {validator.__class__.__name__}: " + click.style(
+                    "not valid\n", fg="red"
+                )
 
-                TEXT += "   -> " +\
-                    click.style(val[1] + "\n", fg="red")
+                TEXT += "   -> " + click.style(val[1] + "\n", fg="red")
 
                 current.bot.debug_out(TEXT)
                 break
 
-            TEXT += f"-- {validator.__class__.__name__}: " +\
-                click.style(
-                    "valid\n", fg="green"
-                )
+            TEXT += f"-- {validator.__class__.__name__}: " + click.style(
+                "valid\n", fg="green"
+            )
 
         else:
             comkwargs = {}
@@ -157,33 +149,29 @@ class ReactionsList(list):
                         argname=name,
                         event=event,
                         func=reaction,
-                        bin_stack=bin_stack
+                        bin_stack=bin_stack,
                     )
                 else:
                     content = value.prepare(
                         argname=name,
                         event=event,
                         func=reaction,
-                        bin_stack=bin_stack
+                        bin_stack=bin_stack,
                     )
                 comkwargs.update({name: content})
 
-
             for key, value in comkwargs.items():
-                TEXT += "> " +\
-                    click.style(key, fg="yellow") +\
-                    f" = {value!r}\n"
+                TEXT += (
+                    "> " + click.style(key, fg="yellow") + f" = {value!r}\n"
+                )
             current.bot.debug_out(TEXT)
             response = await reaction.run(comkwargs)
 
             if isgeneratorfunction(reaction.code):
-                await self._send_message(
-                    event, "".join(response)
-                )
+                await self._send_message(event, "".join(response))
             elif isasyncgenfunction(reaction.code):
                 await self._send_message(
-                    event,
-                    "".join([mes async for mes in response])
+                    event, "".join([mes async for mes in response])
                 )
             else:
                 await self._send_message(event, response)
@@ -193,23 +181,26 @@ class ReactionsList(list):
 
         for reaction in self:
 
-            if event.type in reaction.events_name or reaction.events_name is Ellipsis:
+            if (
+                event.type in reaction.events_name
+                or reaction.events_name is Ellipsis
+            ):
                 if not header_printed:
                     if current.bot.debug:
                         click.clear()
                     current.bot.debug_out(
-                        click.style("[Reactions on ", bold=True) +\
-                        click.style(event.type, fg="cyan") +\
-                        click.style("]", bold=True) +\
-                        click.style(
-                            dt.datetime.now().strftime(" -- %Y-%m-%d %H:%M:%S"),
-                            fg="bright_black"
+                        click.style("[Reactions on ", bold=True)
+                        + click.style(event.type, fg="cyan")
+                        + click.style("]", bold=True)
+                        + click.style(
+                            dt.datetime.now().strftime(
+                                " -- %Y-%m-%d %H:%M:%S"
+                            ),
+                            fg="bright_black",
                         )
                     )
 
                 header_printed = True
                 # Class for escaping race condition
                 bin_stack = type("BinStack", (), {})
-                create_task(
-                    self.devalidate(event, reaction, bin_stack)
-                )
+                create_task(self.devalidate(event, reaction, bin_stack))

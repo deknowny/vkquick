@@ -22,10 +22,10 @@ from .annotypes import Annotype
 from . import current
 
 
-TERMINAL_COLORS[string_to_tokentype("String")] =  ('gray', '_')
-TERMINAL_COLORS[string_to_tokentype("Token.Literal.Number")] = ('yellow', '_')
-TERMINAL_COLORS[string_to_tokentype("Token.Keyword.Constant")] = ('red', '_')
-TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] =  ('cyan', '_')
+TERMINAL_COLORS[string_to_tokentype("String")] = ("gray", "_")
+TERMINAL_COLORS[string_to_tokentype("Token.Literal.Number")] = ("yellow", "_")
+TERMINAL_COLORS[string_to_tokentype("Token.Keyword.Constant")] = ("red", "_")
+TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] = ("cyan", "_")
 
 
 @dataclass
@@ -86,20 +86,17 @@ class Bot(Annotype):
     Список обрабатываемых реакций
     """
 
-
     def __post_init__(self):
         current.bot = self
         if float(self.version) < 5.103:
-            raise ValueError(
-                "You can't use API version lower than 5.103"
-            )
+            raise ValueError("You can't use API version lower than 5.103")
         self.version = str(self.version)
         current.api = API(
             token=self.token,
             version=self.version,
             owner=self.owner,
             group_id=self.group_id,
-            URL=self.URL
+            URL=self.URL,
         )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
@@ -148,10 +145,7 @@ class Bot(Annotype):
         1. Процесс прослушивания LongPoll и обработки событий реакциями
         1. Слежку за изменением файлов по "переменной состояния"
         """
-        await asyncio.gather(
-            self._files_changing_check(),
-            self._run()
-        )
+        await asyncio.gather(self._files_changing_check(), self._run())
 
     async def _run(self):
         """
@@ -163,11 +157,13 @@ class Bot(Annotype):
                 if self.debug and self.reactions.has_event(event.type):
                     click.clear()
 
-                    data = json.dumps(event._mapping, ensure_ascii=False, indent=4)
+                    data = json.dumps(
+                        event._mapping, ensure_ascii=False, indent=4
+                    )
                     data = highlight(
                         data,
                         lexers.JsonLexer(),
-                        formatters.TerminalFormatter(bg="light")
+                        formatters.TerminalFormatter(bg="light"),
                     )
                     self.debug_out(
                         f"{'=' * 35}\nBelow is the current handled event\n{'=' * 35}\n"
@@ -178,6 +174,4 @@ class Bot(Annotype):
                         f"{'=' * 35}\nAbove is the current handled event\n{'=' * 35}\n"
                     )
 
-                asyncio.create_task(
-                    self.reactions.resolve(event)
-                )
+                asyncio.create_task(self.reactions.resolve(event))

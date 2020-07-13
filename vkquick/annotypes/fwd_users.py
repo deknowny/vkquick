@@ -12,6 +12,7 @@ class FwdUsers(Annotype, UserAnno):
     Если len(event.object.message.frw_messages) == 0,
     то передастся пустой список
     """
+
     async def prepare(self, argname, event, func, bin_stack) -> List[User]:
         users = []
         for msg in event.object.message.fwd_messages:
