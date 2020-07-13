@@ -1,3 +1,11 @@
+## 0.2.2
+
+Пофикшен запуск через `bot run`
+
+## 0.2.1
+
+Добавлен black в качестве форматтера кода. Убраны иниты из ChatOnly и DirectOnly
+
 ## 0.2.0
 * Появилась полная поддержка callback-кнопок, включая payload-тип `CallbackAnswer` для быстрой отправки по методу `messages.sendMessageEventAnswer` вместо ручного API запроса
 

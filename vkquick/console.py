@@ -411,7 +411,7 @@ def run(reload, once_time, debug):
             version=config.api.version,
             owner=config.api.owner,
             wait=config.longpoll.wait,
-            url=URL,
+            URL=URL,
             debug=debug,
             config=config,
         )
