@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vkquick"
-version = "0.2.0"
+version = "0.2.1"
 description = "Package for quick writing vk chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
@@ -47,4 +47,3 @@ bot = "vkquick.console:bot"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
