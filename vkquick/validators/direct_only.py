@@ -8,9 +8,6 @@ class DirectOnly(Validator):
     которое должно быть отправленно только в лс
     """
 
-    def __init__(self, *types):
-        self.types = types
-
     def isvalid(self, event, com, bin_stack):
         if event.object.message.peer_id < PEER:
             return (True, "")
