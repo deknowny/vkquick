@@ -114,21 +114,26 @@ class API(Annotype):
                     return self.factory(response["response"])
                 return response["response"]
 
+    @staticmethod
+    def _upper_zero_group(match):
+        return match.group("let").upper()
+
     def _convert_name(self, name):
         """
         Convert snake_case to camelCase
         """
-        pycase = re.findall(r"_([a-z])", name)
-        for low in pycase:
-            name = name.replace(f"_{low}", low.upper())
-
-        return name
+        return re.sub(r"_(?P<let>[a-z])", self._upper_zero_group, name)
 
     def _check_errors(self, resp: Dict[str, Any]) -> None:
         if "error" in resp:
             raise ex.VkErr(ex.VkErrPreparing(resp))
 
     async def _waiting(self):
+        """
+        Waiting before the last API requst 0.05 or 1/3
+        seconds. Without this you'll capture the API error
+        so it protects you
+        """
         now = time.time()
         diff = now - self._last_request_time
         if diff < self._delay:
