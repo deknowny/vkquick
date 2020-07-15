@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "todobot"
+version = "0.1.0"
+description = "Todo bot"
+authors = ["Rhinik <deknowny@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+sqlalchemy = "^1.3.18"
+vkquick = "^0.2.4"
+
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
