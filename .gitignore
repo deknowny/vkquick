@@ -13,4 +13,4 @@ dist/
 tests/test_bot/config.toml
 tests/test_bot/.cache
 
-examples/config.toml
+examples/TodoBot/config.toml
