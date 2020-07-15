@@ -1,0 +1,9 @@
+[api]
+token = ""
+group_id = 0
+owner = "group"
+version = 5.124
+
+
+[longpoll]
+wait = 25
