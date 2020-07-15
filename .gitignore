@@ -14,3 +14,4 @@ tests/test_bot/config.toml
 tests/test_bot/.cache
 
 examples/TodoBot/config.toml
+examples/TodoBot/src/db.sqlite3
