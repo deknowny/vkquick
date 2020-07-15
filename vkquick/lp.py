@@ -13,22 +13,28 @@ from . import current
 @dataclass
 class LongPoll:
     """
-    LongPoll handler for groups
+    LongPoll обработчик для событий в сообществе
     """
 
     group_id: int
+    """
+    ID Сообщества
+    """
+
     wait: int = 25
+    """
+    Максимальное время ожидания ответа от сервера
+    """
 
     def __aiter__(self):
         """
-        Async itearation for
-        LongPoll listening
+        Async итерация для получения событий
         """
         return self
 
     async def __anext__(self) -> attrdict.AttrMap:
         await self._get_info()
-        data = dict(act="a_check", wait=self.wait, **self.info)
+        data = dict(act="a_check", wait=self.wait, **self.info)  # required
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 url=self.info.server, data=data, ssl=ssl.SSLContext()
@@ -38,19 +44,23 @@ class LongPoll:
 
                 if "failed" in response:
                     await self._resolve_faileds(response)
+                    return []
                 else:
                     return response.updates
 
     async def _get_info(self):
         """
-        Set or update LongPoll info
-        (key, server, ts)
+        Обновляет или достает
+        информацию о LongPoll сервере
         """
         self.info = await current.api.groups.getLongPollServer(
             group_id=self.group_id
         )
 
     async def _resolve_faileds(self, response):
+        """
+        Обрабатывает LongPoll ошибки (failleds)
+        """
         if response.failed == 1:
             self.info.update(ts=response.ts)
         elif response.failed in (2, 3):
