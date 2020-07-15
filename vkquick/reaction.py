@@ -7,6 +7,8 @@ from asyncio import iscoroutinefunction as icf
 from inspect import signature
 from inspect import isgeneratorfunction
 from inspect import isasyncgenfunction
+from typing import Union
+from typing import Any
 
 import click
 
@@ -65,7 +67,10 @@ class Reaction:
 
         return self
 
-    async def run(self, comkwargs):
+    async def run(self, comkwargs: dict) -> Union[str, Any, "vkquck.Message"]:
+        """
+        Запускает код реакции с переданными comkwargs
+        """
         if icf(self.code):
             return await self.code(**comkwargs)
         else:
@@ -74,8 +79,12 @@ class Reaction:
     @staticmethod
     def convert(conv):
         """
-        Primitives to Annotypes
+        Конвертирует "примитивы" в Annotypes
         """
+        # NOTE: int and str работают
+        # только как одиночные типы, либо
+        # внутри [], т.е. `vq.Optional(int)`
+        # -- невалидно
         if conv is int:
             return annotypes.Integer()
         elif conv is str:
@@ -109,6 +118,7 @@ class ReactionsList(list):
 
             await current.api.messages.send(**message.params)
         elif message is None:
+            # Если реакция ничего не вернула
             return
         else:
             await current.api.messages.send(
@@ -117,7 +127,16 @@ class ReactionsList(list):
                 message=str(message),
             )
 
-    async def devalidate(self, event, reaction, bin_stack):
+    async def devalidate(
+        self,
+        event: "vkquick.Event",
+        reaction: "vkquick.Reaction",
+        bin_stack: type,
+    ):
+        """
+        Валидирует конкретную команду
+        """
+        # Текстовый блок про реакциию в дебаггере
         TEXT = click.style(reaction.code.__name__, fg="cyan") + "\n"
 
         for validator in reaction.validators:
@@ -176,7 +195,7 @@ class ReactionsList(list):
             else:
                 await self._send_message(event, response)
 
-    async def resolve(self, event):
+    async def resolve(self, event: "vkquick.Event"):
         header_printed = False
 
         for reaction in self:
@@ -201,6 +220,6 @@ class ReactionsList(list):
                     )
 
                 header_printed = True
-                # Class for escaping race condition
+                # Класс для избежания гонки аднных
                 bin_stack = type("BinStack", (), {})
                 create_task(self.devalidate(event, reaction, bin_stack))
