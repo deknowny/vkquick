@@ -7,7 +7,7 @@ from .element import Element
 
 class Template(UI):
     """
-    Карусель. Later 
+    Карусель с элементами. Используйте в сообщении
     """
 
     def __init__(self, type_: str = "carousel"):

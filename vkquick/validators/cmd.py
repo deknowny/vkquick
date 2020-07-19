@@ -17,7 +17,7 @@ class _SafeDict(dict):
     """
 
     def __missing__(self, key):
-        return "{" + key + "}"
+        return f"{{{key}}}"
 
 
 class Cmd(Validator):
@@ -37,48 +37,37 @@ class Cmd(Validator):
     (которая поддерживает регулярные выражения),
     обозначая сами аргументы {внутри фигурных скобок} и
     передавая имена этих аргументов
-    в аргументы функции, в аннтациях обозначая тип.
+    в аргументы функции, в аннотациях обозначая тип.
     Например команду
+
     ```python
     @vq.Cmd(names=["hello"], argline="::{name}")
     @vq.Reaction("message_new")
     def hello(name: vq.Word()):
         return f"Hello, {name}!"
     ```
+
     можно вызвать следующим образом:
 
-    1. ```hello::Bob```
 
-        Ответ -> ```Hello, Bob!```
+    * `hello::Bob` -> `Hello, Bob!`
+    * `hello::Tom` -> `Hello, Tom!`
+    * `hello::Ann` -> `Hello, Ann!`
 
-    1. ```hello::Tom```
-
-        Ответ -> ```Hello, Tom!```
-
-    1. ```hello::Ann```
-
-        Ответ -> ```Hello, Ann!```
 
     Если же убрать параметр argline, то команда вызывается так:
 
-    1. ```hello Bob```
 
-        Ответ -> ```Hello, Bob!```
+    * `hello Bob` -> `Hello, Bob!`
+    * `hello Tom` -> `Hello, Tom!`
+    * `hello Ann` -> `Hello, Ann!`
 
-    1. ```hello Tom```
 
-        Ответ -> ```Hello, Tom!```
-
-    1. ```hello Ann```
-
-        Ответ -> ```Hello, Ann!```
-
-    .. note::
-        `argline` воспринимается как регулярное выражение, поэтому, например, вместо
-        `argline="++{name}"`
-        нужно писать
-        `argline="\+\+{name}"`
-        потому что `+` -- это квантификатор
+    `argline` воспринимается как регулярное выражение, поэтому, например, вместо
+    `argline="++{name}"`
+    нужно писать
+    `argline="\+\+{name}"`
+    потому что `+` -- это квантификатор
     """
 
     def __init__(

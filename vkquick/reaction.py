@@ -196,6 +196,7 @@ class ReactionsList(list):
                 await self._send_message(event, response)
 
     async def resolve(self, event: "vkquick.Event"):
+        # Был ли выведен хедер в режиме дебага
         header_printed = False
 
         for reaction in self:
@@ -220,6 +221,6 @@ class ReactionsList(list):
                     )
 
                 header_printed = True
-                # Класс для избежания гонки аднных
+                # Класс для избежания гонки данных
                 bin_stack = type("BinStack", (), {})
                 create_task(self.devalidate(event, reaction, bin_stack))

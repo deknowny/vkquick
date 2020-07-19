@@ -146,7 +146,7 @@ class Button(UI):
     @_payload_convert
     def location(*, payload: Optional[Union[str, dict]] = None) -> Button:
         """
-        Кнопка типа
+        Кнопка типа location
         """
         return locals()
 
