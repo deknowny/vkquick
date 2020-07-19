@@ -4,7 +4,7 @@ version = "0.2.4"
 description = "Package for quick writing vk chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
-documentation = "https://rhinik.github.io"
+documentation = "https://vkquick.github.io"
 authors = ["Kurbatov Yan <deknowny@gmail.com>"]
 readme = "README.md"
 keywords = [
@@ -21,6 +21,7 @@ classifiers = [
     "Topic :: Utilities"
 ]
 
+
 [tool.poetry.dependencies]
 python = "^3.8"
 click = "^7.1.2"
@@ -31,6 +32,7 @@ colorama = "^0.4.3"
 toml = "^0.10.1"
 pygments = "^2.6.1"
 requests = "^2.24.0"
+
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
