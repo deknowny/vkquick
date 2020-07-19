@@ -5,7 +5,6 @@ import asyncio
 import ssl
 import time
 import re
-import logging
 from typing import Dict
 from typing import Any
 from typing import Optional
