@@ -98,7 +98,7 @@ class Bot(Annotype):
         )
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
-        self.reaload_now = False
+        self.reload_now = False
 
     @staticmethod
     def prepare(argname, event, func, bin_stack):
@@ -132,7 +132,7 @@ class Bot(Annotype):
         Поднимает RuntimeError после изменений
         в директории бота для того, чтобы остановиться
         """
-        while not self.reaload_now:
+        while not self.reload_now:
             await asyncio.sleep(0)
         raise RuntimeError()
 

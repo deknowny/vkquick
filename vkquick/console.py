@@ -341,7 +341,7 @@ def run(reload, once_time, debug):
 
         class AllEventsHandler(PatternMatchingEventHandler):
             def on_any_event(self, event):
-                self.bot.reaload_now = True
+                self.bot.reload_now = True
 
         event_handler = AllEventsHandler(
             ignore_patterns=["__pycache__", "*.pyc"], ignore_directories=True
