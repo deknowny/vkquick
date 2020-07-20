@@ -51,10 +51,9 @@ class Keyboard(UI):
     """
 
     def __init__(self, *, one_time: bool = True, inline: bool = False):
-        if inline:
-            self.info = dict(inline=inline, buttons=[[]])
-        else:
-            self.info = dict(one_time=one_time, inline=inline, buttons=[[]])
+        self.info = dict(inline=inline, buttons=[[]])
+        if not inline:
+            self.info.update(one_time=one_time)
 
     @classmethod
     def empty(cls):
