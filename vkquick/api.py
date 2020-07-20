@@ -62,7 +62,7 @@ class API(Annotype):
         self._last_request_time = 0
         self._delay = 1 / 20 if self.owner == "group" else 1 / 3
 
-    def __getattr__(self, attr) -> "self":
+    def __getattr__(self, attr) -> "API":
         """
         Выстраивает имя метода
         """
