@@ -3,12 +3,10 @@ from typing import Optional
 from pathlib import Path
 from functools import wraps, partial
 from dataclasses import dataclass
-import os
 import io
 import ssl
 import asyncio
 import concurrent.futures
-import json
 
 import requests
 import aiohttp

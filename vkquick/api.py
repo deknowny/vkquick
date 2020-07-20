@@ -20,7 +20,6 @@ from .annotypes.base import Annotype
 from . import current
 
 
-# colorama.init(reset=True)
 colorama.init()
 
 

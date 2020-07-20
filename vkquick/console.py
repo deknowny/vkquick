@@ -330,7 +330,7 @@ def run(reload, once_time, debug):
         #     print("Reload...")
         while True:
             click.secho("Listen", fg="green")
-            proc = subprocess.run(["bot", *args])
+            subprocess.run(["bot", *args])
             click.secho(
                 "Found some changes in bot's code. Reload...", fg="yellow"
             )

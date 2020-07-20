@@ -3,7 +3,6 @@
 """
 from asyncio import iscoroutinefunction as icf
 from dataclasses import dataclass
-from typing import Any
 
 from vkquick import current
 

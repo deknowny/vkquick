@@ -1,6 +1,4 @@
 from __future__ import annotations
-from typing import Optional
-from json import dumps
 
 from .button import Button
 from .ui import UI

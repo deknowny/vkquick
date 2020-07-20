@@ -1,6 +1,3 @@
-from .base import Annotype
-
-
 class ClientInfo:
     """
     Возвращает информацию о пользователе из ```event.object.client_info```
