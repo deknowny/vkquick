@@ -1,11 +1,39 @@
 from __future__ import annotations
-from typing import Union
-from typing import Optional
-from json import dumps, loads
+from typing import Union, Optional
+import json
 from json.decoder import JSONDecodeError
-from functools import wraps
+
 
 from .ui import UI
+
+
+def color(color_name: str, doc: str):
+    def colorized(self: Button):
+        if not self.is_text_button():
+            raise TypeError(
+                "Colors unsupported "
+                "for button type "
+                f'{self.info["action"]["type"]}'
+            )
+
+        self.info["color"] = color_name
+        return self
+
+    colorized.__doc__ = doc
+    return colorized
+
+
+def validate_payload(payload: Optional[Union[str, dict]]) -> None:
+    if isinstance(payload, str):
+        try:
+            json.loads(payload)
+        except JSONDecodeError as err:
+            raise ValueError(
+                "Invalid payload struct, "
+                "should be JSON format, "
+                "but get JSONDecodeError: "
+                f"{err}"
+            )
 
 
 class Button(UI):
@@ -25,147 +53,101 @@ class Button(UI):
     ```
     """
 
-    def __new__(cls, **info):
-        self = object.__new__(cls)
-        self.__init__(info)
-        return self
-
-    def __init__(self, info) -> None:
-        self.info = dict(action=info)
-
-    def _payload_convert(func):
-        """
-        Конвертирует payload кнопки в нужный формат
-        """
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            action = func(*args, **kwargs)
-            action.update(type=func.__name__)
-            if action["payload"] is None:
-                del action["payload"]
-            else:
-                # Dumps to JSON
-                if isinstance(action["payload"], dict):
-                    action["payload"] = dumps(
-                        action["payload"], ensure_ascii=False
-                    )
-                # Check payload type
-                elif not isinstance(action["payload"], str):
-                    raise TypeError(
-                        "Payload should be "
-                        "dumped dict to string "
-                        "or dict, not "
-                        f"{type(action['payload'])}"
-                    )
-                # Check payload validations
-                try:
-                    loads(action["payload"])
-                except JSONDecodeError as err:
-                    raise ValueError(
-                        "Invalid payload struct, "
-                        "should be JSON format, "
-                        "but get JSONDecodeError: "
-                        f"{err}"
-                    )
-            obj = Button.__new__(Button, **action)
-            return obj
-
-        return wrapper
-
-    def _is_text_button(func):
-        @wraps(func)
-        def wrapper(self):
-            if self.info["action"]["type"] == "text":
-                self.info["color"] = func.__name__
-                return self
-            else:
-                raise TypeError(
-                    "Colors unsupposed "
-                    "for button type "
-                    f'{self.info["action"]["type"]}'
-                )
-
-        return wrapper
-
-    @_is_text_button
-    def positive(self) -> Button:
-        """
-        Зеленая кнопка (для обеих тем)
-        """
-
-    @_is_text_button
-    def negative(self) -> Button:
-        """
-        красная кнопка (для обеих тем)
-        """
-
-    @_is_text_button
-    def secondary(self) -> Button:
-        """
-        Белая кнопка для светлой темы, серая для темной
-        """
-
-    @_is_text_button
-    def primary(self) -> Button:
-        """
-        Синяя кнопка для белой, белая для темной
-        """
-
-    @classmethod
-    def line(cls) -> Button:
-        """
-        Воспринимается как новая линия в процессе генерации клаиватуры
-        """
-        self = object.__new__(cls)
-        self.info = None
-
-        return self
+    positive = color("positive", doc="Зеленая кнопка (для обеих тем)")
+    negative = color("negative", doc="красная кнопка (для обеих тем)")
+    primary = color("primary", doc="Синяя кнопка для белой, белая для темной")
+    secondary = color(
+        "secondary", doc="Белая кнопка для светлой темы, серая для темной"
+    )
 
     @staticmethod
-    @_payload_convert
+    def _validate_payload(payload):
+        """
+        Вызывает исключение в случае ошибки валидации, иначе возвращает None.
+        """
+        if not isinstance(payload, (str, dict)):
+            raise TypeError(
+                "Payload should be "
+                "dumped dict to string "
+                "or dict, not "
+                f"{type(payload)}"
+            )
+
+        if isinstance(payload, str):
+            try:
+                json.loads(payload)
+            except JSONDecodeError as err:
+                raise ValueError(
+                    "Invalid payload struct, "
+                    "should be JSON format, "
+                    "but get JSONDecodeError: "
+                    f"{err}"
+                )
+
+    @staticmethod
+    def _to_raw_payload(payload) -> str:
+        if isinstance(payload, dict):
+            return json.dumps(payload)
+        return payload
+
+    def __init__(
+        self, info: dict, payload: Optional[Union[str, dict]] = None
+    ):
+        if payload is not None:
+            self._validate_payload(payload)
+            payload = self._to_raw_payload(payload)
+            info.update(payload=payload)
+        self.info: Optional[dict] = dict(action=info)
+
+    def is_text_button(self) -> bool:
+        return self.info["action"]["type"] == "text"
+
+    @classmethod
     def text(
-        label: str, *, payload: Optional[Union[str, dict]] = None
+        cls, label: str, *, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа text
         """
-        return locals()
+        return cls(info={"label": label, "type": "text"}, payload=payload)
 
-    @staticmethod
-    @_payload_convert
+    @classmethod
     def open_link(
-        label: str, *, link: str, payload: Optional[Union[str, dict]] = None
+        cls,
+        label: str,
+        *,
+        link: str,
+        payload: Optional[Union[str, dict]] = None,
     ) -> Button:
         """
         Кнопка типа open_link
         """
-        return locals()
+        return cls(
+            info={"label": label, "link": link, "type": "open_link"},
+            payload=payload,
+        )
 
-    @staticmethod
-    @_payload_convert
-    def location(*, payload: Optional[Union[str, dict]] = None) -> Button:
+    @classmethod
+    def location(
+        cls, *, payload: Optional[Union[str, dict]] = None
+    ) -> Button:
         """
         Кнопка типа location
         """
-        return locals()
+        return cls(info={"type": "location"}, payload=payload)
 
-    @staticmethod
-    @_payload_convert
+    @classmethod
     def vkpay(
-        *, hash_: str, payload: Optional[Union[str, dict]] = None
+        cls, *, hash_: str, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа vkpay
         """
-        data = locals()
-        hash_ = data.pop("hash_")
-        data.update(hash=hash_)
-        return data
+        return cls(info={"hash": hash_, "type": "vkpay"}, payload=payload)
 
-    @staticmethod
-    @_payload_convert
+    @classmethod
     def open_app(
+        cls,
         label: str,
         *,
         app_id: int,
@@ -176,17 +158,28 @@ class Button(UI):
         """
         Кнопка типа open_app
         """
-        data = locals()
-        hash_ = data.pop("hash_")
-        data.update(hash=hash_)
-        return data
+        return cls(
+            info={
+                "label": label,
+                "app_id": app_id,
+                "owner_id": owner_id,
+                "hash": hash_,
+                "type": "open_app",
+            },
+            payload=payload,
+        )
 
-    @staticmethod
-    @_payload_convert
+    @classmethod
     def callback(
-        label: str, *, payload: Optional[Union[str, dict]] = None
+        cls, label: str, *, payload: Optional[Union[str, dict]] = None
     ) -> Button:
         """
         Кнопка типа callback
         """
-        return locals()
+        return cls(info={"label": label, "type": "callback"}, payload=payload)
+
+    @classmethod
+    def line(cls) -> Button:
+        instance = cls(info={})
+        instance.info = None
+        return instance
