@@ -108,7 +108,8 @@ class ReactionsList(list):
 
         return False
 
-    async def _send_message(self, event, message):
+    @staticmethod
+    async def _send_message(event, message):
         """
         Send a meessage by user's returning in reaction
         """
