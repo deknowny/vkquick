@@ -309,7 +309,7 @@ class Photo(Uploader):
         """
         return (
             {
-                "chat_id": chat_id,
+                "chat_id": chat_id,  # ERROR
                 "crop_x": crop_x,
                 "crop_y": crop_y,
                 "crop_width": crop_width,
