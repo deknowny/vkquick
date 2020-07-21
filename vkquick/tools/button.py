@@ -9,13 +9,15 @@ from .ui import UI
 
 def color(color_name: str, doc: str):
     def colorized(self: Button):
-        action_type = self.info["action"]["type"]
-        if action_type not in ("text", "callback"):
-            raise TypeError(
-                "Colors unsupported "
-                "for button type "
-                f'{self.info["action"]["type"]}'
-            )
+        error_text = (
+            "Colors unsupported "
+            "for button type "
+            "{}"
+        )
+        if self.info is None:
+            raise TypeError(error_text.format("Button.line()"))
+        elif action_type := self.info["action"]["type"] not in ("text", "callback"):
+            raise TypeError(error_text.format(action_type))
 
         self.info["color"] = color_name
         return self
@@ -74,16 +76,6 @@ class Button(UI):
                 f"{type(payload)}"
             )
 
-        if isinstance(payload, str):
-            try:
-                json.loads(payload)
-            except JSONDecodeError as err:
-                raise ValueError(
-                    "Invalid payload struct, "
-                    "should be JSON format, "
-                    "but get JSONDecodeError: "
-                    f"{err}"
-                )
 
     @staticmethod
     def _to_raw_payload(payload) -> str:

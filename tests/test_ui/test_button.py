@@ -46,10 +46,6 @@ def test_payload():
         '{"foo": 123}'
     )
 
-    # Payload by invalid string
-    with pytest.raises(ValueError):
-        vq.Button.text("foo", payload='{foo": 123}')
-
 
 def test_color():
     """
@@ -65,7 +61,7 @@ def test_color():
     assert negative.info["color"] == "negative"
     assert positive.info["color"] == "positive"
 
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError):
         vq.Button.line().negative()
 
     with pytest.raises(TypeError):
@@ -85,7 +81,7 @@ def test_color():
         ),
         (
                 vq.Button.location(),
-                {"action": {"label": "foo"}}
+                {"action": {"type": "location"}}
         ),
         (
                 vq.Button.vkpay(hash_="abc"),
@@ -93,10 +89,10 @@ def test_color():
         ),
         (
                 vq.Button.open_app("myapp", app_id=123, owner_id=456, hash_="abc"),
-                {"action": {"label": "myapp", "app_id": 123, "owner_id": 456, "hash": "abc", "type": "vkpay"}}
+                {"action": {"label": "myapp", "app_id": 123, "owner_id": 456, "hash": "abc", "type": "open_app"}}
         ),
     ]
 )
 def test_button_types(button, info):
     structed_button = vq.Button.by(info)
-    assert button.info == structed_button
+    assert button.info == structed_button.info
