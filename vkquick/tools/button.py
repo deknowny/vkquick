@@ -9,7 +9,8 @@ from .ui import UI
 
 def color(color_name: str, doc: str):
     def colorized(self: Button):
-        if not self.is_text_button():
+        action_type = self.info["action"]["type"]
+        if action_type not in ("text", "callback"):
             raise TypeError(
                 "Colors unsupported "
                 "for button type "
@@ -98,9 +99,6 @@ class Button(UI):
             payload = self._to_raw_payload(payload)
             info.update(payload=payload)
         self.info: Optional[dict] = dict(action=info)
-
-    def is_text_button(self) -> bool:
-        return self.info["action"]["type"] == "text"
 
     @classmethod
     def text(
