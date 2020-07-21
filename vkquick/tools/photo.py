@@ -294,9 +294,10 @@ class Photo(Uploader):
             {"file": Photo._get_photo(file)},
         )
 
-    @staticmethod
+    @classmethod
     @_uploader("get_market_upload_server", "save_market_photo")
     def market(
+        cls,
         file: Union[str, bytes, Path],
         group_id: int,
         main_photo: bool,
@@ -309,15 +310,16 @@ class Photo(Uploader):
         """
         return (
             {
-                "chat_id": chat_id,  # ERROR
+                "group_id": group_id,
                 "crop_x": crop_x,
                 "crop_y": crop_y,
                 "crop_width": crop_width,
+                "main_photo": main_photo,
             },
             {
                 "file": (
                     "file.png",
-                    Photo._get_photo(file),
+                    cls._get_photo(file),
                     "multipart/form-data",
                 )
             },
