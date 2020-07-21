@@ -2,9 +2,6 @@
 Основоположник всех аннотационных типов
 """
 from abc import abstractmethod, ABC
-from typing import Callable
-
-# from vkquick.reaction import Reaction
 
 
 class Annotype(ABC):

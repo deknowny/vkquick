@@ -5,7 +5,6 @@ from abc import abstractmethod, ABC
 
 from vkquick.annotypes.event import Event
 from vkquick.reaction import Reaction
-from vkquick.bot import Bot
 
 
 class Validator(ABC):

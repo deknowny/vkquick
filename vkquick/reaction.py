@@ -108,7 +108,8 @@ class ReactionsList(list):
 
         return False
 
-    async def _send_message(self, event, message):
+    @staticmethod
+    async def _send_message(event, message):
         """
         Send a meessage by user's returning in reaction
         """
@@ -127,7 +128,7 @@ class ReactionsList(list):
                 message=str(message),
             )
 
-    async def devalidate(
+    async def validate(
         self,
         event: "vkquick.Event",
         reaction: "vkquick.Reaction",
@@ -223,4 +224,4 @@ class ReactionsList(list):
                 header_printed = True
                 # Класс для избежания гонки данных
                 bin_stack = type("BinStack", (), {})
-                create_task(self.devalidate(event, reaction, bin_stack))
+                create_task(self.validate(event, reaction, bin_stack))

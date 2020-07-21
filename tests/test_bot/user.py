@@ -68,4 +68,4 @@ async def _commands(api):
     await asyncio.sleep(2)
 
     # Teardown the bot
-    vq.current.bot.reaload_now = True
+    vq.current.bot.reload_now = True
