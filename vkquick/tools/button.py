@@ -9,14 +9,13 @@ from .ui import UI
 
 def color(color_name: str, doc: str):
     def colorized(self: Button):
-        error_text = (
-            "Colors unsupported "
-            "for button type "
-            "{}"
-        )
+        error_text = "Colors unsupported for button type {}"
         if self.info is None:
             raise TypeError(error_text.format("Button.line()"))
-        elif action_type := self.info["action"]["type"] not in ("text", "callback"):
+        elif action_type := self.info["action"]["type"] not in (
+            "text",
+            "callback",
+        ):
             raise TypeError(error_text.format(action_type))
 
         self.info["color"] = color_name
@@ -75,7 +74,6 @@ class Button(UI):
                 "or dict, not "
                 f"{type(payload)}"
             )
-
 
     @staticmethod
     def _to_raw_payload(payload) -> str:
