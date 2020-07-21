@@ -1,7 +1,7 @@
 """
 Help you create the best VK chat-bots ever.
 
-More info [here](https://rhinik.github.io)
+More info [here](https://vkquick.github.io)
 """
 
 from . import current

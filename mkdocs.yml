@@ -5,7 +5,7 @@ repo_url: https://github.com/Rhinik/vkquick
 
 remote_branch: master
 
-google_analytics: ["UA-172364682-1", "rhinik.github.io"]
+google_analytics: ["UA-172364682-1", "vkquick.github.io"]
 
 nav:
     - Home: index.md
