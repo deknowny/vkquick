@@ -1,5 +1,5 @@
 ## Установка
-1. Установите репозиторий из ветки __0.1__ к себе
+1. Установите репозиторий из ветки __0.2__ к себе
 2. Зайдите в появивишуюся директорию (__vkquick__)
 3. Создайте виртуальное окружение
 4. Установите туда [poetry](https://github.com/python-poetry/poetry)
@@ -8,7 +8,7 @@
 === "Linux/MacOS"
     <div class="termy">
     ```console
-    $ git clone -b 0.1 https://github.com/Rhinik/vkquick/
+    $ git clone -b 0.2 https://github.com/Rhinik/vkquick/
     $ cd vkquick
     $ python3 -m venv env
     $ source env/bin/activate
