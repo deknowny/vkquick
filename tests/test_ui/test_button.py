@@ -1,5 +1,3 @@
-from functools import wraps
-
 import vkquick as vq
 import pytest
 
@@ -12,11 +10,14 @@ def test_line():
     assert vq_button.info is None
 
 
-def test_color():
+def test_button():
     """
     Text-buttons colors
     """
-    vq_button = vq.Button.text("foo")
+    text_button = vq.Button.text("foo")
+    assert text_button.info == {"action": {"label": "foo", "type": "text"}}
+    callback_button = vq.Button.callback("lol")
+    assert callback_button.info == {"action": {"label": "lol", "type": "callback"}}
 
 
 def test_payload():
@@ -47,9 +48,7 @@ def test_payload():
 
     # Payload by invalid string
     with pytest.raises(ValueError):
-        vq_button = vq.Button.text(
-            "foo", payload='{foo": 123}'
-        )
+        vq.Button.text("foo", payload='{foo": 123}')
 
 
 def test_color():
@@ -66,102 +65,38 @@ def test_color():
     assert negative.info["color"] == "negative"
     assert positive.info["color"] == "positive"
 
+    with pytest.raises(KeyError):
+        vq.Button.line().negative()
 
-def button_type(func):
-    """
-    Decorator for button types testing
-
-    """
-    @wraps(func)
-    def wrapper():
-        vq_button, dict_button = func()
-        button_by_struct = vq.Button.by(dict_button)
-
-        assert vq_button.info == dict_button
-        assert repr(button_by_struct) == repr(vq_button)
-
-@button_type
-def test_text():
-    """
-    A button with text
-    """
-    return (
-        vq.Button.text("foo", payload={"foo": "bar"}),
-        {
-            "action": {
-                "label": "foo",
-                "payload": '{"foo": "bar"}',
-                "type": "text"
-            }
-        }
-    )
+    with pytest.raises(TypeError):
+        vq.Button.open_link("some", link="https://www.youtube.com/watch?v=dQw4w9WgXcQ").primary()
 
 
-@button_type
-def test_open_link():
-    """
-    An open_link-button
-    """
-    return (
-        vq.Button.open_link("foo", link="https://google.com"),
-        {
-            "action": {
-                "label": "foo",
-                "link": "https://google.com",
-                "type": "open_link"
-            }
-        }
-    )
-
-
-@button_type
-def test_location():
-    """
-    A location-button
-    """
-    return (
-        vq.Button.location(),
-        {
-            "action": {
-                "label": "foo"
-            }
-        }
-    )
-
-
-def test_vkpay():
-    """
-    A vkpay-button
-    """
-    return (
-        vq.Button.vkpay(hash_="abc"),
-        {
-            "action": {
-                "hash": "abc",
-                "type": "vkpay"
-            }
-        }
-    )
-
-
-def test_open_app():
-    """
-    An open_app-button
-    """
-    return (
-        vq.Button.open_app(
-            "myapp",
-            app_id=123,
-            owner_id=456,
-            hash_="abc"
+@pytest.mark.parametrize(
+    "button,info",
+    [
+        (
+                vq.Button.text("foo", payload={"foo": "bar"}),
+                {"action": {"label": "foo", "payload": '{"foo": "bar"}', "type": "text"}}
         ),
-        {
-            "action": {
-                "label": "myapp",
-                "app_id": 123,
-                "owner_id": 456,
-                "hash": "abc",
-                "type": "vkpay"
-            }
-        }
-    )
+        (
+                vq.Button.open_link("foo", link="https://google.com"),
+                {"action": {"label": "foo", "link": "https://google.com", "type": "open_link"}}
+        ),
+        (
+                vq.Button.location(),
+                {"action": {"label": "foo"}}
+        ),
+        (
+                vq.Button.vkpay(hash_="abc"),
+                {"action": {"hash": "abc", "type": "vkpay"}}
+        ),
+        (
+                vq.Button.open_app("myapp", app_id=123, owner_id=456, hash_="abc"),
+                {"action": {"label": "myapp", "app_id": 123, "owner_id": 456, "hash": "abc", "type": "vkpay"}}
+        ),
+    ]
+)
+def test_button_types(button, info):
+    structed_button = vq.Button.by(info)
+    assert button.info == structed_button
