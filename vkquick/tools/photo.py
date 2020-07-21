@@ -3,12 +3,10 @@ from typing import Optional
 from pathlib import Path
 from functools import wraps, partial
 from dataclasses import dataclass
-import os
 import io
 import ssl
 import asyncio
 import concurrent.futures
-import json
 
 import requests
 import aiohttp
@@ -311,7 +309,7 @@ class Photo(Uploader):
         """
         return (
             {
-                "chat_id": chat_id,
+                "chat_id": chat_id,  # ERROR
                 "crop_x": crop_x,
                 "crop_y": crop_y,
                 "crop_width": crop_width,

@@ -10,6 +10,8 @@ class CallbackAnswer(Annotype):
     Упрощает работу с методом `messages.sendMessageEventAnswer`
     """
 
+    params: dict
+
     def prepare(
         self,
         argname: str,

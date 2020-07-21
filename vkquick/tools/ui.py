@@ -1,7 +1,7 @@
 """
 Базовый класс для UI элементов
 """
-from json import dumps
+import json
 
 
 class UI:
@@ -9,14 +9,16 @@ class UI:
     Добавляет возможность vk ui _инкапсуляторам_
     (клаиватуры, карусели...)
     возможнсть генерации по словарю (напрямую в JSON)
-    и саму конфертацию через `__repr__`
+    и саму конвертацию через `__repr__`
     """
+
+    info: dict
 
     def __repr__(self) -> str:
         """
         Create for sending
         """
-        return dumps(self.info, ensure_ascii=False)
+        return json.dumps(self.info, ensure_ascii=False)
 
     @classmethod
     def by(cls, pre_json: dict):
