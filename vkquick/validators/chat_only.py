@@ -12,3 +12,7 @@ class ChatOnly(Validator):
         if event.object.message.peer_id > PEER:
             return (True, "")
         return (False, "Message was sent in direct, not in chat")
+
+    def validate(self, event) -> None:
+        if event.object.message.peer_id <= PEER:
+            raise ValueError("Message was sent in direct, not in chat")

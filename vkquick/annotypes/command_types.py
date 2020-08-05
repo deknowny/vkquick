@@ -5,8 +5,10 @@ from abc import ABC, abstractmethod
 from asyncio import iscoroutinefunction as icf
 import re
 
+import typing
+from vkquick import tools
 from .base import Annotype
-from vkquick.tools import User, UserAnno
+from vkquick.tools import User, UserAnno, run
 
 
 class CommandArgument(Annotype):
@@ -16,6 +18,8 @@ class CommandArgument(Annotype):
     """
 
     factory = str
+    regexp: typing.Optional[typing.AnyStr] = None
+    custom_validate: bool = False
     """
     Callable структура, в которую __должно__
     быть вами обернуто возвращаемое значение.
@@ -25,8 +29,34 @@ class CommandArgument(Annotype):
     Может быть корутиной.
     """
 
-    def prepare(self, argname, event, func, bin_stack) -> factory:
-        return self.factory(bin_stack.command_frame.group(argname))
+    def has_custom_validate_method(self) -> bool:
+        return self.custom_validate
+
+    def match_regexp(self, value):
+        matched = (
+            re.fullmatch(self.regexp, value)
+            if self.sensetive
+            else re.fullmatch(
+                self.regexp, value, flags=re.IGNORECASE
+            )
+        )
+        return matched
+
+        # f"String `{event.object.message.text}` isn't matched for pattern `{self.regexp}`",
+
+    def validate(self, value, *, context: typing.Optional[dict] = None):
+        if self.regexp is None:
+            raise Exception("No regexp or custom validate method provided!")
+
+        match = self.match_regexp(value)
+        if not match:
+            raise Exception()
+        return self.factory(value)
+
+    def build(self, value, context: typing.Optional[dict] = None) -> factory:
+        if not self.factory:
+            raise Exception("No factory or custom build method provided!")
+        return self.factory(value)
 
 
 class Integer(CommandArgument):
@@ -35,7 +65,7 @@ class Integer(CommandArgument):
     Можете использовать `int` instead
     """
 
-    rexp = r"\d+"
+    regexp = r"\d+"
     factory = int
 
 
@@ -46,7 +76,7 @@ class String(CommandArgument):
     Можете использовать `str` instead
     """
 
-    rexp = r".+"
+    regexp = r".+"
 
 
 class Word(CommandArgument):
@@ -55,7 +85,7 @@ class Word(CommandArgument):
     т.е. цирфры, знаки препинания -- все это входит
     """
 
-    rexp = r"\S+"
+    regexp = r"\S+"
 
 
 class List(CommandArgument):
@@ -99,14 +129,9 @@ class List(CommandArgument):
         self.sep = sep
         self.part = part
 
-    async def prepare(self, argname, event, func, bin_stack):
-        vals = re.split(
-            self.sep, bin_stack.command_frame.group(argname).rstrip()
-        )
-        if icf(self.part.factory):
-            return [await self.part.factory(val) for val in vals]
-        else:
-            return [self.part.factory(val) for val in vals]
+    async def build(self, value, context: typing.Optional[dict] = None) -> factory:
+        vals = re.split(self.sep, value.rstrip())
+        return [await tools.run(self.part.build(val)) for val in vals]
 
 
 class UserMention(CommandArgument, UserAnno):
@@ -117,18 +142,18 @@ class UserMention(CommandArgument, UserAnno):
     Возможно, добавятся позже
     """
 
-    rexp = r"\[id\d+\|.+?\]"
+    regexp = r"\[id\d+\|.+?\]"
 
-    async def factory(self, val) -> User:
+    async def build(self, value, context=None) -> User:
         """
         Возвращает объект пользователя
         """
-        return await User(mention=val).get_info(*self.fields)
+        return await User(mention=value).get_info(*self.fields)
 
-    async def prepare(self, argname, event, func, bin_stack):
-        mention = bin_stack.command_frame.group(argname)
-        user = await self.factory(val=mention)
-        return user
+    # async def prepare(self, argname, event, func, bin_stack):
+    #     mention = bin_stack.command_frame.group(argname)
+    #     user = await self.build(value=mention)
+    #     return user
 
 
 class Literal(CommandArgument):
@@ -137,8 +162,15 @@ class Literal(CommandArgument):
     Паттерн представляет собой переданный слова, разделенные `|` (или)
     """
 
+    custom_validate = True
+
     def __init__(self, *values):
-        self.rexp = "|".join(values)
+        self.literal_values = values
+        # self.rexp = "|".join(values)
+
+    def validate(self, value, context=None) -> None:
+        if value not in self.literal_values:
+            raise ValueError("Value is not in literal values!")
 
 
 class Custom(CommandArgument):
@@ -167,7 +199,7 @@ class Optional(CommandArgument):
     def __init__(self, elem, default=None, /):
         self.elem = elem
         self.default = default
-        self.rexp = f"(?:{elem.rexp})"  # Optional made in Cmd
+        self.rexp = f"(?:{elem.regexp})"  # Optional made in Cmd
 
     async def prepare(self, argname, event, func, bin_stack):
         captured = bin_stack.command_frame.groupdict()

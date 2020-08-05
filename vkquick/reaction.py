@@ -29,10 +29,11 @@ class Reaction:
         self.validators = []
 
     def __call__(self, code):
-        self.code = code
-        self.args = {}
 
         assert not hasattr(code, "validators"), "Invalid decorator position"
+
+        self.code = code
+        self.args = {}
 
         self.command_args = {}
         self.payload_args = {}
@@ -55,15 +56,15 @@ class Reaction:
                 or isinstance(value.annotation, list)
             ):
                 self.command_args.update(
-                    {name: Reaction.convert(value.annotation)}
+                    {name: self.convert(value.annotation)}
                 )
 
             else:
-                conv = Reaction.convert(value.annotation)
+                conv = self.convert(value.annotation)
 
                 self.payload_args.update({name: conv})
 
-            self.args.update({name: Reaction.convert(value.annotation)})
+            self.args[name] = self.convert(value.annotation)
 
         return self
 
@@ -113,72 +114,58 @@ class ReactionsList(list):
         """
         Send a meessage by user's returning in reaction
         """
-        if isinstance(message, tools.Message):
-            if message.params.peer_id is Ellipsis:
-                message.params.peer_id = event.object.message.peer_id
-
-            await current.api.messages.send(**message.params)
-        elif message is None:
-            # Если реакция ничего не вернула
+        if message is None:
             return
+
+        peer_id = event.object.message.peer_id
+
+        # if current.api.owner == "group":
+        #     peer_id = event.object.peer_id
+        # else:
+        #     peer_id = event.object.message.peer_id
+
+        if not isinstance(message, tools.Message):
+            params = {
+                "random_id": 0,
+                "peer_id": peer_id,
+                "message": str(message),
+            }
         else:
-            await current.api.messages.send(
-                random_id=0,
-                peer_id=event.object.message.peer_id,
-                message=str(message),
-            )
+            params = message.params
+            if message.params.peer_id is Ellipsis:
+                params["peer_id"] = peer_id
+
+        await current.api.messages.send(**params)
 
     async def validate(
         self,
         event: "vkquick.Event",
         reaction: "vkquick.Reaction",
-        bin_stack: type,
     ):
         """
         Валидирует конкретную команду
         """
         # Текстовый блок про реакциию в дебаггере
         TEXT = click.style(reaction.code.__name__, fg="cyan") + "\n"
+        comkwargs = {}
 
         for validator in reaction.validators:
-            if icf(validator.isvalid):
-                val = await validator.isvalid(event, reaction, bin_stack)
-
-            else:
-                val = validator.isvalid(event, reaction, bin_stack)
-
-            if not val[0]:
-                TEXT += f"-- {validator.__class__.__name__}: " + click.style(
-                    "not valid\n", fg="red"
-                )
-
-                TEXT += "   -> " + click.style(val[1] + "\n", fg="red")
-
+            try:
+                validator.validate(event)
+            except ValueError as exc:
+                TEXT += f"-- {validator.__class__.__name__}: {click.style('not valid', fg='red')}\n" \
+                        f"    -> {click.style(str(exc), fg='red')}\n"
                 current.bot.debug_out(TEXT)
                 break
+
+            else:
+                collected_result = await validator.collect()
+                if collected_result:
+                    comkwargs.update(collected_result)
 
             TEXT += f"-- {validator.__class__.__name__}: " + click.style(
                 "valid\n", fg="green"
             )
-
-        else:
-            comkwargs = {}
-            for name, value in reaction.args.items():
-                if icf(value.prepare):
-                    content = await value.prepare(
-                        argname=name,
-                        event=event,
-                        func=reaction,
-                        bin_stack=bin_stack,
-                    )
-                else:
-                    content = value.prepare(
-                        argname=name,
-                        event=event,
-                        func=reaction,
-                        bin_stack=bin_stack,
-                    )
-                comkwargs.update({name: content})
 
             for key, value in comkwargs.items():
                 TEXT += (
@@ -222,6 +209,4 @@ class ReactionsList(list):
                     )
 
                 header_printed = True
-                # Класс для избежания гонки данных
-                bin_stack = type("BinStack", (), {})
-                create_task(self.validate(event, reaction, bin_stack))
+                create_task(self.validate(event, reaction))

@@ -13,10 +13,9 @@ class Action(Validator):
     def __init__(self, *types):
         self.types = types
 
-    def isvalid(self, event, com, bin_stack):
-        if (
+    def validate(self, event):
+        if not (
             "action" in event.object.message
             and event.object.message.action.type in self.types
         ):
-            return (True, "")
-        return (False, "No action or action.type is an another")
+            raise ValueError("No action or action.type is an another")

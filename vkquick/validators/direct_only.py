@@ -8,7 +8,6 @@ class DirectOnly(Validator):
     которое должно быть отправленно только в лс
     """
 
-    def isvalid(self, event, com, bin_stack):
-        if event.object.message.peer_id < PEER:
-            return (True, "")
-        return (False, "Message was sent in chat, not in direct")
+    def validate(self, event) -> None:
+        if event.object.message.peer_id >= PEER:
+            raise ValueError("Message was sent in chat, not in direct")

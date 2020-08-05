@@ -9,7 +9,7 @@ class Annotype(ABC):
     Позволяет создавать свои аннотационные типы
     """
 
-    @abstractmethod
+    # @abstractmethod
     def prepare(
         self,
         argname: str,

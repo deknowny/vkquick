@@ -1,5 +1,6 @@
 from .base import Annotype
-from vkquick.tools import User, UserAnno
+from vkquick.tools import User, UserAnno # , event_resolve as _
+import vkquick as vq
 
 
 class Sender(Annotype, UserAnno):
