@@ -19,6 +19,10 @@ from .photo import Photo
 from .uploader import Uploader
 from .doc import Doc
 
+# async tools
+from .async_tools import run
+
+from .dependency import event_resolve, check_method_overriden
 
 PEER: int = int(2e9)
 """
