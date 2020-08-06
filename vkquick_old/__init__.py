@@ -7,7 +7,7 @@ More info [here](https://vkquick.github.io)
 from . import current
 from .api import API
 from .bot import Bot
-from .exception import VkApiError
+from .exception import VkErr
 from .lp import LongPoll
 from .signal import Signal, SignalsList, signal
 from .reaction import Reaction, ReactionsList

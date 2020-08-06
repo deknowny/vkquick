@@ -1,136 +1,159 @@
 """
 Управление API запросами
 """
+from __future__ import annotations
 import asyncio
+import dataclasses
+import enum
+import re
 import ssl
 import time
-import re
-from typing import Dict
 from typing import Any
+from typing import Callable
+from typing import Dict
 from typing import Optional
-from typing import Literal
-from dataclasses import dataclass
+from typing import Union
+
 
 import aiohttp
 import attrdict
-import colorama
 
-from . import exception as ex
-from .annotypes.base import Annotype
-from . import current
+from . import exception
 
 
-colorama.init()
-
-
-@dataclass
-class API(Annotype):
+class TokenOwner(enum.Enum):
     """
-    Отправляет запросы к API
-
-    Поддерживает конвертацию snake_case
-    в camelCase в именах у методов
+    Тип владельца токена. Используется
+    для определения задержки между API запросами
     """
+
+    GROUP = enum.auto()
+    USER = enum.auto()
+
+
+@dataclasses.dataclass
+class API:
 
     token: str
-    """
-    Токен пользователя или группы
-    """
-    version: float
-    """
-    Верия API
-    """
-    owner: Literal["group", "user"]
-    """
-    Тип обладателя токена
-    """
+    version: Union[float, str] = "5.124"
+    owner: TokenOwner = TokenOwner.USER
     group_id: Optional[int] = None
-    """
-    Передавайте, только если нужен аргумент ```as_group_```
-    """
     URL: str = "https://api.vk.com/method/"
-    """
-    URL API запросов
-    """
-    factory: type = attrdict.AttrMap
-    """
-    Фабрика для возвращаемых ответов
-    """
+    response_factory: Callable[[dict], Any] = attrdict.AttrMap
 
     def __post_init__(self):
-        self._method = ""
+        self._method_name = ""
         self._last_request_time = 0
-        self._delay = 1 / 20 if self.owner == "group" else 1 / 3
+        self._delay = 1 / 3 if self.owner == TokenOwner.USER else 1 / 20
 
-    def __getattr__(self, attr) -> "API":
+    def __getattr__(self, attribute) -> "API":
         """
-        Выстраивает имя метода
+        Выстраивает имя метода путем переложения
+        имен API методов на "получение атрибутов".
+
+        Например
+
+            API(...).messages.send(...)
+
+        Вызовет API метод `messages.send`. Также есть
+        поддержка конвертации snake_case в camelCaseself:
+
+            API(...).messages.get_conversations_by_id(...)
+
+        Что вызовет метод `messages.getConversationsById`
         """
-        attr = self._convert_name(attr)
-        if self._method:
-            self._method += f".{attr}"
+        attribute = self._convert_name(attribute)
+        if self._method_name:
+            self._method_name += f".{attribute}"
         else:
-            self._method = attr
+            self._method_name = attribute
         return self
 
-    def __call__(self, as_group_: bool = False, /, **kwargs):
+    def __call__(self, **request_params):
         """
-        Вызывает метод с полями из
-        **kwargs. При as_group_=True
-        автоматически добавится поле
-        group_id=<id группы>.
-        Сделано для обращений к методами
-        группы от лица пользователя
+        Вызывает API метод с полями из
+        **kwargs и именем метода, полученным через __getattr__
         """
-        if as_group_:
-            kwargs.update(group_id=self.group_id)
-        meth_name = self._method
-        self._method = str()
-        result = self.method(name=meth_name, data=kwargs)
-        return result
+        method_name = self._convert_name(self._method_name)
+        request_params = self._fill_request_params(request_params)
+        self._method_name = str()
+        return self._make_api_request(
+            method_name=method_name, request_params=request_params
+        )
 
-    @staticmethod
-    def prepare(argname, event, func, bin_stack):
-        return current.api
+    def method(self, method_name: str, request_params: Dict[str, Any], /):
+        """
+        Делает API запрос аналогчино `__call__`,
+        но при этом передавая метод строкой
+        """
+        method_name = self._convert_name(name)
+        # Добавление пользовтельских параметров
+        # запроса к токену и версии. Сделано не через
+        # `request_params.update` для возможности перекрытия
+        # параметрами пользователя
+        request_params = self._fill_request_params(request_params)
+        return self._make_api_request(
+            method_name=method_name, request_params=request_params
+        )
 
-    async def method(self, name: str, data: dict):
+    async def _make_api_request(
+        self, method_name: str, request_params: Dict[str, Any]
+    ) -> Union[API.response_factory, str, int]:
         """
-        Вызовает API метод с
-        именем меотда из параметра
-        ```name``` и полями из ```data```
+        Создание API запросов путем передачи имени API и параметров
         """
-        name = self._convert_name(name)
         await self._waiting()
-        data = {"access_token": self.token, "v": self.version, **data}
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.URL + name, data=data, ssl=ssl.SSLContext()
+                url=f"{self.URL}{method_name}",  # f-string быстрее
+                data=request_params,
+                ssl=ssl.SSLContext(),
             ) as response:
                 response = await response.json()
                 self._check_errors(response)
                 if isinstance(response["response"], dict):
-                    return self.factory(response["response"])
+                    return self.response_factory(response["response"])
                 return response["response"]
 
+    def _fill_request_params(self, params: Dict[str, Any]):
+        """
+        Добавляет к параметрам токен и версию API
+        """
+        return {
+            "access_token": self.token,
+            "v": self.version,
+            **params,
+        }
+
     @staticmethod
-    def _upper_zero_group(match):
+    def _upper_zero_group(match: re.Match) -> str:
+        """
+        Поднимает все символы в верхний
+        регистр у captured-группы `let`. Используется
+        для конвертации snake_case в camelCase
+        """
         return match.group("let").upper()
 
-    def _convert_name(self, name):
+    def _convert_name(self, name: str) -> str:
         """
-        Convert snake_case to camelCase
+        Конвертирует snake_case to camelCase
         """
         return re.sub(r"_(?P<let>[a-z])", self._upper_zero_group, name)
 
-    def _check_errors(self, resp: Dict[str, Any]) -> None:
-        if "error" in resp:
-            raise ex.VkErr(ex.VkErrPreparing(resp))
-
-    async def _waiting(self):
+    def _check_errors(self, response: Dict[str, Any]) -> None:
         """
-        Waiting before the last API requst 0.05 or 1/3
-        seconds. Without this you'll capture the API error
-        so it protects you
+        Проверяет, является ли ответ от вк ошибкой
+        """
+        if "error" in response:
+            raise exception.VkApiError.destruct_response(response)
+
+    async def _waiting(self) -> None:
+        """
+        Ожидание после последнего API запроса
+        (длительность в зависимости от владельца токена:
+        1/20 для групп и 1/43  для пользователей).
+        Без этой задержки вк вернет ошибку о
+        слишком частом обращении к API
         """
         now = time.time()
         diff = now - self._last_request_time

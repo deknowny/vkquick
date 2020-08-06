@@ -20,4 +20,7 @@ from .sender import Sender
 from .replied_user import RepliedUser
 from .fwd_users import FwdUsers
 from .client_info import ClientInfo
+from .peer_id import PeerID
+from .group_id import GroupID
+from .chat_id import ChatID
 from .callback_answer import CallbackAnswer

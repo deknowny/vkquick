@@ -2,48 +2,63 @@
 Поднимаются от некорректного API запроса
 """
 from __future__ import annotations
-from typing import Tuple, Dict, Any
+import dataclasses
+from typing import Any
+from typing import Dict
+from typing import Tuple
+from typing import TypedDict
 
 import click
 
 
-class VkErr(Exception):
+class _ParamsScheme(TypedDict):
     """
-    Исключение, вызывается если VK API вернул ошибку в ответе
-    """
-
-    def __init__(self, err_info: VkErrPreparing):
-        self.info = err_info
-
-
-class VkErrPreparing:
-    """
-    Подготавливает __поля__ из ответа для ошибки
+    Струкутра параметров, возвращаемых
+    при некорректном обращении к API
     """
 
-    def __init__(self, err: Dict[str, Any]):
-        info = self._prepare(err)
-        self.text, self.code, self.msg, self.params = info
+    key: str
+    value: str  # Даже если в запрсосе было передано число, значение будет строкой
 
-    def _prepare(
-        self, err: Dict[str, Any]
-    ) -> Tuple[str, str, int, Dict[str, Any]]:
-        error_msg = err["error"]["error_msg"]
-        error_code = err["error"]["error_code"]
-        error_params = err["error"]["request_params"]
 
-        content = (
-            click.style(f"\n[{error_code}] ", fg="red")
-            + click.style(f"{error_msg}\n\n", fg="red", bold=True)
+@dataclasses.dataclass
+class VkApiError(Exception):
+    """
+    Исключение, поднимаемое при некорректном вызове API запроса.
+    Инициализируется через метод класса `destruct_response`
+    для деструктуризации ответа от вк
+    """
+
+    pretty_exception_text: str
+    description: str
+    status_code: int
+    request_params: _ParamsScheme
+
+    @classmethod
+    def destruct_response(cls, response: Dict[str, Any]) -> VkApiError:
+        """
+        Разбирает ответ от вк про некорректный API запрос
+        на части и инициализирует сам объект исключения
+        """
+        status_code, description, request_params = response["error"].values()
+
+        pretty_exception_text = (
+            click.style(f"\n[{status_code}] ", fg="red")
+            + click.style(f"{description}\n\n", fg="red", bold=True)
             + click.style("Request params:", bold=True)
         )
 
-        for pair in err["error"]["request_params"]:
+        for pair in request_params:
             key = click.style(pair["key"], fg="yellow")
             value = click.style(pair["value"], fg="cyan")
-            content += f"\n{key} = {value}"
+            pretty_exception_text += f"\n{key} = {value}"
 
-        return content, error_msg, error_code, error_params
+        return cls(
+            pretty_exception_text=pretty_exception_text,
+            description=description,
+            status_code=status_code,
+            request_params=request_params,
+        )
 
     def __str__(self):
-        return self.text
+        return self.pretty_exception_text
