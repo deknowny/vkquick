@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vkquick"
-version = "0.2.6"
+version = "0.2.7"
 description = "Package for quick writing vk chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
