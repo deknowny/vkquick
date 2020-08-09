@@ -99,6 +99,7 @@ class Bot(Annotype):
         self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
 
         self.reload_now = False
+        # self.reload_now = asyncio.Event()
 
     @staticmethod
     def prepare(argname, event, func, bin_stack):
@@ -117,15 +118,23 @@ class Bot(Annotype):
         вызывая перед этим `startup`,
         а в конце и `shutdown` сигналы
         """
-        asyncio.run(self.signals.resolve("startup"))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.signals.resolve("startup"))
 
         while True:
             try:
-                asyncio.run(self._process_handler())
+                loop.run_until_complete(self._process_handler())
+
             except (RuntimeError, KeyboardInterrupt):
                 break
             finally:
-                asyncio.run(self.signals.resolve("shutdown"))
+                loop.run_until_complete(
+                    asyncio.wait(
+                        [self.signals.resolve("shutdown"), self.lp.close()],
+                        loop=loop,
+                    )
+                )
+
 
     async def _files_changing_check(self):
         """
@@ -149,6 +158,7 @@ class Bot(Annotype):
         """
         Процесс прослушивания LongPoll и обработки событий реакциями
         """
+        await self.lp.get_info()
         async for events in self.lp:
             for event in events:
 
