@@ -8,6 +8,7 @@ todo/
 .pytest_cache/
 site/
 dist/
+.idea/
 
 # Tests data
 tests/test_bot/config.toml
