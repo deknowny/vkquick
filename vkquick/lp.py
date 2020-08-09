@@ -26,36 +26,45 @@ class LongPoll:
     Максимальное время ожидания ответа от сервера
     """
 
+    session = aiohttp.ClientSession()
+    """
+    Основная сессия.
+    """
+
     def __aiter__(self):
         """
         Async итерация для получения событий
         """
+        await self._get_info()
         return self
 
     async def __anext__(self) -> attrdict.AttrMap:
-        await self._get_info()
         data = dict(act="a_check", wait=self.wait, **self.info)  # required
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url=self.info.server, data=data, ssl=ssl.SSLContext()
-            ) as response:
-                response = await response.json()
-                response = attrdict.AttrMap(response)
 
-                if "failed" in response:
-                    await self._resolve_faileds(response)
-                    return []
-                else:
-                    return response.updates
+        async with self.session.post(
+            url=self.url, data=data, ssl=ssl.SSLContext()
+        ) as response:
+            response = await response.json()
+            response = attrdict.AttrMap(response)
+
+            self.info.update(ts=response.ts)
+
+            if "failed" in response:
+                await self._resolve_faileds(response)
+                return []
+            else:
+                return response.updates
 
     async def _get_info(self):
         """
         Обновляет или достает
         информацию о LongPoll сервере
         """
-        self.info = await current.api.groups.getLongPollServer(
+        info_data = await current.api.groups.getLongPollServer(
             group_id=self.group_id
         )
+        self.url = info_data.pop("server")
+        self.info = info_data
 
     async def _resolve_faileds(self, response):
         """
