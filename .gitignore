@@ -13,6 +13,7 @@ dist/
 # Tests data
 tests/test_bot/config.toml
 tests/test_bot/.cache
+tests_old/
 
 examples/TodoBot/config.toml
 examples/TodoBot/src/db.sqlite3
