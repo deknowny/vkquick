@@ -26,7 +26,7 @@ class Message(Annotype):
     ## Пример
     Классический hello world в ответ на пользовательскую команду ```hello``` или ```привет```
 
-        import vkquick as vq
+        import vkquick_old2 as vq
 
 
         @vq.Cmd(names=["hello", "привет"])
@@ -36,7 +36,7 @@ class Message(Annotype):
 
     Для ответов, содержащих только текст, вы можете просто вернуть текст
 
-        import vkquick as vq
+        import vkquick_old2 as vq
 
 
         @vq.Cmd(names=["hello", "привет"])
@@ -89,8 +89,8 @@ class Message(Annotype):
     def prepare(
         self,
         argname: str,
-        event: "vkquick.annotypes.event.Event",
-        func: "vkquick.reaction.Reaction",
+        event: "vkquick_old2.annotypes.event.Event",
+        func: "vkquick_old2.reaction.Reaction",
         bin_stack: type,
     ):
         self._event = event

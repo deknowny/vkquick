@@ -3,7 +3,7 @@ In process
 """
 # import copy
 #
-# import vkquick as vq
+# import vkquick_old2 as vq
 # import pytest
 #
 # import tests.events as events

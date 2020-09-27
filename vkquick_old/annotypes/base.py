@@ -13,8 +13,8 @@ class Annotype(ABC):
     def prepare(
         self,
         argname: str,
-        event: "vkquick.annotypes.event.Event",
-        func: "vkquick.reaction.Reaction",
+        event: "vkquick_old2.annotypes.event.Event",
+        func: "vkquick_old2.reaction.Reaction",
         bin_stack: type,
     ):
         """

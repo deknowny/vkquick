@@ -8,57 +8,83 @@ import enum
 import re
 import ssl
 import time
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Optional
-from typing import Union
+import urllib.parse
+import urllib.request
+import typing as ty
 
-
-import aiohttp
 import attrdict
+import orjson
 
-from . import exception
+from vkquick import exceptions
 
 
-class TokenOwner(enum.Enum):
+class TokenOwner(str, enum.Enum):
     """
     Тип владельца токена. Используется
     для определения задержки между API запросами
     """
 
-    GROUP = enum.auto()
-    USER = enum.auto()
+    GROUP = "group"
+    USER = "user"
 
 
 @dataclasses.dataclass
 class API:
+    """
+    Обработчик всех API запросов
+
+    Later
+    """
 
     token: str
-    version: Union[float, str] = "5.124"
-    owner: TokenOwner = TokenOwner.USER
-    group_id: Optional[int] = None
-    URL: str = "https://api.vk.com/method/"
-    response_factory: Callable[[dict], Any] = attrdict.AttrMap
+    """
+    Access token для API запросов
+    """
+
+    version: ty.Union[float, str] = "5.133"
+    """
+    Версия API
+    """
+
+    group_id: ty.Optional[int] = None
+    """
+    ID группы. Может быть использовано для быстрых добавлений `group_id`
+    в параметры запроса
+    """
+
+    host: str = "api.vk.com"
+    """
+    URL отправки API запросов
+    """
+
+    response_factory: ty.Callable[[dict], ty.Any] = attrdict.AttrMap
+    """
+    Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
+    чтобы иметь возможность получать поля ответа через точку)
+    """
 
     def __post_init__(self):
         self._method_name = ""
         self._last_request_time = 0
-        self._delay = 1 / 3 if self.owner == TokenOwner.USER else 1 / 20
+        self.lock = asyncio.Lock()
+        self.writer = None
+        self.reader = None
+        self.token_owner = self.define_token_owner(self.token, self.version)
+        self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
 
-    def __getattr__(self, attribute) -> "API":
+    def __getattr__(self, attribute) -> API:
         """
         Выстраивает имя метода путем переложения
         имен API методов на "получение атрибутов".
 
         Например
 
-            API(...).messages.send(...)
+            await API(...).messages.send(...)
 
         Вызовет API метод `messages.send`. Также есть
-        поддержка конвертации snake_case в camelCaseself:
+        поддержка конвертации snake_case в camelCase:
 
-            API(...).messages.get_conversations_by_id(...)
+            await API(...).messages.get_conversations_by_id(...)
 
         Что вызовет метод `messages.getConversationsById`
         """
@@ -69,24 +95,33 @@ class API:
             self._method_name = attribute
         return self
 
-    def __call__(self, **request_params):
+    def __call__(self, attach_group_id_: bool = False, **request_params):
         """
         Вызывает API метод с полями из
-        **kwargs и именем метода, полученным через __getattr__
+        `**request_params` и именем метода, полученным через __getattr__
+
+        При `attach_group_id_` добавит параметр `group_id` в запрос
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
+        if attach_group_id_:
+            if self.group_id is not None:
+                request_params.update(group_id=self.group_id)
+            else:
+                raise ValueError("group_id was attached, but hasn't been set")
         self._method_name = str()
         return self._make_api_request(
             method_name=method_name, request_params=request_params
         )
 
-    def method(self, method_name: str, request_params: Dict[str, Any], /):
+    def method(
+        self, method_name: str, request_params: ty.Dict[str, ty.Any], /
+    ):
         """
         Делает API запрос аналогчино `__call__`,
         но при этом передавая метод строкой
         """
-        method_name = self._convert_name(name)
+        method_name = self._convert_name(method_name)
         # Добавление пользовтельских параметров
         # запроса к токену и версии. Сделано не через
         # `request_params.update` для возможности перекрытия
@@ -97,28 +132,66 @@ class API:
         )
 
     async def _make_api_request(
-        self, method_name: str, request_params: Dict[str, Any]
-    ) -> Union[API.response_factory, str, int]:
+        self, method_name: str, request_params: ty.Dict[str, ty.Any]
+    ) -> ty.Union[API.response_factory, ty.Any]:
         """
         Создание API запросов путем передачи имени API и параметров
         """
-        await self._waiting()
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url=f"{self.URL}{method_name}",  # f-string быстрее
-                data=request_params,
-                ssl=ssl.SSLContext(),
-            ) as response:
-                response = await response.json()
-                self._check_errors(response)
-                if isinstance(response["response"], dict):
-                    return self.response_factory(response["response"])
-                return response["response"]
+        # TODO: refactor
+        if self.writer is None:
+            self.reader, self.writer = await asyncio.open_connection(
+                self.host, 443, ssl=ssl.SSLContext()
+            )
 
-    def _fill_request_params(self, params: Dict[str, Any]):
+        # API вк не умеет в массивы, поэтому все перечисления
+        # Нужно отправлять строкой с запятой как разделителем
+        for key, value in request_params.items():
+            if isinstance(value, (list, set, tuple)):
+                request_params[key] = ",".join(map(str, value))
+
+        data = urllib.parse.urlencode(request_params)
+        await self._waiting()
+        query = (
+            f"GET /method/{method_name}?{data} HTTP/1.1\n"
+            f"Host: {self.host}\n\n"
+        )
+        try:
+            self.writer.write(query.encode("utf-8"))
+            await self.writer.drain()
+        except ConnectionResetError:
+            self.reader, self.writer = await asyncio.open_connection(
+                self.host, 443, ssl=ssl.SSLContext()
+            )
+            self.writer.write(query.encode("utf-8"))
+            await self.writer.drain()
+
+        content_length = 0
+        async with self.lock:
+            while True:
+                line = await self.reader.readline()
+                if line.startswith(b"Content-Length"):
+                    line = line.decode("utf-8")
+                    length = ""
+                    for i in line:
+                        if i.isdigit():
+                            length += i
+                    content_length = int(length)
+                if line == b"\r\n":
+                    break
+
+            body = await self.reader.read(content_length)
+            body = orjson.loads(body)
+            self._check_errors(body)
+            if isinstance(body["response"], dict):
+                return self.response_factory(body["response"])
+            return body["response"]
+
+    def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
         """
-        Добавляет к параметрам токен и версию API
+        Добавляет к параметрам токен и версию API.
+        Дефолтный `access_token` и `v` могут быть перекрыты
         """
+
         return {
             "access_token": self.token,
             "v": self.version,
@@ -126,7 +199,7 @@ class API:
         }
 
     @staticmethod
-    def _upper_zero_group(match: re.Match) -> str:
+    def _upper_zero_group(match: ty.Match) -> str:
         """
         Поднимает все символы в верхний
         регистр у captured-группы `let`. Используется
@@ -136,22 +209,35 @@ class API:
 
     def _convert_name(self, name: str) -> str:
         """
-        Конвертирует snake_case to camelCase
+        Конвертирует snake_case в camelCase
         """
         return re.sub(r"_(?P<let>[a-z])", self._upper_zero_group, name)
 
-    def _check_errors(self, response: Dict[str, Any]) -> None:
+    @staticmethod
+    def _check_errors(response: ty.Dict[str, ty.Any]) -> None:
         """
         Проверяет, является ли ответ от вк ошибкой
         """
         if "error" in response:
-            raise exception.VkApiError.destruct_response(response)
+            raise exceptions.VkApiError.destruct_response(response)
+
+    @staticmethod
+    def define_token_owner(token: str, version: str = "5.133"):
+        attached_query = urllib.parse.urlencode(
+            {"access_token": token, "v": version}
+        )
+        resp = urllib.request.urlopen(
+            f"https://api.vk.com/method/users.get?{attached_query}",
+            context=ssl.SSLContext(),
+        )
+        resp = orjson.loads(resp.read())
+        return TokenOwner.USER if resp["response"] else TokenOwner.GROUP
 
     async def _waiting(self) -> None:
         """
         Ожидание после последнего API запроса
         (длительность в зависимости от владельца токена:
-        1/20 для групп и 1/43  для пользователей).
+        1/20 для групп и 1/3  для пользователей).
         Без этой задержки вк вернет ошибку о
         слишком частом обращении к API
         """
@@ -163,3 +249,7 @@ class API:
             await asyncio.sleep(wait_time)
         else:
             self._last_request_time = now
+
+    def __del__(self):
+        if self.writer is not None:
+            self.writer.close()

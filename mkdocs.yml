@@ -1,11 +1,11 @@
 site_name: VK Quick
 site_description: Async python package for creating VK chat bots
-repo_name: vkquick
-repo_url: https://github.com/Rhinik/vkquick
+repo_name: vkquick_old2
+repo_url: https://github.com/Rhinik/vkquick_old2
 
 remote_branch: master
 
-google_analytics: ["UA-172364682-1", "vkquick.github.io"]
+google_analytics: ["UA-172364682-1", "vkquick_old2.github.io"]
 
 nav:
     - Home: index.md

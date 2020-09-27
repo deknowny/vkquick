@@ -66,5 +66,5 @@ def test_inits():
     assert (
         carousel.info ==
         carousel_dict ==
-        vq.Template.by(carousel_dict).info
+        vq.Template.by(carousel_dict)._info
     )

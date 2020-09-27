@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:ketre" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8ed4cea9-c648-48aa-a091-514b20427a39" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/vkquick/event_handling/message.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vkquick_old2/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/base.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vkquick_old2/bot.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vkquick_old2/lp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/releases.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/releases.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mkdocs.yml" beforeDir="false" afterPath="$PROJECT_DIR$/mkdocs.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/poetry.lock" beforeDir="false" afterPath="$PROJECT_DIR$/poetry.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/events.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/events.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_bot/src/annofwd/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_bot/src/annofwd/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_bot/src/annorep/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_bot/src/annorep/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_bot/src/annotypes1/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_bot/src/annotypes1/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_payload_types.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_payload_types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_ui/test_button.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_ui/test_button.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_ui/test_element.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_ui/test_element.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_ui/test_keyboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_ui/test_keyboard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_ui/test_template.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_ui/test_template.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/callback_answer.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/callback_answer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/client_info.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/client_info.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/command_types.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/command_types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/event.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/event.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/fwd_users.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/fwd_users.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/replied_user.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/replied_user.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/annotypes/sender.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/annotypes/sender.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/bot.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/console.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/console.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/current.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/current.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/exception.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick/exceptions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/lp.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/reaction.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/reaction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/signal.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/signal_.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/button.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/button.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/doc.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/doc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/element.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/element.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/keyboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/keyboard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/message.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/photo.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/photo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/template.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/template.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/ui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/uploader.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/uploader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/tools/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/tools/user.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/action.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/action.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/chat_only.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/chat_only.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/cmd.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/cmd.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick/validators/direct_only.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old2/validators/direct_only.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/annotypes/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/annotypes/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/annotypes/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/annotypes/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/annotypes/callback_answer.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/annotypes/callback_answer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/console.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/console.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/current.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/current.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/reaction.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/reaction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/button.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/button.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/keyboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/keyboard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/message.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/photo.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/photo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/template.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/template.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vkquick_old/tools/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/vkquick_old/tools/user.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="ProjectId" id="1fmLwGxyxA5CJRNBQxhUMXXmb0G" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples" />
+      <recent name="$PROJECT_DIR$/vkquick/event_handling/reaction_argument" />
+      <recent name="$PROJECT_DIR$/vkquick" />
+      <recent name="$PROJECT_DIR$/vkquick/event_handling" />
+      <recent name="$PROJECT_DIR$/vkquick/reaction_argument" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8ed4cea9-c648-48aa-a091-514b20427a39" name="Default Changelist" comment="" />
+      <created>1596818558458</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1596818558458</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="796" y="376" key="#Inspections" timestamp="1597859485235">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="796" y="376" key="#Inspections/0.23.2560.1417@0.23.2560.1417" timestamp="1597859485235" />
+    <state x="583" y="405" width="1327" height="926" key="#Log_Highlighting_(ideolog)" timestamp="1597754991185">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="583" y="405" width="1327" height="926" key="#Log_Highlighting_(ideolog)/0.23.2560.1417@0.23.2560.1417" timestamp="1597754991185" />
+    <state x="733" y="312" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1601139828323">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="733" y="312" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.2560.1417@0.23.2560.1417" timestamp="1601139828323" />
+    <state x="812" y="491" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1601066189859">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="812" y="491" key="#com.intellij.fileTypes.FileTypeChooser/0.23.2560.1417@0.23.2560.1417" timestamp="1601066189859" />
+    <state x="593" y="572" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog" timestamp="1601066229058">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="593" y="572" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.23.2560.1417@0.23.2560.1417" timestamp="1601066229058" />
+    <state x="742" y="193" key="SettingsEditor" timestamp="1601056652768">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="742" y="193" key="SettingsEditor/0.23.2560.1417@0.23.2560.1417" timestamp="1601056652768" />
+    <state x="586" y="256" width="1225" height="928" key="recent.locations.popup" timestamp="1598900017366">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="586" y="256" width="1225" height="928" key="recent.locations.popup/0.23.2560.1417@0.23.2560.1417" timestamp="1598900017366" />
+    <state x="587" y="23" width="1173" height="1417" key="search.everywhere.popup" timestamp="1601140891806">
+      <screen x="0" y="23" width="2560" height="1417" />
+    </state>
+    <state x="587" y="0" width="1173" height="1440" key="search.everywhere.popup/0.0.2560.1440@0.0.2560.1440" timestamp="1598702781610" />
+    <state x="587" y="23" width="1173" height="1417" key="search.everywhere.popup/0.23.2560.1417@0.23.2560.1417" timestamp="1601140891806" />
+  </component>
+</project>

@@ -27,7 +27,7 @@ async def annotypes1(
     )
 
     user = await vq.User(user_id=sender.id).get_info("verificate")
-    assert user.info == sender.info
+    assert user.info == sender._info
     cache("annotypes1")
 
     return config.ANSWER

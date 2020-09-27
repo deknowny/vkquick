@@ -48,7 +48,7 @@ def test_all_inits():
 
     kb_vq3 = vq.Keyboard.by(kb_dict)
 
-    assert kb_dict == kb_vq1.info == kb_vq2.info == kb_vq3.info
+    assert kb_dict == kb_vq1.info == kb_vq2.info == kb_vq3._info
     assert repr(kb_vq1) == repr(kb_vq2)
 
 

@@ -11,6 +11,6 @@ async def annofwd(fwds: vq.FwdUsers("verificate")):
     Get fwd users
     """
     user = await vq.User(user_id=fwds[0].id).get_info("verificate")
-    assert user.info == fwds[0].info
+    assert user.info == fwds[0]._info
     cache("annofwd")
     return config.ANSWER

@@ -1,7 +1,7 @@
 """
 Аннотационные типы для реакций.
 Класс также является аннотационным,
-если наследуется `vkquick.annotypes.base.Annotype`
+если наследуется `vkquick_old2.annotypes.base.Annotype`
 """
 from .base import Annotype
 

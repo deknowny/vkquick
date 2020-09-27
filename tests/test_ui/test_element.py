@@ -32,4 +32,4 @@ def test_inits():
 
     elem_by_dict = vq.Element.by(elem_dict)
 
-    assert elem.info == elem_by_dict.info == elem_dict
+    assert elem._info == elem_by_dict._info == elem_dict

@@ -1,7 +1,7 @@
 """
 Some LongPoll events
 """
-# import vkquick as vq
+# import vkquick_old2 as vq
 #
 #
 #

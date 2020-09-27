@@ -1,175 +1,101 @@
-"""
-Основная точка запуска любого бота
-"""
 import asyncio
-import json
-from dataclasses import dataclass, field
-from typing import Union
-from typing import List
+import sys
+import typing as ty
 
-import click
-from pygments import highlight, lexers, formatters
-from pygments.formatters.terminal import TERMINAL_COLORS
-from pygments.token import string_to_tokentype
-
-from .api import API
-from .lp import LongPoll
-from .signal import SignalsList, Signal
-from .reaction import ReactionsList, Reaction
-from .annotypes import Annotype
-from . import current
+import vkquick.current
+import vkquick.event_handling.event_handler
+import vkquick.signal_handling.signal_handler
+import vkquick.events_generators.event
+import vkquick.exceptions
+import vkquick.utils
 
 
-TERMINAL_COLORS[string_to_tokentype("String")] = ("gray", "_")
-TERMINAL_COLORS[string_to_tokentype("Token.Literal.Number")] = ("yellow", "_")
-TERMINAL_COLORS[string_to_tokentype("Token.Keyword.Constant")] = ("red", "_")
-TERMINAL_COLORS[string_to_tokentype("Token.Name.Tag")] = ("cyan", "_")
+class Bot:
 
+    events_generator = vkquick.current.fetch("events_generator", "cb", "lp")
 
-@dataclass
-class Bot(Annotype):
-    """
-    Основной менеджер событий LongPoll,
-    сигналов, API запросов и в целом работы бота
-    """
-
-    token: str
-    """
-    Токен пользователя/группы
-    """
-
-    group_id: int
-    """
-    Айдификатор группы, с которым будут
-    связаны LongPoll события
-    """
-
-    debug: bool
-    """
-    Режим дебага в терминале
-    """
-
-    config: dict = field(default_factory=dict)
-    """
-    Общие настройки бота (дополнительно)
-    """
-
-    version: Union[float, str] = 5.124
-    """
-    Версия API
-    """
-
-    wait: int = 25
-    """
-    Время ожидания ответа LongPoll события
-    """
-
-    owner: str = "group"
-    """
-    Тип владельца токена. group/user
-    """
-
-    URL: str = "https://api.vk.com/method/"
-    """
-    URL API запросов
-    """
-
-    signals: List[Signal] = field(default_factory=SignalsList)
-    """
-    Список обрабатываемых сигналов
-    """
-
-    reactions: List[Reaction] = field(default_factory=ReactionsList)
-    """
-    Список обрабатываемых реакций
-    """
-
-    def __post_init__(self):
-        current.bot = self
-        if float(self.version) < 5.103:
-            raise ValueError("You can't use API version lower than 5.103")
-        self.version = str(self.version)
-        current.api = API(
-            token=self.token,
-            version=self.version,
-            owner=self.owner,
-            group_id=self.group_id,
-            URL=self.URL,
-        )
-        self.lp = LongPoll(group_id=self.group_id, wait=self.wait)
-
+    def __init__(
+        self,
+        signal_handlers: ty.List[
+            vkquick.signal_handling.signal_handler.SignalHandler
+        ],
+        event_handlers: ty.List[
+            vkquick.event_handling.event_handler.EventHandler
+        ],
+    ):
+        self.signal_handlers = signal_handlers
+        self.event_handlers = event_handlers
         self.reload_now = False
-
-    @staticmethod
-    def prepare(argname, event, func, bin_stack):
-        return current.bot
-
-    def debug_out(self, string, **kwargs):
-        """
-        Проивзодит вывод, если включен режим дебага
-        """
-        if self.debug:
-            print(string, **kwargs)
 
     def run(self):
         """
-        Запускает LongPoll процесс,
-        вызывая перед этим `startup`,
-        а в конце и `shutdown` сигналы
+        Запуск бота. Вызывает сигнал `startup`,
+        потом запускает процесс по получению и обработке событий,
+        при завершении вызывает `shutdown`
         """
-        asyncio.run(self.signals.resolve("startup"))
-
-        while True:
-            try:
-                asyncio.run(self._process_handler())
-            except (RuntimeError, KeyboardInterrupt):
-                break
-            finally:
-                asyncio.run(self.signals.resolve("shutdown"))
-
-    async def _files_changing_check(self):
-        """
-        Поднимает RuntimeError после изменений
-        в директории бота для того, чтобы остановиться
-        """
-        while not self.reload_now:
-            await asyncio.sleep(0)
-        raise RuntimeError()
-
-    async def _process_handler(self):
-        """
-        Запускает две таски:
-
-        1. Процесс прослушивания LongPoll и обработки событий реакциями
-        1. Слежку за изменением файлов по "переменной состояния"
-        """
-        await asyncio.gather(self._files_changing_check(), self._run())
+        asyncio.run(self.call_signal("startup"))
+        try:
+            asyncio.run(self._run())
+        except vkquick.exceptions.BotReloadNow:
+            pass
+        finally:
+            asyncio.run(self.call_signal("shutdown"))
 
     async def _run(self):
         """
-        Процесс прослушивания LongPoll и обработки событий реакциями
+        Запускает конкурентно две задачи: наблюдение за
+        изменениями в файле (если нет флага `--release`) и получение событий
         """
-        async for events in self.lp:
+        await asyncio.gather(
+            self.observe_files_changing(), self.listen_events()
+        )
+
+    async def observe_files_changing(self) -> None:
+        """
+        Если запуск не содержит флаг `--release`,
+        то будет будет следить за изменениями в фалйе.
+        Реализация перезагрузки находится в проекте бота
+        """
+        if "--release" not in sys.argv:
+            while not self.reload_now:
+                await asyncio.sleep(0)
+            raise vkquick.exceptions.BotReloadNow()
+
+    async def listen_events(self):
+        """
+        Получает события с помощью одного из генераторов событий.
+        После получение вызывает метод по обработке события каждым `EventHandler`'ом
+        """
+        await self.events_generator.setup()
+        async for events in self.events_generator:
             for event in events:
+                asyncio.create_task(self.run_through_event_handlers(event))
 
-                if self.debug and self.reactions.has_event(event.type):
-                    click.clear()
+    async def run_through_event_handlers(
+        self, event: vkquick.events_generators.event.Event
+    ) -> None:
+        """
 
-                    data = json.dumps(
-                        event._mapping, ensure_ascii=False, indent=4
-                    )
-                    data = highlight(
-                        data,
-                        lexers.JsonLexer(),
-                        formatters.TerminalFormatter(bg="light"),
-                    )
-                    self.debug_out(
-                        f"{'=' * 35}\nBelow is the current handled event\n{'=' * 35}\n"
-                    )
-                    # print("=" * 35, "Below is the current handled event\n", sep="\n", end="=" * 35 + "\n")
-                    self.debug_out(data.strip())
-                    self.debug_out(
-                        f"{'=' * 35}\nAbove is the current handled event\n{'=' * 35}\n"
-                    )
+        """
+        # TODO: Handling info scheme
+        tasks = [
+            asyncio.create_task(event_handler.handle_event(event))
+            for event_handler in self.event_handlers
+        ]
+        handling_info = await asyncio.wait(tasks)
 
-                asyncio.create_task(self.reactions.resolve(event))
+    async def call_signal(self, signal_name: str, *args, **kwargs) -> ty.Any:
+        """
+        Вызывает сигнал с именем `signal_name` и передает
+        соответствующие аргументы. Если обработчика сигнала с
+        таким именем нет, поднимется ошибка `NameError`
+        """
+        for signal_handler in self.signal_handlers:
+            if signal_handler.signal_name == signal_name:
+                return await vkquick.utils.sync_async_run(
+                    signal_handler.reaction(*args, **kwargs)
+                )
+        # else:
+        #     raise NameError(
+        #         f"There is no any signals with name `{signal_name}`"
+        #     )

@@ -1,7 +1,7 @@
 """
 Набор полезных инструмеентов,
 встречающихся повсеместно как в ботах (клавиатуры, Message-объекты...),
-так и внутри vkquick
+так и внутри vkquick_old2
 """
 from random import randint
 
@@ -32,6 +32,6 @@ PEER: int = int(2e9)
 def random_id(side: int = 2 ** 31) -> int:
     """
     Случайное число в дипазоне +-`side`.
-    Используется для метода ```messages.send``` или в классе `vkquick.tools.message.Message`
+    Используется для метода ```messages.send``` или в классе `vkquick_old2.tools.message.Message`
     """
     return randint(-side, +side)

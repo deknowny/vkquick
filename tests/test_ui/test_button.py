@@ -56,10 +56,10 @@ def test_color():
     negative = vq.Button.text("foo").negative()
     positive = vq.Button.text("foo").positive()
 
-    assert primary.info["color"] == "primary"
-    assert secondary.info["color"] == "secondary"
-    assert negative.info["color"] == "negative"
-    assert positive.info["color"] == "positive"
+    assert primary._info["color"] == "primary"
+    assert secondary._info["color"] == "secondary"
+    assert negative._info["color"] == "negative"
+    assert positive._info["color"] == "positive"
 
     with pytest.raises(TypeError):
         vq.Button.line().negative()
@@ -95,4 +95,4 @@ def test_color():
 )
 def test_button_types(button, info):
     structed_button = vq.Button.by(info)
-    assert button.info == structed_button.info
+    assert button.info == structed_button._info
