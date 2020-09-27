@@ -14,6 +14,7 @@ from .event_handling.handling_info_scheme import HandlingInfoScheme
 
 from .event_handling.reaction_argument.text_arguments.base import TextArgument
 from .event_handling.reaction_argument.text_arguments.integer import Integer
+from .event_handling.reaction_argument.text_arguments.word import Word
 
 from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,

@@ -10,8 +10,6 @@ class UnmatchedArgument:
     Пустышка для значения аргумента, не прошедшего матчинг
     """
 
-    pass
-
 
 class TextArgument(
     vkquick.event_handling.reaction_argument.base.ReactionArgument, abc.ABC

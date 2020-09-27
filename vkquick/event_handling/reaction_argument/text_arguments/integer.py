@@ -20,9 +20,9 @@ class Integer(base.TextArgument):
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         values = self.cut_part_lite(
-            re.compile(r"(\d+[^oxb\s])"),
+            re.compile(r"\d+[^oxb\s]"),
             arguments_string,
-            lambda x: int(x.group(1)),
+            lambda x: int(x.group(0)),
         )
         if values[0] is base.UnmatchedArgument and not self.only_decimal:
             values = (
