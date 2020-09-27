@@ -6,6 +6,7 @@ __pycache__/
 vkquick.egg-info/
 todo/
 .pytest_cache/
+.idea/
 site/
 dist/
 
