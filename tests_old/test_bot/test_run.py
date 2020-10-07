@@ -28,7 +28,7 @@ CACHE_SET = {
 }
 
 # Create cache if not exists
-open(pathlib.Path() / "tests" / "test_bot" / ".cache", "w+")
+open(pathlib.Path() / "tests_old" / "test_bot" / ".cache", "w+")
 
 def test_bot_run(run_thread=True):
     # Bot's
@@ -36,7 +36,7 @@ def test_bot_run(run_thread=True):
 
     config = attrdict.AttrMap(toml.load(
             str(
-                pathlib.Path() / "tests" / "test_bot" / "config.toml"
+                pathlib.Path() / "tests_old" / "test_bot" / "config.toml"
             )
         )
     )
@@ -73,8 +73,8 @@ def test_bot_run(run_thread=True):
 
 
 def test_run():
-    cache_path = pathlib.Path() / "tests" / "test_bot" / ".cache"
-    with open(pathlib.Path() / "tests" / "test_bot" / ".cache", "r") as cache:
+    cache_path = pathlib.Path() / "tests_old" / "test_bot" / ".cache"
+    with open(pathlib.Path() / "tests_old" / "test_bot" / ".cache", "r") as cache:
         cache = set(cache.read().split())
 
     os.remove(cache_path)

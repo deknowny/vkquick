@@ -11,7 +11,7 @@ async def doc_uploader(event: vq.Event()):
     """
     Handler to command `send_photo`
     """
-    path = pathlib.Path() / "tests" / "test_bot" / "assets" / "example.png"
+    path = pathlib.Path() / "tests_old" / "test_bot" / "assets" / "example.png"
     with open(path, "rb") as file:
         photo_bytes = file.read()
 

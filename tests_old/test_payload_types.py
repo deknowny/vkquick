@@ -6,7 +6,7 @@ In process
 # import vkquick_old2 as vq
 # import pytest
 #
-# import tests.events as events
+# import tests_old.events as events
 #
 #
 # @pytest.mark.asyncio
