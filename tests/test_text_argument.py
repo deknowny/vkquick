@@ -68,6 +68,8 @@ text_arguments_data = [
     (vq.Bool(), "выкл", False),
     (vq.Bool(), "disable", False),
     (vq.Bool(false_extension=["custom"]), "custom", False),
+
+    (vq.Bool(), "off,", vq.UnmatchedArgument),
 ]
 
 

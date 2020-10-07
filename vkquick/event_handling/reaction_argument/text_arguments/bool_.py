@@ -15,7 +15,6 @@ class Bool(base.TextArgument):
         true_extension: ty.Iterable[str] = (),
         false_extension: ty.Iterable[str] = (),
     ):
-        # TODO: append (?:\s+|^[,]|$)
         true_values = [
             "true",
             "1",
@@ -49,6 +48,11 @@ class Bool(base.TextArgument):
         true_values.extend(true_extension)
         false_values.extend(false_extension)
 
+        append_postfix = lambda x: x + r"(?:\s+|^[,]|$)"  # noqa
+
+        true_values = map(append_postfix, true_values)
+        false_values = map(append_postfix, false_values)
+
         self.true_regex = re.compile(f"(?:{'|'.join(true_values)})", re.IGNORECASE)
         self.false_regex = re.compile(f"(?:{'|'.join(false_values)})", re.IGNORECASE)
 
@@ -67,3 +71,4 @@ class Bool(base.TextArgument):
 
     def usage_description(self, *_):
         return "Todo"  # TODO
+
