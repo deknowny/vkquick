@@ -115,12 +115,6 @@ class EventHandler:
             if isinstance(
                 value,
                 vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
-            ) or (
-                inspect.isclass(value)
-                and issubclass(
-                    value,
-                    vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
-                )
             ):
                 reaction_arguments[name] = await vkquick.utils.sync_async_run(
                     value.init_value(event)
@@ -137,10 +131,7 @@ class EventHandler:
         reaction_parameters = inspect.signature(reaction).parameters
         reaction_arguments = {}
         for name, value in reaction_parameters.items():
-            if (
-                inspect.isclass(value.annotation)
-                and value.annotation.always_be_instance
-            ):
+            if inspect.isclass(value.annotation):
                 reaction_arguments[name] = value.annotation()
             else:
                 reaction_arguments[name] = value.annotation

@@ -60,15 +60,9 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             if isinstance(
                 value,
                 vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
-            ) or issubclass(
-                value,
-                vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
             ):
                 self.text_arguments[name] = value
             elif isinstance(
-                value,
-                vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
-            ) or issubclass(
                 value,
                 vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
             ):
@@ -93,6 +87,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             event, arguments_string
         )
         if not matched:
+            if arguments_string:
+                return (
+                    False,
+                    f"Передано излишнее значение `{arguments_string}`, на которое не обозначены аргументы",
+                )
             unmatched_argument_name = list(text_arguments)[-1]
             return (
                 False,
@@ -124,7 +123,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         arguments_string: str,
     ) -> ty.Tuple[bool, str, ty.Dict[str, ty.Any]]:
         """
-        Вырзает аргументы из `arguments_string`.
+        Вырезает аргументы из `arguments_string`.
 
         Возвращает кортеж из:
         * Подходят ли все аргументы под `arguments_string`
@@ -151,6 +150,10 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                     )
                 )
                 return False, arguments_string, text_arguments
+
+        if arguments_string:
+            # TODO: on_expected_arguments
+            return False, arguments_string, text_arguments
 
         return True, arguments_string, text_arguments
 
