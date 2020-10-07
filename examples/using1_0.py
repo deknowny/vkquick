@@ -6,12 +6,9 @@ import vkquick as vq
 @vq.Command(
     names=["foo"],
     prefixes=["/"],
-    on_invalid_text_argument={
-        "num2": lambda **_: "Fizz"
-    }
 )
-async def foo(num: vq.Integer, num2: vq.Integer):
-    return f"Hello! Num is {num} and {num2}"
+async def foo(num: vq.Bool()):
+    return f"Hello! Num is {locals()}"
 
 
 vq.current.objects["api"] = vq.API(os.getenv("VKDEVGROUPTOKEN"))
