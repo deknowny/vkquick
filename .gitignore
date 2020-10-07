@@ -9,6 +9,7 @@ todo/
 .idea/
 site/
 dist/
+.coverage
 
 # Tests data
 tests/test_bot/config.toml
