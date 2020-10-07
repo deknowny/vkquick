@@ -13,8 +13,15 @@ from .event_handling.event_handler import EventHandler
 from .event_handling.handling_info_scheme import HandlingInfoScheme
 
 from .event_handling.reaction_argument.text_arguments.base import TextArgument
+from .event_handling.reaction_argument.text_arguments.base import (
+    UnmatchedArgument,
+)
 from .event_handling.reaction_argument.text_arguments.integer import Integer
 from .event_handling.reaction_argument.text_arguments.word import Word
+from .event_handling.reaction_argument.text_arguments.string_ import String
+from .event_handling.reaction_argument.text_arguments.union import Union
+from .event_handling.reaction_argument.text_arguments.regex import Regex
+from .event_handling.reaction_argument.text_arguments.bool_ import Bool
 
 from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,

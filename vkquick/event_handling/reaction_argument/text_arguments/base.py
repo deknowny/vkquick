@@ -3,6 +3,7 @@ import typing as ty
 
 import vkquick.event_handling.reaction_argument.base
 import vkquick.events_generators.event
+import vkquick.event_handling.message
 
 
 class UnmatchedArgument:
@@ -30,7 +31,7 @@ class TextArgument(
     def cut_part_lite(
         regex: ty.Pattern,
         arguments_string: str,
-        factory: ty.Callable[[ty.Match], ty.Any] = lambda x: x,
+        factory: ty.Callable[[ty.Match], ty.Any] = lambda match: match,
     ) -> ty.Tuple[ty.Any, str]:
         """
         Инкапсулирует логику, часто применяющуюся к `cut_part`
@@ -42,9 +43,8 @@ class TextArgument(
 
         return UnmatchedArgument, arguments_string
 
-    @classmethod
     def invalid_value(
-        cls,
+        self,
         argument_name: str,
         argument_position: int,
         argument_string: str,
@@ -59,23 +59,24 @@ class TextArgument(
                 "Вероятно, при вызове команды был пропущен параметер."
             )
 
-        extra_info = cls.extra_invalid_value_info(
+        extra_info = self.usage_description(
             argument_name, argument_position, argument_string, event,
         )
         if extra_info:
             extra_info = f"🔎 {extra_info}"
 
-        return (
+        response = (
             f"💥 Во время обработки команды `[id0|{event.get_message_object().text}]` "
             "возникли технические шоколадки!\n\n"
-            f"При попытке достать параметр №[id0|{argument_position}]"
+            f"При попытке достать аргумент №[id0|{argument_position}]"
             f" ({argument_name}) полученно некорректное значение "
             f"`{argument_string}`. {seems_missing}\n\n"
-            f"🔎 {extra_info}"
+            f"{extra_info}"
         )
+        return response
 
     @staticmethod
-    def extra_invalid_value_info(
+    def usage_description(
         argument_name: str,
         argument_position: int,
         argument_string: str,
