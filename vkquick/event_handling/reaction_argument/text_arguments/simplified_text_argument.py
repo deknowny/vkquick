@@ -1,7 +1,7 @@
 import re
 import typing as ty
 
-from . import base
+from vkquick.event_handling.reaction_argument.text_arguments import base
 
 
 class SimplifiedTextArgument(base.TextArgument):
