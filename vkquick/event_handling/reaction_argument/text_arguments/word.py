@@ -2,12 +2,12 @@ import re
 import typing as ty
 
 import vkquick.event_handling.reaction_argument.text_arguments.base
-import vkquick.event_handling.reaction_argument.text_arguments._text_base
+import vkquick.event_handling.reaction_argument.text_arguments.text_values_base
 
 
 class Word(
     vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
-    vkquick.event_handling.reaction_argument.text_arguments._text_base.TextBase,
+    vkquick.event_handling.reaction_argument.text_arguments.text_values_base.TextBase,
 ):
     """
     Слово, содержащее буквы, цифры и _
@@ -27,4 +27,4 @@ class Word(
 
     def usage_description(self, *_):
         desc = "Параметр может состоять из букв, чисел или знака нижнего подчеркивания. "
-        return self.usage_description(desc)
+        return self.create_length_rule(desc)

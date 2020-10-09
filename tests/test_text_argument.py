@@ -1,8 +1,8 @@
 import re
-import typing as ty
 
 import pytest
 import vkquick as vq
+
 
 text_arguments_data = [
     (vq.Integer(), "123", 123),
@@ -105,3 +105,12 @@ def test_text_argument_union():
 
     with pytest.warns(UserWarning):
         vq.Union(vq.Integer())
+
+
+def test_text_base():
+    with pytest.raises(ValueError):
+        vq.TextBase.check_valid_length(max_length=-5, min_length=1)
+    with pytest.raises(ValueError):
+        vq.TextBase.check_valid_length(max_length=10, min_length=20)
+    with pytest.raises(ValueError):
+        vq.TextBase.check_valid_length(max_length=10, min_length=-2)

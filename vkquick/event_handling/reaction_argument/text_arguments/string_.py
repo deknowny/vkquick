@@ -2,15 +2,15 @@ import re
 import typing as ty
 
 import vkquick.event_handling.reaction_argument.text_arguments.base
-import vkquick.event_handling.reaction_argument.text_arguments._text_base
+import vkquick.event_handling.reaction_argument.text_arguments.text_values_base
 
 
 class String(
     vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
-    vkquick.event_handling.reaction_argument.text_arguments._text_base.TextBase,
+    vkquick.event_handling.reaction_argument.text_arguments.text_values_base.TextBase,
 ):
     """
-    Слово, содержащее буквы, цифры и _
+    Любая последовательность символов
     """
 
     def __init__(
@@ -27,4 +27,4 @@ class String(
 
     def usage_description(self, *_):
         desc = "Строка, содержащая любые символы"
-        return self.usage_description(desc)
+        return self.create_length_rule(desc)
