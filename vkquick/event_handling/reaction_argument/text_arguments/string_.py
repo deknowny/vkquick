@@ -14,7 +14,7 @@ class String(
     """
 
     def __init__(
-        self, max_length: ty.Optional[int] = None, min_length: int = 1
+        self, *, max_length: ty.Optional[int] = None, min_length: int = 1
     ):
         self.pattern = re.compile(r".+", flags=re.DOTALL)
         super().__init__(max_length, min_length)
