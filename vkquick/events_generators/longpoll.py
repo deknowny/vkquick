@@ -10,6 +10,7 @@ import orjson
 
 import vkquick.current
 import vkquick.events_generators.event
+import vkquick.request
 
 
 class LongPoll:
@@ -22,7 +23,7 @@ class LongPoll:
     def __init__(self, group_id: int, wait: int = 25):
         self.group_id = group_id
         self.wait = wait
-        self.lock = asyncio.Lock()
+        self.requests_session = vkquick.request.RequestsSession("lp.vk.com")
 
         self._server_path = (
             self._params
@@ -42,25 +43,10 @@ class LongPoll:
             f"GET {self._server_path}?{query_string} HTTP/1.1\n"
             "Host: lp.vk.com\n\n"
         )
-        self.writer.write(query.encode("utf-8"))
-        await self.writer.drain()
-        content_length = 0
-        async with self.lock:
-            while True:
-                line = await self.reader.readline()
-                if line.startswith(b"Content-Length"):
-                    line = line.decode("utf-8")
-                    length = ""
-                    for i in line:
-                        if i.isdigit():
-                            length += i
-                    content_length = int(length)
-                if line == b"\r\n":
-                    break
-
-            body = await self.reader.read(content_length)
-            body = orjson.loads(body)
-            response = vkquick.events_generators.event.Event(body)
+        await self.requests_session.write(query.encode("UTF-8"))
+        body = await self.requests_session.read_body()
+        body = orjson.loads(body)
+        response = vkquick.events_generators.event.Event(body)
 
         if "failed" in response:
             await self._resolve_faileds(response)
@@ -74,17 +60,13 @@ class LongPoll:
         Обновляет или достает информацию о LongPoll сервере
         и открыват соединение
         """
+
         new_lp_settings = await self.api.groups.getLongPollServer(
             group_id=self.group_id
         )
         server_url = new_lp_settings.pop("server")
         server = urllib.parse.urlparse(server_url)
         self._server_path = server.path
-
-        self.reader, self.writer = await asyncio.open_connection(
-            "lp.vk.com", 443, ssl=ssl.SSLContext()
-        )
-
         self._lp_settings = dict(
             act="a_check", wait=self.wait, **new_lp_settings
         )

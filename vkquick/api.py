@@ -15,7 +15,8 @@ import typing as ty
 import attrdict
 import orjson
 
-from vkquick import exceptions
+import vkquick.exceptions
+import vkquick.request
 
 
 class TokenOwner(str, enum.Enum):
@@ -71,6 +72,7 @@ class API:
         self.reader = None
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
+        self.requests_session = vkquick.request.RequestsSession(host=self.host)
 
     def __getattr__(self, attribute) -> API:
         """
@@ -137,12 +139,6 @@ class API:
         """
         Создание API запросов путем передачи имени API и параметров
         """
-        # TODO: refactor
-        if self.writer is None:
-            self.reader, self.writer = await asyncio.open_connection(
-                self.host, 443, ssl=ssl.SSLContext()
-            )
-
         # API вк не умеет в массивы, поэтому все перечисления
         # Нужно отправлять строкой с запятой как разделителем
         for key, value in request_params.items():
@@ -155,36 +151,13 @@ class API:
             f"GET /method/{method_name}?{data} HTTP/1.1\n"
             f"Host: {self.host}\n\n"
         )
-        try:
-            self.writer.write(query.encode("utf-8"))
-            await self.writer.drain()
-        except ConnectionResetError:
-            self.reader, self.writer = await asyncio.open_connection(
-                self.host, 443, ssl=ssl.SSLContext()
-            )
-            self.writer.write(query.encode("utf-8"))
-            await self.writer.drain()
-
-        content_length = 0
-        async with self.lock:
-            while True:
-                line = await self.reader.readline()
-                if line.startswith(b"Content-Length"):
-                    line = line.decode("utf-8")
-                    length = ""
-                    for i in line:
-                        if i.isdigit():
-                            length += i
-                    content_length = int(length)
-                if line == b"\r\n":
-                    break
-
-            body = await self.reader.read(content_length)
-            body = orjson.loads(body)
-            self._check_errors(body)
-            if isinstance(body["response"], dict):
-                return self.response_factory(body["response"])
-            return body["response"]
+        await self.requests_session.write(query.encode("UTF-8"))
+        body = await self.requests_session.read_body()
+        body = orjson.loads(body)
+        self._check_errors(body)
+        if isinstance(body["response"], dict):
+            return self.response_factory(body["response"])
+        return body["response"]
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
         """
@@ -219,7 +192,7 @@ class API:
         Проверяет, является ли ответ от вк ошибкой
         """
         if "error" in response:
-            raise exceptions.VkApiError.destruct_response(response)
+            raise vkquick.exceptions.VkApiError.destruct_response(response)
 
     @staticmethod
     def define_token_owner(token: str, version: str = "5.133"):

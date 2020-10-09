@@ -3,12 +3,12 @@ import ssl
 
 
 class RequestsSession:
-    def __init__(self, host: str):
+    def __init__(self, host: str) -> None:
         self.writer = self.reader = None
         self.host = host
         self.lock = asyncio.Lock()
 
-    def _setup_connection(self):
+    async def _setup_connection(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(
             self.host, 443, ssl=ssl.SSLContext()
         )
@@ -24,7 +24,7 @@ class RequestsSession:
         finally:
             await self.writer.drain()
 
-    async def read(self) -> bytes:
+    async def read_body(self) -> bytes:
         content_length = 0
         async with self.lock:
             while True:
