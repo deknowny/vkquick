@@ -19,7 +19,9 @@ class Regex(base.TextArgument):
         self.factory = factory
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
-        return self.cut_part_lite(self.pattern, arguments_string, self.factory)
+        return self.cut_part_lite(
+            self.pattern, arguments_string, self.factory
+        )
 
     async def usage_description(self, *args) -> str:
         return f"Параметер должен подходить под шаблон {self.regex}"

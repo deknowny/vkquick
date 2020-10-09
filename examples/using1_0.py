@@ -7,7 +7,7 @@ import vkquick as vq
     names=["foo"],
     prefixes=["/"],
 )
-async def foo(num: vq.Bool()):
+async def foo(val: vq.Word(max_length=5000)):
     return f"Hello! Num is {locals()}"
 
 

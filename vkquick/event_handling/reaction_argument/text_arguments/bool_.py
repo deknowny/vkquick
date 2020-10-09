@@ -28,7 +28,7 @@ class Bool(base.TextArgument):
             "t",
             "on",
             "вкл",
-            "enable"
+            "enable",
         ]
         false_values = [
             "false",
@@ -43,21 +43,29 @@ class Bool(base.TextArgument):
             "f",
             "off",
             "выкл",
-            "disable"
+            "disable",
         ]
         true_values.extend(true_extension)
         false_values.extend(false_extension)
 
-        self.true_regex = re.compile(f"(?:{'|'.join(true_values)})", re.IGNORECASE)
-        self.false_regex = re.compile(f"(?:{'|'.join(false_values)})", re.IGNORECASE)
+        self.true_regex = re.compile(
+            f"(?:{'|'.join(true_values)})", re.IGNORECASE
+        )
+        self.false_regex = re.compile(
+            f"(?:{'|'.join(false_values)})", re.IGNORECASE
+        )
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
-        value, parsed_string = self.cut_part_lite(self.true_regex, arguments_string)
+        value, parsed_string = self.cut_part_lite(
+            self.true_regex, arguments_string
+        )
 
         if value is not base.UnmatchedArgument:
             return True, parsed_string
 
-        value, parsed_string = self.cut_part_lite(self.false_regex, arguments_string)
+        value, parsed_string = self.cut_part_lite(
+            self.false_regex, arguments_string
+        )
 
         if value is not base.UnmatchedArgument:
             return False, parsed_string
@@ -66,4 +74,3 @@ class Bool(base.TextArgument):
 
     def usage_description(self, *_):
         return "Todo"  # TODO
-
