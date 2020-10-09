@@ -38,3 +38,8 @@ def random_id(side: int = 2 ** 31 - 1) -> int:
     Используется для API метода `messages.send`
     """
     return random.randint(-side, +side)
+
+
+class SafeDict(dict):
+    def __missing__(self, key):
+        return "{" + key + "}"

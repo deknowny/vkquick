@@ -8,6 +8,7 @@ import vkquick as vq
     prefixes=["/"],
 )
 async def foo(val: vq.Word(max_length=5000)):
+    user = await vq.User.build_from_mention("[id1|aaa]")
     return f"Hello! Num is {locals()}"
 
 

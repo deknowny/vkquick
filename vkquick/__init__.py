@@ -29,3 +29,7 @@ from vkquick.event_handling.reaction_argument.text_arguments.text_values_base im
 from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,
 )
+
+
+from vkquick.wrappers.base import Wrapper
+from vkquick.wrappers.user import User
