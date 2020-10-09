@@ -12,12 +12,10 @@ dist/
 .coverage
 
 # Tests data
-tests/test_bot/config.toml
-tests/test_bot/.cache
 tests_old/
 
 examples/TodoBot/config.toml
 examples/TodoBot/src/db.sqlite3
 
-vkquick_old
-vkquick_old2
+vkquick_old/
+vkquick_old2/
