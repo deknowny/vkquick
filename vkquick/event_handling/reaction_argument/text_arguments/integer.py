@@ -14,13 +14,13 @@ class Integer(base.TextArgument):
     ):
         self.only_decimal = only_decimal  # TODO
         self.range_ = range_
-        self.pattern = re.compile(r"(\d+)(?:\s+|^[,]|$)")
+        self.pattern = re.compile(r"\d+")
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         value, parsed_string = self.cut_part_lite(
             self.pattern,
             arguments_string,
-            lambda x: int(x.group(1)),
+            lambda x: int(x.group(0)),
         )
         if (
             value is not base.UnmatchedArgument

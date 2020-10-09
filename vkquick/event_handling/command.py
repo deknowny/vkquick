@@ -146,7 +146,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             ):
                 asyncio.create_task(
                     self._on_unsuccessful_cutting(
-                        name, arguments_string, value, event  # noqa
+                        name, arguments_string, value, event
                     )
                 )
                 return False, arguments_string, text_arguments

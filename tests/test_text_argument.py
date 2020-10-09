@@ -9,7 +9,7 @@ text_arguments_data = [
     (vq.Integer(), "0", 0),
     (vq.Integer(), "823123000", 823123000),
     (vq.Integer(), "000", 0),
-    (vq.Integer(), "123123a12123", vq.UnmatchedArgument),
+    (vq.Integer(), "123123a12123", 123123),
     (vq.Integer(), "a12123", vq.UnmatchedArgument),
     (vq.Integer(), "123 123", 123),
     (vq.Integer(range_=range(10)), "5", 5),
@@ -20,7 +20,7 @@ text_arguments_data = [
     (vq.Word(), "hello world", "hello"),
     (vq.Word(), "123hello123", "123hello123"),
     (vq.Word(), "123 123", "123"),
-    (vq.Word(), "123,", vq.UnmatchedArgument),
+    (vq.Word(), "123,", "123"),
     (vq.Word(), ",123", vq.UnmatchedArgument),
 
     (vq.String(), "abc def \n\n", "abc def \n\n"),
@@ -69,7 +69,8 @@ text_arguments_data = [
     (vq.Bool(), "disable", False),
     (vq.Bool(false_extension=["custom"]), "custom", False),
 
-    (vq.Bool(), "off,", vq.UnmatchedArgument),
+    (vq.Bool(), "off,", False),
+    (vq.Bool(), "on,", True)
 ]
 
 
