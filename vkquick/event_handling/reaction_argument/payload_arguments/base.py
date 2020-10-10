@@ -2,7 +2,6 @@ import abc
 import typing as ty
 
 import vkquick.event_handling.reaction_argument.base
-import vkquick.events_generators.event
 
 
 class PayloadArgument(
@@ -14,7 +13,7 @@ class PayloadArgument(
 
     @abc.abstractmethod
     def init_value(
-        self, event: vkquick.events_generators.event.Event
+        self, event: "vkquick.events_generators.event.Event"
     ) -> ty.Any:
         """
         Возвращает значение аргумента для рекакции. Принимает объект события
