@@ -172,23 +172,15 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             list(self.text_arguments.keys()).index(argument_name) + 1
         )
         if argument_name in self.on_invalid_text_argument:
-            response = await vkquick.utils.sync_async_run(
-                self.on_invalid_text_argument[argument_name](
-                    argument_name=argument_name,
-                    argument_position=argument_position,
-                    argument_string=argument_string,
-                    event=event,
-                )
-            )
+            func_for_invalid = self.on_invalid_text_argument[argument_name]
         else:
-            response = await vkquick.utils.sync_async_run(
-                text_argument.invalid_value(
-                    argument_name=argument_name,
-                    argument_position=argument_position,
-                    argument_string=argument_string,
-                    event=event,
-                )
-            )
+            func_for_invalid = text_argument.invalid_value
+        response = func_for_invalid(
+            argument_name=argument_name,
+            argument_position=argument_position,
+            argument_string=argument_string,
+            event=event,
+        )
         asyncio.create_task(self.routing_reaction_response(response, event))
 
     async def run_trough_filters(
