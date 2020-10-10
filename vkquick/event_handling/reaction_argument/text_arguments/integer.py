@@ -4,7 +4,9 @@ import typing as ty
 import vkquick.event_handling.reaction_argument.text_arguments.base
 
 
-class Integer(vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument):
+class Integer(
+    vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument
+):
     """
     Целое число.
     """
@@ -21,11 +23,15 @@ class Integer(vkquick.event_handling.reaction_argument.text_arguments.base.TextA
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
+            value
+            is not vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
             and self.range_ is not None
             and value not in self.range_
         ):
-            return vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument, arguments_string
+            return (
+                vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument,
+                arguments_string,
+            )
 
         return value, parsed_string
 
