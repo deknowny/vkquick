@@ -95,7 +95,3 @@ class Bot:
                 return await vkquick.utils.sync_async_run(
                     signal_handler.reaction(*args, **kwargs)
                 )
-        # else:
-        #     raise NameError(
-        #         f"There is no any signals with name `{signal_name}`"
-        #     )
