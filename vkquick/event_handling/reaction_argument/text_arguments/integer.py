@@ -1,10 +1,10 @@
 import re
 import typing as ty
 
-from vkquick.event_handling.reaction_argument.text_arguments import base
+import vkquick.event_handling.reaction_argument.text_arguments.base
 
 
-class Integer(base.TextArgument):
+class Integer(vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument):
     """
     Целое число.
     """
@@ -21,11 +21,11 @@ class Integer(base.TextArgument):
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not base.UnmatchedArgument
+            value is not vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
             and self.range_ is not None
             and value not in self.range_
         ):
-            return base.UnmatchedArgument, arguments_string
+            return vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument, arguments_string
 
         return value, parsed_string
 

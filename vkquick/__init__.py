@@ -22,6 +22,7 @@ from .event_handling.reaction_argument.text_arguments.string_ import String
 from .event_handling.reaction_argument.text_arguments.union import Union
 from .event_handling.reaction_argument.text_arguments.regex import Regex
 from .event_handling.reaction_argument.text_arguments.bool_ import Bool
+from .event_handling.reaction_argument.text_arguments.mention import UserMention
 from vkquick.event_handling.reaction_argument.text_arguments.text_values_base import (
     TextBase,
 )

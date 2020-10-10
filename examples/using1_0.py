@@ -7,8 +7,7 @@ import vkquick as vq
     names=["foo"],
     prefixes=["/"],
 )
-async def foo(sender: vq.Sender(), val: vq.Word(max_length=5000)):
-    user = await vq.User.build_from_mention("[id1|aaa]")
+async def foo(user: vq.UserMention()):
     return f"Hello! Num is {locals()}"
 
 
