@@ -17,12 +17,11 @@ class RequestsSession:
         if self.writer is None:
             await self._setup_connection()
         try:
-            self.writer.write(body_query)
+            await self.writer.drain()
         except ConnectionResetError:
             await self._setup_connection()
-            self.writer.write(body_query)
         finally:
-            await self.writer.drain()
+            self.writer.write(body_query)
 
     async def read_body(self) -> bytes:
         content_length = 0
