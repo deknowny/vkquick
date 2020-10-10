@@ -47,10 +47,10 @@ class API:
     Версия API
     """
 
-    group_id: ty.Optional[int] = None
+    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(default_factory=dict)
     """
-    ID группы. Может быть использовано для быстрых добавлений `group_id`
-    в параметры запроса
+    При вызове API метода первым аргументом можно передать Ellipsis,
+    тогда в вызов метода подставятся поля из этого аргумента 
     """
 
     host: str = "api.vk.com"
@@ -94,7 +94,7 @@ class API:
             self._method_name = attribute
         return self
 
-    def __call__(self, attach_group_id_: bool = False, **request_params):
+    def __call__(self, use_autocomplete_params_: bool = False, /, **request_params):
         """
         Вызывает API метод с полями из
         `**request_params` и именем метода, полученным через __getattr__
@@ -103,11 +103,8 @@ class API:
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
-        if attach_group_id_:
-            if self.group_id is not None:
-                request_params.update(group_id=self.group_id)
-            else:
-                raise ValueError("group_id was attached, but hasn't been set")
+        if use_autocomplete_params_:
+            request_params.update(self.autocomplete_params)
         self._method_name = str()
         return self._make_api_request(
             method_name=method_name, request_params=request_params
