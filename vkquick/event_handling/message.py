@@ -1,9 +1,6 @@
 import typing as ty
 
-import attrdict
-
 import vkquick.utils
-
 import vkquick.events_generators.event
 import vkquick.current
 
@@ -67,7 +64,7 @@ class Message:
 
     async def send(
         self, event: vkquick.events_generators.event.Event
-    ) -> attrdict.AttrMap:
+    ) -> vkquick.utils.AttrDict:
         if not (
             {"user_id", "domain", "chat_id", "user_ids", "peer_ids"}
             & set(self.params)

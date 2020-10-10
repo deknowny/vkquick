@@ -43,3 +43,31 @@ def random_id(side: int = 2 ** 31 - 1) -> int:
 class SafeDict(dict):
     def __missing__(self, key):
         return "{" + key + "}"
+
+
+class AttrDict:
+    def __new__(cls, mapping):
+        if isinstance(mapping, dict):
+            self = object.__new__(cls)
+            self.__init__(mapping)
+            return self
+        elif isinstance(mapping, list):
+            return [cls(i) for i in mapping]
+
+        else:
+            return mapping
+
+    def __init__(self, mapping):
+        self.mapping_ = mapping
+
+    def __getattr__(self, item):
+        return self.__class__(self.mapping_[item])
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.mapping_})"
+
+    def __call__(self, item):
+        return self.__getattr__(item)
+
+    def __getitem__(self, item):
+        return self.mapping_[item]

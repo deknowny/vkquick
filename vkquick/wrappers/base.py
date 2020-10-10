@@ -1,8 +1,6 @@
 import dataclasses
 import typing as ty
 
-import attrdict
-
 import vkquick.utils
 
 
@@ -11,7 +9,8 @@ class Wrapper:
     """
     Wrapper -- специальная обертка на объекты ВК
     """
-    scheme: attrdict.AttrMap
+
+    scheme: vkquick.utils.AttrDict
 
     def __post_init__(self):
         self._shortcuts: ty.Dict[str, ty.Any] = {}
@@ -25,7 +24,6 @@ class Wrapper:
 
     def __format__(self, format_spec: str) -> str:
         inserted_values = vkquick.utils.SafeDict(
-            scheme=self.scheme,
-            **self._shortcuts
+            scheme=self.scheme, **self._shortcuts
         )
         return format_spec.format_map(inserted_values)

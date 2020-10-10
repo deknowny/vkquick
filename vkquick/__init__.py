@@ -2,7 +2,7 @@ from . import current
 from .api import API, TokenOwner
 from .bot import Bot
 from .exceptions import VkApiError, BotReloadNow
-from .utils import peer, random_id, sync_async_run
+from .utils import peer, random_id, sync_async_run, AttrDict
 
 from .events_generators.event import Event
 from .events_generators.longpoll import LongPoll
@@ -29,6 +29,7 @@ from vkquick.event_handling.reaction_argument.text_arguments.text_values_base im
 from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,
 )
+from .event_handling.reaction_argument.payload_arguments.sender import Sender
 
 
 from vkquick.wrappers.base import Wrapper

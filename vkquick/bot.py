@@ -15,7 +15,8 @@ class Bot:
     events_generator = vkquick.current.fetch("events_generator", "cb", "lp")
 
     def __init__(
-        self, *,
+        self,
+        *,
         signal_handlers: ty.List[
             vkquick.signal_handling.signal_handler.SignalHandler
         ],

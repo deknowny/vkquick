@@ -12,11 +12,11 @@ import urllib.parse
 import urllib.request
 import typing as ty
 
-import attrdict
 import orjson
 
 import vkquick.exceptions
 import vkquick.request
+import vkquick.utils
 
 
 class TokenOwner(str, enum.Enum):
@@ -47,7 +47,9 @@ class API:
     Версия API
     """
 
-    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(default_factory=dict)
+    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(
+        default_factory=dict
+    )
     """
     При вызове API метода первым аргументом можно передать Ellipsis,
     тогда в вызов метода подставятся поля из этого аргумента 
@@ -58,7 +60,7 @@ class API:
     URL отправки API запросов
     """
 
-    response_factory: ty.Callable[[dict], ty.Any] = attrdict.AttrMap
+    response_factory: ty.Callable[[dict], ty.Any] = vkquick.utils.AttrDict
     """
     Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)
@@ -69,7 +71,9 @@ class API:
         self._last_request_time = 0
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
-        self.requests_session = vkquick.request.RequestsSession(host=self.host)
+        self.requests_session = vkquick.request.RequestsSession(
+            host=self.host
+        )
 
     def __getattr__(self, attribute) -> API:
         """
@@ -94,7 +98,9 @@ class API:
             self._method_name = attribute
         return self
 
-    def __call__(self, use_autocomplete_params_: bool = False, /, **request_params):
+    def __call__(
+        self, use_autocomplete_params_: bool = False, /, **request_params
+    ):
         """
         Вызывает API метод с полями из
         `**request_params` и именем метода, полученным через __getattr__
@@ -151,6 +157,8 @@ class API:
         self._check_errors(body)
         if isinstance(body["response"], dict):
             return self.response_factory(body["response"])
+        elif isinstance(body["response"], list):
+            return [self.response_factory(i) for i in body["response"]]
         return body["response"]
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
