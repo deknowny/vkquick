@@ -16,9 +16,9 @@ class User(vkquick.wrappers.base.Wrapper):
 
     def __init__(self, scheme: attrdict.AttrMap):
         super().__init__(scheme)
-        self.add_field_shortcut("fn", scheme.first_name)
-        self.add_field_shortcut("ln", scheme.last_name)
-        self.add_field_shortcut("id", scheme.id)
+        self.add_scheme_shortcut("fn", scheme.first_name)
+        self.add_scheme_shortcut("ln", scheme.last_name)
+        self.add_scheme_shortcut("id", scheme.id)
 
     @classmethod
     async def build_from_id(cls, id_: ty.Union[int, str], /) -> User:

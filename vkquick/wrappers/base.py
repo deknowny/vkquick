@@ -16,7 +16,7 @@ class Wrapper:
     def __post_init__(self):
         self._shortcuts: ty.Dict[str, ty.Any] = {}
 
-    def add_field_shortcut(self, alias: str, value: ty.Any) -> None:
+    def add_scheme_shortcut(self, alias: str, value: ty.Any) -> None:
         """
         Добавляет шорткаты на некоторые поля из `scheme`
         """
