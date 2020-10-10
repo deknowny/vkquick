@@ -71,3 +71,6 @@ class AttrDict:
 
     def __getitem__(self, item):
         return self.mapping_[item]
+
+    def __contains__(self, item):
+        return item in self.mapping_

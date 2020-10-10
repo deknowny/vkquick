@@ -64,11 +64,11 @@ class LongPoll:
         new_lp_settings = await self.api.groups.getLongPollServer(
             group_id=self.group_id
         )
-        server_url = new_lp_settings.pop("server")
+        server_url = new_lp_settings.mapping_.pop("server")
         server = urllib.parse.urlparse(server_url)
         self._server_path = server.path
         self._lp_settings = dict(
-            act="a_check", wait=self.wait, **new_lp_settings
+            act="a_check", wait=self.wait, **new_lp_settings.mapping_
         )
 
     async def _resolve_faileds(

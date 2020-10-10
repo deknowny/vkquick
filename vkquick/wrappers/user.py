@@ -2,10 +2,7 @@ from __future__ import annotations
 import re
 import typing as ty
 
-import attrdict
-
 import vkquick.wrappers.base
-import vkquick.current
 import vkquick.utils
 
 
@@ -14,7 +11,7 @@ class User(vkquick.wrappers.base.Wrapper):
     api = vkquick.current.fetch("api_user_wrapper", "api")
     mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
-    def __init__(self, scheme: attrdict.AttrMap):
+    def __init__(self, scheme: vkquick.utils.AttrDict):
         super().__init__(scheme)
         self.add_scheme_shortcut("fn", scheme.first_name)
         self.add_scheme_shortcut("ln", scheme.last_name)
