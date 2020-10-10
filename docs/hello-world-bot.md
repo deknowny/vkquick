@@ -8,21 +8,7 @@
 ## Новый бот
 Для начала, давайте создадим проект бота и сразу перейдем в его директорию
 
-<!--
-Colorfull output
 
-<div class="termy">
-```console
-$ bot new hello_world
-<span style="color: YellowGreen;">Created <span style="color: Cyan;">hello_world</span> bot. Don't forget `cd` to bot's directory</span>
-
-<span style="color: Yellow;">Please, add following parameters to <span style="color: Cyan;">hello_world/config.toml</span> under <span style="color: Cyan;">[api]</span> section</span>
- -- <span style="color: Red;">token</span>
- -- <span style="color: Red;">group_id</span>
-
-$ cd hello_world
-```
-</div> -->
 <div class="termy">
 ```console
 $ bot new hello_world

@@ -29,7 +29,7 @@ class TextBase:
     def create_length_rule(self, desc: str) -> str:
         length_rule = "Минимальная длина строки {min_length}, а максимальная {max_length}."
         if self.max_length is None:
-            max_length_desc = "длина не ограничена"
+            max_length_desc = "не ограничена"
         else:
             max_length_desc = f"<= {self.max_length}"
         min_length_desc = f">= {self.min_length}"

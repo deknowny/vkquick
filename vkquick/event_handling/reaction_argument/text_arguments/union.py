@@ -20,7 +20,7 @@ class Union(base.TextArgument):
             raise ValueError("Union type must contains at least 2 types")
         elif len(text_arguments) == 1:
             warnings.warn(
-                "Union type contains only one type. The expression can be shorten",
+                "Union type contains only one type. The expression can be shortened",
                 UserWarning,
             )
 

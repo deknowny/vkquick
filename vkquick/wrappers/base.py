@@ -7,7 +7,7 @@ import attrdict
 @dataclasses.dataclass
 class Wrapper:
     """
-    Wrapper -- специальная обертка на объекты вк
+    Wrapper -- специальная обертка на объекты ВК
     """
     scheme: attrdict.AttrMap
 

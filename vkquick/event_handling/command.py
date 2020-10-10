@@ -127,7 +127,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
         Возвращает кортеж из:
         * Подходят ли все аргументы под `arguments_string`
-        * Ключ -- имя аргумента, значение -- значение
+        * Словарь, где ключ -- имя аргумента, значение -- значение
         """
         text_arguments: ty.Dict[str, ty.Any] = {}
         arguments_string = arguments_string.lstrip()

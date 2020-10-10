@@ -26,5 +26,5 @@ class Word(
         return self.check_range(*parsed_result)
 
     def usage_description(self, *_):
-        desc = "Параметр может состоять из букв, чисел или знака нижнего подчеркивания. "
+        desc = "Параметр может состоять из букв, чисел или знака нижнего подчеркивания."
         return self.create_length_rule(desc)

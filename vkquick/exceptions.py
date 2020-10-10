@@ -1,5 +1,5 @@
 """
-Поднимаются от некорректного API запроса
+Исключения, которые поднимаются от некорректного API запроса
 """
 from __future__ import annotations
 import dataclasses
