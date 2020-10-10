@@ -67,9 +67,6 @@ class API:
     def __post_init__(self):
         self._method_name = ""
         self._last_request_time = 0
-        self.lock = asyncio.Lock()
-        self.writer = None
-        self.reader = None
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
         self.requests_session = vkquick.request.RequestsSession(host=self.host)
@@ -222,7 +219,3 @@ class API:
             await asyncio.sleep(wait_time)
         else:
             self._last_request_time = now
-
-    def __del__(self):
-        if self.writer is not None:
-            self.writer.close()

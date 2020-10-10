@@ -41,3 +41,7 @@ class RequestsSession:
 
             body = await self.reader.read(content_length)
             return body
+
+    def __del__(self) -> None:
+        if self.writer is not None:
+            self.writer.close()
