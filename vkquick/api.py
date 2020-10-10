@@ -158,7 +158,6 @@ class API:
         Добавляет к параметрам токен и версию API.
         Дефолтный `access_token` и `v` могут быть перекрыты
         """
-
         return {
             "access_token": self.token,
             "v": self.version,
