@@ -19,3 +19,5 @@ examples/TodoBot/src/db.sqlite3
 
 vkquick_old/
 vkquick_old2/
+
+poetry.lock
