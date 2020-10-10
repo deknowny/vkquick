@@ -11,8 +11,8 @@ import vkquick.utils
 
 class User(vkquick.wrappers.base.Wrapper):
 
-    api = vkquick.current.fetch("user_wrapper_api", "api")
-    mention_regex = re.compile(r"\[id(\d+)\|.+?\]")
+    api = vkquick.current.fetch("api_user_wrapper", "api")
+    mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
     def __init__(self, scheme: attrdict.AttrMap):
         super().__init__(scheme)
@@ -38,7 +38,7 @@ class User(vkquick.wrappers.base.Wrapper):
         if not match:
             raise ValueError(f"`{mention}` isn't a user mention")
 
-        user_id = match.group(1)
+        user_id = match.group("id")
         return await cls.build_from_id(user_id)
 
     def mention(self, alias: str, /) -> str:
@@ -46,11 +46,6 @@ class User(vkquick.wrappers.base.Wrapper):
         mention = f"[id{self.scheme.id}|{new_alias}]"
         return mention
 
-    def __format__(self, format_spec: str) -> str:
-        inserted_values = vkquick.utils.SafeDict(
-            scheme=self.scheme,
-            **self.shortcuts
-        )
-        return format_spec.format_map(inserted_values)
+
 
 
