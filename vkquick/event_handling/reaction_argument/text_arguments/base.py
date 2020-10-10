@@ -63,7 +63,7 @@ class TextArgument(
             argument_name, argument_position, argument_string, event,
         )
         if extra_info:
-            extra_info = f"🔎 {extra_info}"
+            extra_info = f"💡 {extra_info}"
 
         response = (
             f"💥 Во время обработки команды `[id0|{event.get_message_object().text}]` "
