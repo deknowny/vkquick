@@ -10,7 +10,7 @@ import orjson
 
 import vkquick.current
 import vkquick.events_generators.event
-import vkquick.request
+import vkquick.utils
 
 
 class LongPoll:
@@ -23,7 +23,7 @@ class LongPoll:
     def __init__(self, group_id: int, wait: int = 25):
         self.group_id = group_id
         self.wait = wait
-        self.requests_session = vkquick.request.RequestsSession("lp.vk.com")
+        self.requests_session = vkquick.utils.RequestsSession("lp.vk.com")
 
         self._server_path = (
             self._params

@@ -15,7 +15,6 @@ import typing as ty
 import orjson
 
 import vkquick.exceptions
-import vkquick.request
 import vkquick.utils
 
 
@@ -71,7 +70,7 @@ class API:
         self._last_request_time = 0
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
-        self.requests_session = vkquick.request.RequestsSession(
+        self.requests_session = vkquick.utils.RequestsSession(
             host=self.host
         )
 

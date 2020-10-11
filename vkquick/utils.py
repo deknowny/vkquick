@@ -3,6 +3,7 @@
 """
 import asyncio
 import random
+import ssl
 import typing as ty
 
 
@@ -41,6 +42,9 @@ def random_id(side: int = 2 ** 31 - 1) -> int:
 
 
 class SafeDict(dict):
+    """
+    Обертка для словаря, передаваемого в `str.format_map`
+    """
     def __missing__(self, key):
         return "{" + key + "}"
 
@@ -74,3 +78,47 @@ class AttrDict:
 
     def __contains__(self, item):
         return item in self.mapping_
+
+
+class RequestsSession:
+    def __init__(self, host: str) -> None:
+        self.writer = self.reader = None
+        self.host = host
+        self.lock = asyncio.Lock()
+
+    async def _setup_connection(self) -> None:
+        self.reader, self.writer = await asyncio.open_connection(
+            self.host, 443, ssl=ssl.SSLContext()
+        )
+
+    async def write(self, body_query: bytes) -> None:
+        if self.writer is None:
+            await self._setup_connection()
+        try:
+            await self.writer.drain()
+        except ConnectionResetError:
+            await self._setup_connection()
+        finally:
+            self.writer.write(body_query)
+
+    async def read_body(self) -> bytes:
+        content_length = 0
+        async with self.lock:
+            while True:
+                line = await self.reader.readline()
+                if line.startswith(b"Content-Length"):
+                    line = line.decode("utf-8")
+                    length = ""
+                    for i in line:
+                        if i.isdigit():
+                            length += i
+                    content_length = int(length)
+                if line == b"\r\n":
+                    break
+
+            body = await self.reader.read(content_length)
+            return body
+
+    def __del__(self) -> None:
+        if self.writer is not None:
+            self.writer.close()
