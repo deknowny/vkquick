@@ -41,9 +41,6 @@ pytest = "^6.1.0"
 pytest-cov = "^2.10.1"
 pylint = "^2.6.0"
 
-[tool.poetry.scripts]
-bot = "vkquick.console:bot"
-
 [tool.poetry.urls]
 "VK group" = "https://vk.com/vkquick"
 "Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
