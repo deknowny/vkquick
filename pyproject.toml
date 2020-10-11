@@ -51,11 +51,6 @@ bot = "vkquick.console:bot"
 [tool.black]
 line-length = 78
 
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
-
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
