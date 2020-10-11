@@ -6,8 +6,6 @@ import ssl
 import urllib.parse
 import typing as ty
 
-import orjson
-
 import vkquick.current
 import vkquick.events_generators.event
 import vkquick.utils
@@ -24,6 +22,7 @@ class LongPoll:
         self.group_id = group_id
         self.wait = wait
         self.requests_session = vkquick.utils.RequestsSession("lp.vk.com")
+        self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
 
         self._server_path = (
             self._params
@@ -45,7 +44,7 @@ class LongPoll:
         )
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.read_body()
-        body = orjson.loads(body)
+        body = self.json_parser.loads(body)
         response = vkquick.events_generators.event.Event(body)
 
         if "failed" in response:

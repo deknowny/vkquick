@@ -12,8 +12,6 @@ import urllib.parse
 import urllib.request
 import typing as ty
 
-import orjson
-
 import vkquick.exceptions
 import vkquick.utils
 
@@ -73,6 +71,7 @@ class API:
         self.requests_session = vkquick.utils.RequestsSession(
             host=self.host
         )
+        self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
 
     def __getattr__(self, attribute) -> API:
         """
@@ -152,7 +151,7 @@ class API:
         )
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.read_body()
-        body = orjson.loads(body)
+        body = self.json_parser.loads(body)
         self._check_errors(body)
         if isinstance(body["response"], dict):
             return self.response_factory(body["response"])
@@ -203,7 +202,7 @@ class API:
             f"https://api.vk.com/method/users.get?{attached_query}",
             context=ssl.SSLContext(),
         )
-        resp = orjson.loads(resp.read())
+        resp = vkquick.utils.JSONParserBase.choose_parser().loads(resp.read())
         return TokenOwner.USER if resp["response"] else TokenOwner.GROUP
 
     async def _waiting(self) -> None:

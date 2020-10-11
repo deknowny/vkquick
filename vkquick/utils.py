@@ -1,10 +1,18 @@
 """
 Тривиальные инструменты для некоторых кейсов
 """
+import abc
 import asyncio
 import random
 import ssl
+import json
+import functools
 import typing as ty
+
+try:
+    import orjson
+except ImportError:
+    orjson = None
 
 
 T = ty.TypeVar("T")
@@ -122,3 +130,38 @@ class RequestsSession:
     def __del__(self) -> None:
         if self.writer is not None:
             self.writer.close()
+
+
+class JSONParserBase(abc.ABC):
+    @staticmethod
+    @abc.abstractmethod
+    def dumps(data: ty.Dict[str, ty.Any]) -> str:
+        ...
+
+    @staticmethod
+    @abc.abstractmethod
+    def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
+        ...
+
+    @staticmethod
+    def choose_parser():
+        if orjson is None:
+            return BuiltinJSONParser
+        return OrjsonJSONParser
+
+
+class BuiltinJSONParser(JSONParserBase):
+
+    dumps = functools.partial(json.dumps, ensure_ascii=False, separators=(",", ":"))
+    loads = json.loads
+
+
+class OrjsonJSONParser(JSONParserBase):
+
+    @staticmethod
+    def dumps(data: ty.Dict[str, ty.Any]) -> str:
+        return str(orjson.dumps(data))
+
+    @staticmethod
+    def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
+        return orjson.loads(string)
