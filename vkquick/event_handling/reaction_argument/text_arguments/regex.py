@@ -23,5 +23,5 @@ class Regex(base.TextArgument):
             self.pattern, arguments_string, self.factory
         )
 
-    async def usage_description(self, *args) -> str:
+    async def usage_description(self) -> str:
         return f"Параметер должен подходить под шаблон {self.regex}"

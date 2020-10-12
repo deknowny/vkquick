@@ -35,7 +35,7 @@ class Integer(
 
         return value, parsed_string
 
-    def usage_description(self, *_):
+    def usage_description(self):
         description = "Аргумент должен быть целым числом."
         if self.range_ is not None:
             range_info = f" Число должно быть ≥ {self.range_.start}, ≤ {self.range_.stop - 1}"

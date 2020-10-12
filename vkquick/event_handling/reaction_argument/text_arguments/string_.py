@@ -25,6 +25,6 @@ class String(
         )
         return self.check_range(*parsed_result)
 
-    def usage_description(self, *_):
+    def usage_description(self):
         desc = "Строка, содержащая любые символы. "  # Пробел стоит специально
         return self.create_length_rule(desc)

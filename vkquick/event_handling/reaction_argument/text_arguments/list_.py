@@ -25,6 +25,6 @@ class List(
                 self.pattern, arguments_string, lambda x: x.group(0),
             )
 
-    def usage_description(self, *_):
+    def usage_description(self):
         desc = "Параметр может состоять из букв, чисел или знака нижнего подчеркивания. "  # Пробел стоит специально
         return self.create_length_rule(desc)

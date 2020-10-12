@@ -24,5 +24,5 @@ class UserMention(
         user = await vkquick.wrappers.user.User.build_from_id(value)
         return user, parsed_string
 
-    def usage_description(self, *_):
+    def usage_description(self):
         return "Аргумент является упоминанием пользователя."

@@ -72,5 +72,5 @@ class Bool(base.TextArgument):
 
         return base.UnmatchedArgument, parsed_string
 
-    def usage_description(self, *_):
+    def usage_description(self):
         return "Todo"  # TODO

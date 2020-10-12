@@ -59,9 +59,7 @@ class TextArgument(
                 "Вероятно, при вызове команды был пропущен аргумент."
             )
 
-        extra_info = self.usage_description(
-            argument_name, argument_position, argument_string, event,
-        )
+        extra_info = self.usage_description()
         if extra_info:
             extra_info = f"💡 {extra_info}"
 
@@ -76,10 +74,5 @@ class TextArgument(
         return response
 
     @staticmethod
-    def usage_description(
-        argument_name: str,
-        argument_position: int,
-        argument_string: str,
-        event: vkquick.events_generators.event.Event,
-    ) -> str:
+    def usage_description() -> str:
         return ""
