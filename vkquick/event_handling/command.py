@@ -41,11 +41,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self,
         reaction: ty.Callable[
             ...,
-            ty.Awaitable[
+            ty.Union[ty.Awaitable[
                 ty.Union[vkquick.event_handling.message.Message, str]
-            ],
+            ], vkquick.event_handling.message.Message, str],
         ],
-    ):  # TODO: typing
+    ):
         super().__call__(reaction)
         self._separate_reaction_arguments()
         return self
