@@ -53,6 +53,7 @@ class SafeDict(dict):
     """
     Обертка для словаря, передаваемого в `str.format_map`
     """
+
     def __missing__(self, key):
         return "{" + key + "}"
 
@@ -152,12 +153,13 @@ class JSONParserBase(abc.ABC):
 
 class BuiltinJSONParser(JSONParserBase):
 
-    dumps = functools.partial(json.dumps, ensure_ascii=False, separators=(",", ":"))
+    dumps = functools.partial(
+        json.dumps, ensure_ascii=False, separators=(",", ":")
+    )
     loads = json.loads
 
 
 class OrjsonJSONParser(JSONParserBase):
-
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> str:
         return str(orjson.dumps(data))

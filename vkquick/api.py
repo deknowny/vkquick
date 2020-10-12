@@ -68,9 +68,7 @@ class API:
         self._last_request_time = 0
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
-        self.requests_session = vkquick.utils.RequestsSession(
-            host=self.host
-        )
+        self.requests_session = vkquick.utils.RequestsSession(host=self.host)
         self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
 
     def __getattr__(self, attribute) -> API:
