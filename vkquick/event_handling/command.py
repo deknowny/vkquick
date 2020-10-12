@@ -299,20 +299,20 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             asyncio.create_task(message.send(event))
 
     def generate_default_help_text(self) -> str:
-        prefixes = ", ".join(map(lambda x: f"[id0|{x}]", self.origin_prefixes))
-        names = ", ".join(map(lambda x: f"[id0|{x}]", self.origin_names))
+        prefixes = "\n".join(map(lambda x: f"-> [id0|{x}]", self.origin_prefixes))
+        names = "\n".join(map(lambda x: f"-> [id0|{x}]", self.origin_names))
         params_description = "\n".join(
-            f"[id0|{pos + 1})] {arg.usage_description()}"
+            f"[id0|{pos + 1}.] {arg.usage_description()}"
             for pos, arg in enumerate(self.text_arguments.values())
         )
         description = self.description or "Описание отсутствует"
         text = (
-            f"Команда `{self.title}`\n\n"
+            f"Помощь по команде `{self.title}`\n\n"
             f"{description}\n\n"
-            "Использование:\n"
-            f"-> Возможные префиксы: {prefixes or 'Отсутствуют'}\n"
-            f"-> Возможные имена: {names or 'Отстутсвуют'}\n"
-            f"-> Аргументы, которые необходимо передать при вызове:\n{params_description or 'Отсутствуют'}"
+            "[Использование]\n"
+            f"Возможные префиксы:\n{prefixes or '> Отсутствуют'}\n"
+            f"Возможные имена:\n{names or '> Отстутсвуют'}\n"
+            f"Аргументы, которые необходимо передать при вызове:\n{params_description or 'Отсутствуют'}"
         )
 
         return text
