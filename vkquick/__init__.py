@@ -18,6 +18,8 @@ from .event_handling.reaction_argument.text_arguments.base import (
 )
 from .event_handling.reaction_argument.text_arguments.integer import Integer
 from .event_handling.reaction_argument.text_arguments.word import Word
+from .event_handling.reaction_argument.text_arguments.optional import Optional
+from .event_handling.reaction_argument.text_arguments.replace_integer import ReplaceInteger
 from .event_handling.reaction_argument.text_arguments.string_ import String
 from .event_handling.reaction_argument.text_arguments.union import Union
 from .event_handling.reaction_argument.text_arguments.regex import Regex
@@ -33,6 +35,8 @@ from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,
 )
 from .event_handling.reaction_argument.payload_arguments.sender import Sender
+from .event_handling.reaction_argument.payload_arguments.peer_id import PeerID
+from .event_handling.reaction_argument.payload_arguments.group_id import GroupID
 from .event_handling.reaction_argument.payload_arguments.replied_user import RepliedUser
 
 
