@@ -24,9 +24,12 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
         self._made_text_arguments = {}
+        
+        self.origin_prefixes = tuple(prefixes)
+        self.origin_names = tuple(names)
 
-        self.prefixes = "|".join(prefixes)
-        self.names = "|".join(names)
+        self.prefixes = "|".join(self.origin_prefixes)
+        self.names = "|".join(self.origin_names)
         self.command_routing_regex = re.compile(
             f"(?:{self.prefixes})(?:{self.names})",
             flags=matching_command_routing_re_flags,
