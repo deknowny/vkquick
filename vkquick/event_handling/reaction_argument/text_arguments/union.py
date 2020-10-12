@@ -33,12 +33,10 @@ class Union(base.TextArgument):
                 return values
         return base.UnmatchedArgument, arguments_string
 
-    async def usage_description(self) -> str:
-        description = "Параметер должен подходить под одно из описаний:\n"
+    def usage_description(self) -> str:
+        description = "Аргумент должен подходить под одно из описаний:\n"
         for ind, value in enumerate(self.available_type, 1):
-            description = await vkquick.utils.sync_async_run(
-                value.usage_description()
-            )
-            description += f"{ind}. {value}"
+            value_description = value.usage_description()
+            description += f"{ind}) {value_description} "
 
         return description
