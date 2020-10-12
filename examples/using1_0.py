@@ -3,9 +3,11 @@ import os
 import vkquick as vq
 
 
+@vq.Enable(False)
 @vq.Command(
     names=["foo"],
     prefixes=["/"],
+    on_unapproved_filters={vq.Enable: lambda _: "Disabled"},
 )
 async def foo(user: vq.UserMention()):
     return f"Hello! Num is {locals()}"

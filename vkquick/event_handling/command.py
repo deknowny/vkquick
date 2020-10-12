@@ -7,6 +7,7 @@ import vkquick.event_handling.message
 import vkquick.events_generators.event
 import vkquick.event_handling.reaction_argument.payload_arguments.base
 import vkquick.event_handling.reaction_argument.text_arguments.base
+import vkquick.event_handling.filters.base
 import vkquick.utils
 
 
@@ -20,9 +21,27 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             ty.Dict[str, ty.Callable[..., ty.Union[ty.Awaitable, ty.Any]]]
         ] = None,
         matching_command_routing_re_flags: re.RegexFlag = re.IGNORECASE,
+        on_unapproved_filters: ty.Optional[
+            ty.Dict[
+                vkquick.event_handling.filters.base.Filter,
+                ty.Callable[
+                    [vkquick.events_generators.event.Event],
+                    ty.Union[
+                        str,
+                        vkquick.event_handling.message.Message,
+                        ty.Awaitable[
+                            ty.Union[
+                                str, vkquick.event_handling.message.Message
+                            ]
+                        ],
+                    ],
+                ],
+            ]
+        ] = None,
         ignore_editing: bool = False,
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
+        self.on_unapproved_filters = on_unapproved_filters or {}
         self._made_text_arguments = {}
 
         self.origin_prefixes = tuple(prefixes)
@@ -44,9 +63,13 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self,
         reaction: ty.Callable[
             ...,
-            ty.Union[ty.Awaitable[
-                ty.Union[vkquick.event_handling.message.Message, str]
-            ], vkquick.event_handling.message.Message, str],
+            ty.Union[
+                ty.Awaitable[
+                    ty.Union[vkquick.event_handling.message.Message, str]
+                ],
+                vkquick.event_handling.message.Message,
+                str,
+            ],
         ],
     ):
         super().__call__(reaction)
@@ -189,13 +212,28 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Tuple[bool, ty.List[ty.Tuple[bool, str, str]]]:
-        passed, description = await self.command_text_filter(event)
-        name = "Command Text"
-        if not passed:
-            return False, [(False, description, name)]
+        """
 
+        """
         passed_all, filters_decision = await super().run_trough_filters(event)
-        filters_decision.insert(0, (True, description, name))
+        if passed_all:
+            passed_text, description_text = await self.command_text_filter(
+                event
+            )
+            name = "CommandText"
+            passed_all = passed_text
+            filters_decision.append((passed_text, description_text, name))
+        else:
+            for (
+                filter_,
+                filter_reaction,
+            ) in self.on_unapproved_filters.items():
+                if filter_.__name__ == filters_decision[-1][2]:
+                    response = await vkquick.utils.sync_async_run(
+                        filter_reaction(event)
+                    )
+                    await self.routing_reaction_response(response, event)
+
         return passed_all, filters_decision
 
     async def init_reaction_arguments(
@@ -230,6 +268,9 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         response: ty.Union[str, vkquick.event_handling.message.Message],
         event: vkquick.events_generators.event.Event,
     ) -> None:
+        """
+
+        """
         if isinstance(response, vkquick.event_handling.message.Message):
             asyncio.create_task(response.send(event))
         elif response is not None:

@@ -17,7 +17,6 @@ class List(
     min_length: int = 1
     max_length: ty.Optional[int] = None
 
-
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         values = []
         while True:

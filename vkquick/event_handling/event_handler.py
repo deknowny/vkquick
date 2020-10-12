@@ -94,7 +94,7 @@ class EventHandler:
             passed, description = await vkquick.utils.sync_async_run(
                 filter_.make_decision(event)
             )
-            decision = (passed, description, filter_.__name__)
+            decision = (passed, description, filter_.__class__.__name__)
             filters_decision.append(decision)
             if not passed:
                 passed_all = False

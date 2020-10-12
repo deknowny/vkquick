@@ -15,7 +15,11 @@ class Filter(abc.ABC):
         """
 
     def __call__(self, event_handler):
-        if not isinstance(event_handler, vkquick.event_handling.event_handler.EventHandler):
-            raise TypeError("Filters can be used only for `EventHandler` and its subclasses")
+        if not isinstance(
+            event_handler, vkquick.event_handling.event_handler.EventHandler
+        ):
+            raise TypeError(
+                "Filters can be used only for `EventHandler` and its subclasses"
+            )
         event_handler.filters.append(self)
         return event_handler
