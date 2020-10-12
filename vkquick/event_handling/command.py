@@ -19,6 +19,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         names: ty.Iterable[str] = (),
         on_invalid_text_argument: ty.Optional[
             ty.Dict[str, ty.Callable[..., ty.Union[ty.Awaitable, ty.Any]]]
+            # TODO: correct typing
         ] = None,
         matching_command_routing_re_flags: re.RegexFlag = re.IGNORECASE,
         on_unapproved_filters: ty.Optional[

@@ -56,7 +56,7 @@ class TextArgument(
         seems_missing = ""
         if not argument_string:
             seems_missing = (
-                "Вероятно, при вызове команды был пропущен параметер."
+                "Вероятно, при вызове команды был пропущен аргумент."
             )
 
         extra_info = self.usage_description(
