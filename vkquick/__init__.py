@@ -33,6 +33,7 @@ from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,
 )
 from .event_handling.reaction_argument.payload_arguments.sender import Sender
+from .event_handling.reaction_argument.payload_arguments.replied_user import RepliedUser
 
 
 from vkquick.wrappers.base import Wrapper
