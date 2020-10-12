@@ -42,6 +42,7 @@ from .event_handling.reaction_argument.payload_arguments.base import (
     PayloadArgument,
 )
 from .event_handling.reaction_argument.payload_arguments.sender import Sender
+from .event_handling.reaction_argument.payload_arguments.replied_user import RepliedUser
 
 from .event_handling.filters.base import Filter
 from .event_handling.filters.enable import Enable
