@@ -24,7 +24,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
         self._made_text_arguments = {}
-        
+
         self.origin_prefixes = tuple(prefixes)
         self.origin_names = tuple(names)
 
