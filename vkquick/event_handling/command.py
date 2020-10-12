@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import re
 import typing as ty
 
@@ -15,6 +16,8 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     def __init__(
         self,
         *,
+        title: ty.Optional[str] = None,
+        description: ty.Optional[str] = None,
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
         on_invalid_text_argument: ty.Optional[
@@ -39,6 +42,15 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                 ],
             ]
         ] = None,
+        help_reaction: ty.Optional[ty.Callable[[vkquick.events_generators.event.Event], ty.Union[
+                        str,
+                        vkquick.event_handling.message.Message,
+                        ty.Awaitable[
+                            ty.Union[
+                                str, vkquick.event_handling.message.Message
+                            ]
+                        ],
+                    ]]] = None,
         ignore_editing: bool = False,
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
@@ -47,6 +59,9 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
         self.origin_prefixes = tuple(prefixes)
         self.origin_names = tuple(names)
+        self.title = title
+        self.description = description
+        self.help_reaction = help_reaction or (lambda _: self.generate_default_help_text())
 
         self.prefixes = "|".join(self.origin_prefixes)
         self.names = "|".join(self.origin_names)
@@ -75,6 +90,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     ):
         super().__call__(reaction)
         self._separate_reaction_arguments()
+        if self.title is None:
+            self.title = reaction.__name__
+        if self.description is None:
+            self.description = inspect.getdoc(reaction)
+
         return self
 
     def _separate_reaction_arguments(self) -> None:
@@ -277,3 +297,22 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         elif response is not None:
             message = vkquick.event_handling.message.Message(str(response))
             asyncio.create_task(message.send(event))
+
+    def generate_default_help_text(self) -> str:
+        prefixes = ", ".join(map(lambda x: f"[id0|{x}]", self.origin_prefixes))
+        names = ", ".join(map(lambda x: f"[id0|{x}]", self.origin_names))
+        params_description = "\n".join(
+            f"[id0|{pos + 1})] {arg.usage_description()}"
+            for pos, arg in enumerate(self.text_arguments.values())
+        )
+        description = self.description or "Описание отсутствует"
+        text = (
+            f"Команда `{self.title}`\n\n"
+            f"{description}\n\n"
+            "Использование:\n"
+            f"-> Возможные префиксы: {prefixes or 'Отсутствуют'}\n"
+            f"-> Возможные имена: {names or 'Отстутсвуют'}\n"
+            f"-> Аргументы, которые необходимо передать при вызове:\n{params_description or 'Отсутствуют'}"
+        )
+
+        return text
