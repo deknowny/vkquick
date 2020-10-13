@@ -21,11 +21,23 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
         on_invalid_text_argument: ty.Optional[
-            ty.Dict[str, ty.Callable[..., ty.Union[ty.Awaitable, ty.Any]]]
-            # TODO: correct typing
+            ty.Dict[
+                str,
+                ty.Callable[
+                    [str, int, str, vkquick.events_generators.event.Event],
+                    ty.Union[
+                        ty.Awaitable[
+                            ty.Union[
+                                str, vkquick.event_handling.message.Message
+                            ]
+                        ],
+                        ty.Union[str, vkquick.event_handling.message.Message],
+                    ],
+                ],
+            ]
         ] = None,
         matching_command_routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        on_unapproved_filters: ty.Optional[
+        on_unapproved_filter: ty.Optional[
             ty.Dict[
                 vkquick.event_handling.filters.base.Filter,
                 ty.Callable[
@@ -42,26 +54,31 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                 ],
             ]
         ] = None,
-        help_reaction: ty.Optional[ty.Callable[[vkquick.events_generators.event.Event], ty.Union[
-                        str,
-                        vkquick.event_handling.message.Message,
-                        ty.Awaitable[
-                            ty.Union[
-                                str, vkquick.event_handling.message.Message
-                            ]
-                        ],
-                    ]]] = None,
+        help_reaction: ty.Optional[
+            ty.Callable[
+                [vkquick.events_generators.event.Event],
+                ty.Union[
+                    str,
+                    vkquick.event_handling.message.Message,
+                    ty.Awaitable[
+                        ty.Union[str, vkquick.event_handling.message.Message]
+                    ],
+                ],
+            ]
+        ] = None,
         ignore_editing: bool = False,
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
-        self.on_unapproved_filters = on_unapproved_filters or {}
+        self.on_unapproved_filter = on_unapproved_filter or {}
         self._made_text_arguments = {}
 
         self.origin_prefixes = tuple(prefixes)
         self.origin_names = tuple(names)
         self.title = title
         self.description = description
-        self.help_reaction = help_reaction or (lambda _: self.generate_default_help_text())
+        self.help_reaction = help_reaction or (
+            lambda _: self.generate_default_help_text()
+        )
 
         self.prefixes = "|".join(self.origin_prefixes)
         self.names = "|".join(self.origin_names)
@@ -142,7 +159,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             unmatched_argument_name = list(text_arguments)[-1]
             return (
                 False,
-                f"Аргумент `{unmatched_argument_name}` не вырезан из строки `{text_arguments}`",
+                f"Аргумент `{unmatched_argument_name}` не вырезан из строки `{arguments_string}`",
             )
 
         self._made_text_arguments[event.event_id] = text_arguments
@@ -248,7 +265,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             for (
                 filter_,
                 filter_reaction,
-            ) in self.on_unapproved_filters.items():
+            ) in self.on_unapproved_filter.items():
                 if filter_.__name__ == filters_decision[-1][2]:
                     response = await vkquick.utils.sync_async_run(
                         filter_reaction(event)
@@ -299,7 +316,9 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             asyncio.create_task(message.send(event))
 
     def generate_default_help_text(self) -> str:
-        prefixes = "\n".join(map(lambda x: f"-> [id0|{x}]", self.origin_prefixes))
+        prefixes = "\n".join(
+            map(lambda x: f"-> [id0|{x}]", self.origin_prefixes)
+        )
         names = "\n".join(map(lambda x: f"-> [id0|{x}]", self.origin_names))
         params_description = "\n".join(
             f"[id0|{pos + 1}.] {arg.usage_description()}"
