@@ -7,6 +7,7 @@ import random
 import ssl
 import json
 import functools
+import os
 import typing as ty
 
 try:
@@ -167,3 +168,10 @@ class OrjsonJSONParser(JSONParserBase):
     @staticmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
         return orjson.loads(string)
+
+
+def clear_console():
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
