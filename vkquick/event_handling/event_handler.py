@@ -46,8 +46,9 @@ class EventHandler:
         is_correct_event_type = self.is_correct_event_type(event)
         if not is_correct_event_type:
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
+                handler=self,
                 is_correct_event_type=False,
-                is_filters_passed=False,
+                are_filters_passed=False,
                 filters_decision=[],
                 passed_arguments={},
             )
@@ -55,8 +56,9 @@ class EventHandler:
         passed_all, filters_decision = await self.run_trough_filters(event)
         if not passed_all:
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
+                handler=self,
                 is_correct_event_type=True,
-                is_filters_passed=False,
+                are_filters_passed=False,
                 filters_decision=filters_decision,
                 passed_arguments={},
             )
@@ -64,8 +66,9 @@ class EventHandler:
         reaction_arguments = await self.init_reaction_arguments(event)
         asyncio.create_task(self.call_reaction(event, reaction_arguments))
         return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
+            handler=self,
             is_correct_event_type=True,
-            is_filters_passed=False,
+            are_filters_passed=True,
             filters_decision=filters_decision,
             passed_arguments=reaction_arguments,
         )

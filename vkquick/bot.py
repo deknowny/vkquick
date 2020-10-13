@@ -1,11 +1,16 @@
 import asyncio
+import datetime
 import sys
+import os
 import typing as ty
+
+import sty
 
 import vkquick.current
 import vkquick.event_handling.event_handler
 import vkquick.signal_handling.signal_handler
 import vkquick.events_generators.event
+import vkquick.event_handling.handling_info_scheme
 import vkquick.exceptions
 import vkquick.utils
 
@@ -23,9 +28,13 @@ class Bot:
         event_handlers: ty.List[
             vkquick.event_handling.event_handler.EventHandler
         ],
+        debug_filter: ty.Optional[
+            ty.Callable[[vkquick.events_generators.event.Event], bool]
+        ] = None,
     ):
         self.signal_handlers = signal_handlers
         self.event_handlers = event_handlers
+        self.debug_filter = debug_filter or self.default_debug_filter
         self.reload_now = False
 
     def run(self):
@@ -39,6 +48,9 @@ class Bot:
             asyncio.run(self._run())
         except vkquick.exceptions.BotReloadNow:
             pass
+        except KeyboardInterrupt:
+            print(sty.fg.yellow + "\nBot was stopped")
+
         finally:
             asyncio.run(self.call_signal("shutdown"))
 
@@ -83,7 +95,63 @@ class Bot:
             asyncio.create_task(event_handler.handle_event(event))
             for event_handler in self.event_handlers
         ]
-        handling_info = await asyncio.wait(tasks)
+        handling_info = await asyncio.gather(*tasks)
+        self.show_debug_info(event, handling_info)
+
+    def show_debug_info(
+        self,
+        event: vkquick.events_generators.event.Event,
+        handling_info: ty.List[
+            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+        ],
+    ):
+        if "--release" not in sys.argv:
+            if self.debug_filter(event):
+                time_header = datetime.datetime.now().strftime(
+                    "-- %H:%M:%S %d-%m-%Y"
+                )
+                debug_info = f"-> {event.type} {sty.fg.li_black + time_header + sty.fg.rs}\n"
+                debug_info += sty.fg.li_black + os.get_terminal_size().columns * "=" + sty.fg.rs + "\n\n"
+                handling_messages: ty.List[str] = []
+                for scheme in handling_info:
+                    if scheme["is_correct_event_type"]:
+                        handling_message = self._build_event_handler_message(
+                            scheme
+                        )
+                        if scheme["are_filters_passed"]:
+                            handling_messages.insert(0, handling_message)
+                        else:
+                            handling_messages.append(handling_message)
+
+                handling_message = (
+                    "\n"
+                    + sty.fg.li_black
+                    + os.get_terminal_size().columns * "-"
+                    + sty.fg.rs
+                    + "\n\n"
+                ).join(handling_messages)
+                vkquick.utils.clear_console()
+                print(debug_info + handling_message)
+
+    @staticmethod
+    def _build_event_handler_message(
+        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ) -> str:
+        header_color = (
+            sty.fg.green if scheme["are_filters_passed"] else sty.fg.red
+        )
+        header = f"[{header_color + scheme['handler'].reaction.__name__ + sty.fg.rs}]\n"
+        filters_decisions: ty.List[str] = [
+            f"{sty.fg.yellow + decision[2] + sty.fg.rs}: {decision[1]}"
+            for decision in scheme["filters_decision"]
+        ]
+        filters_decisions: str = "\n".join(filters_decisions)
+        arguments: ty.List[str] = [
+            f"\n    > {sty.fg.cyan + name + sty.fg.rs}: {value!s}"
+            for name, value in scheme["passed_arguments"].items()
+        ]
+        arguments: str = "".join(arguments)
+        return header + filters_decisions + arguments
 
     async def call_signal(self, signal_name: str, *args, **kwargs) -> ty.Any:
         """
@@ -96,3 +164,10 @@ class Bot:
                 return await vkquick.utils.sync_async_run(
                     signal_handler.reaction(*args, **kwargs)
                 )
+
+    @staticmethod
+    def default_debug_filter(
+        event: vkquick.events_generators.event.Event,
+    ) -> bool:
+        if event.type in ("message_new", "message_edit"):
+            return True

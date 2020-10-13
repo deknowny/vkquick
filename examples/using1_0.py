@@ -9,11 +9,24 @@ bot = vq.Bot(event_handlers=[], signal_handlers=[])
 
 
 @bot.event_handlers.append
+@vq.Enable(True)
 @vq.Command(
     names=["foo", "bar"],
     prefixes=["/", "!"],
 )
 async def foo(user: vq.UserMention(), other: vq.Union(vq.Integer(), vq.Word())):
+    """
+    Какое-то описание команды. Lorem ipsum
+    """
+    return f"Hello! Num is {locals()}"
+
+
+@bot.event_handlers.append
+@vq.Command(
+    names=["fizz"],
+    prefixes=["/", "!"],
+)
+async def bazz(num: vq.Integer()):
     """
     Какое-то описание команды. Lorem ipsum
     """
