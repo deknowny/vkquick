@@ -6,12 +6,17 @@ class HandlingInfoScheme(ty.TypedDict):
     Схема отчета от `EventHandler` по обработке события
     """
 
+    handler: "vkquick.event_handling.event_handler.EventHandler"
+    """
+    Обработчик события
+    """
+
     is_correct_event_type: bool
     """
     Корректен ли тип события
     """
 
-    is_filters_passed: bool
+    are_filters_passed: bool
     """
     Все ли фильтры пройдены
     """
