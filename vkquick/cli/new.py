@@ -228,9 +228,6 @@ class New(cleo.Command):
             CONFIGPY.format(token=self.token, group_id=current_group.id)
         )
 
-        init = src / "__init__.py"
-        init.touch()
-
         mainpy = src / "__main__.py"
         mainpy.touch()
         mainpy.write_text(MAINPY)
