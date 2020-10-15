@@ -32,7 +32,6 @@ watchdog = "^0.10.2"
 pygments = "^2.6.1"
 cleo = "^0.8.1"
 orjson = { version = "^3.3.1", optional = true }
-click = "^7.1.2"
 sty = "^1.0.0-beta.12"
 
 
