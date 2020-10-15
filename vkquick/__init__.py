@@ -23,6 +23,7 @@ from .utils import (
     BuiltinJSONParser,
     OrjsonJSONParser,
     RequestsSession,
+    SafeDict,
 )
 
 from .events_generators.event import Event
@@ -66,3 +67,6 @@ from .event_handling.filters.enable import Enable
 
 from .wrappers.base import Wrapper
 from .wrappers.user import User
+
+
+__version__ = "1.0.0a0"

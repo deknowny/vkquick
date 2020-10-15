@@ -41,4 +41,4 @@ class User(vkquick.wrappers.base.Wrapper):
     def mention(self, alias: str, /) -> str:
         new_alias = self.__format__(alias)
         mention = f"[id{self.scheme.id}|{new_alias}]"
-        return
+        return mention

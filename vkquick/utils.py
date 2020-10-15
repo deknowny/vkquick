@@ -65,14 +65,14 @@ class AttrDict:
             self = object.__new__(cls)
             self.__init__(mapping)
             return self
-        elif isinstance(mapping, list):
+        if isinstance(mapping, list):
             return [cls(i) for i in mapping]
 
         else:
             return mapping
 
     def __init__(self, mapping):
-        self.mapping_ = mapping
+        object.__setattr__(self, "mapping_", mapping)
 
     def __getattr__(self, item):
         return self.__class__(self.mapping_[item])
@@ -88,6 +88,12 @@ class AttrDict:
 
     def __contains__(self, item):
         return item in self.mapping_
+
+    def __setattr__(self, key, value):
+        self.mapping_[key] = value
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
 
 
 class RequestsSession:

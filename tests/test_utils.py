@@ -10,11 +10,6 @@ def test_peer(chat_id, peer_id):
     assert vq.peer(chat_id) == peer_id
 
 
-attrdict_data = [
-    ({"a": 1}, )
-]
-
-
 class TestAttrDict:
 
     def test_recursive_getattr(self):

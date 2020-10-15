@@ -5,8 +5,10 @@
 """
 import typing as ty
 
+import vkquick.utils
 
-objects: ty.Dict[str, ty.Any] = {}
+
+objects: vkquick.utils.AttrDict = vkquick.utils.AttrDict({})
 """
 Место хранения current-объектов
 """
@@ -24,10 +26,8 @@ def fetch(*values_name: str) -> ty.Any:
     @property
     def get_current_object(_) -> ty.Any:
         for value_name in values_name:
-            # Морж смотрится не элегантно
-            value = objects.get(value_name)
-            if value is not None:
-                return value
+            if value_name in objects:
+                return objects[value_name]
         else:
             raise NameError(f"No any object with names `{values_name}`")
 

@@ -28,13 +28,13 @@ class Wrapper:
         )
         return format_spec.format_map(inserted_values)
 
+    def format(self, format_spec: str) -> str:
+        return self.__format__(format_spec)
+
     def __str__(self):
         shortcuts = [
-            f"{name}={value!r}"
-            for name, value in self._shortcuts.items()
+            f"{name}={value!r}" for name, value in self._shortcuts.items()
         ]
         shortcuts = ", ".join(shortcuts)
 
         return f"{self.__class__.__name__}({shortcuts})"
-
-

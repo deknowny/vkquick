@@ -22,3 +22,6 @@ class Event(
             return self.object.message
         else:
             return self.object
+
+    def __str__(self):
+        return f"Event(type={self.type})"

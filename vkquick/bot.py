@@ -22,10 +22,10 @@ class Bot:
     def __init__(
         self,
         *,
-        signal_handlers: ty.List[
+        signal_handlers: ty.Collection[
             vkquick.signal_handling.signal_handler.SignalHandler
         ],
-        event_handlers: ty.List[
+        event_handlers: ty.Collection[
             vkquick.event_handling.event_handler.EventHandler
         ],
         debug_filter: ty.Optional[
@@ -111,7 +111,12 @@ class Bot:
                     "-- %H:%M:%S %d-%m-%Y"
                 )
                 debug_info = f"-> {event.type} {sty.fg.li_black + time_header + sty.fg.rs}\n"
-                debug_info += sty.fg.li_black + os.get_terminal_size().columns * "=" + sty.fg.rs + "\n\n"
+                debug_info += (
+                    sty.fg.li_black
+                    + os.get_terminal_size().columns * "="
+                    + sty.fg.rs
+                    + "\n\n"
+                )
                 handling_messages: ty.List[str] = []
                 for scheme in handling_info:
                     if scheme["is_correct_event_type"]:
