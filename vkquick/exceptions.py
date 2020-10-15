@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 import typing as ty
 
-import click
+import sty
 
 
 class _ParamsScheme(ty.TypedDict):
@@ -40,14 +40,18 @@ class VkApiError(Exception):
         status_code, description, request_params = response["error"].values()
 
         pretty_exception_text = (
-            click.style(f"\n[{status_code}] ", fg="red")
-            + click.style(f"{description}\n\n", fg="red", bold=True)
-            + click.style("Request params:", bold=True)
+            sty.fg.red
+            + f"\n[{status_code}] "
+            + sty.fg.rs
+            + f"{description}\n\n"
+            + sty.fg.li_white
+            + "Request params:"
+            + sty.fg.rs
         )
 
         for pair in request_params:
-            key = click.style(pair["key"], fg="yellow")
-            value = click.style(pair["value"], fg="cyan")
+            key = sty.fg.yellow + pair["key"] + sty.fg.rs
+            value = sty.fg.cyan + pair["value"] + sty.fg.rs
             pretty_exception_text += f"\n{key} = {value}"
 
         return cls(
