@@ -114,8 +114,8 @@ text = f\"""
 <Описание>
 
 Создатель: {owner_mention}
-Написан на Python({platform.python_version()}) с
-использованием @vkquick (VK Quick)({vq.__version__})
+Python: {platform.python_version()}
+[id195194058|VK Quick]: ({vq.__version__})
 \""".lstrip()
 
 
@@ -212,12 +212,15 @@ class New(cleo.Command):
             LICENSE_TEXT.format(
                 year=datetime.datetime.now().year,
                 owner=self.option("owner") or owner.format("{fn} {ln}"),
-            )
+            ),
+            encoding="utf-8",
         )
 
         readme = bot_dir / "README.md"
         readme.touch()
-        readme.write_text(README.format(name=self.argument("name")))
+        readme.write_text(
+            README.format(name=self.argument("name")), encoding="utf-8"
+        )
 
         src = bot_dir / "src"
         src.mkdir()
@@ -225,24 +228,26 @@ class New(cleo.Command):
         config = src / "config.py"
         config.touch()
         config.write_text(
-            CONFIGPY.format(token=self.token, group_id=current_group.id)
+            CONFIGPY.format(token=self.token, group_id=current_group.id),
+            encoding="utf-8",
         )
 
         mainpy = src / "__main__.py"
         mainpy.touch()
-        mainpy.write_text(MAINPY)
+        mainpy.write_text(MAINPY, encoding="utf-8")
 
         default = src / "default"
         default.mkdir()
 
         help_ = default / "help_.py"
         help_.touch()
-        help_.write_text(HELPPY)
+        help_.write_text(HELPPY, encoding="utf-8")
 
         readme = default / "readme.py"
         readme.touch()
         readme.write_text(
             READMEPY.replace("{bot_name}", self.argument("name")).replace(
                 "{owner_mention}", owner.mention("{fn} {ln}")
-            )
+            ),
+            encoding="utf-8",
         )
