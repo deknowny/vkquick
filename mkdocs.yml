@@ -1,6 +1,6 @@
 site_name: VK Quick
 site_description: Async python package for creating VK chat bots
-repo_name: vkquick_old2
+repo_name: vkquick
 repo_url: https://github.com/Rhinik/vkquick_old2
 
 remote_branch: master
@@ -8,35 +8,7 @@ remote_branch: master
 google_analytics: ["UA-172364682-1", "vkquick_old2.github.io"]
 
 nav:
-    - Home: index.md
-    - Установка: installation.md
-    - hello world бот: hello-world-bot.md
-    - Инструкция:
-        - Введение: possible/index.md
-        - Структура проекта: possible/project-struct.md
-        - Структура команды: possible/command-struct.md
-        - Реакции: possible/reaction.md
-        - Payload-типы: possible/payload-args.md
-        - Валидаторы: possible/validators.md
-        - Быстрые ответы: possible/quick-answers.md
-        - Current-объекты: possible/current-obj.md
-        - Сигналы: possible/signals.md
-        - bot: possible/bot.md
-        - Инструменты:
-            - Что это: possible/tools/index.md
-            - Клавиатуры: possible/tools/keyboards.md
-            - Кнопки: possible/tools/buttons.md
-            - Карусели: possible/tools/templates.md
-            - Элементы: possible/tools/elements.md
-            - Загрузка фотографий: possible/tools/photos.md
-            - Загрузка документов, гс, граффити: possible/tools/docs-vm-graffiti.md
-            - Пользователь: possible/tools/user.md
-    - Примеры:
-        - Делаем бота: examples/index.md
-        - Техническое задание: examples/tech-task.md
-        - Создание: examples/create.md
-    - Контрибьюторам: contributing.md
-    - Релизы: releases.md
+    - Test: build/markdown/vkquick.md
 
 theme:
     name: material
@@ -64,9 +36,13 @@ markdown_extensions:
     - pymdownx.tabbed
     - pymdownx.details
     - pymdownx.tilde
+    - admonition
+    - codehilite
+    - mkautodoc
 
 extra_css:
     - css/termynal.css
+    - css/custom.css
 
 extra_javascript:
     - js/termynal.js

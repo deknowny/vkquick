@@ -9,9 +9,7 @@ import vkquick.utils
 
 
 objects: vkquick.utils.AttrDict = vkquick.utils.AttrDict({})
-"""
-Место хранения current-объектов
-"""
+
 
 
 def fetch(*values_name: str) -> ty.Any:
