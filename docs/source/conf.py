@@ -73,7 +73,7 @@ html_theme_options = {
     "master_doc": False,
     "css_minify": True,
     "nav_title": "VK Quick",
-    "logo_icon": "&#57374",
+    "logo_icon": "&#xe869",
     "globaltoc_depth": 2,
     "heroes": {
         "index": "The phenomenal docs of the phenomenal framework for the phenomenal developers",
