@@ -5,6 +5,7 @@ import os
 import typing as ty
 
 import sty
+import watchgod
 
 import vkquick.current
 import vkquick.event_handling.event_handler
@@ -31,10 +32,12 @@ class Bot:
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
+        observing_path: str = "."
     ):
         self.signal_handlers = signal_handlers
         self.event_handlers = event_handlers
         self.debug_filter = debug_filter or self.default_debug_filter
+        self.observing_path = observing_path
         self.reload_now = False
 
     def run(self):
@@ -59,9 +62,8 @@ class Bot:
         Запускает конкурентно две задачи: наблюдение за
         изменениями в файле (если нет флага `--release`) и получение событий
         """
-        await asyncio.gather(
-            self.observe_files_changing(), self.listen_events()
-        )
+        await self.listen_events()
+
 
     async def observe_files_changing(self) -> None:
         """
@@ -70,9 +72,8 @@ class Bot:
         Реализация перезагрузки находится в проекте бота
         """
         if "--release" not in sys.argv:
-            while not self.reload_now:
-                await asyncio.sleep(0)
-            raise vkquick.exceptions.BotReloadNow()
+            async for changes in watchgod.awatch(self.observing_path):
+                print(changes)
 
     async def listen_events(self):
         """
