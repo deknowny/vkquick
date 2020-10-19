@@ -1,5 +1,17 @@
 """
 Управление API запросами
+
+API ВКонтакте представляет собой набор
+специальных "методов" для получения какой-либо информации.
+Например, чтобы получить имя пользователя, нужно вызвать метод `users.get`
+и передать в качестве параметра его ID.
+Вызов метода и передача параметров представляет собой лишь отправку HTTP запроса.
+Вызвать метод `some.method` и передать туда параметр `foo=1` означает составить
+запрос такого вида: `https://api.vk.com/method/some.method?foo=1`.
+Составлять такие запросы каждый раз достаточно неудобно, поэтому этот
+модуль предоставляет возможности более комфортного взаимодействия
+
+Список методов с параметрами можно найти на https://vk.com/dev/methods
 """
 from __future__ import annotations
 import asyncio
@@ -31,20 +43,80 @@ class API:
     """
     Обертка для API запросов
 
-    API ВКонтакте представляет собой набор
-    специальных "методов" для получения какой-либо информации.
-    Например, чтобы отправить сообщение, нужно вызвать метод `messages.send`
-    и передать соответствующие парамьеры (тектс, ID диалога и другие).
-    Вызов метода и передача параметров представляет собой лишь отправку HTTP запроса.
-    Вызыать метод `some.method` и передать туда параметр `foo=1` означает составить
-    запрос такового вида: `https://api.vk.com/method/some.method?foo=1`.
-    Составлять такие запросы каждый раз достаточно неудобно, поэтому этот класс
-    предоставляет возможности по работе с API через более комфортный интерефейс 
+    Допустим, вам нужно вызвать метод `messages.getConversationsById`
+    и передать параметры `peer_ids=2000000001`. Сделать это можно несколькими способами
+
+    > Вызов метода делается через `await`, т.е. внутри корутинных функций (`async def`)
+
+    1. Через `.method`
+
+
+        import vkquick as vq
+
+        api = vq.API("mytoken")
+        await api.method("messages.getConversationsById", {"peer_ids": vq.peer(1)})
+
+
+    > `vq.peer` прибавит к числу 2_000_000_000
+
+    2. Через `__getattr__` с последующим `__call__`
+
+
+    import vkquick as vq
+
+        api = vq.API("mytoken")
+        await api.messages.getConversationsById(peer_ids=vq.peer(1))
+
+
+    VK Quick может преобразовать camelCase в snake_case:
+
+
+        import vkquick as vq
+
+        api = vq.API("mytoken")
+        await api.messages.get_conversations_by_id(peer_ids=vq.peer(1))
+
+
+    Автокомплит
+
+    Представим, что вы хотите передать `group_id`. Вы используете много методов,
+    где передаете один и тот же `group_id`. Чтобы не повторять себя жеб
+    можно сделать вот так:
+
+
+        import vkquick as vq
+
+        api = vq.API("mytoken", autocomplete_params={"group_id": 123})
+        await api.messages.get_conversations_by_id(
+            ...,  # Подстановка `Ellipsis` первым аргументом вызывает автокомплит
+            peer_ids=vq.peer(1)
+        )
+
+
+    Теперь метод вызвался с двумя параметрами: `group_id` и `peer_ids`
+
+    Фабрика ответов
+
+    По умолчанию, ответы оборачиваются в специальный класс `AttrDict`,
+    чтобы поля ответа можно было получить через точку
+
+
+        import vkquick as vq
+
+        api = vq.API("mytoken")
+        convs = await api.messages.get_conversations_by_id(
+            peer_ids=vq.peer(1)
+        )
+        name = convs[0].chat_settings.title  # Аналогично convs[0]["chat_settings"]["title"]
+
+
+    Если вы хотите использовать свою обертку на словари, установите `response_factory`
+    при инициализации
     """
 
     token: str
     """
-    Access token для API запросов
+    Access Token для API запросов
     """
 
     version: ty.Union[float, str] = "5.133"
@@ -57,7 +129,7 @@ class API:
     )
     """
     При вызове API метода первым аргументом можно передать Ellipsis,
-    тогда в вызов метода подставятся поля из этого аргумента 
+    тогда в вызов подставятся поля из этого аргумента 
     """
 
     host: str = "api.vk.com"
@@ -86,14 +158,12 @@ class API:
 
         Например
 
-            await API(...).messages.send(...)
+        ```python
+        await API(...).messages.send(...)
+        ```
 
         Вызовет API метод `messages.send`. Также есть
         поддержка конвертации snake_case в camelCase:
-
-            await API(...).messages.get_conversations_by_id(...)
-
-        Что вызовет метод `messages.getConversationsById`
         """
         attribute = self._convert_name(attribute)
         if self._method_name:
@@ -124,15 +194,16 @@ class API:
         self, method_name: str, request_params: ty.Dict[str, ty.Any], /
     ):
         """
-        Делает API запрос аналогчино `__call__`,
+        Делает API запрос аналогично `__call__`,
         но при этом передавая метод строкой
         """
         method_name = self._convert_name(method_name)
-        # Добавление пользовтельских параметров
+        # Добавление пользовательских параметров
         # запроса к токену и версии. Сделано не через
         # `request_params.update` для возможности перекрытия
         # параметрами пользователя
         request_params = self._fill_request_params(request_params)
+        # TODO: sync ability
         return self._make_api_request(
             method_name=method_name, request_params=request_params
         )
@@ -200,15 +271,22 @@ class API:
             raise vkquick.exceptions.VkApiError.destruct_response(response)
 
     @staticmethod
-    def define_token_owner(token: str, version: str = "5.133"):
+    def define_token_owner(
+        token: str, version: str = "5.133", host: str = "api.vk.com"
+    ) -> TokenOwner:
+        """
+        Определяет владельца токена: группу или пользователя.
+        Например, для определения задержки между запросами
+        """
         attached_query = urllib.parse.urlencode(
             {"access_token": token, "v": version}
         )
         resp = urllib.request.urlopen(
-            f"https://api.vk.com/method/users.get?{attached_query}",
+            f"https://{host}/method/users.get?{attached_query}",
             context=ssl.SSLContext(),
         )
         resp = vkquick.utils.JSONParserBase.choose_parser().loads(resp.read())
+        API._check_errors(resp["response"])
         return TokenOwner.USER if resp["response"] else TokenOwner.GROUP
 
     async def _waiting(self) -> None:
