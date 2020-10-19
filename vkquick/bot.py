@@ -32,7 +32,7 @@ class Bot:
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
-        observing_path: str = "."
+        observing_path: str = ".",
     ):
         self.signal_handlers = signal_handlers
         self.event_handlers = event_handlers
@@ -63,7 +63,6 @@ class Bot:
         изменениями в файле (если нет флага `--release`) и получение событий
         """
         await self.listen_events()
-
 
     async def observe_files_changing(self) -> None:
         """

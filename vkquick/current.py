@@ -11,7 +11,6 @@ import vkquick.utils
 objects: vkquick.utils.AttrDict = vkquick.utils.AttrDict({})
 
 
-
 def fetch(*values_name: str) -> ty.Any:
     """
     Возвращает `property` для получения одного
