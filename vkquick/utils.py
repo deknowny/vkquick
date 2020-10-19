@@ -80,7 +80,9 @@ class AttrDict:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.mapping_})"
 
-    def __call__(self, item):
+    def __call__(self, item=None):
+        if item is None:
+            return self.mapping_
         return self.__getattr__(item)
 
     def __getitem__(self, item):
