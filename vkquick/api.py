@@ -62,7 +62,7 @@ class API:
     2. Через `__getattr__` с последующим `__call__`
 
 
-    import vkquick as vq
+        import vkquick as vq
 
         api = vq.API("mytoken")
         await api.messages.getConversationsById(peer_ids=vq.peer(1))
@@ -143,13 +143,19 @@ class API:
     чтобы иметь возможность получать поля ответа через точку)
     """
 
+    json_parser: vkquick.utils.JSONParserBase = dataclasses.field(
+        default_factory=vkquick.utils.JSONParserBase.choose_parser
+    )
+    """
+    Парсер для JSON, приходящего от ответа вк
+    """
+
     def __post_init__(self):
         self._method_name = ""
         self._last_request_time = 0
         self.token_owner = self.define_token_owner(self.token, self.version)
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
         self.requests_session = vkquick.utils.RequestsSession(host=self.host)
-        self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
 
     def __getattr__(self, attribute) -> API:
         """
