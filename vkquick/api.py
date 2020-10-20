@@ -39,7 +39,7 @@ class TokenOwner(str, enum.Enum):
 
 
 @dataclasses.dataclass
-class API:
+class API(vkquick.utils.Synchronizable):
     """
     Обертка для API запросов
 
@@ -182,17 +182,19 @@ class API:
         self, use_autocomplete_params_: bool = False, /, **request_params
     ):
         """
-        Вызывает API метод с полями из
-        `**request_params` и именем метода, полученным через __getattr__
+        Вызывает API запрос с именем метода, полученным через
+        `__getattr__`, и параметрами из `**request_params`
 
-        При `attach_group_id_` добавит параметр `group_id` в запрос
+        :param `**request_params`: Параметры для метода
+        :param use_autocomplete_params_: Подставить параметры из `self.autocomplete_fields`
+        :raises vkquick.exceptions.VkApiErr: API вернуло ошибку
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
         if use_autocomplete_params_:
             request_params.update(self.autocomplete_params)
-        self._method_name = str()
-        return self._make_api_request(
+        self._method_name = ""
+        return self._route_request_scheme(
             method_name=method_name, request_params=request_params
         )
 
@@ -200,33 +202,67 @@ class API:
         self, method_name: str, request_params: ty.Dict[str, ty.Any], /
     ):
         """
-        Делает API запрос аналогично `__call__`,
-        но при этом передавая метод строкой
+        Вызывает API запрос, передавая имя метода (`method_name`)
+        и его параметры (`request_params`).
+        Токен и версия API могут быть перекрыты значениями из `request_params`
         """
         method_name = self._convert_name(method_name)
-        # Добавление пользовательских параметров
-        # запроса к токену и версии. Сделано не через
-        # `request_params.update` для возможности перекрытия
-        # параметрами пользователя
         request_params = self._fill_request_params(request_params)
-        # TODO: sync ability
-        return self._make_api_request(
+        return self._route_request_scheme(
             method_name=method_name, request_params=request_params
         )
 
-    async def _make_api_request(
+    def _route_request_scheme(
         self, method_name: str, request_params: ty.Dict[str, ty.Any]
-    ) -> ty.Union[API.response_factory, ty.Any]:
+    ):
         """
-        Создание API запросов путем передачи имени API и параметров
+        Определяет, как вызывается запрос: синхронно или асинхронно
+        в зависимости от того значения синхронизации
         """
-        # API вк не умеет в массивы, поэтому все перечисления
-        # Нужно отправлять строкой с запятой как разделителем
-        for key, value in request_params.items():
-            if isinstance(value, (list, set, tuple)):
-                request_params[key] = ",".join(map(str, value))
-
+        self._convert_collections_params(request_params)
         data = urllib.parse.urlencode(request_params)
+        if self.synchronized:
+            return self._make_sync_api_request(method_name, data)
+        return self._make_async_api_request(method_name, data)
+
+    @staticmethod
+    def _convert_collections_params(params: ty.Dict[str, ty.Any], /) -> None:
+        """
+        Лучшее API в Интернете не может распарсить массивы,
+        поэтому все перечисления нужно собирать в строку и разделять запятой
+
+        Для справки, вот так передается значение `{"foo": ["fizz", "bazz"]}`:
+
+        `?foo=fizz&foo=bazz`
+
+        Но приходится вот так (%2C - запятая по стандарту):
+
+        `?foo=fizz%2Cbazz %2C - запятая по стандарту
+        """
+        for key, value in params.items():
+            if isinstance(value, (list, set, tuple)):
+                params[key] = ",".join(map(str, value))
+
+    def _prepare_response_body(
+        self, body: bytes
+    ) -> ty.Union[str, int, API.default_factory]:
+        """
+        Подготавливает ответ API в надлежащий вид:
+        парсит JSON, проверяет на наличие ошибок
+        и оборачивает в `self.response_factory`
+        """
+        body = self.json_parser.loads(body)
+        self._check_errors(body)
+        return self.response_factory(body["response"])
+
+    async def _make_async_api_request(
+        self, method_name: str, data: str
+    ) -> ty.Union[str, int, API.default_factory]:
+        """
+        Отправляет API запрос асинхронно с именем API метода из
+        `method_name` и параметрами метода `data`, преобразованными
+        в query string
+        """
         await self._waiting()
         query = (
             f"GET /method/{method_name}?{data} HTTP/1.1\n"
@@ -234,13 +270,22 @@ class API:
         )
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.read_body()
-        body = self.json_parser.loads(body)
-        self._check_errors(body)
-        if isinstance(body["response"], dict):
-            return self.response_factory(body["response"])
-        elif isinstance(body["response"], list):
-            return [self.response_factory(i) for i in body["response"]]
-        return body["response"]
+        return self._prepare_response_body(body)
+
+    def _make_sync_api_request(
+        self, method_name: str, data: str
+    ) -> ty.Union[str, int, API.default_factory]:
+        """
+        Отправляет API запрос синхронно с именем API метода из
+        `method_name` и параметрами метода `data`, преобразованными
+        в query string
+        """
+        resp = urllib.request.urlopen(
+            f"https://{self.host}/method/{method_name}?{data}",
+            context=ssl.SSLContext(),
+        )
+        body = resp.read()
+        return self._prepare_response_body(body)
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
         """
