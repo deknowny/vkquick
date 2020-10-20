@@ -185,7 +185,7 @@ def clear_console():
         os.system("clear")
 
 
-class Synchronized:
+class Synchronizable:
     """
     Протокол для синхронизации объектов
 
