@@ -216,13 +216,13 @@ class Synchronizable:
                 obj.some_method_that_was_async_but_now_sync()
         """
         self.__synchronized = True
+        return self
 
     def __enter__(self):
         """
         Менеджер контекста гарантирует, что
         поведение объекта обратно поменяется на асинхронное
         """
-        return self
 
     def __exit__(self, *args):
         self.__synchronized = False
