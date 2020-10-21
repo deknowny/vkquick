@@ -150,7 +150,7 @@ class API(vkquick.utils.Synchronizable):
     Парсер для JSON, приходящего от ответа вк
     """
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._method_name = ""
         self._last_request_time = 0
         self.token_owner = self.define_token_owner(self.token, self.version)
@@ -180,7 +180,7 @@ class API(vkquick.utils.Synchronizable):
 
     def __call__(
         self, use_autocomplete_params_: bool = False, /, **request_params
-    ):
+    ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос с именем метода, полученным через
         `__getattr__`, и параметрами из `**request_params`
@@ -199,7 +199,7 @@ class API(vkquick.utils.Synchronizable):
 
     def method(
         self, method_name: str, request_params: ty.Dict[str, ty.Any], /
-    ):
+    ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос, передавая имя метода (`method_name`)
         и его параметры (`request_params`).
@@ -216,7 +216,7 @@ class API(vkquick.utils.Synchronizable):
 
     def _route_request_scheme(
         self, method_name: str, request_params: ty.Dict[str, ty.Any]
-    ):
+    ) -> ty.Union[str, int, API.default_factory]:
         """
         Определяет, как вызывается запрос: синхронно или асинхронно
         в зависимости от того значения синхронизации
