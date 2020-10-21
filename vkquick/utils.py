@@ -129,17 +129,34 @@ class AttrDict:
 
 
 class RequestsSession:
+    """
+    Надстройка над асинхронным TCP клиентом.
+    В момент инициализации принимает `host`,
+    к которому в последующем можно отправлять запросы.
+    Советуем использовать `HTTP/1.1`, либо `1.0`
+    с хедером `Connection: Keep-Alive`.
+    """
     def __init__(self, host: str) -> None:
         self.writer = self.reader = None
         self.host = host
         self.lock = asyncio.Lock()
 
     async def _setup_connection(self) -> None:
+        """
+        Устанавливает TCP соединение, присваивая
+        `StreamReader` и `StreamWriter` в поля объекта
+        """
         self.reader, self.writer = await asyncio.open_connection(
             self.host, 443, ssl=ssl.SSLContext()
         )
 
     async def write(self, body_query: bytes) -> None:
+        """
+        Записывает в сокет HTTP сообщение, перед
+        этим дожидаясь его очищения (`drain()`).
+        В случае, если соединение разорвалось,
+        устанавливает его еще раз
+        """
         if self.writer is None:
             await self._setup_connection()
         try:
@@ -149,23 +166,35 @@ class RequestsSession:
         finally:
             self.writer.write(body_query)
 
-    async def read_body(self) -> bytes:
-        content_length = 0
+    async def fetch_body(self) -> bytes:
+        """
+        Читает из сокета HTTP ответ. Путем
+        нехитрых манипуляций достает `Content-Length`,
+        читает body респонза и возвращает именно его в байтах
+        """
         async with self.lock:
             while True:
                 line = await self.reader.readline()
                 if line.startswith(b"Content-Length"):
-                    line = line.decode("utf-8")
-                    length = ""
-                    for i in line:
-                        if i.isdigit():
-                            length += i
-                    content_length = int(length)
+                    content_length = self._get_content_length(line)
                 if line == b"\r\n":
                     break
 
             body = await self.reader.read(content_length)
             return body
+
+    @staticmethod
+    def _get_content_length(line: bytes) -> int:
+        """
+        Достает числовое значение из `Content-Length` хедера
+        """
+        line = line.decode("utf-8")
+        length = ""
+        for letter in line:
+            if letter.isdigit():
+                length += letter
+        length = int(length)
+        return length
 
     def __del__(self) -> None:
         if self.writer is not None:
