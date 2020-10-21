@@ -1,6 +1,7 @@
 """
 Тривиальные инструменты для некоторых кейсов
 """
+from __future__ import annotations
 import abc
 import asyncio
 import random
@@ -202,25 +203,41 @@ class RequestsSession:
 
 
 class JSONParserBase(abc.ABC):
+    """
+    Надстройка над сереализацией/десериализацией
+    JSON. Сделано для возможности использовать
+    `orjson` как опциональную зависимость
+    """
     @staticmethod
     @abc.abstractmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> str:
-        ...
+        """
+        Сереалиация объекта `data`
+        """
 
     @staticmethod
     @abc.abstractmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
-        ...
+        """
+        Десериализует JSON из `string`
+        """
 
     @staticmethod
-    def choose_parser():
+    def choose_parser() -> ty.Type[JSONParserBase]:
+        """
+        Возвращает `orjson` парсер, если
+        `orjson` библиотека установлена.
+        По умолчанию парсер из стандартной библиотеки `json`
+        """
         if orjson is None:
             return BuiltinJSONParser
         return OrjsonJSONParser
 
 
 class BuiltinJSONParser(JSONParserBase):
-
+    """
+    JSON парсер, использующий стандартную библиотеку
+    """
     dumps = functools.partial(
         json.dumps, ensure_ascii=False, separators=(",", ":")
     )
@@ -228,6 +245,9 @@ class BuiltinJSONParser(JSONParserBase):
 
 
 class OrjsonJSONParser(JSONParserBase):
+    """
+    JSON парсер, использующий `orjson`
+    """
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> str:
         return str(orjson.dumps(data))
@@ -238,6 +258,9 @@ class OrjsonJSONParser(JSONParserBase):
 
 
 def clear_console():
+    """
+    Очищает окно терминала
+    """
     if os.name == "nt":
         os.system("cls")
     else:
