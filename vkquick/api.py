@@ -112,6 +112,22 @@ class API(vkquick.utils.Synchronizable):
 
     Если вы хотите использовать свою обертку на словари, установите `response_factory`
     при инициализации
+
+    Синхронизация
+
+    Бывают случаи, когда асинхронность лишь мешает. Этот класс
+    предоставляет функционал для синхронных запросов, определяя
+    интерфейс `Synchronizable`:
+
+        import vkquick as vq
+
+        api = vq.API("mytoken")
+        with api.synchronize():
+            users = api.users.get(user_ids=1)  # `await` не нужен
+        # Либо:
+        # with api.synchronize():
+        #     users = api.method("users.get", user_ids=1)
+        print(users)
     """
 
     token: str
