@@ -53,6 +53,7 @@ def random_id(side: int = 2 ** 31 - 1) -> int:
 class SafeDict(dict):
     """
     Обертка для словаря, передаваемого в `str.format_map`
+    (формат с возможными пропусками)
     """
 
     def __missing__(self, key):
@@ -60,6 +61,35 @@ class SafeDict(dict):
 
 
 class AttrDict:
+    """
+    Надстройка к словарю для возможности получения
+    значений через точку. Работает рекурсивно,
+    поддержка списков также имеется.
+
+        foo = AttrDict({"a": {"b": 1}})
+        print(foo.a.b)  # 1
+
+        foo = AttrDict([{"a": [{"b": 1}]}])
+        print(foo[0].a[0].b)  # 1
+
+        # Когда ключ нельзя получить через атрибут
+        foo = AttrDict({"#$@234": 1})
+        print(foo("#$@234"))  # 1
+
+        # Нужно получить исходный объект
+        foo = AttrDict({"a": 1})
+        print(foo())  # {'a': 1}
+
+        foo = AttrDict({})
+        foo.a = 1  # foo["a"] = 1
+        print(foo())  # {'a': 1}
+
+        # `__getitem__` возвращает исходный объект.
+        # `__call__` -- новую обертку AttrDict
+        foo = AttrDict({"a": {"b": 1}})
+        print(isinstance(foo.a, AttrDict))  # True
+        print(isinstance(foo["a"], dict))  # True
+    """
     def __new__(cls, mapping):
         if isinstance(mapping, dict):
             self = object.__new__(cls)
