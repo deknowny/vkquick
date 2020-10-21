@@ -91,6 +91,7 @@ class AttrDict:
         print(isinstance(foo.a, AttrDict))  # True
         print(isinstance(foo["a"], dict))  # True
     """
+
     def __new__(cls, mapping):
         if isinstance(mapping, dict):
             self = object.__new__(cls)
@@ -99,8 +100,7 @@ class AttrDict:
         if isinstance(mapping, list):
             return [cls(i) for i in mapping]
 
-        else:
-            return mapping
+        return mapping
 
     def __init__(self, mapping):
         object.__setattr__(self, "mapping_", mapping)
@@ -137,6 +137,7 @@ class RequestsSession:
     Советуем использовать `HTTP/1.1`, либо `1.0`
     с хедером `Connection: Keep-Alive`.
     """
+
     def __init__(self, host: str) -> None:
         self.writer = self.reader = None
         self.host = host
@@ -208,6 +209,7 @@ class JSONParserBase(abc.ABC):
     JSON. Сделано для возможности использовать
     `orjson` как опциональную зависимость
     """
+
     @staticmethod
     @abc.abstractmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> str:
@@ -238,6 +240,7 @@ class BuiltinJSONParser(JSONParserBase):
     """
     JSON парсер, использующий стандартную библиотеку
     """
+
     dumps = functools.partial(
         json.dumps, ensure_ascii=False, separators=(",", ":")
     )
@@ -248,6 +251,7 @@ class OrjsonJSONParser(JSONParserBase):
     """
     JSON парсер, использующий `orjson`
     """
+
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> str:
         return str(orjson.dumps(data))

@@ -34,8 +34,6 @@ sty = "^1.0.0-beta.12"
 orjson = { version = "^3.3.1", optional = true }
 watchgod = "^0.6"
 
-
-
 [tool.poetry.dev-dependencies]
 mkdocs-material = "^5.4.0"
 mkdocs = "^1.1.2"
