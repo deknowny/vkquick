@@ -76,9 +76,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self.origin_names = tuple(names)
         self.title = title
         self.description = description
-        self.help_reaction = help_reaction or (
-            lambda _: self.generate_default_help_text()
-        )
+        self.help_reaction = help_reaction
 
         self.prefixes = "|".join(self.origin_prefixes)
         self.names = "|".join(self.origin_names)

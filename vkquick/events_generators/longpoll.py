@@ -43,7 +43,7 @@ class LongPoll:
             "Host: lp.vk.com\n\n"
         )
         await self.requests_session.write(query.encode("UTF-8"))
-        body = await self.requests_session.read_body()
+        body = await self.requests_session.fetch_body()
         body = self.json_parser.loads(body)
         response = vkquick.events_generators.event.Event(body)
 

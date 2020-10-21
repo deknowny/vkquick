@@ -287,7 +287,7 @@ class API(vkquick.utils.Synchronizable):
             f"Host: {self.host}\n\n"
         )
         await self.requests_session.write(query.encode("UTF-8"))
-        body = await self.requests_session.read_body()
+        body = await self.requests_session.fetch_body()
         return self._prepare_response_body(body)
 
     def _make_sync_api_request(
