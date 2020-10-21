@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import pathlib
 import os
+import time
 import typing as ty
 
 import cleo
@@ -92,7 +93,7 @@ import vkquick as vq
 
 @vq.Command(
     prefixes=["/"],
-    names=["help", "помощь"]
+    names=["help", "по"]
 )
 async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     \"""
@@ -101,22 +102,50 @@ async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     \"""
     for event_handler in vq.current.objects.bot.event_handlers:
         if isinstance(event_handler, vq.Command) and com_name in event_handler.origin_names:
+            if event_handler.help_reaction is None:
+                return build_text(event_handler)
             return await vq.sync_async_run(event_handler.help_reaction(event))
     return f"Команды с именем `{com_name}` не существует!"
+    
+    
+def build_text(eh):
+    prefixes = "\\n".join(
+        map(lambda x: f"-> [id0|{x}]", eh.origin_prefixes)
+    )
+    names = "\\n".join(map(lambda x: f"-> [id0|{x}]", eh.origin_names))
+    params_description = "\\n".join(
+        f"[id0|{pos + 1}.] {arg.usage_description()}"
+        for pos, arg in enumerate(eh.text_arguments.values())
+    )
+    description = eh.description or "Описание отсутствует"
+    text = (
+        f"{eh.title}\\n\\n"
+        f"{description}\\n\\n"
+        "[Использование]\\n"
+        f"Возможные префиксы:\\n{prefixes or '> Отсутствуют'}\\n"
+        f"Возможные имена:\\n{names or '> Отсутствуют'}\\n"
+        f"Аргументы, которые необходимо передать при вызове:\\n{params_description or 'Отсутствуют'}"
+    )
+    
+    return text
 """.lstrip()
 
 
 READMEPY = """
+import datetime
 import platform
 
 import vkquick as vq
 
 
+creation_date = datetime.datetime.fromtimestamp({creation_date})
+now = datetime.datetime.now()
 text = f\"""
 Бот {bot_name}
 
 <Описание>
 
+Создан: {creation_date:%d.%m.%Y} {(now - creation_date).days}
 Создатель: {owner_mention}
 Python: {platform.python_version()}
 [id195194058|VK Quick]: ({vq.__version__})
@@ -249,9 +278,10 @@ class New(cleo.Command):
 
         readme = default / "readme.py"
         readme.touch()
+        # TODO: format_map
         readme.write_text(
             READMEPY.replace("{bot_name}", self.argument("name")).replace(
                 "{owner_mention}", owner.mention("{fn} {ln}")
-            ),
+            ).replace("{creation_date}", str(int(time.time()))),
             encoding="utf-8",
         )
