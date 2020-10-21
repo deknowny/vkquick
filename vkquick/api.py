@@ -185,14 +185,13 @@ class API(vkquick.utils.Synchronizable):
         Вызывает API запрос с именем метода, полученным через
         `__getattr__`, и параметрами из `**request_params`
 
-        :param `**request_params`: Параметры для метода
-        :param use_autocomplete_params_: Подставить параметры из `self.autocomplete_fields`
-        :raises vkquick.exceptions.VkApiErr: API вернуло ошибку
+        В случае некорректного запроса поднимается ошибка
+        `vkquick.exceptions.VkApiError`
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
         if use_autocomplete_params_:
-            request_params.update(self.autocomplete_params)
+            request_params = {**self.autocomplete_params, **request_params}
         self._method_name = ""
         return self._route_request_scheme(
             method_name=method_name, request_params=request_params
@@ -205,6 +204,9 @@ class API(vkquick.utils.Synchronizable):
         Вызывает API запрос, передавая имя метода (`method_name`)
         и его параметры (`request_params`).
         Токен и версия API могут быть перекрыты значениями из `request_params`
+
+        В случае некорректного запроса поднимается ошибка
+        `vkquick.exceptions.VkApiError`
         """
         method_name = self._convert_name(method_name)
         request_params = self._fill_request_params(request_params)
