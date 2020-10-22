@@ -145,7 +145,7 @@ text = f\"""
 
 <Описание>
 
-Создан: {creation_date:%d.%m.%Y} {(now - creation_date).days}
+Создан: {creation_date:%d.%m.%Y} ({(now - creation_date).days} дней)
 Создатель: {owner_mention}
 Python: {platform.python_version()}
 [id195194058|VK Quick]: ({vq.__version__})
@@ -280,8 +280,8 @@ class New(cleo.Command):
         readme.touch()
         # TODO: format_map
         readme.write_text(
-            READMEPY.replace("{bot_name}", self.argument("name")).replace(
-                "{owner_mention}", owner.mention("{fn} {ln}")
-            ).replace("{creation_date}", str(int(time.time()))),
+            READMEPY.replace("{bot_name}", self.argument("name"))
+            .replace("{owner_mention}", owner.mention("{fn} {ln}"))
+            .replace("{creation_date}", str(int(time.time()))),
             encoding="utf-8",
         )
