@@ -10,7 +10,7 @@ VK Quick — это высокоуровневная надстройка над
 from . import current
 from .api import API, TokenOwner
 from .bot import Bot
-from .exceptions import VkApiError, BotReloadNow
+from .exceptions import VkApiError
 from .utils import (
     peer,
     random_id,

@@ -153,7 +153,9 @@ class API(vkquick.utils.Synchronizable):
     URL отправки API запросов
     """
 
-    response_factory: ty.Callable[[ty.Union[dict, list, str, int]], ty.Any] = vkquick.utils.AttrDict
+    response_factory: ty.Callable[
+        [ty.Union[dict, list, str, int]], ty.Any
+    ] = vkquick.utils.AttrDict
     """
     Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)

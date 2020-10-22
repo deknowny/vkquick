@@ -1,19 +1,21 @@
+from __future__ import annotations
 import asyncio
 import datetime
-import sys
 import os
+import time
 import typing as ty
 
 import huepy
-import watchgod
 
 import vkquick.current
 import vkquick.event_handling.event_handler
+import vkquick.event_handling.command
 import vkquick.signal_handling.signal_handler
 import vkquick.events_generators.event
 import vkquick.event_handling.handling_info_scheme
 import vkquick.exceptions
 import vkquick.utils
+import vkquick.debugger
 
 
 class Bot:
@@ -23,63 +25,96 @@ class Bot:
     def __init__(
         self,
         *,
-        signal_handlers: ty.Collection[
-            vkquick.signal_handling.signal_handler.SignalHandler
-        ],
-        event_handlers: ty.Collection[
-            vkquick.event_handling.event_handler.EventHandler
-        ],
+        signal_handlers: ty.Optional[
+            ty.Collection[
+                vkquick.signal_handling.signal_handler.SignalHandler
+            ]
+        ] = None,
+        event_handlers: ty.Optional[
+            ty.Collection[vkquick.event_handling.event_handler.EventHandler]
+        ] = None,
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
+        debugger: ty.Optional[ty.Type[vkquick.debugger.Debugger]] = None,
         observing_path: str = ".",
     ):
-        self.signal_handlers = signal_handlers
-        self.event_handlers = event_handlers
+        self.signal_handlers = signal_handlers or []
+        self.event_handlers = event_handlers or []
         self.debug_filter = debug_filter or self.default_debug_filter
         self.observing_path = observing_path
-        self.reload_now = False
+        self.debugger = debugger or vkquick.debugger.Debugger
+
+        self.release = os.getenv("VKQUICK_RELEASE")
+
+        # Статистика
+        self._start_time = time.time()
+        self._handled_events_count = 0
+        self._command_calls_count = 0
 
     def run(self):
         """
         Запуск бота. Вызывает сигнал `startup`,
-        потом запускает процесс по получению и обработке событий,
-        при завершении вызывает `shutdown`
+        потом запускает процесс по получению и обработке событий.
+        При завершении вызывает `shutdown`
         """
         asyncio.run(self.call_signal("startup"))
         try:
             asyncio.run(self.listen_events())
-        except vkquick.exceptions.BotReloadNow:
-            pass
         except KeyboardInterrupt:
-            print(huepy.yellow("\nBot was stopped"))
-
+            vkquick.utils.clear_console()
+            print(huepy.yellow("Bot was stopped\n"))
+            print(self._fetch_statistic_message())
         finally:
             asyncio.run(self.call_signal("shutdown"))
 
     async def listen_events(self):
         """
         Получает события с помощью одного из генераторов событий.
-        После получение вызывает метод по обработке события каждым `EventHandler`'ом
+        После получение вызывает метод по обработке события
+        на каждый `EventHandler` (или `Command`). Выбор метода
+        зависит от того, является ли запуск бота деплоем
+        (переменная окружения `VKQUICK_RELEASE`)
         """
+        if self.release:
+            event_handlers_runner = self.run_through_event_handlers_release
+        else:
+            event_handlers_runner = self.run_through_event_handlers
+
         await self.events_generator.setup()
         async for events in self.events_generator:
             for event in events:
-                asyncio.create_task(self.run_through_event_handlers(event))
+                asyncio.create_task(event_handlers_runner(event))
 
     async def run_through_event_handlers(
         self, event: vkquick.events_generators.event.Event
     ) -> None:
         """
-
+        Конкурентно запускает процесс по обработке события
+        на каждый `EventHandler`. После обработки выводит
+        информацию в дебаггере
         """
-        # TODO: Handling info scheme
         tasks = [
             asyncio.create_task(event_handler.handle_event(event))
             for event_handler in self.event_handlers
         ]
         handling_info = await asyncio.gather(*tasks)
         self.show_debug_info(event, handling_info)
+        self._update_statistic_info(handling_info)
+
+    async def run_through_event_handlers_release(
+        self, event: vkquick.events_generators.event.Event
+    ) -> None:
+        """
+        Оптимизированная версия `run_through_event_handlers`:
+        не отправляет информацию в дебаггер
+        """
+        tasks = [
+            asyncio.create_task(event_handler.handle_event(event))
+            for event_handler in self.event_handlers
+        ]
+        handling_info = await asyncio.gather(*tasks)
+        self._update_statistic_info(handling_info)
 
     def show_debug_info(
         self,
@@ -87,59 +122,18 @@ class Bot:
         handling_info: ty.List[
             vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
         ],
-    ):
-        if "--release" not in sys.argv:
-            if self.debug_filter(event):
-                time_header = datetime.datetime.now().strftime(
-                    "-- %H:%M:%S %d-%m-%Y"
-                )
-                debug_info = f"-> {event.type} {sty.fg.li_black + time_header + sty.fg.rs}\n"
-                debug_info += (
-                    sty.fg.li_black
-                    + os.get_terminal_size().columns * "="
-                    + sty.fg.rs
-                    + "\n\n"
-                )
-                handling_messages: ty.List[str] = []
-                for scheme in handling_info:
-                    if scheme["is_correct_event_type"]:
-                        handling_message = self._build_event_handler_message(
-                            scheme
-                        )
-                        if scheme["are_filters_passed"]:
-                            handling_messages.insert(0, handling_message)
-                        else:
-                            handling_messages.append(handling_message)
-
-                handling_message = (
-                    "\n"
-                    + sty.fg.li_black
-                    + os.get_terminal_size().columns * "-"
-                    + sty.fg.rs
-                    + "\n\n"
-                ).join(handling_messages)
-                vkquick.utils.clear_console()
-                print(debug_info + handling_message)
-
-    @staticmethod
-    def _build_event_handler_message(
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
-    ) -> str:
-        header_color = (
-            sty.fg.green if scheme["are_filters_passed"] else sty.fg.red
-        )
-        header = f"[{header_color + scheme['handler'].reaction.__name__ + sty.fg.rs}]\n"
-        filters_decisions: ty.List[str] = [
-            f"{sty.fg.yellow + decision[2] + sty.fg.rs}: {decision[1]}"
-            for decision in scheme["filters_decision"]
-        ]
-        filters_decisions: str = "\n".join(filters_decisions)
-        arguments: ty.List[str] = [
-            f"\n    > {sty.fg.cyan + name + sty.fg.rs}: {value!s}"
-            for name, value in scheme["passed_arguments"].items()
-        ]
-        arguments: str = "".join(arguments)
-        return header + filters_decisions + arguments
+    ) -> None:
+        """
+        Показывает информацию в дебаггере. Если событие прошло фильтр,
+        сначала выводит само событие, потом очищает окно терминала,
+        а затем выводит сообщение, собранное дебаггером
+        """
+        if self.debug_filter(event):
+            debugger = self.debugger(event, handling_info)
+            debug_message = debugger.render()
+            print(event.pretty_view())
+            vkquick.utils.clear_console()
+            print(debug_message)
 
     async def call_signal(self, signal_name: str, *args, **kwargs) -> ty.Any:
         """
@@ -153,9 +147,49 @@ class Bot:
                     signal_handler.reaction(*args, **kwargs)
                 )
 
+    def _fetch_statistic_message(self) -> str:
+        """
+        Собирает сообщение о статистике обработки
+        """
+        data: ty.Dict[str, str] = {}
+
+        uptime = time.time() - self._start_time
+        uptime = int(uptime)
+        since = datetime.datetime.fromtimestamp(self._start_time)
+        uptime = f"{uptime}s (since {since:%H:%M %d-%m-%Y})"
+
+        data["Uptime"] = uptime
+        data["Count of got events"] = str(self._handled_events_count)
+        data["Command calls count"] = str(self._command_calls_count)
+
+        info: ty.List[str] = []
+        for key, value in data.items():
+            key = huepy.blue(key)
+            info.append(f"{key}: {value}")
+
+        info: str = "\n".join(info)
+        return info
+
+    def _update_statistic_info(
+        self,
+        handling_info: ty.List[
+            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+        ]
+    ) -> None:
+        """
+        Обновляет информацию по статистике
+        """
+        self._handled_events_count += 1
+        for info in handling_info:
+            if info["are_filters_passed"] and isinstance(info["handler"], vkquick.event_handling.command.Command):
+                self._command_calls_count += 1
+
     @staticmethod
     def default_debug_filter(
         event: vkquick.events_generators.event.Event,
     ) -> bool:
+        """
+        Фильтр на событие для дебаггера по умолчанию
+        """
         if event.type in ("message_new", "message_edit"):
             return True
