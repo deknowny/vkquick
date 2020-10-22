@@ -70,7 +70,7 @@ import src.default.readme
 
 def main():
     vq.current.objects.api = vq.API(**src.config.api_settings)
-    vq.current.objects.lp = vq.LongPoll(**src.config.longpoll_settings)
+    vq.current.objects.lp = vq.GroupLongPoll(**src.config.longpoll_settings)
     vq.current.objects.bot = vq.Bot(
         event_handlers=[
             src.default.help_.help_,
@@ -82,6 +82,7 @@ def main():
     
     vq.current.objects.bot.run()
     
+
 if __name__ == "__main__":
     main()
 """.lstrip()

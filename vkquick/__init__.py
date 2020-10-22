@@ -24,7 +24,7 @@ from .utils import (
 )
 
 from .events_generators.event import Event
-from .events_generators.longpoll import LongPoll
+from .events_generators.longpoll import GroupLongPoll, UserLongPoll
 
 from .event_handling.message import Message
 from .event_handling.command import Command
