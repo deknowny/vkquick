@@ -1,8 +1,6 @@
 """
 Управление событиями LongPoll
 """
-import asyncio
-import ssl
 import urllib.parse
 import typing as ty
 
