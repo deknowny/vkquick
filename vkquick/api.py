@@ -153,7 +153,7 @@ class API(vkquick.utils.Synchronizable):
     URL отправки API запросов
     """
 
-    response_factory: ty.Callable[[dict], ty.Any] = vkquick.utils.AttrDict
+    response_factory: ty.Callable[[ty.Union[dict, list, str, int]], ty.Any] = vkquick.utils.AttrDict
     """
     Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)
@@ -169,7 +169,7 @@ class API(vkquick.utils.Synchronizable):
     def __post_init__(self) -> None:
         self._method_name = ""
         self._last_request_time = 0
-        self.token_owner = self.define_token_owner(self.token, self.version)
+        self.token_owner = self.define_token_owner()
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
         self.requests_session = vkquick.utils.RequestsSession(host=self.host)
 
@@ -339,24 +339,15 @@ class API(vkquick.utils.Synchronizable):
         if "error" in response:
             raise vkquick.exceptions.VkApiError.destruct_response(response)
 
-    @staticmethod
-    def define_token_owner(
-        token: str, version: str = "5.133", host: str = "api.vk.com"
-    ) -> TokenOwner:
+    def define_token_owner(self) -> TokenOwner:
         """
         Определяет владельца токена: группу или пользователя.
         Например, для определения задержки между запросами
         """
-        attached_query = urllib.parse.urlencode(
-            {"access_token": token, "v": version}
-        )
-        resp = urllib.request.urlopen(
-            f"https://{host}/method/users.get?{attached_query}",
-            context=ssl.SSLContext(),
-        )
-        resp = vkquick.utils.JSONParserBase.choose_parser().loads(resp.read())
-        API._check_errors(resp["response"])
-        return TokenOwner.USER if resp["response"] else TokenOwner.GROUP
+        with self.synchronize():
+            users = self.users.get()
+
+        return TokenOwner.USER if users else TokenOwner.GROUP
 
     async def _waiting(self) -> None:
         """
