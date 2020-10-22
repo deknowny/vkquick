@@ -68,9 +68,3 @@ class VkApiError(Exception):
 
     def __str__(self):
         return self.pretty_exception_text
-
-
-class BotReloadNow(Exception):
-    """
-    Поднимается, когда требуется остановить работу бота
-    """
