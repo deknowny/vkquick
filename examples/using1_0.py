@@ -4,7 +4,7 @@ import vkquick as vq
 
 
 vq.current.objects["api"] = vq.API(os.getenv("VKDEVGROUPTOKEN"))
-vq.current.objects["lp"] = vq.LongPoll(group_id=int(os.getenv("VKDEVGROUPID")))
+vq.current.objects["lp"] = vq.GroupLongPoll(group_id=int(os.getenv("VKDEVGROUPID")))
 bot = vq.Bot(event_handlers=[], signal_handlers=[])
 
 
