@@ -37,7 +37,9 @@ class VkApiError(Exception):
         Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
         """
-        status_code, description, request_params = response["error"].values()
+        status_code = response["error"].pop("error_code")
+        description = response["error"].pop("error_msg")
+        request_params = response["error"].pop("request_params")
 
         pretty_exception_text = (
             sty.fg.red
@@ -53,6 +55,13 @@ class VkApiError(Exception):
             key = sty.fg.yellow + pair["key"] + sty.fg.rs
             value = sty.fg.cyan + pair["value"] + sty.fg.rs
             pretty_exception_text += f"\n{key} = {value}"
+
+        # Если остались дополнительные поля
+        if response["error"]:
+            pretty_exception_text += (
+                "\n\nThere are some extra fields:\n"
+                f"{response['error']}"
+            )
 
         return cls(
             pretty_exception_text=pretty_exception_text,
