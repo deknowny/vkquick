@@ -4,7 +4,7 @@ import sys
 import os
 import typing as ty
 
-import sty
+import huepy
 import watchgod
 
 import vkquick.current
@@ -48,31 +48,14 @@ class Bot:
         """
         asyncio.run(self.call_signal("startup"))
         try:
-            asyncio.run(self._run())
+            asyncio.run(self.listen_events())
         except vkquick.exceptions.BotReloadNow:
             pass
         except KeyboardInterrupt:
-            print(sty.fg.yellow + "\nBot was stopped")
+            print(huepy.yellow("\nBot was stopped"))
 
         finally:
             asyncio.run(self.call_signal("shutdown"))
-
-    async def _run(self):
-        """
-        Запускает конкурентно две задачи: наблюдение за
-        изменениями в файле (если нет флага `--release`) и получение событий
-        """
-        await self.listen_events()
-
-    async def observe_files_changing(self) -> None:
-        """
-        Если запуск не содержит флаг `--release`,
-        то будет будет следить за изменениями в фалйе.
-        Реализация перезагрузки находится в проекте бота
-        """
-        if "--release" not in sys.argv:
-            async for changes in watchgod.awatch(self.observing_path):
-                print(changes)
 
     async def listen_events(self):
         """

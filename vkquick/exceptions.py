@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 import typing as ty
 
-import sty
+import huepy
 
 
 class _ParamsScheme(ty.TypedDict):
@@ -42,25 +42,21 @@ class VkApiError(Exception):
         request_params = response["error"].pop("request_params")
 
         pretty_exception_text = (
-            sty.fg.red
-            + f"\n[{status_code}] "
-            + sty.fg.rs
-            + f"{description}\n\n"
-            + sty.fg.li_white
-            + "Request params:"
-            + sty.fg.rs
+            huepy.red(f"\n[{status_code}]")
+            + f" {description}\n\n"
+            + huepy.grey("Request params:")
         )
 
         for pair in request_params:
-            key = sty.fg.yellow + pair["key"] + sty.fg.rs
-            value = sty.fg.cyan + pair["value"] + sty.fg.rs
+            key = huepy.yellow(pair["key"])
+            value = huepy.cyan(pair["value"])
             pretty_exception_text += f"\n{key} = {value}"
 
         # Если остались дополнительные поля
         if response["error"]:
             pretty_exception_text += (
-                "\n\nThere are some extra fields:\n"
-                f"{response['error']}"
+                huepy.info("\n\nThere are some extra fields:\n")
+                + f"{response['error']}"
             )
 
         return cls(
