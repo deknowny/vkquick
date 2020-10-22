@@ -121,7 +121,7 @@ class Bot:
         event: vkquick.events_generators.event.Event,
         handling_info: ty.List[
             vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
-        ],
+        ]
     ) -> None:
         """
         Показывает информацию в дебаггере. Если событие прошло фильтр,

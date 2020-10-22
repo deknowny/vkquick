@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import inspect
+import time
 import typing as ty
 
 import vkquick.events_generators.event
@@ -43,34 +44,41 @@ class EventHandler:
         2. Прошло ли событие все фильтры
         3. Инициализация аргументов для реакции
         """
+        start_stamp = time.time()
         is_correct_event_type = self.is_correct_event_type(event)
         if not is_correct_event_type:
+            end_stamp = time.time()
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
                 handler=self,
                 is_correct_event_type=False,
                 are_filters_passed=False,
                 filters_decision=[],
                 passed_arguments={},
+                taken_time=end_stamp - start_stamp
             )
 
         passed_all, filters_decision = await self.run_trough_filters(event)
         if not passed_all:
+            end_stamp = time.time()
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
                 handler=self,
                 is_correct_event_type=True,
                 are_filters_passed=False,
                 filters_decision=filters_decision,
                 passed_arguments={},
+                taken_time=end_stamp - start_stamp
             )
 
         reaction_arguments = await self.init_reaction_arguments(event)
         asyncio.create_task(self.call_reaction(event, reaction_arguments))
+        end_stamp = time.time()
         return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
             handler=self,
             is_correct_event_type=True,
             are_filters_passed=True,
             filters_decision=filters_decision,
             passed_arguments=reaction_arguments,
+            taken_time=end_stamp - start_stamp
         )
 
     def is_correct_event_type(

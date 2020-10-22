@@ -49,10 +49,12 @@ class Debugger:
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
-        time_header = datetime.datetime.now()
-        time_header = time_header.strftime("-- %H:%M:%S %d-%m-%Y")
-        time_header = huepy.grey(time_header, key=90)
-        event_header = f"-> {self.event.type} {time_header}\n"
+        summary_taken_time = 0
+        for scheme in self.schemes:
+            summary_taken_time += scheme["taken_time"]
+        summary_taken_time_header = f"({summary_taken_time:.6f}s)"
+        summary_taken_time_header = huepy.grey(summary_taken_time_header, key=90)
+        event_header = f"-> {self.event.type} {summary_taken_time_header}\n"
         separator = self._build_separator("=")
         event_header += f"{separator}\n\n"
         return event_header
@@ -93,7 +95,10 @@ class Debugger:
             header_color = huepy.red
         handler_name = scheme["handler"].reaction.__name__
         handler_name = header_color(handler_name)
-        header = f"[{handler_name}]\n"
+        taken_time = scheme["taken_time"]
+        taken_time = f"({taken_time:.6f}s)"
+        taken_time = huepy.grey(taken_time, key=90)
+        header = f"[{handler_name}] {taken_time}\n"
 
         filters_gen = self._generate_filters_message(scheme)
         filters_decisions: ty.List[str] = list(filters_gen)
