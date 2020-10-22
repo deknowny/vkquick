@@ -54,7 +54,7 @@ class EventHandler:
                 are_filters_passed=False,
                 filters_decision=[],
                 passed_arguments={},
-                taken_time=end_stamp - start_stamp
+                taken_time=end_stamp - start_stamp,
             )
 
         passed_all, filters_decision = await self.run_trough_filters(event)
@@ -66,7 +66,7 @@ class EventHandler:
                 are_filters_passed=False,
                 filters_decision=filters_decision,
                 passed_arguments={},
-                taken_time=end_stamp - start_stamp
+                taken_time=end_stamp - start_stamp,
             )
 
         reaction_arguments = await self.init_reaction_arguments(event)
@@ -78,7 +78,7 @@ class EventHandler:
             are_filters_passed=True,
             filters_decision=filters_decision,
             passed_arguments=reaction_arguments,
-            taken_time=end_stamp - start_stamp
+            taken_time=end_stamp - start_stamp,
         )
 
     def is_correct_event_type(

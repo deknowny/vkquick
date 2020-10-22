@@ -53,7 +53,9 @@ class Debugger:
         for scheme in self.schemes:
             summary_taken_time += scheme["taken_time"]
         summary_taken_time_header = f"({summary_taken_time:.6f}s)"
-        summary_taken_time_header = huepy.grey(summary_taken_time_header, key=90)
+        summary_taken_time_header = huepy.grey(
+            summary_taken_time_header, key=90
+        )
         event_header = f"-> {self.event.type} {summary_taken_time_header}\n"
         separator = self._build_separator("=")
         event_header += f"{separator}\n\n"

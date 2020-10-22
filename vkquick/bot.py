@@ -121,7 +121,7 @@ class Bot:
         event: vkquick.events_generators.event.Event,
         handling_info: ty.List[
             vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
-        ]
+        ],
     ) -> None:
         """
         Показывает информацию в дебаггере. Если событие прошло фильтр,
@@ -174,14 +174,16 @@ class Bot:
         self,
         handling_info: ty.List[
             vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
-        ]
+        ],
     ) -> None:
         """
         Обновляет информацию по статистике
         """
         self._handled_events_count += 1
         for info in handling_info:
-            if info["are_filters_passed"] and isinstance(info["handler"], vkquick.event_handling.command.Command):
+            if info["are_filters_passed"] and isinstance(
+                info["handler"], vkquick.event_handling.command.Command
+            ):
                 self._command_calls_count += 1
 
     @staticmethod

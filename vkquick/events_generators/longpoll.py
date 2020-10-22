@@ -47,19 +47,26 @@ class GroupLongPoll(LongPollBase):
     LongPoll обработчик для событий в сообществе
     """
 
-    api: vkquick.api.API = vkquick.current.fetch("api_lp_group", "api_lp", "api")
+    api: vkquick.api.API = vkquick.current.fetch(
+        "api_lp_group", "api_lp", "api"
+    )
 
-    def __init__(self, group_id: ty.Optional[int] = None, wait: int = 25) -> None:
-        if group_id is None and self.api.token_owner == vkquick.api.TokenOwner.USER:
-            raise ValueError("Can't use group longpoll with user token without `group_id`")
+    def __init__(
+        self, group_id: ty.Optional[int] = None, wait: int = 25
+    ) -> None:
+        if (
+            group_id is None
+            and self.api.token_owner == vkquick.api.TokenOwner.USER
+        ):
+            raise ValueError(
+                "Can't use group longpoll with user token without `group_id`"
+            )
         self.group_id = group_id
         self.wait = wait
         self.requests_session = vkquick.utils.RequestsSession("lp.vk.com")
         self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
 
-        self._server_path = (
-            self._params
-        ) = self._lp_settings = None
+        self._server_path = self._params = self._lp_settings = None
 
     def __aiter__(self):
         return self
@@ -101,7 +108,9 @@ class UserLongPoll(LongPollBase):
     LongPoll обработчик для событий пользователя
     """
 
-    api: vkquick.api.API = vkquick.current.fetch("api_lp_user", "api_lp", "api")
+    api: vkquick.api.API = vkquick.current.fetch(
+        "api_lp_user", "api_lp", "api"
+    )
 
     def __init__(self, version: int = 10, wait: int = 25, mode: int = 128):
         self.version = version
@@ -110,9 +119,7 @@ class UserLongPoll(LongPollBase):
 
         self.requests_session = vkquick.utils.RequestsSession("api.vk.me")
         self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
-        self._server_path = (
-            self._params
-        ) = self._lp_settings = None
+        self._server_path = self._params = self._lp_settings = None
 
     def __aiter__(self):
         return self
@@ -145,5 +152,9 @@ class UserLongPoll(LongPollBase):
         server = urllib.parse.urlparse(server_url)
         self._server_path = server.path
         self._lp_settings = dict(
-            act="a_check", wait=self.wait, mode=self.mode, version=self.version, **new_lp_settings()
+            act="a_check",
+            wait=self.wait,
+            mode=self.mode,
+            version=self.version,
+            **new_lp_settings(),
         )
