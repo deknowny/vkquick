@@ -4,6 +4,7 @@
 from __future__ import annotations
 import abc
 import urllib.parse
+import json
 import typing as ty
 
 import vkquick.api
@@ -133,7 +134,12 @@ class UserLongPoll(LongPollBase):
         )
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.fetch_body()
-        body = self.json_parser.loads(body)
+        try:
+            body = self.json_parser.loads(body)
+        except json.decoder.JSONDecodeError:
+            print(body)
+            return []
+
         response = vkquick.utils.AttrDict(body)
 
         if "failed" in response:
