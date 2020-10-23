@@ -133,13 +133,19 @@ class UserLongPoll(LongPollBase):
             f"Host: {self._server_netloc}\n\n"
         )
         await self.requests_session.write(query.encode("UTF-8"))
-        body = await self.requests_session.fetch_body()
+        try:
+            body = await asyncio.wait_for(self.requests_session.fetch_body(), timeout=self.wait)
+        except asyncio.exceptions.TimeoutError:
+            await self.setup()
+            return []
+
         try:
             body = self.json_parser.loads(body)
         except Exception as exc:
             print("Please, report it.\n")
             print(exc)
             print(body)
+            await self.setup()
             return []
             # raise ValueError("Try to get token from another app (for example, from VK ME)")
 
