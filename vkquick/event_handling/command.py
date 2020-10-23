@@ -85,9 +85,9 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             flags=matching_command_routing_re_flags,
         )
 
-        handled_event_types = ["message_new"]
+        handled_event_types = ["message_new", 4]
         if not ignore_editing:
-            handled_event_types.append("message_edit")
+            handled_event_types.extend("message_edit")
         super().__init__(*handled_event_types)
 
     def __call__(
@@ -160,7 +160,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                 f"Аргумент `{unmatched_argument_name}` не вырезан из строки `{arguments_string}`",
             )
 
-        self._made_text_arguments[event.event_id] = text_arguments
+        if isinstance(event(), list):
+            event_id = event[1]
+        else:
+            event_id = event.event_id
+        self._made_text_arguments[event_id] = text_arguments
         return True, "Текст команды подходит под шаблон"
 
     def matching_command_routing(
@@ -280,7 +284,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         `TextArgument` и `PayloadArgument` в этой реализации
         """
         payload_arguments = await super().init_reaction_arguments(event)
-        text_arguments = self._made_text_arguments.pop(event.event_id)
+        if isinstance(event(), list):
+            event_id = event[1]
+        else:
+            event_id = event.event_id
+        text_arguments = self._made_text_arguments.pop(event_id)
         # Reaction аргументы. Абсолютно все
         payload_arguments.update(text_arguments)
         return payload_arguments

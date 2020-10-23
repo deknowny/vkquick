@@ -56,7 +56,11 @@ class Debugger:
         summary_taken_time_header = huepy.grey(
             summary_taken_time_header, key=90
         )
-        event_header = f"-> {self.event.type} {summary_taken_time_header}\n"
+        if isinstance(self.event(), list):
+            event_type = self.event[0]
+        else:
+            event_type = self.event.type
+        event_header = f"-> {event_type} {summary_taken_time_header}\n"
         separator = self._build_separator("=")
         event_header += f"{separator}\n\n"
         return event_header

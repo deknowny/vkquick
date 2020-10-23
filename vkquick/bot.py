@@ -193,5 +193,5 @@ class Bot:
         """
         Фильтр на событие для дебаггера по умолчанию
         """
-        if event.type in ("message_new", "message_edit"):
-            return True
+        return (isinstance(event(), list) and event[0]) == 4 or (isinstance(event(), dict) and event.type in ("message_new", "message_edit"))
+

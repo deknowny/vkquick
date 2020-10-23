@@ -88,7 +88,7 @@ class EventHandler:
         Проверяет, предназначена ли реакция
         для обработки событий с типом из `event.type`
         """
-        return self.event_types is Ellipsis or event.type in self.event_types
+        return self.event_types is Ellipsis or ((isinstance(event(), list) and event[0] in self.event_types) or (isinstance(event(), dict) and event.type in self.event_types))
 
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event

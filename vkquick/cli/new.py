@@ -50,7 +50,7 @@ api_settings = dict(
 )
 
 longpoll_settings = dict(
-    group_id={group_id}
+    # group_id={group_id}
 )
 
 bot_settings = dict()

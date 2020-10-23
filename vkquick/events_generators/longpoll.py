@@ -112,7 +112,7 @@ class UserLongPoll(LongPollBase):
         "api_lp_user", "api_lp", "api"
     )
 
-    def __init__(self, version: int = 10, wait: int = 25, mode: int = 128):
+    def __init__(self, version: int = 10, wait: int = 25, mode: int = 234):
         self.version = version
         self.wait = wait
         self.mode = mode
@@ -130,26 +130,25 @@ class UserLongPoll(LongPollBase):
             f"GET {self._server_path}?{query_string} HTTP/1.1\n"
             "Host: api.vk.me\n\n"
         )
-        print(query)
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.fetch_body()
-        print(body)
         body = self.json_parser.loads(body)
-        response = vkquick.events_generators.event.Event(body)
+        response = vkquick.utils.AttrDict(body)
 
         if "failed" in response:
             await self._resolve_faileds(response)
             return []
         else:
             self._lp_settings.update(ts=response.ts)
-            return response.updates
+            updates = [vkquick.events_generators.event.Event(update) for update in response.updates]
+            return updates
 
     async def setup(self) -> None:
         new_lp_settings = await self.api.messages.getLongPollServer(
             lp_version=self.version
         )
         server_url = new_lp_settings().pop("server")
-        server = urllib.parse.urlparse(server_url)
+        server = urllib.parse.urlparse(f"//{server_url}")  # // убирает домен из `path`
         self._server_path = server.path
         self._lp_settings = dict(
             act="a_check",

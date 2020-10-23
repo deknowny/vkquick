@@ -93,12 +93,10 @@ class AttrDict:
     """
 
     def __new__(cls, mapping):
-        if isinstance(mapping, dict):
+        if isinstance(mapping, (dict, list)):
             self = object.__new__(cls)
             self.__init__(mapping)
             return self
-        if isinstance(mapping, list):
-            return [cls(i) for i in mapping]
 
         return mapping
 
