@@ -137,7 +137,7 @@ class UserLongPoll(LongPollBase):
         try:
             body = self.json_parser.loads(body)
         except json.decoder.JSONDecodeError:
-            print(body)
+            breakpoint()
             return []
 
         response = vkquick.utils.AttrDict(body)
