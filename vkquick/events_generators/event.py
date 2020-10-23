@@ -37,6 +37,12 @@ class Event(vkquick.utils.AttrDict):
         else:
             return super().__new__(cls, mapping)
 
+    def __init__(self, mapping):
+        if isinstance(mapping, list):
+            object.__setattr__(self, "type", mapping[0])
+            object.__setattr__(self, "event_id", mapping[1])
+        super().__init__(mapping)
+
     def get_message_object(self):
         """
         Возвращает объект сообщения в зависимости от версии
