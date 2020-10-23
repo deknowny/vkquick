@@ -137,8 +137,7 @@ class UserLongPoll(LongPollBase):
         try:
             body = self.json_parser.loads(body)
         except json.decoder.JSONDecodeError:
-            breakpoint()
-            return []
+            raise ValueError("Try to get token from another app (for example, from VK ME)")
 
         response = vkquick.utils.AttrDict(body)
 
