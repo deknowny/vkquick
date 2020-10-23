@@ -145,7 +145,7 @@ text = f\"""
 Создан: {creation_date:%d.%m.%Y} ({(now - creation_date).days} дней)
 Создатель: {owner_mention}
 Python: {platform.python_version()}
-[id195194058|VK Quick]: ({vq.__version__})
+[public195194058|VK Quick]: ({vq.__version__})
 \""".lstrip()
 
 
