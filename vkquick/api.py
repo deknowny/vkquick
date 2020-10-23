@@ -349,7 +349,7 @@ class API(vkquick.utils.Synchronizable):
         with self.synchronize():
             users = self.users.get()
 
-        return TokenOwner.USER if users else TokenOwner.GROUP
+        return TokenOwner.USER if users() else TokenOwner.GROUP
 
     async def _waiting(self) -> None:
         """
