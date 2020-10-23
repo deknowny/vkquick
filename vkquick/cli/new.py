@@ -54,8 +54,6 @@ bot_settings = dict()
 
 
 MAINPY = """
-import pathlib
-
 import vkquick as vq
 
 import src.config
