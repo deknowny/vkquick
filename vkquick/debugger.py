@@ -49,14 +49,7 @@ class Debugger:
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
-        summary_taken_time = 0
-        for scheme in self.schemes:
-            summary_taken_time += scheme["taken_time"]
-        summary_taken_time_header = f"({summary_taken_time:.6f}s)"
-        summary_taken_time_header = huepy.grey(
-            summary_taken_time_header, key=90
-        )
-        event_header = f"-> {self.event.type} {summary_taken_time_header}\n"
+        event_header = f"-> {self.event.type}\n"
         separator = self._build_separator("=")
         event_header += f"{separator}\n\n"
         return event_header
