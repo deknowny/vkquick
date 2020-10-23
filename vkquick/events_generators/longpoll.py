@@ -2,9 +2,9 @@
 Управление событиями LongPoll
 """
 from __future__ import annotations
+import asyncio
 import abc
 import urllib.parse
-import json
 import typing as ty
 
 import vkquick.api
@@ -114,14 +114,14 @@ class UserLongPoll(LongPollBase):
         "api_lp_user", "api_lp", "api"
     )
 
-    def __init__(self, version: int = 10, wait: int = 25, mode: int = 234):
+    def __init__(self, version: int = 3, wait: int = 15, mode: int = 234):
         self.version = version
         self.wait = wait
         self.mode = mode
 
-        self.requests_session = vkquick.utils.RequestsSession("api.vk.me")
+        self.requests_session = None
         self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
-        self._server_path = self._params = self._lp_settings = None
+        self._server_path = self._params = self._lp_settings = self._server_netloc = None
 
     def __aiter__(self):
         return self
@@ -130,14 +130,14 @@ class UserLongPoll(LongPollBase):
         query_string = urllib.parse.urlencode(self._lp_settings)
         query = (
             f"GET {self._server_path}?{query_string} HTTP/1.1\n"
-            "Host: api.vk.me\n\n"
+            f"Host: {self._server_netloc}\n\n"
         )
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.fetch_body()
         try:
             body = self.json_parser.loads(body)
         except Exception as exc:
-            print("Please. report it.\n")
+            print("Please, report it.\n")
             print(exc)
             print(body)
             return []
@@ -154,12 +154,14 @@ class UserLongPoll(LongPollBase):
             return updates
 
     async def setup(self) -> None:
+
         new_lp_settings = await self.api.messages.getLongPollServer(
             lp_version=self.version
         )
         server_url = new_lp_settings().pop("server")
         server = urllib.parse.urlparse(f"//{server_url}")  # // убирает домен из `path`
         self._server_path = server.path
+        self._server_netloc = server.netloc
         self._lp_settings = dict(
             act="a_check",
             wait=self.wait,
@@ -167,3 +169,4 @@ class UserLongPoll(LongPollBase):
             version=self.version,
             **new_lp_settings(),
         )
+        self.requests_session = vkquick.utils.RequestsSession(self._server_netloc)
