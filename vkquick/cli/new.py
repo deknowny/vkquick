@@ -45,13 +45,9 @@ CONFIGPY = """
 import vkquick as vq
 
 
-api_settings = dict(
-    token="{token}"
-)
+api_settings = dict(token="{token}")
 
-longpoll_settings = dict(
-    # group_id={group_id}
-)
+longpoll_settings = dict({group_id})
 
 bot_settings = dict()
 """.lstrip()
@@ -70,7 +66,7 @@ import src.default.readme
 
 def main():
     vq.current.objects.api = vq.API(**src.config.api_settings)
-    vq.current.objects.lp = vq.GroupLongPoll(**src.config.longpoll_settings)
+    vq.current.objects.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
     vq.current.objects.bot = vq.Bot(
         event_handlers=[
             src.default.help_.help_,
@@ -183,54 +179,68 @@ class New(cleo.Command):
         while True:
             current_group, owner = self._get_info_by_token()
 
-            confirmed = self.confirm(
-                f"\nYou want to create a bot "
-                f"for a group\n<info>{current_group.name}</info> "
-                f"<fg=white;options=blink>(https://vk.com/{current_group.screen_name})</>"
-                f"\nContinue?",
-                True,
-            )
+            if current_group is not None:
+                confirmed = self.confirm(
+                    f"\nYou want to create a bot "
+                    f"for a group\n<info>{current_group.name}</info> "
+                    f"<fg=white;options=blink>(https://vk.com/{current_group.screen_name})</>"
+                    f"\nContinue?",
+                    True,
+                )
+            else:
+                owner_mention = owner.format("{fn} {ln}")
+                confirmed = self.confirm(
+                    f"\nYou want to create a user bot "
+                    f"for the account\n<info>{owner_mention}</info>"
+                    f"\nContinue?",
+                    True,
+                )
             if confirmed:
                 self._make_files(current_group, owner)
                 break
 
-    @staticmethod
-    async def _fetch_group_and_user(
-        api: vq.API,
-    ) -> ty.Tuple[vq.AttrDict, vq.User]:
-        group = await api.groups.get_by_id()
-        group = group[0]
+    def _fetch_group_and_user(self) -> ty.Tuple[vq.AttrDict, vq.User]:
+        with self.api.synchronize():
+            group = self.api.groups.get_by_id()
+            group = group[0]
 
-        group_members = await api.groups.getMembers(
-            filter="managers", group_id=group.id
-        )
-        for member in group_members.items:
-            if member.role == "creator":
-                creator_id = member.id
-                creator = await vq.User.build_from_id(creator_id)
-                return group, creator
+            group_members = self.api.groups.getMembers(
+                filter="managers", group_id=group.id
+            )
+            for member in group_members.items:
+                if member.role == "creator":
+                    creator_id = member.id
+                    creator = self.api.users.get(user_ids=creator_id)
+                    creator = vq.User(creator[0])
+                    return group, creator
 
-        raise ValueError("Can't get group's creator")
+            raise ValueError("Can't get group's creator")
 
-    def _get_info_by_token(self) -> ty.Tuple[vq.AttrDict, vq.User]:
+    def _fetch_user(self):
+        with self.api.synchronize():
+            user = self.api.users.get()
+            user = vq.User(user[0])
+            return None, user
+
+    def _get_info_by_token(self) -> ty.Tuple[ty.Optional[vq.AttrDict], vq.User]:
         if not self.option("token"):
             self.token = self.ask("Enter an API token:")
         else:
             self.token = self.option("token")
 
         if self.token.startswith("$"):
-            # str.removeprefix
+            # str.removeprefix... Когда-нибудь...
             self.token = os.getenv(self.token[1:])
 
-        api = vq.API(self.token)
-        vq.current.objects.api = api
+        self.api = vq.API(self.token)
+        vq.current.objects.api = self.api
 
-        if api.token_owner == vq.TokenOwner.USER:
-            raise ValueError("Can't create bot with user token")
+        if self.api.token_owner == vq.TokenOwner.GROUP:
+            return self._fetch_group_and_user()
+        else:
+            return self._fetch_user()
 
-        return asyncio.run(self._fetch_group_and_user(api))
-
-    def _make_files(self, current_group: vq.AttrDict, owner: vq.User):
+    def _make_files(self, current_group: ty.Optional[vq.AttrDict], owner: vq.User):
         root_path = pathlib.Path()
 
         # Main bot's directory
@@ -261,14 +271,21 @@ class New(cleo.Command):
 
         config = src / "config.py"
         config.touch()
+        if self.api.token_owner == vq.TokenOwner.GROUP:
+            group_id = f"group_id={current_group.id}"
+        else:
+            group_id = ""
         config.write_text(
-            CONFIGPY.format(token=self.token, group_id=current_group.id),
+            CONFIGPY.format(token=self.token, group_id=group_id),
             encoding="utf-8",
         )
 
         mainpy = src / "__main__.py"
         mainpy.touch()
-        mainpy.write_text(MAINPY, encoding="utf-8")
+        mainpy.write_text(
+            MAINPY.format(lp_type="Group" if self.api.token_owner == vq.TokenOwner.GROUP else "User"),
+            encoding="utf-8"
+        )
 
         default = src / "default"
         default.mkdir()

@@ -82,14 +82,15 @@ class GroupLongPoll(LongPollBase):
         await self.requests_session.write(query.encode("UTF-8"))
         body = await self.requests_session.fetch_body()
         body = self.json_parser.loads(body)
-        response = vkquick.events_generators.event.Event(body)
+        response = vkquick.utils.AttrDict(body)
 
         if "failed" in response:
             await self._resolve_faileds(response)
             return []
         else:
             self._lp_settings.update(ts=response.ts)
-            return response.updates
+            updates = [vkquick.events_generators.event.Event(update()) for update in response.updates]
+            return updates
 
     async def setup(self) -> None:
         new_lp_settings = await self.api.groups.getLongPollServer(
@@ -140,7 +141,7 @@ class UserLongPoll(LongPollBase):
             return []
         else:
             self._lp_settings.update(ts=response.ts)
-            updates = [vkquick.events_generators.event.Event(update) for update in response.updates]
+            updates = [vkquick.events_generators.event.Event(update()) for update in response.updates]
             return updates
 
     async def setup(self) -> None:

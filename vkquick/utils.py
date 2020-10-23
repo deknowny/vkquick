@@ -115,6 +115,9 @@ class AttrDict:
         return self.__getattr__(item)
 
     def __getitem__(self, item):
+        val = self.mapping_[item]
+        if isinstance(self.mapping_, list):
+            return self.__class__(val)
         return self.mapping_[item]
 
     def __contains__(self, item):
