@@ -136,8 +136,11 @@ class UserLongPoll(LongPollBase):
         body = await self.requests_session.fetch_body()
         try:
             body = self.json_parser.loads(body)
-        except json.decoder.JSONDecodeError:
-            raise ValueError("Try to get token from another app (for example, from VK ME)")
+        except Exception as exc:
+            print("Please. report it.\n")
+            print(exc)
+            return []
+            # raise ValueError("Try to get token from another app (for example, from VK ME)")
 
         response = vkquick.utils.AttrDict(body)
 
