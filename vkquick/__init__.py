@@ -67,4 +67,4 @@ from .wrappers.base import Wrapper
 from .wrappers.user import User
 
 
-__version__ = "1.0.0a0"
+__version__ = "1.0.0a1"
