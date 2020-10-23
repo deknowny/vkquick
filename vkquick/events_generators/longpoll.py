@@ -139,6 +139,7 @@ class UserLongPoll(LongPollBase):
         except Exception as exc:
             print("Please. report it.\n")
             print(exc)
+            print(body)
             return []
             # raise ValueError("Try to get token from another app (for example, from VK ME)")
 
