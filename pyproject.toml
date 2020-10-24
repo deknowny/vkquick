@@ -25,7 +25,6 @@ classifiers = [
     "Topic :: Utilities"
 ]
 
-
 [tool.poetry.dependencies]
 python = "^3.8"
 pygments = "^2.6.1"
@@ -43,12 +42,9 @@ sqlalchemy = "^1.3.18"
 pytest = "^6.1.0"
 pytest-cov = "^2.10.1"
 pylint = "^2.6.0"
-Sphinx = { version = "^3.2.1", optional = true }
-sphinx-material = { version = "^0.0.32", optional = true }
 
 [tool.poetry.extras]
 orjson = ["orjson"]
-sphinx = ["Sphinx", "sphinx-material"]
 
 [tool.poetry.urls]
 "VK group" = "https://vk.com/vkquick"
