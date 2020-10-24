@@ -42,9 +42,6 @@ VK Bot. In developing now.
 
 
 CONFIGPY = """
-import vkquick as vq
-
-
 api_settings = dict(token="{token}")
 
 longpoll_settings = dict({group_id})
