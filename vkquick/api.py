@@ -300,6 +300,7 @@ class API(vkquick.utils.Synchronizable):
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
+        self._waiting()
         resp = urllib.request.urlopen(
             f"https://{self.host}/method/{method_name}?{data}",
             context=ssl.SSLContext(),
@@ -351,7 +352,7 @@ class API(vkquick.utils.Synchronizable):
 
         return TokenOwner.USER if users() else TokenOwner.GROUP
 
-    async def _waiting(self) -> None:
+    def _waiting(self) -> ty.Union[None, asyncio.Future]:
         """
         Ожидание после последнего API запроса
         (длительность в зависимости от владельца токена:
@@ -364,6 +365,9 @@ class API(vkquick.utils.Synchronizable):
         if diff < self._delay:
             wait_time = self._delay - diff
             self._last_request_time += self._delay
-            await asyncio.sleep(wait_time)
+            if self.synchronized:
+                time.sleep(wait_time)
+            else:
+                return asyncio.sleep(wait_time)
         else:
             self._last_request_time = now
