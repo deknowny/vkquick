@@ -25,7 +25,7 @@ class TestAttrDict:
 
     def test_calling(self):
         data = vq.AttrDict({"a": {"b": 1}})
-        assert data("a").mapping_ == {"b": 1}
+        assert data("a").mapping_ == {"b": 1} == data()
         assert isinstance(data("a"), vq.AttrDict)
 
     def test_getitem(self):
