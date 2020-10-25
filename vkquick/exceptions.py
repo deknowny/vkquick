@@ -30,6 +30,7 @@ class VkApiError(Exception):
     description: str
     status_code: int
     request_params: _ParamsScheme
+    extra_fileds: dict
 
     @classmethod
     def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VkApiError:
@@ -40,6 +41,10 @@ class VkApiError(Exception):
         status_code = response["error"].pop("error_code")
         description = response["error"].pop("error_msg")
         request_params = response["error"].pop("request_params")
+        request_params = {
+            item["key"]: item["value"]
+            for item in request_params
+        }
 
         pretty_exception_text = (
             huepy.red(f"\n[{status_code}]")
@@ -47,16 +52,17 @@ class VkApiError(Exception):
             + huepy.grey("Request params:")
         )
 
-        for pair in request_params:
-            key = huepy.yellow(pair["key"])
-            value = huepy.cyan(pair["value"])
+        for key, value in request_params.items():
+            key = huepy.yellow(key)
+            value = huepy.cyan(value)
             pretty_exception_text += f"\n{key} = {value}"
 
         # Если остались дополнительные поля
         if response["error"]:
             pretty_exception_text += (
-                huepy.info("\n\nThere are some extra fields:\n")
-                + f"{response['error']}"
+                "\n\n"
+                + huepy.info("There are some extra fields:\n")
+                + str(response["error"])
             )
 
         return cls(
@@ -64,6 +70,7 @@ class VkApiError(Exception):
             description=description,
             status_code=status_code,
             request_params=request_params,
+            extra_fileds=response["error"]
         )
 
     def __str__(self):
