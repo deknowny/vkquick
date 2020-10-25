@@ -22,3 +22,5 @@ vkquick_old2/
 poetry.lock
 
 docs/build/
+
+htmlcov/
