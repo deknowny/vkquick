@@ -168,14 +168,22 @@ class API(vkquick.utils.Synchronizable):
     Парсер для JSON, приходящего от ответа вк
     """
 
+    token_owner: ty.Optional[TokenOwner] = None
+    """
+    Владелец токена: пользователь/группа. если не передано,
+    определяется автоматически через `users.get`. Внутри используется
+    для определения задержки между запросами
+    """
+
     def __post_init__(self) -> None:
         self._method_name = ""
         self._last_request_time = 0
-        self.token_owner = self.define_token_owner()
+        self._delay = 0
+        self.token_owner = self.token_owner or self._define_token_owner()
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
         self.requests_session = vkquick.utils.RequestsSession(host=self.host)
 
-    def __getattr__(self, attribute) -> API:
+    def __getattr__(self, attribute: str) -> API:
         """
         Выстраивает имя метода путем переложения
         имен API методов на "получение атрибутов".
@@ -283,7 +291,7 @@ class API(vkquick.utils.Synchronizable):
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
-        await self._waiting()
+        await asyncio.sleep(self._get_waiting_time())
         query = (
             f"GET /method/{method_name}?{data} HTTP/1.1\n"
             f"Host: {self.host}\n\n"
@@ -300,7 +308,7 @@ class API(vkquick.utils.Synchronizable):
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
-        self._waiting()
+        time.sleep(self._get_waiting_time())
         resp = urllib.request.urlopen(
             f"https://{self.host}/method/{method_name}?{data}",
             context=ssl.SSLContext(),
@@ -328,11 +336,12 @@ class API(vkquick.utils.Synchronizable):
         """
         return match.group("let").upper()
 
-    def _convert_name(self, name: str) -> str:
+    @classmethod
+    def _convert_name(cls, name: str) -> str:
         """
         Конвертирует snake_case в camelCase
         """
-        return re.sub(r"_(?P<let>[a-z])", self._upper_zero_group, name)
+        return re.sub(r"_(?P<let>[a-z])", cls._upper_zero_group, name)
 
     @staticmethod
     def _check_errors(response: ty.Dict[str, ty.Any]) -> None:
@@ -342,7 +351,7 @@ class API(vkquick.utils.Synchronizable):
         if "error" in response:
             raise vkquick.exceptions.VkApiError.destruct_response(response)
 
-    def define_token_owner(self) -> TokenOwner:
+    def _define_token_owner(self) -> TokenOwner:
         """
         Определяет владельца токена: группу или пользователя.
         Например, для определения задержки между запросами
@@ -352,7 +361,7 @@ class API(vkquick.utils.Synchronizable):
 
         return TokenOwner.USER if users() else TokenOwner.GROUP
 
-    def _waiting(self) -> ty.Union[None, asyncio.Future]:
+    def _get_waiting_time(self) -> float:
         """
         Ожидание после последнего API запроса
         (длительность в зависимости от владельца токена:
@@ -365,9 +374,7 @@ class API(vkquick.utils.Synchronizable):
         if diff < self._delay:
             wait_time = self._delay - diff
             self._last_request_time += self._delay
-            if self.synchronized:
-                time.sleep(wait_time)
-            else:
-                return asyncio.sleep(wait_time)
+            return wait_time
         else:
             self._last_request_time = now
+            return 0
