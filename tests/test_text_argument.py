@@ -14,7 +14,6 @@ text_arguments_data = [
     (vq.Integer(), "123 123", 123),
     (vq.Integer(range_=range(10)), "5", 5),
     (vq.Integer(range_=range(10)), "15", vq.UnmatchedArgument),
-
     (vq.Word(), "hello", "hello"),
     (vq.Word(), "hello_world", "hello_world"),
     (vq.Word(), "hello world", "hello"),
@@ -22,14 +21,13 @@ text_arguments_data = [
     (vq.Word(), "123 123", "123"),
     (vq.Word(), "123,", "123"),
     (vq.Word(), ",123", vq.UnmatchedArgument),
-    (vq.Word(min_length=10), "a"*15, "a"*15),
-    (vq.Word(min_length=10), "a"*5, vq.UnmatchedArgument),
-    (vq.Word(max_length=10), "a"*5, "a"*5),
-    (vq.Word(max_length=10), "a"*15, vq.UnmatchedArgument),
-    (vq.Word(min_length=10, max_length=20), "a"*15, "a"*15),
-    (vq.Word(min_length=10, max_length=20), "a"*5, vq.UnmatchedArgument),
-    (vq.Word(min_length=10, max_length=20), "a"*25, vq.UnmatchedArgument),
-
+    (vq.Word(min_length=10), "a" * 15, "a" * 15),
+    (vq.Word(min_length=10), "a" * 5, vq.UnmatchedArgument),
+    (vq.Word(max_length=10), "a" * 5, "a" * 5),
+    (vq.Word(max_length=10), "a" * 15, vq.UnmatchedArgument),
+    (vq.Word(min_length=10, max_length=20), "a" * 15, "a" * 15),
+    (vq.Word(min_length=10, max_length=20), "a" * 5, vq.UnmatchedArgument),
+    (vq.Word(min_length=10, max_length=20), "a" * 25, vq.UnmatchedArgument),
     (vq.String(), "abc def \n\n", "abc def \n\n"),
     (vq.String(), "", vq.UnmatchedArgument),
     (vq.String(), "\u1231\u4564", "\u1231\u4564"),
@@ -40,19 +38,32 @@ text_arguments_data = [
     (vq.String(min_length=10, max_length=20), "a" * 15, "a" * 15),
     (vq.String(min_length=10, max_length=20), "a" * 5, vq.UnmatchedArgument),
     (vq.String(min_length=10, max_length=20), "a" * 25, vq.UnmatchedArgument),
-
     (vq.Union(vq.Integer(), vq.Word()), "123", 123),
     (vq.Union(vq.Word(), vq.Integer()), "123", "123"),
     (vq.Union(vq.Integer(), vq.Word()), "abc", "abc"),
     (vq.Union(vq.Integer(), vq.Word()), "abc cde", "abc"),
     (vq.Union(vq.Word(), vq.String()), "abc cde", "abc"),
     (vq.Union(vq.Word(), vq.String()), ",abc cde", ",abc cde"),
-    (vq.Union(vq.Integer(range_=range(10)), vq.Integer(range_=range(20, 30))), "15", vq.UnmatchedArgument),
-
+    (
+        vq.Union(
+            vq.Integer(range_=range(10)), vq.Integer(range_=range(20, 30))
+        ),
+        "15",
+        vq.UnmatchedArgument,
+    ),
     (vq.Regex(regex="hello", factory=lambda x: x.group(0)), "hello", "hello"),
-    (vq.Regex(regex=re.compile("hello"), factory=lambda x: x.group(0)), "hello", "hello"),
-    (vq.Regex(regex=r"(?P<group>\d+)", factory=lambda x: int(x.group("group"))), "123", 123),
-
+    (
+        vq.Regex(regex=re.compile("hello"), factory=lambda x: x.group(0)),
+        "hello",
+        "hello",
+    ),
+    (
+        vq.Regex(
+            regex=r"(?P<group>\d+)", factory=lambda x: int(x.group("group"))
+        ),
+        "123",
+        123,
+    ),
     (vq.Bool(), "true", True),
     (vq.Bool(), "1", True),
     (vq.Bool(), "yes", True),
@@ -67,7 +78,6 @@ text_arguments_data = [
     (vq.Bool(), "вкл", True),
     (vq.Bool(), "enable", True),
     (vq.Bool(true_extension=["custom"]), "custom", True),
-
     (vq.Bool(), "false", False),
     (vq.Bool(), "0", False),
     (vq.Bool(), "no", False),
@@ -82,9 +92,8 @@ text_arguments_data = [
     (vq.Bool(), "выкл", False),
     (vq.Bool(), "disable", False),
     (vq.Bool(false_extension=["custom"]), "custom", False),
-
     (vq.Bool(), "off,", False),
-    (vq.Bool(), "on,", True)
+    (vq.Bool(), "on,", True),
 ]
 
 
