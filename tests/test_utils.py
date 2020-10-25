@@ -11,15 +11,12 @@ def test_peer(chat_id, peer_id):
 
 
 class TestAttrDict:
-
     def test_recursive_getattr(self):
         data = vq.AttrDict({"a": {"b": {"c": 1}}})
         assert data.a.b.c == 1
 
     def test_lists(self):
-        data = vq.AttrDict(
-            {"a": [[[], {"b": 1}]]}
-        )
+        data = vq.AttrDict({"a": [[[], {"b": 1}]]})
         assert data.a[0][0]() == []
         assert data.a[0][1].b == 1
 
