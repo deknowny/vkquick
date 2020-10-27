@@ -11,10 +11,12 @@ from . import current
 from .api import API, TokenOwner
 from .bot import Bot
 from .exceptions import VkApiError
+from .debugger import Debugger, uncolored_text
 from .utils import (
     peer,
     random_id,
     sync_async_run,
+    clear_console,
     AttrDict,
     JSONParserBase,
     BuiltinJSONParser,
@@ -22,6 +24,7 @@ from .utils import (
     RequestsSession,
     SafeDict,
 )
+
 
 from .events_generators.event import Event
 from .events_generators.longpoll import GroupLongPoll, UserLongPoll
@@ -55,7 +58,9 @@ from .event_handling.reaction_argument.payload_arguments.sender import Sender
 from .event_handling.reaction_argument.payload_arguments.replied_user import (
     RepliedUser,
 )
-from .event_handling.reaction_argument.payload_arguments.current import Current
+from .event_handling.reaction_argument.payload_arguments.current import (
+    Current,
+)
 from .event_handling.reaction_argument.payload_arguments.captured_event import (
     CapturedEvent,
 )
