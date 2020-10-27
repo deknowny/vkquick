@@ -1,14 +1,11 @@
-import re
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.text_arguments.base
+import vkquick.event_handling.text_arguments.base
 import vkquick.wrappers.user
 
 
 # TODO: Links parsing (+ init: allows_links)
-class UserMention(
-    vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument
-):
+class UserMention(vkquick.event_handling.text_arguments.base.TextArgument):
     async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         value, parsed_string = self.cut_part_lite(
             vkquick.wrappers.user.User.mention_regex,
@@ -17,7 +14,7 @@ class UserMention(
         )
         if (
             value
-            is vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
+            is vkquick.event_handling.text_arguments.base.UnmatchedArgument
         ):
             return value, parsed_string
 

@@ -1,6 +1,6 @@
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.text_arguments.base
+import vkquick.event_handling.text_arguments.base
 
 
 class TextBase:
@@ -43,14 +43,14 @@ class TextBase:
     ) -> ty.Tuple[ty.Any, str]:
         if (
             got_value
-            is not vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
+            is not vkquick.event_handling.text_arguments.base.UnmatchedArgument
         ):
             length = len(got_value)
             if length < self.min_length or (
                 self.max_length is not None and length > self.max_length
             ):
                 return (
-                    vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument,
+                    vkquick.event_handling.text_arguments.base.UnmatchedArgument,
                     parsed_string,
                 )
         return got_value, parsed_string

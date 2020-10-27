@@ -1,7 +1,7 @@
 import re
 import typing as ty
 
-from vkquick.event_handling.reaction_argument.text_arguments import base
+from vkquick.event_handling.text_arguments import base
 
 
 class Bool(base.TextArgument):

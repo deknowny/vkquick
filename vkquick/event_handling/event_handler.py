@@ -1,12 +1,11 @@
 from __future__ import annotations
-import asyncio
 import inspect
 import time
 import traceback
 import typing as ty
 
 import vkquick.events_generators.event
-import vkquick.event_handling.reaction_argument.payload_arguments.base
+import vkquick.event_handling.payload_arguments.base
 import vkquick.event_handling.filters.base
 import vkquick.utils
 import vkquick.event_handling.handling_info_scheme
@@ -129,7 +128,7 @@ class EventHandler:
         for name, value in self.reaction_arguments.items():
             if isinstance(
                 value,
-                vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
+                vkquick.event_handling.payload_arguments.base.PayloadArgument,
             ):
                 reaction_arguments[name] = await vkquick.utils.sync_async_run(
                     value.init_value(event)

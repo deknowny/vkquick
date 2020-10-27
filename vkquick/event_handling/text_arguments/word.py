@@ -1,12 +1,12 @@
 import re
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.text_arguments.base
-import vkquick.event_handling.reaction_argument.text_arguments.text_values_base
+import vkquick.event_handling.text_arguments.base
+import vkquick.event_handling.text_arguments.text_values_base
 
 
 class Word(
-    vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
+    vkquick.event_handling.text_arguments.base.TextArgument,
     vkquick.event_handling.reaction_argument.text_arguments.text_values_base.TextBase,
 ):
     """

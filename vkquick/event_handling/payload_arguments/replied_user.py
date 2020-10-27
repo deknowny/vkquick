@@ -1,12 +1,12 @@
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.payload_arguments.base
+import vkquick.event_handling.payload_arguments.base
 import vkquick.events_generators.event
 import vkquick.wrappers.user
 
 
 class RepliedUser(
-    vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument
+    vkquick.event_handling.payload_arguments.base.PayloadArgument
 ):
     async def init_value(
         self, event: vkquick.events_generators.event.Event

@@ -6,8 +6,8 @@ import typing as ty
 import vkquick.event_handling.event_handler
 import vkquick.event_handling.message
 import vkquick.events_generators.event
-import vkquick.event_handling.reaction_argument.payload_arguments.base
-import vkquick.event_handling.reaction_argument.text_arguments.base
+import vkquick.event_handling.payload_arguments.base
+import vkquick.event_handling.text_arguments.base
 import vkquick.event_handling.filters.base
 import vkquick.utils
 
@@ -121,12 +121,12 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         for name, value in self.reaction_arguments.items():
             if isinstance(
                 value,
-                vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
+                vkquick.event_handling.text_arguments.base.TextArgument,
             ):
                 self.text_arguments[name] = value
             elif isinstance(
                 value,
-                vkquick.event_handling.reaction_argument.payload_arguments.base.PayloadArgument,
+                vkquick.event_handling.payload_arguments.base.PayloadArgument,
             ):
                 self.payload_arguments[name] = value
                 # TODO: TypeError in other method
@@ -204,7 +204,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             arguments_string = arguments_string.lstrip()
             if (
                 matched_value
-                is vkquick.event_handling.reaction_argument.text_arguments.base.UnmatchedArgument
+                is vkquick.event_handling.text_arguments.base.UnmatchedArgument
             ):
                 asyncio.create_task(
                     self._on_unsuccessful_cutting(
@@ -227,7 +227,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self,
         argument_name: str,
         argument_string: str,
-        text_argument: vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument,
+        text_argument: vkquick.event_handling.text_arguments.base.TextArgument,
         event: vkquick.events_generators.event.Event,
     ) -> None:
         argument_position = (

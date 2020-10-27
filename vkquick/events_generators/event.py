@@ -3,11 +3,11 @@ import json
 
 import pygments.lexers
 import pygments.formatters
-from pygments import highlight, lexers, formatters
+from pygments import highlight
 import pygments.formatters.terminal
 import pygments.token
 
-import vkquick.event_handling.reaction_argument.payload_arguments.base
+import vkquick.event_handling.payload_arguments.base
 import vkquick.utils
 
 

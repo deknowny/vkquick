@@ -1,19 +1,16 @@
 import dataclasses
-import re
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.text_arguments.base
+import vkquick.event_handling.text_arguments.base
 
 
 @dataclasses.dataclass
-class List(
-    vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument
-):
+class List(vkquick.event_handling.text_arguments.base.TextArgument):
     """
     Список
     """
 
-    element: vkquick.event_handling.reaction_argument.text_arguments.base.TextArgument
+    element: vkquick.event_handling.text_arguments.base.TextArgument
     min_length: int = 1
     max_length: ty.Optional[int] = None
 

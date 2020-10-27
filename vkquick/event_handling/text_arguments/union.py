@@ -1,7 +1,7 @@
 import warnings
 import typing as ty
 
-from vkquick.event_handling.reaction_argument.text_arguments import base
+from vkquick.event_handling.text_arguments import base
 import vkquick.utils
 
 

@@ -1,7 +1,6 @@
 import abc
 import typing as ty
 
-import vkquick.event_handling.reaction_argument.base
 import vkquick.events_generators.event
 import vkquick.event_handling.message
 
@@ -12,9 +11,7 @@ class UnmatchedArgument:
     """
 
 
-class TextArgument(
-    vkquick.event_handling.reaction_argument.base.ReactionArgument, abc.ABC
-):
+class TextArgument(abc.ABС):
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         """
