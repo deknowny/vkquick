@@ -1,9 +1,8 @@
 """
 Реализация дебаггера
 """
-import dataclasses
-import datetime
 import os
+import functools
 import typing as ty
 
 import huepy
@@ -12,7 +11,25 @@ import vkquick.event_handling.handling_info_scheme
 import vkquick.events_generators
 
 
-@dataclasses.dataclass
+Color = ty.Callable[[str], str]
+"""
+Обертка для подсветки текста
+"""
+
+
+true_grey = functools.partial(huepy.grey, key=90)
+"""
+Настоящий серый цвет
+"""
+
+
+def uncolored_text(text: str) -> str:
+    """
+    Текст оригинального цвета
+    """
+    return text
+
+
 class Debugger:
     """
     Дебаггер -- терминальный визуализатор команд,
@@ -23,57 +40,136 @@ class Debugger:
     вообще
     """
 
-    event: vkquick.events_generators.event.Event
-    """
-    Событие, которое было обработано
-    """
-    schemes: ty.List[
-        vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
-    ]
-    """
-    Набор отчетов об обработке, сформированных обработчиками/командами
-    """
+    event_handler_passed_color: Color = staticmethod(huepy.green)
+    event_handler_not_passed_color: Color = staticmethod(huepy.red)
+    event_handler_taken_time_color: Color = staticmethod(true_grey)
+    filter_name_color: Color = staticmethod(huepy.yellow)
+    filter_decision_color: Color = staticmethod(uncolored_text)
+    passed_argument_color: Color = staticmethod(huepy.cyan)
+    separator_color: Color = staticmethod(true_grey)
+    exception_header_color: Color = staticmethod(huepy.bad)
+    exception_header_reaction_name_color: Color = staticmethod(huepy.red)
+    event_header_separator_color: Color = staticmethod(true_grey)
+    reactions_separator_color: Color = staticmethod(true_grey)
+    exception_separator_color: Color = staticmethod(true_grey)
+
+    event_header_template: str = "-> {event_type}\n{separator}\n\n"
+    event_header_separator_symbol: str = "="
+    reactions_separator_symbol: str = "-"
+    exception_separator_symbol: str = "!"
+    handlers_separator: str = "\n{separator}\n\n"
+    exceptions_template: str = "\n{separator}\n\n{exceptions}"
+    exception_header_template: str = huepy.bad(
+        "Реакция `{reaction_name}` при вызове выбросила исключение:\n\n"
+    )
+    event_handler_header_template: str = "[{reaction_name}] {taken_time}\n"
+    event_handler_argument_taken_time_template: str = "({taken_time}s)"
+    event_handler_header_taken_time_digits_format_spec: str = ".6f"
+    event_handler_filters_decision_separator: str = "\n"
+    filter_info_template: str = "{filter_name}: {decision_description}"
+    event_handler_arguments_separator: str = ""
+    event_handler_arguments_template: str = "\n{arguments}"
+    event_handler_argument_template: str = "    > {name}: {value!s}"
+
+    def __init__(
+        self,
+        event: vkquick.events_generators.event.Event,
+        schemes: ty.List[
+            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+        ],
+    ) -> None:
+        """
+        * `event`: Событие, которое было обработано
+        * `schemes`: Набор отчетов об обработке, сформированных обработчиками/командами
+        """
+        self.event = event
+        self.schemes = schemes
 
     def render(self):
         """
         Основной метод визуализации, выстраивающий
         сообщение для отображения в терминале
         """
-        header = self._build_header()
-        body = self._build_body()
-        result_message = header + body
+        header = self.build_header()
+        body = self.build_body()
+        exception = self.build_exception()
+        result_message = header + body + exception
         return result_message
 
-    def _build_header(self) -> str:
+    def build_header(self) -> str:
         """
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
-        event_header = f"-> {self.event.type}\n"
-        separator = self._build_separator("=")
-        event_header += f"{separator}\n\n"
-        return event_header
+        header = self.event_header_template.format(
+            event_type=self.event.type,
+            separator=self.build_separator(
+                self.event_header_separator_symbol,
+                self.event_header_separator_color,
+            ),
+        )
+        return header
 
-    def _build_body(self) -> str:
+    def build_body(self) -> str:
         """
         Выстраивает тело сообщения: разделенная /внезапно/
         разделителями информация о каждом обработчике
         """
         handling_messages: ty.List[str] = []
         for scheme in self.schemes:
-            if scheme["is_correct_event_type"]:
-                handling_message = self._build_event_handler_message(scheme)
-                if scheme["are_filters_passed"]:
+            if scheme.is_correct_event_type:
+                handling_message = self.build_event_handler_message(scheme)
+                if scheme.all_filters_passed:
                     handling_messages.insert(0, handling_message)
                 else:
                     handling_messages.append(handling_message)
 
-        separator = self._build_separator("-")
-        separator = f"\n{separator}\n\n"
+        separator = self.build_separator(
+            self.reactions_separator_symbol, self.reactions_separator_color
+        )
+        separator = self.handlers_separator.format(separator=separator)
         body_message = separator.join(handling_messages)
         return body_message
 
-    def _build_event_handler_message(
+    def build_exception(self) -> str:
+        """
+        Выстраивает текст поднятых исключений
+        """
+        exceptions: ty.List[str] = []
+        for scheme in self.schemes:
+            if scheme.exception_text:
+                exc_header = self.build_exception_header(scheme)
+                exc_text = exc_header + scheme.exception_text
+                exceptions.append(exc_text)
+
+        exceptions: str = self.exception_separator_symbol.join(exceptions)
+        if exceptions:
+            separator = self.build_separator(
+                self.exception_separator_symbol,
+                self.exception_separator_color,
+            )
+            exceptions: str = self.exceptions_template.format(
+                separator=separator, exceptions=exceptions
+            )
+        return exceptions
+
+    def build_exception_header(
+        self,
+        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ):
+        """
+        Выстраивает заголовок для исключения
+        """
+        reaction_name = scheme.handler.reaction.__name__
+        reaction_name = self.exception_header_reaction_name_color(
+            reaction_name
+        )
+        text = self.exception_header_template.format(
+            reaction_name=reaction_name
+        )
+        return text
+
+    def build_event_handler_message(
         self,
         scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
     ) -> str:
@@ -84,61 +180,111 @@ class Debugger:
         Если реакция была вызвана с аргументами -- они также
         будут отображены
         """
-        if scheme["are_filters_passed"]:
-            header_color = huepy.green
+        header = self.build_event_handler_header(scheme)
+        filters_decision = self.build_event_handler_filters_decision(scheme)
+        arguments = self.build_event_handler_arguments(scheme)
+
+        return header + filters_decision + arguments
+
+    def build_event_handler_header(
+        self,
+        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ) -> str:
+        """
+        Собирает заголовок обработчика для сообщения
+        """
+        if scheme.all_filters_passed:
+            header_color = self.event_handler_passed_color
         else:
-            header_color = huepy.red
-        handler_name = scheme["handler"].reaction.__name__
-        handler_name = header_color(handler_name)
-        taken_time = scheme["taken_time"]
-        taken_time = f"({taken_time:.6f}s)"
-        taken_time = huepy.grey(taken_time, key=90)
-        header = f"[{handler_name}] {taken_time}\n"
+            header_color = self.event_handler_not_passed_color
+        reaction_name = scheme.handler.reaction.__name__
+        reaction_name = header_color(reaction_name)
+        taken_time = scheme.taken_time
+        taken_time = format(
+            taken_time,
+            self.event_handler_header_taken_time_digits_format_spec,
+        )
+        taken_time = self.event_handler_argument_taken_time_template.format(
+            taken_time=taken_time
+        )
+        taken_time = self.event_handler_taken_time_color(taken_time)
+        header = self.event_handler_header_template.format(
+            reaction_name=reaction_name, taken_time=taken_time
+        )
+        return header
 
+    def build_event_handler_filters_decision(
+        self,
+        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ) -> str:
+        """
+        Собирает решение фильтров для сообщения
+        """
         filters_gen = self._generate_filters_message(scheme)
-        filters_decisions: ty.List[str] = list(filters_gen)
-        filters_decisions: str = "\n".join(filters_decisions)
+        filters_decision: ty.List[str] = list(filters_gen)
+        filters_decision: str = self.event_handler_filters_decision_separator.join(
+            filters_decision
+        )
+        return filters_decision
 
+    def build_event_handler_arguments(
+        self,
+        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ) -> str:
+        """
+        Собирает аргументы для сообщения
+        """
         arguments_gen = self._generate_arguments_message(scheme)
         arguments: ty.List[str] = list(arguments_gen)
-        arguments: str = "".join(arguments)
+        arguments: str = self.event_handler_arguments_separator.join(
+            arguments
+        )
+        arguments: str = self.event_handler_arguments_template.format(
+            arguments=arguments
+        )
+        return arguments
 
-        return header + filters_decisions + arguments
-
-    @staticmethod
     def _generate_filters_message(
+        self,
         scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
     ) -> ty.Generator[str, None, None]:
         """
         Генерирует информацию по каждому фильтру обработчика
         """
-        for decision in scheme["filters_decision"]:
-            decision_description = decision[1]
+        for decision in scheme.filters_decision:
+            decision_description = self.filter_decision_color(decision[1])
             filter_name = decision[2]
-            filter_name = huepy.yellow(filter_name)
-            filter_info = f"{filter_name}: {decision_description}"
+            filter_name = self.filter_name_color(filter_name)
+            filter_info = self.filter_info_template.format(
+                filter_name=filter_name,
+                decision_description=decision_description,
+            )
             yield filter_info
 
-    @staticmethod
     def _generate_arguments_message(
+        self,
         scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
     ) -> ty.Generator[str, None, None]:
         """
         Генерирует информацию по каждому аргументу, переданного
         в реакцию
         """
-        for name, value in scheme["passed_arguments"].items():
-            name = huepy.cyan(name)
-            argument_info = f"\n    > {name}: {value!s}"
+        for name, value in scheme.passed_arguments.items():
+            name = self.passed_argument_color(name)
+            argument_info = self.event_handler_argument_template.format(
+                name=name, value=value
+            )
             yield argument_info
 
     @staticmethod
-    def _build_separator(sep_symbol: str) -> str:
+    def build_separator(
+        sep_symbol: str, color: Color = uncolored_text
+    ) -> str:
         """
         Выстраивает сепаратор, основываясь
         на длине терминального окна
         """
         size = os.get_terminal_size().columns
         separator = sep_symbol * size
-        separator = huepy.grey(separator, key=90)
+        separator = color(separator)
         return separator
