@@ -7,7 +7,7 @@ import vkquick.event_handling.text_arguments.text_values_base
 
 class Word(
     vkquick.event_handling.text_arguments.base.TextArgument,
-    vkquick.event_handling.reaction_argument.text_arguments.text_values_base.TextBase,
+    vkquick.event_handling.text_arguments.text_values_base.TextBase,
 ):
     """
     Слово, содержащее буквы, цифры и _
