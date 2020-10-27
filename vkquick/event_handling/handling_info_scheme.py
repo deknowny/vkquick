@@ -1,7 +1,10 @@
+import dataclasses
 import typing as ty
 
 
-class HandlingInfoScheme(ty.TypedDict):
+# pydantic?
+@dataclasses.dataclass
+class HandlingInfoScheme:
     """
     Схема отчета от `EventHandler` по обработке события
     """
@@ -16,12 +19,19 @@ class HandlingInfoScheme(ty.TypedDict):
     Корректен ли тип события
     """
 
-    are_filters_passed: bool
+    all_filters_passed: bool
     """
     Все ли фильтры пройдены
     """
 
-    filters_decision: ty.List[ty.Tuple[bool, str, str]]
+    taken_time: float
+    """
+    Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
+    """
+
+    filters_decision: ty.List[ty.Tuple[bool, str, str]] = dataclasses.field(
+        default_factory=list
+    )
     """
     Для каждого элемента списка:
     * Событие прошло/не прошло
@@ -29,7 +39,9 @@ class HandlingInfoScheme(ty.TypedDict):
     * Имя фильтра (`__name__` атрибут)
     """
 
-    passed_arguments: ty.Dict[str, ty.Any]
+    passed_arguments: ty.Dict[str, ty.Any] = dataclasses.field(
+        default_factory=dict
+    )
     """
     Словарь переданных аргументов в саму функцию обработки
     (под ключом имя аргумента, под значение само значение аргумента).
@@ -37,7 +49,7 @@ class HandlingInfoScheme(ty.TypedDict):
     фильтр не пройден список передается пустой
     """
 
-    taken_time: float
+    exception_text: str = ""
     """
-    Затраченное время на обработку события
+    Если реакция подняла исключение, то его текст отобразится
     """
