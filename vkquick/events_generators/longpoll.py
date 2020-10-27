@@ -90,7 +90,10 @@ class GroupLongPoll(LongPollBase):
             return []
         else:
             self._lp_settings.update(ts=response.ts)
-            updates = [vkquick.events_generators.event.Event(update()) for update in response.updates]
+            updates = [
+                vkquick.events_generators.event.Event(update())
+                for update in response.updates
+            ]
             return updates
 
     async def setup(self) -> None:
@@ -121,7 +124,9 @@ class UserLongPoll(LongPollBase):
 
         self.requests_session = None
         self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
-        self._server_path = self._params = self._lp_settings = self._server_netloc = None
+        self._server_path = (
+            self._params
+        ) = self._lp_settings = self._server_netloc = None
 
     def __aiter__(self):
         return self
@@ -134,7 +139,9 @@ class UserLongPoll(LongPollBase):
         )
         await self.requests_session.write(query.encode("UTF-8"))
         try:
-            body = await asyncio.wait_for(self.requests_session.fetch_body(), timeout=self.wait)
+            body = await asyncio.wait_for(
+                self.requests_session.fetch_body(), timeout=self.wait
+            )
         except asyncio.exceptions.TimeoutError:
             await self.setup()
             return []
@@ -156,7 +163,10 @@ class UserLongPoll(LongPollBase):
             return []
         else:
             self._lp_settings.update(ts=response.ts)
-            updates = [vkquick.events_generators.event.Event(update()) for update in response.updates]
+            updates = [
+                vkquick.events_generators.event.Event(update())
+                for update in response.updates
+            ]
             return updates
 
     async def setup(self) -> None:
@@ -165,7 +175,9 @@ class UserLongPoll(LongPollBase):
             lp_version=self.version
         )
         server_url = new_lp_settings().pop("server")
-        server = urllib.parse.urlparse(f"//{server_url}")  # // убирает домен из `path`
+        server = urllib.parse.urlparse(
+            f"//{server_url}"
+        )  # // убирает домен из `path`
         self._server_path = server.path
         self._server_netloc = server.netloc
         self._lp_settings = dict(
@@ -175,4 +187,6 @@ class UserLongPoll(LongPollBase):
             version=self.version,
             **new_lp_settings(),
         )
-        self.requests_session = vkquick.utils.RequestsSession(self._server_netloc)
+        self.requests_session = vkquick.utils.RequestsSession(
+            self._server_netloc
+        )
