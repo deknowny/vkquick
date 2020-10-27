@@ -1,4 +1,3 @@
-import dataclasses
 import typing as ty
 
 
@@ -7,19 +6,22 @@ import vkquick.events_generators.event
 import vkquick.utils
 
 
-@dataclasses.dataclass
 class Enable(vkquick.event_handling.filters.base.Filter):
 
-    enabled: bool = True
+    passed_decision = "Обработка событий включена"
+    not_passed_decision = "Обработка событий отключена"
 
-    async def make_decision(
+    def __init__(self, enabled: bool = True):
+        self.enabled = enabled
+
+    def make_decision(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Tuple[bool, str]:
         """
-        Определяет, подходит ли событие по критериями фильтра
+        Определяет, подходит ли событие по критериям фильтра
         """
         if self.enabled:
-            decision = "Обработка событий включена"
+            decision = self.passed_decision
         else:
-            decision = "Обработка событий отключена"
+            decision = self.not_passed_decision
         return self.enabled, decision
