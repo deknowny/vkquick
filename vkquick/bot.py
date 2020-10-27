@@ -37,15 +37,16 @@ class Bot:
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
         debugger: ty.Optional[ty.Type[vkquick.debugger.Debugger]] = None,
-        observing_path: str = ".",
     ):
         self.signal_handlers = signal_handlers or []
         self.event_handlers = event_handlers or []
         self.debug_filter = debug_filter or self.default_debug_filter
-        self.observing_path = observing_path
         self.debugger = debugger or vkquick.debugger.Debugger
 
         self.release = os.getenv("VKQUICK_RELEASE")
+        if self.release is not None and self.release.isdigit():
+            self.release = int(self.release)
+        self.release = bool(self.release)
 
         # Статистика
         self._start_time = time.time()
@@ -181,8 +182,8 @@ class Bot:
         """
         self._handled_events_count += 1
         for info in handling_info:
-            if info["are_filters_passed"] and isinstance(
-                info["handler"], vkquick.event_handling.command.Command
+            if info.all_filters_passed and isinstance(
+                info.handler, vkquick.event_handling.command.Command
             ):
                 self._command_calls_count += 1
 
@@ -194,4 +195,3 @@ class Bot:
         Фильтр на событие для дебаггера по умолчанию
         """
         return event.type in ("message_new", "message_edit", 4)
-
