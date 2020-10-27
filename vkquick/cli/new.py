@@ -220,7 +220,9 @@ class New(cleo.Command):
             user = vq.User(user[0])
             return None, user
 
-    def _get_info_by_token(self) -> ty.Tuple[ty.Optional[vq.AttrDict], vq.User]:
+    def _get_info_by_token(
+        self,
+    ) -> ty.Tuple[ty.Optional[vq.AttrDict], vq.User]:
         if not self.option("token"):
             self.token = self.ask("Enter an API token:")
         else:
@@ -238,7 +240,9 @@ class New(cleo.Command):
         else:
             return self._fetch_user()
 
-    def _make_files(self, current_group: ty.Optional[vq.AttrDict], owner: vq.User):
+    def _make_files(
+        self, current_group: ty.Optional[vq.AttrDict], owner: vq.User
+    ):
         root_path = pathlib.Path()
 
         # Main bot's directory
@@ -281,8 +285,12 @@ class New(cleo.Command):
         mainpy = src / "__main__.py"
         mainpy.touch()
         mainpy.write_text(
-            MAINPY.format(lp_type="Group" if self.api.token_owner == vq.TokenOwner.GROUP else "User"),
-            encoding="utf-8"
+            MAINPY.format(
+                lp_type="Group"
+                if self.api.token_owner == vq.TokenOwner.GROUP
+                else "User"
+            ),
+            encoding="utf-8",
         )
 
         default = src / "default"
