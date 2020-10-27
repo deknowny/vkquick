@@ -30,6 +30,7 @@ class Event(vkquick.utils.AttrDict):
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам
     """
+
     def __new__(cls, mapping):
         if isinstance(mapping, list):
             elems = [vkquick.utils.AttrDict(i) for i in mapping]
@@ -50,17 +51,21 @@ class Event(vkquick.utils.AttrDict):
         """
         if isinstance(self(), list):
             # User LongPoll. Только для нового сообщения
-            return vkquick.utils.AttrDict({
-                "event_id": self[0],
-                "msg_id": self[1],
-                "flags": self[2],
-                "peer_id": self[3],
-                "timestamp": self[4],
-                "text": self[5],
-                "from_id": int(self[6]["from"]) if "from" in self[6] else self[3],
-                "attachments": self[7],
-                "random_id": self[8]
-            })
+            return vkquick.utils.AttrDict(
+                {
+                    "event_id": self[0],
+                    "msg_id": self[1],
+                    "flags": self[2],
+                    "peer_id": self[3],
+                    "timestamp": self[4],
+                    "text": self[5],
+                    "from_id": int(self[6]["from"])
+                    if "from" in self[6]
+                    else self[3],
+                    "attachments": self[7],
+                    "random_id": self[8],
+                }
+            )
         if "message" in self.object:
             return self.object.message
         elif isinstance(self(), dict):
