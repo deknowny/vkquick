@@ -40,3 +40,19 @@ class TestVkApiError:
         del scheme["request_params"]
         del scheme["error_code"]
         assert exception.extra_fileds == scheme
+
+    def test_str(self):
+        inst = vq.VkApiError.destruct_response(
+            {
+                "error": {
+                    "error_code": 5,
+                    "error_msg": "User authorization failed: invalid access_token.",
+                    "request_params": [
+                        {"key": "oauth", "value": "1"},
+                        {"key": "v", "value": "5.123"},
+                        {"key": "method", "value": "users.get"},
+                    ],
+                }
+            }
+        )
+        assert str(inst) == inst.pretty_exception_text
