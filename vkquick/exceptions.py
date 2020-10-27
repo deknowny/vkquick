@@ -42,8 +42,7 @@ class VkApiError(Exception):
         description = response["error"].pop("error_msg")
         request_params = response["error"].pop("request_params")
         request_params = {
-            item["key"]: item["value"]
-            for item in request_params
+            item["key"]: item["value"] for item in request_params
         }
 
         pretty_exception_text = (
@@ -70,7 +69,7 @@ class VkApiError(Exception):
             description=description,
             status_code=status_code,
             request_params=request_params,
-            extra_fileds=response["error"]
+            extra_fileds=response["error"],
         )
 
     def __str__(self):
