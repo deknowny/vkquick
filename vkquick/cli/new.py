@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import pathlib
 import os
@@ -63,9 +62,9 @@ import src.default.readme
 
 
 def main():
-    vq.current.objects.api = vq.API(**src.config.api_settings)
-    vq.current.objects.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
-    vq.current.objects.bot = vq.Bot(
+    vq.curs.api = vq.API(**src.config.api_settings)
+    vq.curs.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
+    vq.curs.bot = vq.Bot(
         event_handlers=[
             src.default.help_.help_,
             src.default.readme.readme
@@ -74,7 +73,7 @@ def main():
         **src.config.bot_settings
     )
     
-    vq.current.objects.bot.run()
+    vq.curs.bot.run()
     
 
 if __name__ == "__main__":
@@ -88,7 +87,7 @@ import vkquick as vq
 
 @vq.Command(
     prefixes=["/"],
-    names=["help", "по"]
+    names=["help", "помощь"]
 )
 async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     \"""
@@ -233,7 +232,7 @@ class New(cleo.Command):
             self.token = os.getenv(self.token[1:])
 
         self.api = vq.API(self.token)
-        vq.current.objects.api = self.api
+        vq.current.curs.api = self.api
 
         if self.api.token_owner == vq.TokenOwner.GROUP:
             return self._fetch_group_and_user()
