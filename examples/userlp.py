@@ -6,7 +6,7 @@ import vkquick as vq
 
 async def main():
     api = vq.API(os.getenv("VKDEVUSERTOKEN"))
-    vq.current.objects.api = api
+    vq.current.curs.api = api
     lp = vq.UserLongPoll()
     await lp.setup()
     async for events in lp:

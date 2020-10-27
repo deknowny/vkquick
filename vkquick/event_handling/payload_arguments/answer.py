@@ -63,11 +63,14 @@ class Answer:
                 self.params.update({name: value})
 
     async def send(
-        self, event: vkquick.events_generators.event.Event
+        self,
+        event: ty.Optional[vkquick.events_generators.event.Event] = None,
+        peer_id: ty.Optional[int] = None,
     ) -> vkquick.utils.AttrDict:
+        peer_id = peer_id or event.get_message_object().peer_id
         if not (
             {"user_id", "domain", "chat_id", "user_ids", "peer_ids"}
             & set(self.params)
         ):
-            self.params["peer_id"] = event.get_message_object().peer_id
+            self.params["peer_id"] = peer_id
         return await self.api.messages.send(**self.params)

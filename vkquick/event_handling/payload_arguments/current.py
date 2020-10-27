@@ -12,4 +12,4 @@ class Current(vkquick.event_handling.payload_arguments.base.PayloadArgument):
     def init_value(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Any:
-        return vkquick.current.objects[self.current_object_name]
+        return vkquick.current.curs[self.current_object_name]

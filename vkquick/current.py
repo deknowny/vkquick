@@ -8,7 +8,7 @@ import typing as ty
 import vkquick.utils
 
 
-objects: vkquick.utils.AttrDict = vkquick.utils.AttrDict({})
+curs = vkquick.utils.AttrDict({})
 
 
 def fetch(*values_name: str) -> ty.Any:
@@ -23,8 +23,8 @@ def fetch(*values_name: str) -> ty.Any:
     @property
     def get_current_object(_) -> ty.Any:
         for value_name in values_name:
-            if value_name in objects:
-                return objects[value_name]
+            if value_name in curs:
+                return curs[value_name]
         else:
             raise NameError(f"No any object with names `{values_name}`")
 
