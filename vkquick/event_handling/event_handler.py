@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import time
+import traceback
 import typing as ty
 
 import vkquick.events_generators.event
@@ -51,9 +52,7 @@ class EventHandler:
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
                 handler=self,
                 is_correct_event_type=False,
-                are_filters_passed=False,
-                filters_decision=[],
-                passed_arguments={},
+                all_filters_passed=False,
                 taken_time=end_stamp - start_stamp,
             )
 
@@ -63,23 +62,29 @@ class EventHandler:
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
                 handler=self,
                 is_correct_event_type=True,
-                are_filters_passed=False,
+                all_filters_passed=False,
                 filters_decision=filters_decision,
-                passed_arguments={},
                 taken_time=end_stamp - start_stamp,
             )
 
         reaction_arguments = await self.init_reaction_arguments(event)
-        asyncio.create_task(self.call_reaction(event, reaction_arguments))
-        end_stamp = time.time()
-        return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
-            handler=self,
-            is_correct_event_type=True,
-            are_filters_passed=True,
-            filters_decision=filters_decision,
-            passed_arguments=reaction_arguments,
-            taken_time=end_stamp - start_stamp,
-        )
+        try:
+            await self.call_reaction(event, reaction_arguments)
+        except Exception:
+            exception = traceback.format_exc()
+        else:
+            exception = ""
+        finally:
+            end_stamp = time.time()
+            return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
+                handler=self,
+                is_correct_event_type=True,
+                all_filters_passed=True,
+                filters_decision=filters_decision,
+                passed_arguments=reaction_arguments,
+                taken_time=end_stamp - start_stamp,
+                exception_text=exception,  # NOTE: Что делать с `BaseException` кейсом?
+            )
 
     def is_correct_event_type(
         self, event: vkquick.events_generators.event.Event
