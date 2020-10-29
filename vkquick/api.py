@@ -288,6 +288,10 @@ class API(vkquick.base.synchronizable.Synchronizable):
             if isinstance(value, (list, set, tuple)):
                 params[key] = ",".join(map(str, value))
 
+            # For aiohttp
+            elif isinstance(value, bool):
+                params[key] = int(value)
+
     def _prepare_response_body(
         self, body: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
