@@ -2,11 +2,11 @@ from __future__ import annotations
 import re
 import typing as ty
 
-import vkquick.wrappers.base
+import vkquick.base.wrapper
 import vkquick.utils
 
 
-class User(vkquick.wrappers.base.Wrapper):
+class User(vkquick.base.wrapper.Wrapper):
 
     api = vkquick.current.fetch("api_user_wrapper", "api")
     mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")

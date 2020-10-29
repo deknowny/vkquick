@@ -15,7 +15,7 @@ import vkquick.events_generators.event
 import vkquick.event_handling.handling_info_scheme
 import vkquick.exceptions
 import vkquick.utils
-import vkquick.debugger
+import vkquick.debuggers
 
 
 class Bot:
@@ -36,12 +36,14 @@ class Bot:
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
-        debugger: ty.Optional[ty.Type[vkquick.debugger.Debugger]] = None,
+        debugger: ty.Optional[
+            ty.Type[vkquick.debuggers.Debugger]
+        ] = None,
     ):
         self.signal_handlers = signal_handlers or []
         self.event_handlers = event_handlers or []
         self.debug_filter = debug_filter or self.default_debug_filter
-        self.debugger = debugger or vkquick.debugger.Debugger
+        self.debugger = debugger or vkquick.debuggers.ColoredDebugger
 
         self.release = os.getenv("VKQUICK_RELEASE")
         if self.release is not None and self.release.isdigit():

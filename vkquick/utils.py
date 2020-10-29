@@ -2,14 +2,12 @@
 Тривиальные инструменты для некоторых кейсов
 """
 from __future__ import annotations
-import abc
 import asyncio
 import random
 import ssl
-import json
-import functools
 import os
 import typing as ty
+
 
 try:
     import orjson
@@ -204,64 +202,6 @@ class RequestsSession:
             self.writer.close()
 
 
-class JSONParserBase(abc.ABC):
-    """
-    Надстройка над сереализацией/десериализацией
-    JSON. Сделано для возможности использовать
-    `orjson` как опциональную зависимость
-    """
-
-    @staticmethod
-    @abc.abstractmethod
-    def dumps(data: ty.Dict[str, ty.Any]) -> str:
-        """
-        Сереалиация объекта `data`
-        """
-
-    @staticmethod
-    @abc.abstractmethod
-    def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
-        """
-        Десериализует JSON из `string`
-        """
-
-    @staticmethod
-    def choose_parser() -> ty.Type[JSONParserBase]:
-        """
-        Возвращает `orjson` парсер, если
-        `orjson` библиотека установлена.
-        По умолчанию парсер из стандартной библиотеки `json`
-        """
-        if orjson is None:
-            return BuiltinJSONParser
-        return OrjsonJSONParser
-
-
-class BuiltinJSONParser(JSONParserBase):
-    """
-    JSON парсер, использующий стандартную библиотеку
-    """
-
-    dumps = functools.partial(
-        json.dumps, ensure_ascii=False, separators=(",", ":")
-    )
-    loads = json.loads
-
-
-class OrjsonJSONParser(JSONParserBase):
-    """
-    JSON парсер, использующий `orjson`
-    """
-
-    @staticmethod
-    def dumps(data: ty.Dict[str, ty.Any]) -> str:
-        return str(orjson.dumps(data))
-
-    @staticmethod
-    def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
-        return orjson.loads(string)
-
-
 def clear_console():
     """
     Очищает окно терминала
@@ -270,46 +210,3 @@ def clear_console():
         os.system("cls")
     else:
         os.system("clear")
-
-
-class Synchronizable:
-    """
-    Протокол для синхронизации объектов
-
-    Некоторое поведение объектов может быть
-    асинхронным (например, вызов API методов),
-    но использовать те же возможности, когда весь код строится
-    синхронно и конкурировать нечему, не нужно.
-    Поэтому этот класс определяет общее поведение для
-    объектов, чье поведение должно стать синхронным.
-    """
-
-    __synchronized = False  # По умолчанию асинхронно
-
-    @property
-    def synchronized(self):
-        """
-        Состояние режима объекта: асинхронный/синхронный
-        """
-        return self.__synchronized
-
-    def synchronize(self):
-        """
-        Метод, меняющий поведение на синхронное.
-        Если вы меняете поведение разово, используйте
-        вместе с менеджером контекста:
-
-            with obj.synchronize():
-                obj.some_method_that_was_async_but_now_sync()
-        """
-        self.__synchronized = True
-        return self
-
-    def __enter__(self):
-        """
-        Менеджер контекста гарантирует, что
-        поведение объекта обратно поменяется на асинхронное
-        """
-
-    def __exit__(self, *args):
-        self.__synchronized = False

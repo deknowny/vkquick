@@ -3,9 +3,10 @@ import typing as ty
 import vkquick.utils
 import vkquick.events_generators.event
 import vkquick.current
+import vkquick.event_handling.payload_arguments.base
 
 
-class Answer:
+class Answer(vkquick.event_handling.payload_arguments.base.PayloadArgument):
     """
     Используйте в своей реакции,
     чтобы отправить сообщение в диалог
@@ -20,9 +21,12 @@ class Answer:
     `random_id=random.randint(-2**31, +2**31)`
     """
 
-    api = vkquick.current.fetch("api_message", "api")
+    api = vkquick.current.fetch("api_answer", "api")
 
-    def __init__(
+    def __init__(self):
+        self.params = {}
+
+    def __call__(
         self,
         message: ty.Optional[str] = None,
         /,
@@ -55,7 +59,6 @@ class Answer:
         if random_id is None:
             random_id = vkquick.utils.random_id()
 
-        self.params = {}
         for name, value in locals().items():
             if name == "kwargs":
                 self.params.update(value["kwargs"])
@@ -69,8 +72,18 @@ class Answer:
     ) -> vkquick.utils.AttrDict:
         peer_id = peer_id or event.get_message_object().peer_id
         if not (
-            {"user_id", "domain", "chat_id", "user_ids", "peer_ids"}
+            {
+                "user_id",
+                "domain",
+                "chat_id",
+                "user_ids",
+                "peer_ids",
+                "peer_id",
+            }
             & set(self.params)
         ):
             self.params["peer_id"] = peer_id
         return await self.api.messages.send(**self.params)
+
+    def init_value(self, event: vkquick.events_generators.event.Event):
+        self.params["peer_id"] = event.get_message_object().peer_id

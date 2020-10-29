@@ -8,9 +8,13 @@ import urllib.parse
 import typing as ty
 
 import vkquick.api
+import vkquick.base.json_parser
+import vkquick.json_parsers
 import vkquick.current
 import vkquick.events_generators.event
 import vkquick.utils
+import vkquick.clients
+
 
 
 class LongPollBase(abc.ABC):
@@ -64,9 +68,7 @@ class GroupLongPoll(LongPollBase):
             )
         self.group_id = group_id
         self.wait = wait
-        self.requests_session = vkquick.utils.RequestsSession("lp.vk.com")
-        self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
-
+        self.session = None
         self._server_path = self._params = self._lp_settings = None
 
     def __aiter__(self):
@@ -75,15 +77,10 @@ class GroupLongPoll(LongPollBase):
     async def __anext__(
         self,
     ) -> ty.List[vkquick.events_generators.event.Event]:
-        query_string = urllib.parse.urlencode(self._lp_settings)
-        query = (
-            f"GET {self._server_path}?{query_string} HTTP/1.1\n"
-            "Host: lp.vk.com\n\n"
+        response = await self.session.send_get_request(
+            "", self._lp_settings
         )
-        await self.requests_session.write(query.encode("UTF-8"))
-        body = await self.requests_session.fetch_body()
-        body = self.json_parser.loads(body)
-        response = vkquick.utils.AttrDict(body)
+        response = vkquick.utils.AttrDict(response)
 
         if "failed" in response:
             await self._resolve_faileds(response)
@@ -101,10 +98,11 @@ class GroupLongPoll(LongPollBase):
             group_id=self.group_id
         )
         server_url = new_lp_settings().pop("server")
-        server = urllib.parse.urlparse(server_url)
-        self._server_path = server.path
         self._lp_settings = dict(
             act="a_check", wait=self.wait, **new_lp_settings.mapping_
+        )
+        self.session = vkquick.clients.AIOHTTPClient(
+            server_url, vkquick.json_parsers.BuiltinJSONParser
         )
 
 
@@ -123,7 +121,9 @@ class UserLongPoll(LongPollBase):
         self.mode = mode
 
         self.requests_session = None
-        self.json_parser = vkquick.utils.JSONParserBase.choose_parser()
+        self.json_parser = (
+            vkquick.base.json_parser.JSONParserBase.choose_parser()
+        )
         self._server_path = (
             self._params
         ) = self._lp_settings = self._server_netloc = None

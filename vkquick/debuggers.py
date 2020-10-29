@@ -7,13 +7,14 @@ import typing as ty
 
 import huepy
 
+import vkquick.base.debugger
 import vkquick.event_handling.handling_info_scheme
 import vkquick.events_generators
 
 
 Color = ty.Callable[[str], str]
 """
-Обертка для подсветки текста
+Тайпинг обертки для подсветки текста
 """
 
 
@@ -30,15 +31,7 @@ def uncolored_text(text: str) -> str:
     return text
 
 
-class Debugger:
-    """
-    Дебаггер -- терминальный визуализатор команд,
-    наглядно показывающий, что произошло во время
-    обработки события: подходит ли его тип, каково
-    решение фильтров самого обработчика, какие
-    аргументы были переданы в реакцию и была ли реакция вызвана
-    вообще
-    """
+class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     event_handler_passed_color: Color = staticmethod(huepy.green)
     event_handler_not_passed_color: Color = staticmethod(huepy.red)
@@ -69,21 +62,7 @@ class Debugger:
     filter_info_template: str = "{filter_name}: {decision_description}"
     event_handler_arguments_separator: str = ""
     event_handler_arguments_template: str = "\n{arguments}"
-    event_handler_argument_template: str = "    > {name}: {value!s}"
-
-    def __init__(
-        self,
-        event: vkquick.events_generators.event.Event,
-        schemes: ty.List[
-            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
-        ],
-    ) -> None:
-        """
-        * `event`: Событие, которое было обработано
-        * `schemes`: Набор отчетов об обработке, сформированных обработчиками/командами
-        """
-        self.event = event
-        self.schemes = schemes
+    event_handler_argument_template: str = "    > {name}: {value!s}\n"
 
     def render(self):
         """
@@ -288,3 +267,22 @@ class Debugger:
         separator = sep_symbol * size
         separator = color(separator)
         return separator
+
+
+class UncoloredDebugger(vkquick.base.debugger.Debugger):
+    """
+    Дебагер без цвета
+    """
+
+    event_handler_passed_color: Color = staticmethod(uncolored_text)
+    event_handler_not_passed_color: Color = staticmethod(uncolored_text)
+    event_handler_taken_time_color: Color = staticmethod(uncolored_text)
+    filter_name_color: Color = staticmethod(uncolored_text)
+    filter_decision_color: Color = staticmethod(uncolored_text)
+    passed_argument_color: Color = staticmethod(uncolored_text)
+    separator_color: Color = staticmethod(uncolored_text)
+    exception_header_color: Color = staticmethod(uncolored_text)
+    exception_header_reaction_name_color: Color = staticmethod(uncolored_text)
+    event_header_separator_color: Color = staticmethod(uncolored_text)
+    reactions_separator_color: Color = staticmethod(uncolored_text)
+    exception_separator_color: Color = staticmethod(uncolored_text)

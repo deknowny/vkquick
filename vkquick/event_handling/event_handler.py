@@ -31,7 +31,7 @@ class EventHandler:
         self, reaction: ty.Callable[..., ty.Union[ty.Awaitable, None]]
     ) -> EventHandler:
         self.reaction = reaction
-        self.reaction_arguments = self._convert_reaction_arguments(reaction)
+        self.reaction_arguments = self._convert_reaction_arguments()
         return self
 
     async def handle_event(
@@ -135,14 +135,13 @@ class EventHandler:
                 )
         return reaction_arguments
 
-    @staticmethod
-    def _convert_reaction_arguments(reaction) -> ty.Dict[str, ty.Any]:
+    def _convert_reaction_arguments(self) -> ty.Dict[str, ty.Any]:
         """
         Если тайпинг аргумента не инстанс,
         а должен быть (поле `always_be_instance`),
         инстанс создастся автоматически
         """
-        reaction_parameters = inspect.signature(reaction).parameters
+        reaction_parameters = inspect.signature(self.reaction).parameters
         reaction_arguments = {}
         for name, value in reaction_parameters.items():
             if inspect.isclass(value.annotation):

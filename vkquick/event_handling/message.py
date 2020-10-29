@@ -59,7 +59,7 @@ class Message:
         for name, value in locals().items():
             if name == "kwargs":
                 self.params.update(value)
-            if name != "self" and value is not None:
+            elif name != "self" and value is not None:
                 self.params.update({name: value})
 
     async def send(

@@ -18,14 +18,15 @@ import asyncio
 import dataclasses
 import enum
 import re
-import ssl
 import time
-import urllib.parse
-import urllib.request
 import typing as ty
 
+import vkquick.base.json_parser
+import vkquick.base.synchronizable
 import vkquick.exceptions
 import vkquick.utils
+import vkquick.clients
+import vkquick.base.client
 
 
 class TokenOwner(str, enum.Enum):
@@ -39,7 +40,7 @@ class TokenOwner(str, enum.Enum):
 
 
 @dataclasses.dataclass
-class API(vkquick.utils.Synchronizable):
+class API(vkquick.base.synchronizable.Synchronizable):
     """
     Обертка для API запросов
 
@@ -148,11 +149,6 @@ class API(vkquick.utils.Synchronizable):
     тогда в вызов подставятся поля из этого аргумента 
     """
 
-    host: str = "api.vk.com"
-    """
-    URL отправки API запросов
-    """
-
     response_factory: ty.Callable[
         [ty.Union[dict, list, str, int]], ty.Any
     ] = vkquick.utils.AttrDict
@@ -161,9 +157,9 @@ class API(vkquick.utils.Synchronizable):
     чтобы иметь возможность получать поля ответа через точку)
     """
 
-    json_parser: vkquick.utils.JSONParserBase = dataclasses.field(
-        default_factory=vkquick.utils.JSONParserBase.choose_parser
-    )
+    json_parser: ty.Optional[
+        ty.Type[vkquick.base.json_parser.JSONParser]
+    ] = None
     """
     Парсер для JSON, приходящего от ответа вк
     """
@@ -175,13 +171,35 @@ class API(vkquick.utils.Synchronizable):
     для определения задержки между запросами
     """
 
+    async_http_session: ty.Optional[
+        vkquick.base.client.AsyncHTTPClient
+    ] = None
+
+    sync_http_session: ty.Optional[vkquick.base.client.SyncHTTPClient] = None
+
     def __post_init__(self) -> None:
+        self.json_parser = (
+            self.json_parser or vkquick.json_parsers.BuiltinJSONParser
+        )
+        self.async_http_session = (
+            self.async_http_session
+            or vkquick.clients.AIOHTTPClient(
+                url="https://api.vk.com/method/",
+                json_parser=self.json_parser,
+            )
+        )
+        self.sync_http_session = (
+            self.sync_http_session
+            or vkquick.clients.RequestsHTTPClient(
+                url="https://api.vk.com/method/",
+                json_parser=self.json_parser,
+            )
+        )
         self._method_name = ""
         self._last_request_time = 0
         self._delay = 0
         self.token_owner = self.token_owner or self._define_token_owner()
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
-        self.requests_session = vkquick.utils.RequestsSession(host=self.host)
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -248,10 +266,9 @@ class API(vkquick.utils.Synchronizable):
         в зависимости от того значения синхронизации
         """
         self._convert_collections_params(request_params)
-        data = urllib.parse.urlencode(request_params)
         if self.synchronized:
-            return self._make_sync_api_request(method_name, data)
-        return self._make_async_api_request(method_name, data)
+            return self._make_sync_api_request(method_name, request_params)
+        return self._make_async_api_request(method_name, request_params)
 
     @staticmethod
     def _convert_collections_params(params: ty.Dict[str, ty.Any], /) -> None:
@@ -272,19 +289,18 @@ class API(vkquick.utils.Synchronizable):
                 params[key] = ",".join(map(str, value))
 
     def _prepare_response_body(
-        self, body: bytes
+        self, body: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Подготавливает ответ API в надлежащий вид:
         парсит JSON, проверяет на наличие ошибок
         и оборачивает в `self.response_factory`
         """
-        body = self.json_parser.loads(body)
         self._check_errors(body)
         return self.response_factory(body["response"])
 
     async def _make_async_api_request(
-        self, method_name: str, data: str
+        self, method_name: str, data: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос асинхронно с именем API метода из
@@ -292,16 +308,13 @@ class API(vkquick.utils.Synchronizable):
         в query string
         """
         await asyncio.sleep(self._get_waiting_time())
-        query = (
-            f"GET /method/{method_name}?{data} HTTP/1.1\n"
-            f"Host: {self.host}\n\n"
+        response = await self.async_http_session.send_get_request(
+            path=method_name, params=data
         )
-        await self.requests_session.write(query.encode("UTF-8"))
-        body = await self.requests_session.fetch_body()
-        return self._prepare_response_body(body)
+        return self._prepare_response_body(response)
 
     def _make_sync_api_request(
-        self, method_name: str, data: str
+        self, method_name: str, data: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос синхронно с именем API метода из
@@ -309,12 +322,10 @@ class API(vkquick.utils.Synchronizable):
         в query string
         """
         time.sleep(self._get_waiting_time())
-        resp = urllib.request.urlopen(
-            f"https://{self.host}/method/{method_name}?{data}",
-            context=ssl.SSLContext(),
+        response = self.sync_http_session.send_get_request(
+            path=method_name, params=data
         )
-        body = resp.read()
-        return self._prepare_response_body(body)
+        return self._prepare_response_body(response)
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
         """
@@ -378,3 +389,6 @@ class API(vkquick.utils.Synchronizable):
         else:
             self._last_request_time = now
             return 0
+
+    async def close_session(self):
+        await self.async_http_session.close()
