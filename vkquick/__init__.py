@@ -11,6 +11,7 @@ from .current import fetch, curs
 from .api import API, TokenOwner
 from .bot import Bot
 from .exceptions import VkApiError
+from .utils import AttrDict, SafeDict, peer, random_id, clear_console, sync_async_run
 
 from .json_parsers import BuiltinJSONParser
 
@@ -42,5 +43,7 @@ from .event_handling.payload_arguments.answer import Answer
 
 from .event_handling.filters.base import Filter
 from .event_handling.filters.enable import Enable
+
+from .wrappers.user import User
 
 __version__ = "1.0.0a1"
