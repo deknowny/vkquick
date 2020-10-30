@@ -36,9 +36,7 @@ class Bot:
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
-        debugger: ty.Optional[
-            ty.Type[vkquick.debuggers.Debugger]
-        ] = None,
+        debugger: ty.Optional[ty.Type[vkquick.debuggers.Debugger]] = None,
     ):
         self.signal_handlers = signal_handlers or []
         self.event_handlers = event_handlers or []

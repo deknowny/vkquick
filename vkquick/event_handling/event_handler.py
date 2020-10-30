@@ -5,7 +5,7 @@ import traceback
 import typing as ty
 
 import vkquick.events_generators.event
-import vkquick.event_handling.payload_arguments.base
+import vkquick.base.payload_argument
 import vkquick.event_handling.filters.base
 import vkquick.utils
 import vkquick.event_handling.handling_info_scheme
@@ -127,8 +127,7 @@ class EventHandler:
         reaction_arguments = {}
         for name, value in self.reaction_arguments.items():
             if isinstance(
-                value,
-                vkquick.event_handling.payload_arguments.base.PayloadArgument,
+                value, vkquick.base.payload_argument.PayloadArgument,
             ):
                 reaction_arguments[name] = await vkquick.utils.sync_async_run(
                     value.init_value(event)

@@ -1,10 +1,10 @@
 import re
 import typing as ty
 
-from vkquick.event_handling.text_arguments import base
+from vkquick.base import text_argument
 
 
-class Bool(base.TextArgument):
+class Bool(text_argument.TextArgument):
     """
     Later
     """
@@ -60,17 +60,17 @@ class Bool(base.TextArgument):
             self.true_regex, arguments_string
         )
 
-        if value is not base.UnmatchedArgument:
+        if value is not text_argument.UnmatchedArgument:
             return True, parsed_string
 
         value, parsed_string = self.cut_part_lite(
             self.false_regex, arguments_string
         )
 
-        if value is not base.UnmatchedArgument:
+        if value is not text_argument.UnmatchedArgument:
             return False, parsed_string
 
-        return base.UnmatchedArgument, parsed_string
+        return text_argument.UnmatchedArgument, parsed_string
 
     def usage_description(self):
         return "Todo"  # TODO

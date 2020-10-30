@@ -16,7 +16,6 @@ import vkquick.utils
 import vkquick.clients
 
 
-
 class LongPollBase(abc.ABC):
     @abc.abstractmethod
     async def setup(self) -> None:
@@ -77,9 +76,7 @@ class GroupLongPoll(LongPollBase):
     async def __anext__(
         self,
     ) -> ty.List[vkquick.events_generators.event.Event]:
-        response = await self.session.send_get_request(
-            "", self._lp_settings
-        )
+        response = await self.session.send_get_request("", self._lp_settings)
         response = vkquick.utils.AttrDict(response)
 
         if "failed" in response:
@@ -94,8 +91,14 @@ class GroupLongPoll(LongPollBase):
             return updates
 
     async def setup(self) -> None:
+        if self.group_id is None:
+            groups = await self.api.groups.get()
+            group = groups[0]
+            group_id = group.id
+        else:
+            group_id = self.group_id
         new_lp_settings = await self.api.groups.getLongPollServer(
-            group_id=self.group_id
+            group_id=group_id
         )
         server_url = new_lp_settings().pop("server")
         self._lp_settings = dict(

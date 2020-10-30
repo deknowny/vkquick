@@ -32,8 +32,11 @@ class AIOHTTPClient(vkquick.base.client.AsyncHTTPClient):
                 connector=self.connector,
                 skip_auto_headers={"User-Agent"},
                 raise_for_status=True,
-        )
-        async with self.session.get(f"{self.url}{path}", params=params) as response:
+                json_serialize=self.json_parser.dumps,
+            )
+        async with self.session.get(
+            f"{self.url}{path}", params=params
+        ) as response:
             json_response = await response.json(loads=self.json_parser.loads)
             return json_response
 

@@ -2,7 +2,10 @@ import abc
 import typing as ty
 
 import vkquick.events_generators.event
-import vkquick.event_handling.message
+import vkquick.event_handling.payload_arguments.message
+import vkquick.current
+import vkquick.wrappers.user
+import vkquick.api
 
 
 class UnmatchedArgument:
@@ -12,6 +15,9 @@ class UnmatchedArgument:
 
 
 class TextArgument(abc.ABC):
+
+    api: vkquick.api.API = vkquick.current.fetch("api_invalid_argument", "api")
+
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         """
@@ -46,7 +52,7 @@ class TextArgument(abc.ABC):
         argument_position: int,
         argument_string: str,
         event: vkquick.events_generators.event.Event,
-    ) -> str:
+    ) -> vkquick.event_handling.payload_arguments.message.Message:
         """
         Дефолтный текст для некорректных аргументов
         """
@@ -60,15 +66,19 @@ class TextArgument(abc.ABC):
         if extra_info:
             extra_info = f"💡 {extra_info}"
 
+        with self.api.synchronize():
+            user = self.api.users.get(user_ids=event.get_message_object().from_id)
+            user = vkquick.wrappers.user.User(user[0])
+            mention = user.mention("{fn}")
         response = (
-            f"💥 Во время обработки команды `[id0|{event.get_message_object().text}]` "
-            "возникли технические шоколадки!\n\n"
-            f"При попытке достать аргумент №[id0|{argument_position}]"
-            f" ({argument_name}) полученно некорректное значение "
-            f"`{argument_string}`. {seems_missing}\n\n"
-            f"{extra_info}"
+            f"💥 {mention}, при попытке достать аргумент №[id0|{argument_position}]"
+            f" ({argument_name}) получено некорректное значение "
+            f"`{argument_string}`. {seems_missing}\n\n{extra_info}"
         )
-        return response
+        message = vkquick.event_handling.payload_arguments.message.Message(
+            response, disable_mentions=True
+        )
+        return message
 
     @staticmethod
     def usage_description() -> str:

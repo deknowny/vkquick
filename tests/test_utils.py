@@ -27,7 +27,7 @@ class _StreamReader:
             line += letter
             if letter == b"\n":
                 break
-        self.message = self.message[len(line):]
+        self.message = self.message[len(line) :]
         return line
 
     async def read(self, length: int):
@@ -95,13 +95,11 @@ class TestAttrDict:
 
 
 class TestRequestSession:
-
     @pytest.mark.asyncio
     async def test_setup_connection(self, mocker: pytest_mock.MockerFixture):
         session = vq.RequestsSession("hostname")
         mocked_open_connection = mocker.patch(
-            "asyncio.open_connection",
-            return_value=("reader", "writer")
+            "asyncio.open_connection", return_value=("reader", "writer")
         )
         await session._setup_connection()
         mocked_open_connection.assert_called_once_with(
@@ -132,17 +130,18 @@ class TestRequestSession:
         mocked_setup.assert_called_once()
         mocked_write.assert_called_once_with(b"foo")
 
-
-
     @pytest.mark.asyncio
-    async def test_write_reset_connection(self, mocker: pytest_mock.MockerFixture):
+    async def test_write_reset_connection(
+        self, mocker: pytest_mock.MockerFixture
+    ):
         def setup_connection(self_):
             self_.writer = _StreamWriter()
 
         mocked_setup = mocker.patch.object(
-            vq.RequestsSession, "_setup_connection",
+            vq.RequestsSession,
+            "_setup_connection",
             side_effect=setup_connection,
-            autospec=vq.RequestsSession._setup_connection
+            autospec=vq.RequestsSession._setup_connection,
         )
         session = vq.RequestsSession("hostname")
 
@@ -151,35 +150,43 @@ class TestRequestSession:
         await session.write(b"foo")
         mocked_setup.assert_called_once()
 
-    @pytest.mark.parametrize("line,length", [
-        (b"Content-Length: 456456", 456456),
-        (b"Content-Length: 0", 0),
-        (b"Content-Length: 10", 10)
-    ])
+    @pytest.mark.parametrize(
+        "line,length",
+        [
+            (b"Content-Length: 456456", 456456),
+            (b"Content-Length: 0", 0),
+            (b"Content-Length: 10", 10),
+        ],
+    )
     def test_get_content_length(self, line, length):
         assert vq.RequestsSession._get_content_length(line) == length
 
-    @pytest.mark.parametrize("message,body", [
-        (
-            b"GET /foo HTTP/1.1\r\n"
-            b"Header: 123\r\n"
-            b"Content-Length: 6\r\n"
-            b"\r\n"
-            b"body\r\n",
-            b"body\r\n"
-        ),
-        (
-            b"GET /barrrr HTTP/1.1\r\n"
-            + b"Content-Length: 1026\r\n"
-            + b"Header: 1026\r\n"
-            + b"\r\n"
-            + b"a"*1024
-            + b"\r\n",
-            b"a"*1024 + b"\r\n"
-        )
-    ])
+    @pytest.mark.parametrize(
+        "message,body",
+        [
+            (
+                b"GET /foo HTTP/1.1\r\n"
+                b"Header: 123\r\n"
+                b"Content-Length: 6\r\n"
+                b"\r\n"
+                b"body\r\n",
+                b"body\r\n",
+            ),
+            (
+                b"GET /barrrr HTTP/1.1\r\n"
+                + b"Content-Length: 1026\r\n"
+                + b"Header: 1026\r\n"
+                + b"\r\n"
+                + b"a" * 1024
+                + b"\r\n",
+                b"a" * 1024 + b"\r\n",
+            ),
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_fetch_body(self, message, body, mocker: pytest_mock.MockerFixture):
+    async def test_fetch_body(
+        self, message, body, mocker: pytest_mock.MockerFixture
+    ):
         reader = _StreamReader(message)
 
         session = vq.RequestsSession("host")
@@ -187,9 +194,7 @@ class TestRequestSession:
         session.reader.readline = mocker.MagicMock(
             side_effect=reader.readline
         )
-        session.reader.read = mocker.MagicMock(
-            side_effect=reader.read
-        )
+        session.reader.read = mocker.MagicMock(side_effect=reader.read)
         result = await session.fetch_body()
         assert result == body
         session.reader.read.assert_called_once_with(len(body))

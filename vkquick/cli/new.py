@@ -94,7 +94,7 @@ async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     Показывает информацию по команде:
     способы использования, описание и примеры.
     \"""
-    for event_handler in vq.current.objects.bot.event_handlers:
+    for event_handler in vq.curs.bot.event_handlers:
         if isinstance(event_handler, vq.Command) and com_name in event_handler.origin_names:
             if event_handler.help_reaction is None:
                 return build_text(event_handler)
@@ -104,9 +104,9 @@ async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     
 def build_text(eh):
     prefixes = "\\n".join(
-        map(lambda x: f"-> [id0|{x}]", eh.origin_prefixes)
+        map(lambda x: f"-> [id0|{x}&#13;]", eh.origin_prefixes)
     )
-    names = "\\n".join(map(lambda x: f"-> [id0|{x}]", eh.origin_names))
+    names = "\\n".join(map(lambda x: f"-> [id0|{x}&#13;]", eh.origin_names))
     params_description = "\\n".join(
         f"[id0|{pos + 1}.] {arg.usage_description()}"
         for pos, arg in enumerate(eh.text_arguments.values())
@@ -142,7 +142,8 @@ text = f\"""
 Создан: {creation_date:%d.%m.%Y} ({(now - creation_date).days} дней)
 Создатель: {owner_mention}
 Python: {platform.python_version()}
-[public195194058|VK Quick]: ({vq.__version__})
+
+⚡️ Powered by [public195194058|VK Quick] ({vq.__version__}) 
 \""".lstrip()
 
 
@@ -154,7 +155,7 @@ def readme():
     \"""
     Сводка по боту.
     \"""
-    return vq.Message(
+    return vq.MessageResponse(
         text, disable_mentions=True
     )
 """.lstrip()

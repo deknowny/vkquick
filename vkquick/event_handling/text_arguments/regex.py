@@ -1,10 +1,10 @@
 import re
 import typing as ty
 
-from vkquick.event_handling.text_arguments import base
+from vkquick.base import text_argument
 
 
-class Regex(base.TextArgument):
+class Regex(text_argument.TextArgument):
     """
     Later
     """

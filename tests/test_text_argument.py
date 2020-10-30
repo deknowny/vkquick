@@ -94,6 +94,14 @@ text_arguments_data = [
     (vq.Bool(false_extension=["custom"]), "custom", False),
     (vq.Bool(), "off,", False),
     (vq.Bool(), "on,", True),
+    (vq.List(vq.Integer()), "123 123 123", [123, 123, 123]),
+    (vq.List(vq.Integer(), min_length=2), "123", vq.UnmatchedArgument),
+    (vq.List(vq.Integer(), max_length=2), "123 123 123 123", [123, 123]),
+    (
+        vq.List(vq.Union(vq.Integer(), vq.Word())),
+        "123 abc 123 dec",
+        [123, "abc", 123, "dec"],
+    ),
 ]
 
 

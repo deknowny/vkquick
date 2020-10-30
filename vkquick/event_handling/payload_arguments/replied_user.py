@@ -1,13 +1,11 @@
 import typing as ty
 
-import vkquick.event_handling.payload_arguments.base
+import vkquick.base.payload_argument
 import vkquick.events_generators.event
 import vkquick.wrappers.user
 
 
-class RepliedUser(
-    vkquick.event_handling.payload_arguments.base.PayloadArgument
-):
+class RepliedUser(vkquick.base.payload_argument.PayloadArgument):
     async def init_value(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Any:

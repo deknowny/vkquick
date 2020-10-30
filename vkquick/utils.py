@@ -4,12 +4,33 @@
 from __future__ import annotations
 import asyncio
 import random
-import ssl
 import os
 import typing as ty
 
 
 T = ty.TypeVar("T")
+S = ty.TypeVar("S")
+M = ty.TypeVar("M")
+
+
+def sync_async_callable(
+    args: ty.Union[ty.List[ty.Any], type(...)], returns: ty.Any
+) -> ty.Type[ty.Callable]:
+    if args is not Ellipsis:
+        return ty.Callable[
+            [*args], ty.Union[ty.Awaitable[returns], returns],
+        ]
+
+    return ty.Callable[
+        ..., ty.Union[ty.Awaitable[returns], returns],
+    ]
+
+
+def foo(arg: int) -> int:
+    return 1
+
+
+bar: sync_async_callable([int], int) = foo
 
 
 def peer(chat_id: int) -> int:

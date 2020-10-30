@@ -4,12 +4,17 @@ import re
 import typing as ty
 
 import vkquick.event_handling.event_handler
-import vkquick.event_handling.message
+import vkquick.event_handling.payload_arguments.message
 import vkquick.events_generators.event
-import vkquick.event_handling.payload_arguments.base
-import vkquick.event_handling.text_arguments.base
+import vkquick.base.payload_argument
+import vkquick.base.text_argument
 import vkquick.event_handling.filters.base
 import vkquick.utils
+
+
+Response = ty.Union[
+    str, vkquick.event_handling.payload_arguments.message.Message
+]
 
 
 class Command(vkquick.event_handling.event_handler.EventHandler):
@@ -23,47 +28,27 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         on_invalid_text_argument: ty.Optional[
             ty.Dict[
                 str,
-                ty.Callable[
+                vkquick.utils.sync_async_callable(
                     [str, int, str, vkquick.events_generators.event.Event],
-                    ty.Union[
-                        ty.Awaitable[
-                            ty.Union[
-                                str, vkquick.event_handling.message.Message
-                            ]
-                        ],
-                        ty.Union[str, vkquick.event_handling.message.Message],
-                    ],
-                ],
+                    Response,
+                ),
             ]
         ] = None,
         matching_command_routing_re_flags: re.RegexFlag = re.IGNORECASE,
         on_unapproved_filter: ty.Optional[
             ty.Dict[
                 vkquick.event_handling.filters.base.Filter,
-                ty.Callable[
-                    [vkquick.events_generators.event.Event],
-                    ty.Union[
-                        str,
-                        vkquick.event_handling.message.Message,
-                        ty.Awaitable[
-                            ty.Union[
-                                str, vkquick.event_handling.message.Message
-                            ]
-                        ],
-                    ],
-                ],
+                vkquick.utils.sync_async_callable(
+                    [vkquick.events_generators.event.Event], Response
+                ),
             ]
         ] = None,
         help_reaction: ty.Optional[
             ty.Callable[
                 [vkquick.events_generators.event.Event],
-                ty.Union[
-                    str,
-                    vkquick.event_handling.message.Message,
-                    ty.Awaitable[
-                        ty.Union[str, vkquick.event_handling.message.Message]
-                    ],
-                ],
+                vkquick.utils.sync_async_callable(
+                    [vkquick.events_generators.event.Event], Response
+                ),
             ]
         ] = None,
         ignore_editing: bool = False,
@@ -80,8 +65,12 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
         self.prefixes = "|".join(self.origin_prefixes)
         self.names = "|".join(self.origin_names)
+        if len(self.origin_prefixes) > 1:
+            self.prefixes = f"(?:{self.prefixes})"
+        if len(self.origin_names) > 1:
+            self.names = f"(?:{self.names})"
         self.command_routing_regex = re.compile(
-            f"(?:{self.prefixes})(?:{self.names})",
+            self.prefixes + self.names,
             flags=matching_command_routing_re_flags,
         )
 
@@ -91,17 +80,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         super().__init__(*handled_event_types)
 
     def __call__(
-        self,
-        reaction: ty.Callable[
-            ...,
-            ty.Union[
-                ty.Awaitable[
-                    ty.Union[vkquick.event_handling.message.Message, str]
-                ],
-                vkquick.event_handling.message.Message,
-                str,
-            ],
-        ],
+        self, reaction: vkquick.utils.sync_async_callable(..., Response)
     ):
         super().__call__(reaction)
         self._separate_reaction_arguments()
@@ -119,14 +98,10 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self.payload_arguments = {}
         self.text_arguments = {}
         for name, value in self.reaction_arguments.items():
-            if isinstance(
-                value,
-                vkquick.event_handling.text_arguments.base.TextArgument,
-            ):
+            if isinstance(value, vkquick.base.text_argument.TextArgument,):
                 self.text_arguments[name] = value
             elif isinstance(
-                value,
-                vkquick.event_handling.payload_arguments.base.PayloadArgument,
+                value, vkquick.base.payload_argument.PayloadArgument,
             ):
                 self.payload_arguments[name] = value
                 # TODO: TypeError in other method
@@ -176,6 +151,8 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         matched = self.command_routing_regex.match(command_text)
         if matched:
             arguments_string = command_text[matched.end() :]
+            if not arguments_string.startswith(" ") and arguments_string:
+                return False, arguments_string
             return True, arguments_string
         return False, ""
 
@@ -202,10 +179,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             )
             text_arguments[name] = matched_value
             arguments_string = arguments_string.lstrip()
-            if (
-                matched_value
-                is vkquick.event_handling.text_arguments.base.UnmatchedArgument
-            ):
+            if matched_value is vkquick.base.text_argument.UnmatchedArgument:
                 asyncio.create_task(
                     self._on_unsuccessful_cutting(
                         name, arguments_string, value, event
@@ -213,7 +187,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                 )
                 return False, arguments_string, text_arguments
 
-        if arguments_string and self.text_arguments:
+        if arguments_string:
             asyncio.create_task(
                 self._on_unsuccessful_cutting(
                     name, arguments_string, value, event
@@ -227,7 +201,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self,
         argument_name: str,
         argument_string: str,
-        text_argument: vkquick.event_handling.text_arguments.base.TextArgument,
+        text_argument: vkquick.base.text_argument.TextArgument,
         event: vkquick.events_generators.event.Event,
     ) -> None:
         argument_position = (
@@ -301,23 +275,28 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
     @staticmethod
     async def routing_reaction_response(
-        response: ty.Union[str, vkquick.event_handling.message.Message],
-        event: vkquick.events_generators.event.Event,
+        response: Response, event: vkquick.events_generators.event.Event,
     ) -> None:
         """
 
         """
-        if isinstance(response, vkquick.event_handling.message.Message):
+        if isinstance(
+            response, vkquick.event_handling.payload_arguments.message.Message
+        ):
             asyncio.create_task(response.send(event))
         elif response is not None:
-            message = vkquick.event_handling.message.Message(str(response))
+            message = vkquick.event_handling.payload_arguments.message.Message(
+                str(response)
+            )
             asyncio.create_task(message.send(event))
 
     def generate_default_help_text(self) -> str:
         prefixes = "\n".join(
             map(lambda x: f"-> [id0|{x}]", self.origin_prefixes)
         )
-        names = "\n".join(map(lambda x: f"-> [id0|{x}]", self.origin_names))
+        names = "\n".join(
+            map(lambda x: f"-> [id0|{x}&#13;]", self.origin_names)
+        )
         params_description = "\n".join(
             f"[id0|{pos + 1}.] {arg.usage_description()}"
             for pos, arg in enumerate(self.text_arguments.values())

@@ -1,12 +1,12 @@
 import re
 import typing as ty
 
-import vkquick.event_handling.text_arguments.base
+import vkquick.base.text_argument
 import vkquick.event_handling.text_arguments.text_values_base
 
 
 class String(
-    vkquick.event_handling.text_arguments.base.TextArgument,
+    vkquick.base.text_argument.TextArgument,
     vkquick.event_handling.text_arguments.text_values_base.TextBase,
 ):
     """
@@ -26,5 +26,5 @@ class String(
         return self.check_range(*parsed_result)
 
     def usage_description(self):
-        desc = "Строка, содержащая любые символы. "  # Пробел стоит специально
+        desc = "Аргумент является строкой, содержащей любые символы. "  # Пробел стоит специально
         return self.create_length_rule(desc)

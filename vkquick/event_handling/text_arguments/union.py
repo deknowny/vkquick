@@ -1,11 +1,11 @@
 import warnings
 import typing as ty
 
-from vkquick.event_handling.text_arguments import base
+from vkquick.base import text_argument
 import vkquick.utils
 
 
-class Union(base.TextArgument):
+class Union(text_argument.TextArgument):
     """
     Один из вариантов
     """
@@ -29,9 +29,9 @@ class Union(base.TextArgument):
             values = await vkquick.utils.sync_async_run(
                 type_.cut_part(arguments_string)
             )
-            if values[0] is not base.UnmatchedArgument:
+            if values[0] is not text_argument.UnmatchedArgument:
                 return values
-        return base.UnmatchedArgument, arguments_string
+        return text_argument.UnmatchedArgument, arguments_string
 
     def usage_description(self) -> str:
         description = "Аргумент должен подходить под одно из описаний:\n"

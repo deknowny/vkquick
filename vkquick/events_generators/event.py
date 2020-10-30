@@ -7,7 +7,7 @@ from pygments import highlight
 import pygments.formatters.terminal
 import pygments.token
 
-import vkquick.event_handling.payload_arguments.base
+import vkquick.base.payload_argument
 import vkquick.utils
 
 
@@ -39,6 +39,7 @@ class Event(vkquick.utils.AttrDict):
             return super().__new__(cls, mapping)
 
     def __init__(self, mapping):
+        # User LongPoll:
         if isinstance(mapping, list):
             object.__setattr__(self, "type", mapping[0])
             object.__setattr__(self, "event_id", mapping[1])

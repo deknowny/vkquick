@@ -11,6 +11,10 @@ class User(vkquick.base.wrapper.Wrapper):
     api = vkquick.current.fetch("api_user_wrapper", "api")
     mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
+    fn: str
+    ln: str
+    id: int
+
     def __init__(self, scheme: vkquick.utils.AttrDict):
         super().__init__(scheme)
         self.add_scheme_shortcut("fn", scheme.first_name)
