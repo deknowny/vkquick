@@ -98,7 +98,7 @@ class GroupLongPoll(LongPollBase):
 
     async def setup(self) -> None:
         if self.group_id is None:
-            groups = await self.api.groups.get()
+            groups = await self.api.groups.get_by_id()
             group = groups[0]
             group_id = group.id
         else:
