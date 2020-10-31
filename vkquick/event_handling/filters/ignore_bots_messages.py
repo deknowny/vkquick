@@ -6,7 +6,7 @@ import vkquick.events_generators.event
 
 class IgnoreBotsMessages(vkquick.event_handling.filters.base.Filter):
 
-    passed_decision = "Сообщение отправлено не от бота"
+    passed_decision = "Сообщение отправлено от пользователя"
     not_passed_decision = "Сообщение отправлено от бота"
 
     def make_decision(
