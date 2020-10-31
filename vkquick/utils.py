@@ -9,8 +9,6 @@ import typing as ty
 
 
 T = ty.TypeVar("T")
-S = ty.TypeVar("S")
-M = ty.TypeVar("M")
 
 
 def sync_async_callable(
@@ -26,7 +24,7 @@ def sync_async_callable(
     ]
 
 
-def peer(chat_id: int) -> int:
+def peer(chat_id: int = 0) -> int:
     """
     Добавляет к `chat_id` значение, чтобы оно стало `peer_id`.
     Кртакая и более приятная запись сложения любого числа с 2 000 000 000
