@@ -2,7 +2,7 @@ import abc
 import typing as ty
 
 import vkquick.events_generators.event
-import vkquick.event_handling.payload_arguments.message
+import vkquick.event_handling.message
 import vkquick.current
 import vkquick.wrappers.user
 import vkquick.api
@@ -54,7 +54,7 @@ class TextArgument(abc.ABC):
         argument_position: int,
         argument_string: str,
         event: vkquick.events_generators.event.Event,
-    ) -> vkquick.event_handling.payload_arguments.message.Message:
+    ) -> vkquick.event_handling.message.Message:
         """
         Дефолтный текст для некорректных аргументов
         """
@@ -79,7 +79,7 @@ class TextArgument(abc.ABC):
             f" ({argument_name}) получено некорректное значение "
             f"`{argument_string}`. {seems_missing}\n\n{extra_info}"
         )
-        message = vkquick.event_handling.payload_arguments.message.Message(
+        message = vkquick.event_handling.message.Message(
             response, disable_mentions=True
         )
         return message

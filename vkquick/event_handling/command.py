@@ -5,7 +5,7 @@ import re
 import typing as ty
 
 import vkquick.event_handling.event_handler
-import vkquick.event_handling.payload_arguments.message
+import vkquick.event_handling.message
 import vkquick.events_generators.event
 import vkquick.base.payload_argument
 import vkquick.base.text_argument
@@ -13,9 +13,7 @@ import vkquick.base.filter
 import vkquick.utils
 
 
-Response = ty.Union[
-    str, vkquick.event_handling.payload_arguments.message.Message
-]
+Response = ty.Union[str, vkquick.event_handling.message.Message]
 
 
 class CommandTextStatus(vkquick.base.filter.DecisionStatus):
@@ -47,7 +45,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             ty.Dict[
                 vkquick.base.filter.DecisionStatus,
                 vkquick.utils.sync_async_callable(
-                    [vkquick.events_generators.event.Event, vkquick.utils.AttrDict], Response
+                    [
+                        vkquick.events_generators.event.Event,
+                        vkquick.utils.AttrDict,
+                    ],
+                    Response,
                 ),
             ]
         ] = None,
@@ -248,13 +250,17 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event
-    ) -> ty.Tuple[bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]]:
+    ) -> ty.Tuple[
+        bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]
+    ]:
         """
 
         """
         command_text_filter_decision = await self.command_text_filter(event)
         command_text_filter_name = "CommandText"
-        passed_command_text_filter = command_text_filter_decision.decision.passed
+        passed_command_text_filter = (
+            command_text_filter_decision.decision.passed
+        )
 
         if not passed_command_text_filter:
             return (
@@ -317,12 +323,8 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         """
 
         """
-        if isinstance(
-            response, vkquick.event_handling.payload_arguments.message.Message
-        ):
+        if isinstance(response, vkquick.event_handling.message.Message):
             asyncio.create_task(response.send(event))
         elif response is not None:
-            message = vkquick.event_handling.payload_arguments.message.Message(
-                str(response)
-            )
+            message = vkquick.event_handling.message.Message(str(response))
             asyncio.create_task(message.send(event))

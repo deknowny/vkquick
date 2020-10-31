@@ -13,8 +13,12 @@ class EnableStatus(vkquick.base.filter.DecisionStatus):
 
 class Enable(vkquick.base.filter.Filter):
 
-    enabled_decision = vkquick.base.filter.Decision(True, "Обработка команды включена")
-    disabled_decision = vkquick.base.filter.Decision(False, "Обработка команды отключена")
+    enabled_decision = vkquick.base.filter.Decision(
+        True, "Обработка команды включена"
+    )
+    disabled_decision = vkquick.base.filter.Decision(
+        False, "Обработка команды отключена"
+    )
 
     enabled_response = vkquick.base.filter.FilterResponse(
         EnableStatus.ENABLED, enabled_decision

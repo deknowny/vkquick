@@ -5,8 +5,12 @@ import vkquick.events_generators.event
 
 
 class DirectOnlyDecision(vkquick.base.filter.DecisionEnum):
-    DIRECT = vkquick.base.filter.Decision("Сообщение отправлено в личные сообщения")
-    not_passed_decision = vkquick.base.filter.Decision("Сообщение не отправлено в личные сообщения")
+    DIRECT = vkquick.base.filter.Decision(
+        "Сообщение отправлено в личные сообщения"
+    )
+    not_passed_decision = vkquick.base.filter.Decision(
+        "Сообщение не отправлено в личные сообщения"
+    )
 
 
 class DirectOnly(vkquick.base.filter.Filter):
