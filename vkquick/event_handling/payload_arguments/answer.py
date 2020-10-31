@@ -61,7 +61,6 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
     ):
         if random_id is None:
             random_id = vkquick.utils.random_id()
-        breakpoint()
         for name, value in locals().items():
             if name == "kwargs":
                 self.params.update(value)
@@ -73,6 +72,5 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
     async def init_value(
         self, event: ty.Optional[vkquick.events_generators.event.Event]
     ):
-        breakpoint()
         self.params["peer_id"] = event.get_message_object().peer_id
         return self
