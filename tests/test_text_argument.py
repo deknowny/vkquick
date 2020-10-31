@@ -102,6 +102,10 @@ text_arguments_data = [
         "123 abc 123 dec",
         [123, "abc", 123, "dec"],
     ),
+    (vq.Optional(vq.Integer()), "123", 123),
+    (vq.Optional(vq.Integer()), "abc", None),
+    (vq.Optional(vq.Integer(), default=123), "abc", 123),
+    (vq.Optional(vq.Integer(), default_factory=dict), "abc", {}),
 ]
 
 
