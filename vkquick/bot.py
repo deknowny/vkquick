@@ -48,6 +48,8 @@ class Bot:
             self.release = int(self.release)
         self.release = bool(self.release)
 
+        self.event_waiters = []
+
         # Статистика
         self._start_time = time.time()
         self._handled_events_count = 0
@@ -85,6 +87,7 @@ class Bot:
         await self.events_generator.setup()
         async for events in self.events_generator:
             for event in events:
+                self.set_new_event(event)
                 asyncio.create_task(event_handlers_runner(event))
 
     async def run_through_event_handlers(
@@ -116,6 +119,23 @@ class Bot:
         ]
         handling_info = await asyncio.gather(*tasks)
         self._update_statistic_info(handling_info)
+
+    def set_new_event(self, event: vkquick.events_generators.event.Event) -> None:
+        """
+        Выдает всем вейтерам событие
+        """
+        for waiter in self.event_waiters:
+            waiter.set_result(event)
+
+    async def fetch_new_event(self) -> vkquick.events_generators.event.Event:
+        """
+        Аналог `asyncio.Event.wait()`
+        """
+        waiter = asyncio.Future()
+        self.event_waiters.append(waiter)
+        new_event = await waiter
+        self.event_waiters.remove(waiter)
+        return new_event
 
     def show_debug_info(
         self,
