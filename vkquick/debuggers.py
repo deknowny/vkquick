@@ -36,7 +36,8 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
     event_handler_passed_color: Color = staticmethod(huepy.green)
     event_handler_not_passed_color: Color = staticmethod(huepy.red)
     event_handler_taken_time_color: Color = staticmethod(true_grey)
-    filter_name_color: Color = staticmethod(huepy.yellow)
+    unpassed_filter_name_color: Color = staticmethod(huepy.yellow)
+    passed_filter_name_color: Color = staticmethod(huepy.green)
     filter_decision_color: Color = staticmethod(uncolored_text)
     passed_argument_color: Color = staticmethod(huepy.cyan)
     separator_color: Color = staticmethod(true_grey)
@@ -50,7 +51,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
     event_header_separator_symbol: str = "="
     reactions_separator_symbol: str = "-"
     exception_separator_symbol: str = "!"
-    handlers_separator: str = "\n{separator}\n\n"
+    handlers_separator: str = "\n{separator}\n"
     exceptions_template: str = "\n{separator}\n\n{exceptions}"
     exception_header_template: str = huepy.bad(
         "Реакция `{reaction_name}` при вызове выбросила исключение:\n\n"
@@ -59,10 +60,10 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
     event_handler_argument_taken_time_template: str = "({taken_time}s)"
     event_handler_header_taken_time_digits_format_spec: str = ".6f"
     event_handler_filters_decision_separator: str = "\n"
-    filter_info_template: str = "{filter_name}: {decision_description}"
+    filter_info_template: str = "-> {filter_name}: {decision_description}"
     event_handler_arguments_separator: str = ""
     event_handler_arguments_template: str = "\n{arguments}"
-    event_handler_argument_template: str = "    > {name}: {value!s}\n"
+    event_handler_argument_template: str = "    >> {name}: {value!s}\n"
 
     def render(self):
         """
@@ -230,10 +231,15 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         """
         Генерирует информацию по каждому фильтру обработчика
         """
-        for decision in scheme.filters_decision:
-            decision_description = self.filter_decision_color(decision[1])
-            filter_name = decision[2]
-            filter_name = self.filter_name_color(filter_name)
+        for decision in scheme.filters_response:
+            decision_description = self.filter_decision_color(
+                decision[0].decision.description
+            )
+            filter_name = decision[1]
+            if decision[0].decision.passed:
+                filter_name = self.passed_filter_name_color(filter_name)
+            else:
+                filter_name = self.unpassed_filter_name_color(filter_name)
             filter_info = self.filter_info_template.format(
                 filter_name=filter_name,
                 decision_description=decision_description,
@@ -269,7 +275,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         return separator
 
 
-class UncoloredDebugger(vkquick.base.debugger.Debugger):
+class UncoloredDebugger(ColoredDebugger):
     """
     Дебагер без цвета
     """
@@ -277,7 +283,8 @@ class UncoloredDebugger(vkquick.base.debugger.Debugger):
     event_handler_passed_color: Color = staticmethod(uncolored_text)
     event_handler_not_passed_color: Color = staticmethod(uncolored_text)
     event_handler_taken_time_color: Color = staticmethod(uncolored_text)
-    filter_name_color: Color = staticmethod(uncolored_text)
+    passed_filter_name_color: Color = staticmethod(uncolored_text)
+    unpassed_filter_name_color: Color = staticmethod(uncolored_text)
     filter_decision_color: Color = staticmethod(uncolored_text)
     passed_argument_color: Color = staticmethod(uncolored_text)
     separator_color: Color = staticmethod(uncolored_text)

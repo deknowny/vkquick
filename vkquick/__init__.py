@@ -11,6 +11,12 @@ from .current import fetch, curs
 from .api import API, TokenOwner
 from .bot import Bot
 from .exceptions import VkApiError
+from .debuggers import (
+    ColoredDebugger,
+    UncoloredDebugger,
+    uncolored_text,
+    Color,
+)
 from .utils import (
     AttrDict,
     SafeDict,
@@ -49,8 +55,8 @@ from .event_handling.payload_arguments.current import Current
 from .event_handling.payload_arguments.captured_event import CapturedEvent
 from .event_handling.payload_arguments._answer import Answer
 
-from .event_handling.filters.base import Filter
-from .event_handling.filters.enable import Enable
+from vkquick.base.filter import Filter
+from .event_handling.filters.enable import Enable, EnableStatus
 
 from .wrappers.user import User
 

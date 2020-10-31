@@ -101,7 +101,7 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
 
     api = vkquick.current.fetch("api_message", "api")
 
-    def send(
+    async def send(
         self,
         message: ty.Optional[str] = None,
         /,
@@ -144,8 +144,7 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
         await self.api.method("messages.send", self.params)
 
     async def init_value(
-        self,
-        event: ty.Optional[vkquick.events_generators.event.Event]
+        self, event: ty.Optional[vkquick.events_generators.event.Event]
     ):
         self.params["peer_id"] = event.get_message_object().peer_id
         return self

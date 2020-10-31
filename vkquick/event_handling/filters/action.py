@@ -1,10 +1,10 @@
 import typing as ty
 
-import vkquick.event_handling.filters.base
+import vkquick.base.filter
 import vkquick.events_generators.event
 
 
-class Action(vkquick.event_handling.filters.base.Filter):
+class Action(vkquick.base.filter.Filter):
 
     passed_decision = "В сообщение содержатся нужное действие"
     not_passed_decision = "В сообщение не содержатся нужное действие"
@@ -13,7 +13,7 @@ class Action(vkquick.event_handling.filters.base.Filter):
         self.types = types
 
     def make_decision(
-            self, event: vkquick.events_generators.event.Event
+        self, event: vkquick.events_generators.event.Event
     ) -> ty.Tuple[bool, str]:
         """
         Проверяет на действие в сообщение

@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import inspect
 import re
 import typing as ty
@@ -8,13 +9,20 @@ import vkquick.event_handling.payload_arguments.message
 import vkquick.events_generators.event
 import vkquick.base.payload_argument
 import vkquick.base.text_argument
-import vkquick.event_handling.filters.base
+import vkquick.base.filter
 import vkquick.utils
 
 
 Response = ty.Union[
     str, vkquick.event_handling.payload_arguments.message.Message
 ]
+
+
+class CommandTextStatus(vkquick.base.filter.DecisionStatus):
+    NOT_ROUTED = enum.auto()
+    EXCESS_ARGUMENT = enum.auto()
+    NOT_CAPTURED_ARGUMENT = enum.auto()
+    PASSED = enum.auto()
 
 
 class Command(vkquick.event_handling.event_handler.EventHandler):
@@ -35,11 +43,11 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             ]
         ] = None,
         matching_command_routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        on_unapproved_filter: ty.Optional[
+        on_filters_decision: ty.Optional[
             ty.Dict[
-                vkquick.event_handling.filters.base.Filter,
+                vkquick.base.filter.DecisionStatus,
                 vkquick.utils.sync_async_callable(
-                    [vkquick.events_generators.event.Event], Response
+                    [vkquick.events_generators.event.Event, vkquick.utils.AttrDict], Response
                 ),
             ]
         ] = None,
@@ -54,7 +62,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         ignore_editing: bool = False,
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
-        self.on_unapproved_filter = on_unapproved_filter or {}
+        self.on_filters_decision = on_filters_decision or {}
         self._made_text_arguments = {}
 
         self.origin_prefixes = tuple(prefixes)
@@ -108,15 +116,19 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
     async def command_text_filter(
         self, event: vkquick.events_generators.event.Event
-    ) -> ty.Tuple[bool, str]:
+    ) -> vkquick.base.filter.FilterResponse:
         matched, arguments_string = self.matching_command_routing(
             event.get_message_object().text
         )
         if not matched:
-            return (
+            decision = vkquick.base.filter.Decision(
                 False,
                 f"Вызванная команда не совпадает с шаблоном `{self.command_routing_regex.pattern}`",
             )
+            response = vkquick.base.filter.FilterResponse(
+                CommandTextStatus.NOT_ROUTED, decision
+            )
+            return response
 
         # arguments_string -- остаток от текста, откуда вырезались аргументы
         # text_arguments -- словарь с инстансами `TextArguments`
@@ -125,18 +137,33 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         )
         if not matched:
             if arguments_string:
-                return (
+                decision = vkquick.base.filter.Decision(
                     False,
                     f"Передано излишнее значение `{arguments_string}`, на которое не обозначены аргументы",
                 )
+                response = vkquick.base.filter.FilterResponse(
+                    CommandTextStatus.EXCESS_ARGUMENT, decision
+                )
+                return response
+
             unmatched_argument_name = list(text_arguments)[-1]
-            return (
+            decision = vkquick.base.filter.Decision(
                 False,
                 f"Аргумент `{unmatched_argument_name}` не вырезан из строки `{arguments_string}`",
             )
+            response = vkquick.base.filter.FilterResponse(
+                CommandTextStatus.NOT_CAPTURED_ARGUMENT, decision
+            )
+            return response
 
         self._made_text_arguments[event.event_id] = text_arguments
-        return True, "Текст команды подходит под шаблон"
+        decision = vkquick.base.filter.Decision(
+            True, "Текст команды подходит под шаблон"
+        )
+        response = vkquick.base.filter.FilterResponse(
+            CommandTextStatus.PASSED, decision
+        )
+        return response
 
     def matching_command_routing(
         self, command_text: str
@@ -221,28 +248,38 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event
-    ) -> ty.Tuple[bool, ty.List[ty.Tuple[bool, str, str]]]:
+    ) -> ty.Tuple[bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]]:
         """
 
         """
-        passed_all, filters_decision = await super().run_trough_filters(event)
-        if passed_all:
-            passed_text, description_text = await self.command_text_filter(
-                event
+        command_text_filter_decision = await self.command_text_filter(event)
+        command_text_filter_name = "CommandText"
+        passed_command_text_filter = command_text_filter_decision.decision.passed
+
+        if not passed_command_text_filter:
+            return (
+                False,
+                [(command_text_filter_decision, command_text_filter_name)],
             )
-            name = "CommandText"
-            passed_all = passed_text
-            filters_decision.append((passed_text, description_text, name))
-        else:
-            for (
-                filter_,
-                filter_reaction,
-            ) in self.on_unapproved_filter.items():
-                if filter_.__name__ == filters_decision[-1][2]:
-                    response = await vkquick.utils.sync_async_run(
-                        filter_reaction(event)
-                    )
-                    await self.routing_reaction_response(response, event)
+
+        filters_decision: ty.List[
+            ty.Tuple[vkquick.base.filter.FilterResponse, str]
+        ] = [(command_text_filter_decision, command_text_filter_name)]
+        passed_all, other_filters_decision = await super().run_trough_filters(
+            event
+        )
+
+        for filter_decision in other_filters_decision:
+            if filter_decision[0].status_code in self.on_filters_decision:
+                filter_decision_reaction = self.on_filters_decision[
+                    filter_decision[0].status_code
+                ]
+                response = await vkquick.utils.sync_async_run(
+                    filter_decision_reaction(event, filter_decision[0].extra)
+                )
+                await self.routing_reaction_response(response, event)
+
+            filters_decision.append(filter_decision)
 
         return passed_all, filters_decision
 
@@ -289,26 +326,3 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
                 str(response)
             )
             asyncio.create_task(message.send(event))
-
-    def generate_default_help_text(self) -> str:
-        prefixes = "\n".join(
-            map(lambda x: f"-> [id0|{x}]", self.origin_prefixes)
-        )
-        names = "\n".join(
-            map(lambda x: f"-> [id0|{x}&#13;]", self.origin_names)
-        )
-        params_description = "\n".join(
-            f"[id0|{pos + 1}.] {arg.usage_description()}"
-            for pos, arg in enumerate(self.text_arguments.values())
-        )
-        description = self.description or "Описание отсутствует"
-        text = (
-            f"Помощь по команде `{self.title}`\n\n"
-            f"{description}\n\n"
-            "[Использование]\n"
-            f"Возможные префиксы:\n{prefixes or '> Отсутствуют'}\n"
-            f"Возможные имена:\n{names or '> Отстутсвуют'}\n"
-            f"Аргументы, которые необходимо передать при вызове:\n{params_description or 'Отсутствуют'}"
-        )
-
-        return text

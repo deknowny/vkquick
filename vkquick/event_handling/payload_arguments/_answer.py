@@ -20,6 +20,7 @@ class Answer(
 
     `random_id=random.randint(-2**31, +2**31)`
     """
+
     def __init__(self):
         self.params = {}
 
@@ -27,5 +28,6 @@ class Answer(
         self.params["peer_id"] = event.get_message_object().peer_id
         return self
 
-    __call__ = vkquick.event_handling.payload_arguments.message.Message.__init__
-
+    __call__ = (
+        vkquick.event_handling.payload_arguments.message.Message.__init__
+    )

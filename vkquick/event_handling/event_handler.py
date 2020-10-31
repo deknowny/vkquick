@@ -6,7 +6,7 @@ import typing as ty
 
 import vkquick.events_generators.event
 import vkquick.base.payload_argument
-import vkquick.event_handling.filters.base
+import vkquick.base.filter
 import vkquick.utils
 import vkquick.event_handling.handling_info_scheme
 
@@ -25,7 +25,7 @@ class EventHandler:
 
     def __init__(self, *event_types) -> None:
         self.event_types = event_types or ...
-        self.filters: ty.List[vkquick.event_handling.filters.base.Filter] = []
+        self.filters: ty.List[vkquick.base.filter.Filter] = []
 
     def __call__(
         self, reaction: ty.Callable[..., ty.Union[ty.Awaitable, None]]
@@ -55,14 +55,14 @@ class EventHandler:
                 taken_time=end_stamp - start_stamp,
             )
 
-        passed_all, filters_decision = await self.run_trough_filters(event)
+        passed_all, filters_response = await self.run_trough_filters(event)
         if not passed_all:
             end_stamp = time.time()
             return vkquick.event_handling.handling_info_scheme.HandlingInfoScheme(
                 handler=self,
                 is_correct_event_type=True,
                 all_filters_passed=False,
-                filters_decision=filters_decision,
+                filters_response=filters_response,
                 taken_time=end_stamp - start_stamp,
             )
 
@@ -79,7 +79,7 @@ class EventHandler:
                 handler=self,
                 is_correct_event_type=True,
                 all_filters_passed=True,
-                filters_decision=filters_decision,
+                filters_response=filters_response,
                 passed_arguments=reaction_arguments,
                 taken_time=end_stamp - start_stamp,
                 exception_text=exception,  # NOTE: Что делать с `BaseException` кейсом?
@@ -96,7 +96,9 @@ class EventHandler:
 
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event
-    ) -> ty.Tuple[bool, ty.List[ty.Tuple[bool, str, str]]]:
+    ) -> ty.Tuple[
+        bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]
+    ]:
         """
         Пропускает событие через все фильтры. Возвращает кортеж из значений:
 
@@ -106,12 +108,12 @@ class EventHandler:
         passed_all = True
         filters_decision = []
         for filter_ in self.filters:
-            passed, description = await vkquick.utils.sync_async_run(
+            filter_response = await vkquick.utils.sync_async_run(
                 filter_.make_decision(event)
             )
-            decision = (passed, description, filter_.__class__.__name__)
+            decision = (filter_response, filter_.__class__.__name__)
             filters_decision.append(decision)
-            if not passed:
+            if not filter_response.decision.passed:
                 passed_all = False
                 break
 

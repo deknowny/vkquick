@@ -16,7 +16,9 @@ class UnmatchedArgument:
 
 class TextArgument(abc.ABC):
 
-    api: vkquick.api.API = vkquick.current.fetch("api_invalid_argument", "api")
+    api: vkquick.api.API = vkquick.current.fetch(
+        "api_invalid_argument", "api"
+    )
 
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
@@ -67,7 +69,9 @@ class TextArgument(abc.ABC):
             extra_info = f"💡 {extra_info}"
 
         with self.api.synchronize():
-            user = self.api.users.get(user_ids=event.get_message_object().from_id)
+            user = self.api.users.get(
+                user_ids=event.get_message_object().from_id
+            )
             user = vkquick.wrappers.user.User(user[0])
             mention = user.mention("{fn}")
         response = (

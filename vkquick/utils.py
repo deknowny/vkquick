@@ -26,13 +26,6 @@ def sync_async_callable(
     ]
 
 
-def foo(arg: int) -> int:
-    return 1
-
-
-bar: sync_async_callable([int], int) = foo
-
-
 def peer(chat_id: int) -> int:
     """
     Добавляет к `chat_id` значение, чтобы оно стало `peer_id`.
@@ -105,7 +98,8 @@ class AttrDict:
         print(isinstance(foo["a"], dict))  # True
     """
 
-    def __new__(cls, mapping):
+    def __new__(cls, mapping=None):
+        mapping = mapping or {}
         if isinstance(mapping, (dict, list)):
             self = object.__new__(cls)
             self.__init__(mapping)
@@ -113,7 +107,7 @@ class AttrDict:
 
         return mapping
 
-    def __init__(self, mapping):
+    def __init__(self, mapping=None):
         object.__setattr__(self, "mapping_", mapping)
 
     def __getattr__(self, item):

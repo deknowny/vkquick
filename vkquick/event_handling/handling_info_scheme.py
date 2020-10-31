@@ -1,6 +1,8 @@
 import dataclasses
 import typing as ty
 
+import vkquick.base.filter
+
 
 # pydantic?
 @dataclasses.dataclass
@@ -29,9 +31,9 @@ class HandlingInfoScheme:
     Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
     """
 
-    filters_decision: ty.List[ty.Tuple[bool, str, str]] = dataclasses.field(
-        default_factory=list
-    )
+    filters_response: ty.List[
+        ty.Tuple[vkquick.base.filter.FilterResponse, str]
+    ] = dataclasses.field(default_factory=list)
     """
     Для каждого элемента списка:
     * Событие прошло/не прошло
