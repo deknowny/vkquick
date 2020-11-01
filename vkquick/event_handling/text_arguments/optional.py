@@ -1,3 +1,6 @@
+"""
+Optional аргумент
+"""
 import typing as ty
 
 import vkquick.base.text_argument
@@ -6,7 +9,8 @@ import vkquick.utils
 
 class Optional(vkquick.base.text_argument.TextArgument):
     """
-    Любая последовательность символов
+    Опциональный тип. Если тип подходит, значит
+    вернется он. Если нет -- значение по умолчанию
     """
 
     def __init__(
@@ -17,6 +21,12 @@ class Optional(vkquick.base.text_argument.TextArgument):
         default: ty.Any = None,
         default_factory: ty.Optional[ty.Callable] = None,
     ):
+        """
+        * `element`: Тип, который должен быть опциональным
+        * `default`: Значение пол умолчанию
+        Либо
+        * `default_factory`: Фабрика значений по умолчанию (для мутабельных типов)
+        """
         self.element = element
         self.default = default
         self.default_factory = default_factory

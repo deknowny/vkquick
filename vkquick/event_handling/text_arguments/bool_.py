@@ -1,3 +1,6 @@
+"""
+Bool аргумент
+"""
 import re
 import typing as ty
 
@@ -6,7 +9,7 @@ from vkquick.base import text_argument
 
 class Bool(text_argument.TextArgument):
     """
-    Later
+    Аргумент с двумя возможными значениям -- True и False
     """
 
     def __init__(
@@ -15,6 +18,10 @@ class Bool(text_argument.TextArgument):
         true_extension: ty.Iterable[str] = (),
         false_extension: ty.Iterable[str] = (),
     ):
+        """
+        * `true_extension`: Дополнительные алиасы на True-значения
+        * `false_extension`: Дополнительные алиасы на False-значения
+        """
         true_values = [
             "true",
             "1",

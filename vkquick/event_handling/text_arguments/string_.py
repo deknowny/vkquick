@@ -1,3 +1,6 @@
+"""
+String аргумент
+"""
 import re
 import typing as ty
 
@@ -16,6 +19,10 @@ class String(
     def __init__(
         self, *, max_length: ty.Optional[int] = None, min_length: int = 1
     ):
+        """
+        * `max_length`: Максимальная длина строки
+        * `min_length`: Минимальная длина строки
+        """
         self.pattern = re.compile(r".+", flags=re.DOTALL)
         super().__init__(max_length, min_length)
 

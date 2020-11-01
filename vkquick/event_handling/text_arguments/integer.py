@@ -1,3 +1,6 @@
+"""
+Integer аргумент
+"""
 import re
 import typing as ty
 
@@ -6,7 +9,7 @@ import vkquick.base.text_argument
 
 class Integer(vkquick.base.text_argument.TextArgument):
     """
-    Целое число.
+    Целое число
     """
 
     def __init__(

@@ -1,3 +1,6 @@
+"""
+Union argument
+"""
 import warnings
 import typing as ty
 
@@ -7,7 +10,10 @@ import vkquick.utils
 
 class Union(text_argument.TextArgument):
     """
-    Один из вариантов
+    Один из вариантов `TextArgument`. Если вариант
+    не подходит под первый тип, будет пробовать следующий.
+    Если все не подошли -- значит парсинг строки не удался
+    и команда не вызовется
     """
 
     def __init__(self, *text_arguments):

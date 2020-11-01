@@ -5,7 +5,8 @@ import vkquick.base.text_argument
 
 class TextBase:
     """
-
+    База для текстовых аргументов. Присваивает
+    возможность использовать ограничители длины
     """
 
     def __init__(

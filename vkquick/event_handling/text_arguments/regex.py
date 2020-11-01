@@ -1,3 +1,6 @@
+"""
+Regex аргумент
+"""
 import re
 import typing as ty
 
@@ -6,7 +9,7 @@ from vkquick.base import text_argument
 
 class Regex(text_argument.TextArgument):
     """
-    Later
+    Тип через регексы. Возвращает match-группу
     """
 
     def __init__(
@@ -15,6 +18,10 @@ class Regex(text_argument.TextArgument):
         regex: ty.Union[str, ty.Pattern],
         factory: ty.Callable[[ty.Match], ty.Any] = lambda match: match,
     ):
+        """
+        * `regex`: Регекс строкой либо через `re.compile`
+        * `factory`: Фабрика для матч группы
+        """
         self.pattern = re.compile(regex) if isinstance(regex, str) else regex
         self.factory = factory
 
@@ -24,4 +31,4 @@ class Regex(text_argument.TextArgument):
         )
 
     async def usage_description(self) -> str:
-        return f"Параметер должен подходить под шаблон {self.regex}"
+        return f"Параметер должен подходить под шаблон {self.pattern}"
