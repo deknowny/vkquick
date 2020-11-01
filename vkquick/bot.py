@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import os
 import time
+import traceback
 import typing as ty
 
 import huepy
@@ -10,7 +11,7 @@ import huepy
 import vkquick.current
 import vkquick.event_handling.event_handler
 import vkquick.event_handling.command
-import vkquick.signal_handling.signal_handler
+import vkquick.signal
 import vkquick.events_generators.event
 import vkquick.event_handling.handling_info_scheme
 import vkquick.exceptions
@@ -26,9 +27,7 @@ class Bot:
         self,
         *,
         signal_handlers: ty.Optional[
-            ty.Collection[
-                vkquick.signal_handling.signal_handler.SignalHandler
-            ]
+            ty.Collection[vkquick.signal.SignalHandler]
         ] = None,
         event_handlers: ty.Optional[
             ty.Collection[vkquick.event_handling.event_handler.EventHandler]
@@ -36,12 +35,15 @@ class Bot:
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
-        debugger: ty.Optional[ty.Type[vkquick.debuggers.Debugger]] = None,
+        debugger: ty.Optional[
+            ty.Type[vkquick.debuggers.ColoredDebugger]
+        ] = None,
     ):
         self.signal_handlers = signal_handlers or []
         self.event_handlers = event_handlers or []
         self.debug_filter = debug_filter or self.default_debug_filter
         self.debugger = debugger or vkquick.debuggers.ColoredDebugger
+        self.call_signal = vkquick.signal.SignalCaller(self.signal_handlers)
 
         self.release = os.getenv("VKQUICK_RELEASE")
         if self.release is not None and self.release.isdigit():
@@ -65,9 +67,12 @@ class Bot:
         try:
             asyncio.run(self.listen_events())
         except KeyboardInterrupt:
-            vkquick.utils.clear_console()
+            if self.release:
+                vkquick.utils.clear_console()
             print(huepy.yellow("Bot was stopped\n"))
             print(self._fetch_statistic_message())
+        except Exception as exc:
+            print(exc)
         finally:
             asyncio.run(self.call_signal("shutdown"))
 
@@ -80,15 +85,13 @@ class Bot:
         (переменная окружения `VKQUICK_RELEASE`)
         """
         if self.release:
-            event_handlers_runner = self.run_through_event_handlers_release
-        else:
-            event_handlers_runner = self.run_through_event_handlers
+            self.show_debug_info = self.show_debug_message_for_release
 
         await self.events_generator.setup()
         async for events in self.events_generator:
             for event in events:
                 self.set_new_event(event)
-                asyncio.create_task(event_handlers_runner(event))
+                asyncio.create_task(self.run_through_event_handlers(event))
 
     async def run_through_event_handlers(
         self, event: vkquick.events_generators.event.Event
@@ -102,25 +105,18 @@ class Bot:
             asyncio.create_task(event_handler.handle_event(event))
             for event_handler in self.event_handlers
         ]
-        handling_info = await asyncio.gather(*tasks)
-        self.show_debug_info(event, handling_info)
-        self._update_statistic_info(handling_info)
+        try:
+            handling_info = await asyncio.gather(*tasks)
+        except Exception as exc:
+            traceback.print_exc()
+        else:
+            self.show_debug_info(event, handling_info)
+            self._update_statistic_info(handling_info)
+            await self._call_post_event_handling_signal(event, handling_info)
 
-    async def run_through_event_handlers_release(
+    def set_new_event(
         self, event: vkquick.events_generators.event.Event
     ) -> None:
-        """
-        Оптимизированная версия `run_through_event_handlers`:
-        не отправляет информацию в дебаггер
-        """
-        tasks = [
-            asyncio.create_task(event_handler.handle_event(event))
-            for event_handler in self.event_handlers
-        ]
-        handling_info = await asyncio.gather(*tasks)
-        self._update_statistic_info(handling_info)
-
-    def set_new_event(self, event: vkquick.events_generators.event.Event) -> None:
         """
         Выдает всем вейтерам событие
         """
@@ -156,17 +152,17 @@ class Bot:
             vkquick.utils.clear_console()
             print(debug_message)
 
-    async def call_signal(self, signal_name: str, *args, **kwargs) -> ty.Any:
-        """
-        Вызывает сигнал с именем `signal_name` и передает
-        соответствующие аргументы. Если обработчика сигнала с
-        таким именем нет, поднимется ошибка `NameError`
-        """
-        for signal_handler in self.signal_handlers:
-            if signal_handler.signal_name == signal_name:
-                return await vkquick.utils.sync_async_run(
-                    signal_handler.reaction(*args, **kwargs)
-                )
+    async def _call_post_event_handling_signal(
+        self,
+        event: vkquick.events_generators.event.Event,
+        handling_info: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+    ) -> None:
+        self.call_signal.signal_name = (
+            vkquick.signal.ReservedSignal.POST_EVENT_HANDLING
+        )
+        await vkquick.utils.sync_async_run(
+            self.call_signal(event, handling_info)
+        )
 
     def _fetch_statistic_message(self) -> str:
         """
@@ -215,3 +211,9 @@ class Bot:
         Фильтр на событие для дебаггера по умолчанию
         """
         return event.type in ("message_new", "message_edit", 4)
+
+    @staticmethod
+    def show_debug_message_for_release(_, handling_info):
+        for scheme in handling_info:
+            if scheme.exception_text:
+                print(scheme.exception_text)
