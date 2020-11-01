@@ -63,7 +63,8 @@ class Bot:
         потом запускает процесс по получению и обработке событий.
         При завершении вызывает `shutdown`
         """
-        asyncio.run(self.call_signal("startup"))
+        self.call_signal.signal_name = vkquick.signal.ReservedSignal.STARTUP
+        asyncio.run(vkquick.utils.sync_async_run(self.call_signal()))
         try:
             asyncio.run(self.listen_events())
         except KeyboardInterrupt:
@@ -74,7 +75,10 @@ class Bot:
         except Exception as exc:
             print(exc)
         finally:
-            asyncio.run(self.call_signal("shutdown"))
+            self.call_signal.signal_name = vkquick.signal.ReservedSignal.SHUTDOWN
+            asyncio.run(
+                vkquick.utils.sync_async_run(self.call_signal())
+            )
 
     async def listen_events(self):
         """

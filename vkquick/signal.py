@@ -29,9 +29,8 @@ class SignalHandler:
 
 @dataclasses.dataclass
 class SignalCaller:
-
-    signal_name: ty.Optional[SignalName] = None
     handlers: ty.List[SignalHandler] = dataclasses.field(default_factory=list)
+    signal_name: ty.Optional[SignalName] = None
 
     def __getattr__(self, signal_name: SignalName) -> SignalCaller:
         self.signal_name = signal_name
@@ -40,7 +39,7 @@ class SignalCaller:
     def __call__(self, *args, **kwargs) -> ty.Any:
         signal_name = self.signal_name
         self.signal_name = None
-        for handler in self.signal_handlers:
+        for handler in self.handlers:
             if handler.name == signal_name:
                 return vkquick.utils.sync_async_run(
                     handler.reaction(*args, **kwargs)
