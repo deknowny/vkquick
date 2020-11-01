@@ -7,13 +7,29 @@ import vkquick.utils
 
 
 class User(vkquick.base.wrapper.Wrapper):
+    """
+    Обертка на объект пользователя
+    """
 
     api = vkquick.current.fetch("api_user_wrapper", "api")
+
     mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
+    """
+    Регекс на упоминание
+    """
 
     fn: str
+    """
+    Имя пользователя
+    """
     ln: str
+    """
+    Фамилия пользователя
+    """
     id: int
+    """
+    ID пользователя
+    """
 
     def __init__(self, scheme: vkquick.utils.AttrDict):
         super().__init__(scheme)
@@ -43,6 +59,9 @@ class User(vkquick.base.wrapper.Wrapper):
         return await cls.build_from_id(user_id)
 
     def mention(self, alias: str, /) -> str:
+        """
+        Создает упоминание пользователя с `alias`
+        """
         new_alias = self.__format__(alias)
         mention = f"[id{self.scheme.id}|{new_alias}]"
         return mention

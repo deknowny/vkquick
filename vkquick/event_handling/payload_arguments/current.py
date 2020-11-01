@@ -6,6 +6,9 @@ import vkquick.current
 
 
 class Current(vkquick.base.payload_argument.PayloadArgument):
+    """
+    Возвращает объект из current по его имени
+    """
     def __init__(self, current_object_name):
         self.current_object_name = current_object_name
 

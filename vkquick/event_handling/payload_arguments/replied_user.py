@@ -6,6 +6,10 @@ import vkquick.wrappers.user
 
 
 class RepliedUser(vkquick.base.payload_argument.PayloadArgument):
+    """
+    Пользователь из сообщения, на которое ответили. Если такого
+    нет, значит будет `None`
+    """
     async def init_value(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Any:

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import typing as ty
 
 import vkquick.base
@@ -13,12 +14,12 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
     """
     Используйте в своей реакции,
     чтобы отправить сообщение в диалог
-    со всеми возможными параметрами ```messages.send```,
+    со всеми возможными параметрами `messages.send`,
     откуда пришло событие, т.е. по умолчанию:
 
     `peer_id=event.object.message.peer_id`
     (если не был передан ни один из параметров
-    `"user_id", "domain", "chat_id",
+    `"user_id", "domain", "chat_id", "peer_id",
     "user_ids", "peer_ids"`)
 
     `random_id=random.randint(-2**31, +2**31)`
@@ -59,6 +60,11 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
         content_source: ty.Optional[str] = None,
         **kwargs,
     ):
+        """
+        Отправка сообщения туда, откуда пришло.
+        Если параметра, который вам нужен, нет здесь, вы можете добавить его
+        через `**kwargs`
+        """
         if random_id is None:
             random_id = vkquick.utils.random_id()
         for name, value in locals().items():
@@ -71,6 +77,6 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
 
     async def init_value(
         self, event: ty.Optional[vkquick.events_generators.event.Event]
-    ):
+    ) -> Answer:
         self.params["peer_ids"] = event.get_message_object().peer_id
         return self

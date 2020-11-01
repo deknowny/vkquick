@@ -1,3 +1,6 @@
+"""
+Имплементация HTTP клиентов
+"""
 import typing as ty
 
 import aiohttp
