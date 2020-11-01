@@ -181,21 +181,18 @@ class Bot:
         Не забудьте передать все необходимые обработчики событий
         и сигналов! Этот метод их не добавляет
         """
+        # Создание необходимых объектов по информации с токена
+        # и добавление их в куррент для использования с любой точки кода
+        api = vkquick.api.API(token)
+        vkquick.current.curs.api = api
+        if api.token_owner == vkquick.api.TokenOwner.GROUP:
+            vkquick.current.curs.lp = vkquick.events_generators.longpoll.GroupLongPoll()
+        else:
+            vkquick.current.curs.lp = vkquick.events_generators.longpoll.UserLongPoll()
+
+        # Сам инстанс бота
         self = object.__new__(cls)
         self.__init__()
-
-        # Создание необходимых объектов по информации с токена
-        api = vkquick.api.API(token)
-        if api.token_owner == vkquick.api.TokenOwner.GROUP:
-            lp = vkquick.events_generators.longpoll.GroupLongPoll()
-        else:
-            lp = vkquick.events_generators.longpoll.UserLongPoll()
-
-        # Добавление в current для последующего
-        # использования из любой точки кода
-        vkquick.current.curs.api = api
-        vkquick.current.curs.lp = lp
-
         return self
 
     @functools.cached_property
