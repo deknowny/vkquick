@@ -72,5 +72,5 @@ class Answer(vkquick.base.payload_argument.PayloadArgument):
     async def init_value(
         self, event: ty.Optional[vkquick.events_generators.event.Event]
     ):
-        self.params["peer_id"] = event.get_message_object().peer_id
+        self.params["peer_ids"] = event.get_message_object().peer_id
         return self

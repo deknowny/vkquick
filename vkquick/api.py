@@ -395,4 +395,7 @@ class API(vkquick.base.synchronizable.Synchronizable):
             return 0
 
     async def close_session(self):
+        """
+        Закрывает соединение сессии
+        """
         await self.async_http_session.close()

@@ -16,15 +16,27 @@ import vkquick.clients
 
 
 class LongPollBase(abc.ABC):
+    """
+    Базовый интерфейс для всех типов LongPoll
+    """
     _lp_settings: ty.Optional[dict] = None
     session: ty.Optional[vkquick.clients.AIOHTTPClient] = None
 
-    def __aiter__(self):
+    def __aiter__(self) -> LongPollBase:
+        """
+        Итерация запускает процесс получения событий
+        """
         return self
 
     async def __anext__(
         self,
     ) -> ty.List[vkquick.events_generators.event.Event]:
+        """
+        Отправляет запрос на LongPoll сервер и ждет событие.
+        После оборачивает событие в специальную обертку, которая
+        в некоторых случаях может сделать интерфейс
+        пользовательского лонгпула аналогичным групповому
+        """
         response = await self.session.send_get_request("", self._lp_settings)
         response = vkquick.utils.AttrDict(response)
 
@@ -63,6 +75,23 @@ class LongPollBase(abc.ABC):
 class GroupLongPoll(LongPollBase):
     """
     LongPoll обработчик для событий в сообществе
+
+        import asyncio
+
+        import vkquick as vq
+
+
+        async def main():
+            vq.curs.api = vq.API("any-token")
+            lp = vq.GroupLongPoll()
+            await lp.setup()
+            async for events in lp:
+                for event in events:
+                    print(event)
+
+
+        asyncio.run(main())
+
     """
 
     api: vkquick.api.API = vkquick.current.fetch(
@@ -80,6 +109,13 @@ class GroupLongPoll(LongPollBase):
             ty.Type[vkquick.base.json_parser.JSONParser]
         ] = None,
     ) -> None:
+        """
+        * `group_id`: Если вы хотите получать события из сообщества через
+        пользователя -- этот параметр обязателен. Иначе можно пропустить
+        * `wait`: время максимального ожидания от сервера LongPoll
+        * `client`: HTTP клиент для отправки запросов
+        * `json_parser`: Парсер JSON для новых событий
+        """
         if (
             group_id is None
             and self.api.token_owner == vkquick.api.TokenOwner.USER
@@ -116,6 +152,23 @@ class GroupLongPoll(LongPollBase):
 class UserLongPoll(LongPollBase):
     """
     LongPoll обработчик для событий пользователя
+
+
+        import asyncio
+
+        import vkquick as vq
+
+
+        async def main():
+            vq.curs.api = vq.API("user-token")
+            lp = vq.UserLongPoll()
+            await lp.setup()
+            async for events in lp:
+                for event in events:
+                    print(event)
+
+
+        asyncio.run(main())
     """
 
     api: vkquick.api.API = vkquick.current.fetch(
@@ -134,6 +187,13 @@ class UserLongPoll(LongPollBase):
             ty.Type[vkquick.base.json_parser.JSONParser]
         ] = None,
     ):
+        """
+        * `version`: Версия LongPoll
+        * `wait`: Время максимального ожидания от сервера LongPoll
+        * `mode`: Битовая макса для указания полей в событии
+        * `client`: HTTP клиент для отправки запросов
+        * `json_parser`: парсер JSON для новых событий
+        """
         self.version = version
         self.wait = wait
         self.mode = mode

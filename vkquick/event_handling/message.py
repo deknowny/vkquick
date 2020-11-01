@@ -68,6 +68,11 @@ class Message:
         event: ty.Optional[vkquick.events_generators.event.Event] = None,
         peer_id: ty.Optional[int] = None,
     ) -> vkquick.utils.AttrDict:
+        """
+        Отправка сообщения туда, откуда пришло. Может
+        автоматически определить исходя из события,
+        а можно передать `peer_id` вручную
+        """
         peer_id = peer_id or event.get_message_object().peer_id
         if not (
             {
@@ -80,5 +85,5 @@ class Message:
             }
             & set(self.params)
         ):
-            self.params["peer_id"] = peer_id
+            self.params["peer_ids"] = peer_id
         return await self.api.method("messages.send", self.params)

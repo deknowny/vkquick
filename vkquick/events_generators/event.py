@@ -72,6 +72,12 @@ class Event(vkquick.utils.AttrDict):
         elif isinstance(self(), dict):
             return self.object
 
+    def __eq__(self, other: Event) -> bool:
+        """
+        Сравнение событий по их айди
+        """
+        return self.event_id == other.event_id
+
     def __str__(self):
         """
         Минималистичное отображение события

@@ -1,3 +1,6 @@
+"""
+Имплементации `base/json_parser`
+"""
 import functools
 import json
 

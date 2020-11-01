@@ -1,5 +1,12 @@
 """
-Реализация дебаггера
+Реализация дебаггеров
+
+Дебаггер -- терминальный визуализатор команд,
+наглядно показывающий, что произошло во время
+обработки события: подходит ли его тип, каково
+решение фильтров самого обработчика, какие
+аргументы были переданы в реакцию, и была ли реакция вызвана
+вообще
 """
 import os
 import functools
@@ -32,7 +39,9 @@ def uncolored_text(text: str) -> str:
 
 
 class ColoredDebugger(vkquick.base.debugger.Debugger):
-
+    """
+    Цветной дебаггер
+    """
     event_handler_passed_color: Color = staticmethod(huepy.green)
     event_handler_not_passed_color: Color = staticmethod(huepy.red)
     event_handler_taken_time_color: Color = staticmethod(true_grey)
@@ -64,6 +73,8 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
     event_handler_arguments_separator: str = ""
     event_handler_arguments_template: str = "\n{arguments}"
     event_handler_argument_template: str = "    >> {name}: {value!s}\n"
+
+    # Да, я устал.
 
     def render(self):
         """
@@ -277,7 +288,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
 class UncoloredDebugger(ColoredDebugger):
     """
-    Дебагер без цвета
+    Дебаггер без цвета
     """
 
     event_handler_passed_color: Color = staticmethod(uncolored_text)

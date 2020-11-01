@@ -1,5 +1,4 @@
 import typing as ty
-import ssl
 
 import aiohttp
 import requests
@@ -42,6 +41,7 @@ class AIOHTTPClient(vkquick.base.client.AsyncHTTPClient):
 
     async def close(self):
         await self.session.close()
+        # Если сессия может делаться коннекторами:
         # await self.connector.close()
 
 

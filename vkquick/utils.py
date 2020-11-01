@@ -1,5 +1,6 @@
 """
 Тривиальные инструменты для некоторых кейсов
+(я просто не знаю, куда это деть)
 """
 from __future__ import annotations
 import asyncio
