@@ -104,9 +104,9 @@ async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     
 def build_text(eh):
     prefixes = "\\n".join(
-        map(lambda x: f"-> [id0|{x}&#13;]", eh.origin_prefixes)
+        map(lambda x: f"-> [id0|{x}&#8203;]", eh.origin_prefixes)
     )
-    names = "\\n".join(map(lambda x: f"-> [id0|{x}&#13;]", eh.origin_names))
+    names = "\\n".join(map(lambda x: f"-> [id0|{x}&#8203;]", eh.origin_names))
     params_description = "\\n".join(
         f"[id0|{pos + 1}.] {arg.usage_description()}"
         for pos, arg in enumerate(eh.text_arguments.values())
@@ -155,7 +155,7 @@ def readme():
     \"""
     Сводка по боту.
     \"""
-    return vq.MessageResponse(
+    return vq.Message(
         text, disable_mentions=True
     )
 """.lstrip()
