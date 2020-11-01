@@ -1,14 +1,47 @@
 from __future__ import annotations
 import dataclasses
+import enum
 import typing as ty
 
 import vkquick.utils
 
 
+class ReservedSignal(enum.Enum):
+    STARTUP = enum.auto()
+    SHUTDOWN = enum.auto()
+    POST_EVENT_HANDLING = enum.auto()
+
+
+SignalName = ty.Union[str, ReservedSignal]
+
+
 @dataclasses.dataclass
 class SignalHandler:
-    signal_name: str
 
-    def __call__(self, reaction: ty.Callable[..., ty.Any]) -> SignalHandler:
+    name: SignalName
+
+    def __call__(
+        self, reaction: vkquick.utils.sync_async_callable(..., ty.Any)
+    ) -> SignalHandler:
         self.reaction = reaction
         return self
+
+
+@dataclasses.dataclass
+class SignalCaller:
+
+    signal_name: ty.Optional[SignalName] = None
+    handlers: ty.List[SignalHandler] = dataclasses.field(default_factory=list)
+
+    def __getattr__(self, signal_name: SignalName) -> SignalCaller:
+        self.signal_name = signal_name
+        return self
+
+    def __call__(self, *args, **kwargs) -> ty.Any:
+        signal_name = self.signal_name
+        self.signal_name = None
+        for handler in self.signal_handlers:
+            if handler.name == signal_name:
+                return vkquick.utils.sync_async_run(
+                    handler.reaction(*args, **kwargs)
+                )
