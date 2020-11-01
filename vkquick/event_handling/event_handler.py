@@ -26,12 +26,14 @@ class EventHandler:
     def __init__(self, *event_types) -> None:
         self.event_types = event_types or ...
         self.filters: ty.List[vkquick.base.filter.Filter] = []
+        self.payload_arguments = {}
+        self.reaction_arguments = {}
 
     def __call__(
         self, reaction: ty.Callable[..., ty.Union[ty.Awaitable, None]]
     ) -> EventHandler:
         self.reaction = reaction
-        self.reaction_arguments = self._convert_reaction_arguments()
+        self._capture_reaction_arguments()
         return self
 
     async def handle_event(
@@ -136,21 +138,22 @@ class EventHandler:
                 )
         return reaction_arguments
 
-    def _convert_reaction_arguments(self) -> ty.Dict[str, ty.Any]:
+    def _capture_reaction_arguments(self) -> None:
         """
         Если тайпинг аргумента не инстанс,
         а должен быть (поле `always_be_instance`),
         инстанс создастся автоматически
         """
         reaction_parameters = inspect.signature(self.reaction).parameters
-        reaction_arguments = {}
         for name, value in reaction_parameters.items():
-            if inspect.isclass(value.annotation):
-                reaction_arguments[name] = value.annotation()
+            if value.default != value.empty:
+                typing_type = value.default
             else:
-                reaction_arguments[name] = value.annotation
-
-        return reaction_arguments
+                typing_type = value.annotation
+            if inspect.isclass(typing_type):
+                self.reaction_arguments[name] = typing_type()
+            else:
+                self.reaction_arguments[name] = typing_type
 
     async def call_reaction(
         self,

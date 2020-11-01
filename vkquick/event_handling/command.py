@@ -84,6 +84,8 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             flags=matching_command_routing_re_flags,
         )
 
+        self.text_arguments = {}
+
         handled_event_types = ["message_new", 4]
         if not ignore_editing:
             handled_event_types.extend("message_edit")
@@ -105,8 +107,6 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         """
         Разделяет `self.reaction_arguments` на `TextArgument` и `PayloadArgument`
         """
-        self.payload_arguments = {}
-        self.text_arguments = {}
         for name, value in self.reaction_arguments.items():
             if isinstance(value, vkquick.base.text_argument.TextArgument,):
                 self.text_arguments[name] = value
@@ -253,9 +253,6 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     ) -> ty.Tuple[
         bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]
     ]:
-        """
-
-        """
         command_text_filter_decision = await self.command_text_filter(event)
         command_text_filter_name = "CommandText"
         passed_command_text_filter = (
@@ -320,9 +317,6 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
     async def routing_reaction_response(
         response: Response, event: vkquick.events_generators.event.Event,
     ) -> None:
-        """
-
-        """
         if isinstance(response, vkquick.event_handling.message.Message):
             asyncio.create_task(response.send(event))
         elif response is not None:
