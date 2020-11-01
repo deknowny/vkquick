@@ -62,4 +62,4 @@ from .event_handling.filters.enable import Enable, EnableStatus
 
 from .wrappers.user import User
 
-__version__ = "1.0.0a1"
+__version__ = "1.0.0a2"
