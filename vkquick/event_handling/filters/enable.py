@@ -1,5 +1,4 @@
 import enum
-import typing as ty
 
 import vkquick.base.filter
 import vkquick.events_generators.event
