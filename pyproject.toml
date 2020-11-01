@@ -29,7 +29,6 @@ classifiers = [
 python = "^3.8"
 pygments = "^2.6.1"
 cleo = "^0.8.1"
-orjson = { version = "^3.3.1", optional = true }
 watchgod = { version = "^0.6", optional = true }
 huepy = "^1.2.1"
 requests = "^2.24.0"
@@ -47,7 +46,6 @@ pylint = "^2.6.0"
 pytest-mock = "^3.3.1"
 
 [tool.poetry.extras]
-orjson = ["orjson"]
 watchgod = ["watchgod"]
 
 [tool.poetry.urls]
