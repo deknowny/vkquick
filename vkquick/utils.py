@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import random
 import os
+import functools
 import typing as ty
 
 
@@ -25,10 +26,11 @@ def sync_async_callable(
     ]
 
 
+@functools.lru_cache(maxsize=None)
 def peer(chat_id: int = 0) -> int:
     """
     Добавляет к `chat_id` значение, чтобы оно стало `peer_id`.
-    Кртакая и более приятная запись сложения любого числа с 2 000 000 000
+    Краткая и более приятная запись сложения любого числа с 2 000 000 000
     (да, на один символ)
 
     peer_id=vq.peer(123)
@@ -134,6 +136,9 @@ class AttrDict:
 
     def __setitem__(self, key, value):
         self.__setattr__(key, value)
+
+    def __len__(self):
+        return len(self())
 
 
 def clear_console():
