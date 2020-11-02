@@ -42,6 +42,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
     """
     Цветной дебаггер
     """
+
     event_handler_passed_color: Color = staticmethod(huepy.green)
     event_handler_not_passed_color: Color = staticmethod(huepy.red)
     event_handler_taken_time_color: Color = staticmethod(true_grey)

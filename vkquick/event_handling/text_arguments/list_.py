@@ -52,7 +52,10 @@ class List(vkquick.base.text_argument.TextArgument):
 
     def usage_description(self):
         part_desc = self.element.usage_description().rstrip()
-        length_rule = part_desc + f" Минимальное количество элементов >= {self.min_length}, а максимальное "
+        length_rule = (
+            part_desc
+            + f" Минимальное количество элементов >= {self.min_length}, а максимальное "
+        )
         if self.max_length is Ellipsis:
             max_length_desc = "не ограничено."
         else:

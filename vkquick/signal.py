@@ -40,6 +40,7 @@ class ReservedSignal(enum.Enum):
     """
     Зарезервированные сигналы
     """
+
     STARTUP = enum.auto()
     """
     Вызывается в момент запуска бота
@@ -69,6 +70,7 @@ class SignalHandler:
     Обработчик сигнала (и кастомного, и зарезервированного). Пример
     есть в описании модуля
     """
+
     name: SignalName
     """
     Имя обрабатываемого сигнала
@@ -89,6 +91,7 @@ class SignalCaller:
     """
     Сама логика по вызову сигналов. Можно интегрировать куда угодно
     """
+
     handlers: ty.List[SignalHandler] = dataclasses.field(default_factory=list)
     signal_name: ty.Optional[SignalName] = None
 

@@ -12,6 +12,7 @@ class UserMention(vkquick.base.text_argument.TextArgument):
     """
     Упоминание пользователя
     """
+
     async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         value, parsed_string = self.cut_part_lite(
             vkquick.wrappers.user.User.mention_regex,

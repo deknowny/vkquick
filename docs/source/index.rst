@@ -8,7 +8,6 @@
 
 
 .. automodule:: vkquick
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -16,7 +15,6 @@
    :maxdepth: 1
 
    modules
-   vkquick.api
 
 
 

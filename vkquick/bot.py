@@ -186,9 +186,13 @@ class Bot:
         api = vkquick.api.API(token)
         vkquick.current.curs.api = api
         if api.token_owner == vkquick.api.TokenOwner.GROUP:
-            vkquick.current.curs.lp = vkquick.events_generators.longpoll.GroupLongPoll()
+            vkquick.current.curs.lp = (
+                vkquick.events_generators.longpoll.GroupLongPoll()
+            )
         else:
-            vkquick.current.curs.lp = vkquick.events_generators.longpoll.UserLongPoll()
+            vkquick.current.curs.lp = (
+                vkquick.events_generators.longpoll.UserLongPoll()
+            )
 
         # Сам инстанс бота
         self = object.__new__(cls)
@@ -407,7 +411,12 @@ class Bot:
         return event.type in ("message_new", "message_edit", 4)
 
     @staticmethod
-    def show_debug_message_for_release(_, handling_info: ty.List[vkquick.event_handling.handling_info_scheme.HandlingInfoScheme]) -> None:
+    def show_debug_message_for_release(
+        _,
+        handling_info: ty.List[
+            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+        ],
+    ) -> None:
         """
         Плейсхолдер для `show_debug_message` в момент
         запуска с флагом релиза

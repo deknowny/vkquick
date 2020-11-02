@@ -180,7 +180,10 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         matched = self.command_routing_regex.match(command_text)
         if matched:
             arguments_string = command_text[matched.end() :]
-            if arguments_string.lstrip() == arguments_string and arguments_string:
+            if (
+                arguments_string.lstrip() == arguments_string
+                and arguments_string
+            ):
                 return False, arguments_string
             return True, arguments_string
         return False, ""

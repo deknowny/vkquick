@@ -19,6 +19,7 @@ class LongPollBase(abc.ABC):
     """
     Базовый интерфейс для всех типов LongPoll
     """
+
     _lp_settings: ty.Optional[dict] = None
     session: ty.Optional[vkquick.clients.AIOHTTPClient] = None
 

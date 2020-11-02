@@ -13,13 +13,6 @@ Subpackages
 Submodules
 ----------
 
-vkquick.api module
-------------------
-
-.. automodule:: vkquick.api
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 vkquick.bot module
 ------------------

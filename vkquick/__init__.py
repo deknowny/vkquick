@@ -60,6 +60,6 @@ from .event_handling.payload_arguments.answer import Answer
 from .base.filter import Filter, FilterResponse, Decision, DecisionStatus
 from .event_handling.filters.enable import Enable, EnableStatus
 
-from .wrappers.user import User
+from .wrappers.user import User, UserField, UserNameCase
 
 __version__ = "1.0.0a2"

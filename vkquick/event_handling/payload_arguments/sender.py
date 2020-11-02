@@ -7,6 +7,7 @@ class Sender(vkquick.base.payload_argument.PayloadArgument):
     """
     Пользователь, отправивший сообщение
     """
+
     async def init_value(
         self, event: vkquick.events_generators.event.Event
     ) -> vkquick.wrappers.user.User:
