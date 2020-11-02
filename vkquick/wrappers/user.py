@@ -5,6 +5,7 @@ import typing as ty
 
 import vkquick.base.wrapper
 import vkquick.utils
+import vkquick.utils
 
 
 class User(vkquick.base.wrapper.Wrapper):
@@ -73,7 +74,9 @@ class User(vkquick.base.wrapper.Wrapper):
             raise ValueError(f"`{mention}` isn't a user mention")
 
         user_id = match.group("id")
-        return await cls.build_from_id(user_id, fields=fields, name_case=name_case)
+        return await cls.build_from_id(
+            user_id, fields=fields, name_case=name_case
+        )
 
     def mention(self, alias: str, /) -> str:
         """
@@ -84,18 +87,7 @@ class User(vkquick.base.wrapper.Wrapper):
         return mention
 
 
-class _AutoUpperName(enum.Enum):
-    """
-    Enum, который при авто опускает
-    имя ключа в нижний регистр и дает его в значение
-    """
-
-    @staticmethod
-    def _generate_next_value_(name, *args):
-        return name.lower()
-
-
-class UserField(str, _AutoUpperName):
+class UserField(str, vkquick.utils.AutoUpperNameEnum):
     """
     Параметры для `users.get`
     """
@@ -175,7 +167,7 @@ class UserField(str, _AutoUpperName):
     LAST_NAME_ABL = enum.auto()
 
 
-class UserNameCase(str, _AutoUpperName):
+class UserNameEnumCase(str, vkquick.utils.AutoUpperNameEnum):
     """
     Падежи к имени в поле `name_case`
 

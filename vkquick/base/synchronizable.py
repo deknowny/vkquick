@@ -13,7 +13,7 @@ class Synchronizable:
     __synchronized = False  # По умолчанию асинхронно
 
     @property
-    def synchronized(self):
+    def is_synchronized(self):
         """
         Состояние режима объекта: асинхронный/синхронный
         """

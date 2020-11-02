@@ -32,7 +32,7 @@ class HandlingInfoScheme:
     """
 
     filters_response: ty.List[
-        ty.Tuple[vkquick.base.filter.FilterResponse, str]
+        ty.Tuple[str, vkquick.base.filter.FilterResponse]
     ] = dataclasses.field(default_factory=list)
     """
     Для каждого элемента списка:

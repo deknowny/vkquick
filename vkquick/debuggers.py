@@ -245,10 +245,10 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         """
         for decision in scheme.filters_response:
             decision_description = self.filter_decision_color(
-                decision[0].decision.description
+                decision[1].decision.description
             )
-            filter_name = decision[1]
-            if decision[0].decision.passed:
+            filter_name = decision[0]
+            if decision[1].decision.passed:
                 filter_name = self.passed_filter_name_color(filter_name)
             else:
                 filter_name = self.unpassed_filter_name_color(filter_name)

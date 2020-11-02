@@ -5,12 +5,12 @@ import re
 import typing as ty
 
 import vkquick.base.text_argument
-import vkquick.event_handling.text_arguments.text_values_base
+import vkquick.base.text_values
 
 
 class String(
     vkquick.base.text_argument.TextArgument,
-    vkquick.event_handling.text_arguments.text_values_base.TextBase,
+    vkquick.base.text_values.TextBase,
 ):
     """
     Любая последовательность символов

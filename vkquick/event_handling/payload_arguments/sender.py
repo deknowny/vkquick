@@ -1,10 +1,10 @@
 import vkquick.base.payload_argument
 import vkquick.events_generators.event
 import vkquick.wrappers.user
-import vkquick.event_handling.payload_arguments.user_type
+import vkquick.base.user_type
 
 
-class Sender(vkquick.event_handling.payload_arguments.user_type.UserType):
+class Sender(vkquick.base.user_type.UserType):
     """
     Пользователь, отправивший сообщение
     """

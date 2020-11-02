@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 import asyncio
+import enum
 import random
 import os
 import functools
@@ -149,3 +150,14 @@ def clear_console():
         os.system("cls")
     else:
         os.system("clear")
+
+
+class AutoUpperNameEnum(enum.Enum):
+    """
+    Enum, который при авто опускает
+    имя ключа в нижний регистр и дает его в значение
+    """
+
+    @staticmethod
+    def _generate_next_value_(name, *args):
+        return name.lower()

@@ -16,6 +16,7 @@ API ВКонтакте представляет собой набор
 from __future__ import annotations
 import asyncio
 import dataclasses
+import functools
 import enum
 import re
 import time
@@ -27,6 +28,7 @@ import vkquick.exceptions
 import vkquick.utils
 import vkquick.clients
 import vkquick.base.client
+import vkquick.wrappers.user
 
 
 class TokenOwner(str, enum.Enum):
@@ -201,6 +203,13 @@ class API(vkquick.base.synchronizable.Synchronizable):
         self.token_owner = self.token_owner or self._define_token_owner()
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
 
+    @functools.cached_property
+    def token_owner_user(self) -> vkquick.wrappers.user.User:
+        with self.synchronize():
+            user = self.users.get()
+            user = vkquick.wrappers.user.User(user[0])
+            return user
+
     def __getattr__(self, attribute: str) -> API:
         """
         Выстраивает имя метода путем переложения
@@ -266,7 +275,7 @@ class API(vkquick.base.synchronizable.Synchronizable):
         в зависимости от того значения синхронизации
         """
         self._convert_collections_params(request_params)
-        if self.synchronized:
+        if self.is_synchronized:
             return self._make_sync_api_request(method_name, request_params)
         return self._make_async_api_request(method_name, request_params)
 

@@ -99,7 +99,7 @@ class EventHandler:
     async def run_trough_filters(
         self, event: vkquick.events_generators.event.Event
     ) -> ty.Tuple[
-        bool, ty.List[ty.Tuple[vkquick.base.filter.FilterResponse, str]]
+        bool, ty.List[ty.Tuple[str, vkquick.base.filter.FilterResponse]]
     ]:
         """
         Пропускает событие через все фильтры. Возвращает кортеж из значений:
@@ -113,7 +113,7 @@ class EventHandler:
             filter_response = await vkquick.utils.sync_async_run(
                 filter_.make_decision(event)
             )
-            decision = (filter_response, filter_.__class__.__name__)
+            decision = (filter_.__class__.__name__, filter_response)
             filters_decision.append(decision)
             if not filter_response.decision.passed:
                 passed_all = False

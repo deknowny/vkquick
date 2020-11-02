@@ -9,6 +9,7 @@ import pygments.token
 
 import vkquick.base.payload_argument
 import vkquick.utils
+import vkquick.current
 
 
 pygments.formatters.terminal.TERMINAL_COLORS[
@@ -30,6 +31,8 @@ class Event(vkquick.utils.AttrDict):
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам
     """
+
+    api = vkquick.current.fetch("api_event", "api")
 
     def __new__(cls, mapping):
         if isinstance(mapping, list):
@@ -62,7 +65,7 @@ class Event(vkquick.utils.AttrDict):
                     "text": self[5],
                     "from_id": int(self[6]["from"])
                     if "from" in self[6]
-                    else self[3],
+                    else self.api.token_owner_user.id,
                     "attachments": self[7],
                     "random_id": self[8],
                 }
