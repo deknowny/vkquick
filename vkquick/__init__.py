@@ -61,7 +61,6 @@ from .event_handling.filters.retract_access_for import RetractAccessFor, Retract
 from .event_handling.filters.allow_access_for import AllowAccessFor, AllowAccessForStatus
 from .event_handling.filters.action import Action, ActionStatus
 
-from .base.filter import Filter, FilterResponse, Decision, DecisionStatus
 from .base.payload_argument import PayloadArgument
 from .base.text_values import TextBase
 from .base.text_argument import TextArgument

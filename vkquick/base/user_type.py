@@ -7,7 +7,7 @@ import typing as ty
 import vkquick.base.payload_argument
 
 
-class UserType(abc.ABC, vkquick.base.payload_argument.PayloadArgument):
+class UserType(vkquick.base.payload_argument.PayloadArgument, abc.ABC):
     """
     Расширяет тип, добавляя `fields` и `name_case`
     """

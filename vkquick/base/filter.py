@@ -1,10 +1,7 @@
 import abc
 import dataclasses
 import enum
-import typing as ty
 
-import vkquick.events_generators.event
-import vkquick.event_handling.event_handler
 import vkquick.utils
 
 
@@ -53,8 +50,8 @@ class Filter(abc.ABC):
         """
 
     def __call__(
-        self, event_handler: vkquick.event_handling.event_handler.EventHandler
-    ) -> vkquick.event_handling.event_handler.EventHandler:
+        self, event_handler: "vkquick.event_handling.event_handler.EventHandler"
+    ) -> "vkquick.event_handling.event_handler.EventHandler":
         """
         Вызывается в момент декорирования.
         Фильтры должны быть указаны над хендлером событий

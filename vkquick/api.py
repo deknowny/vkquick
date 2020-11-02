@@ -274,13 +274,13 @@ class API(vkquick.base.synchronizable.Synchronizable):
         Определяет, как вызывается запрос: синхронно или асинхронно
         в зависимости от того значения синхронизации
         """
-        self._convert_collections_params(request_params)
+        request_params = self._convert_collections_params(request_params)
         if self.is_synchronized:
             return self._make_sync_api_request(method_name, request_params)
         return self._make_async_api_request(method_name, request_params)
 
     @staticmethod
-    def _convert_collections_params(params: ty.Dict[str, ty.Any], /) -> None:
+    def _convert_collections_params(params: ty.Dict[str, ty.Any], /) -> ty.Dict[str, ty.Any]:
         """
         Лучшее API в Интернете не может распарсить массивы,
         поэтому все перечисления нужно собирать в строку и разделять запятой
@@ -295,19 +295,21 @@ class API(vkquick.base.synchronizable.Synchronizable):
 
         + со временем сюда добавились еще некоторые преобразования
         """
+        new_params = {}
         for key, value in params.items():
             if isinstance(value, (list, set, tuple)):
-                params[key] = ",".join(map(str, value))
+                new_params[key] = ",".join(map(str, value))
 
             # Для aiohttp
             elif isinstance(value, bool):
-                params[key] = int(value)
+                new_params[key] = int(value)
 
             elif value is None:
-                del params[key]
-
+                continue
             else:
-                str(params[key])
+                new_params[key] = str(value)
+
+        return new_params
 
     def _prepare_response_body(
         self, body: ty.Dict[str, ty.Any]
