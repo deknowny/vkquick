@@ -283,14 +283,22 @@ class API(vkquick.base.synchronizable.Synchronizable):
         Но приходится вот так (%2C - запятая по стандарту):
 
         `?foo=fizz%2Cbazz %2C - запятая по стандарту
+
+        + со временем сюда добавились еще некоторые преобразования
         """
         for key, value in params.items():
             if isinstance(value, (list, set, tuple)):
                 params[key] = ",".join(map(str, value))
 
-            # For aiohttp
+            # Для aiohttp
             elif isinstance(value, bool):
                 params[key] = int(value)
+
+            elif value is None:
+                del params[key]
+
+            else:
+                str(params[key])
 
     def _prepare_response_body(
         self, body: ty.Dict[str, ty.Any]
