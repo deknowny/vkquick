@@ -4,10 +4,10 @@ Bool аргумент
 import re
 import typing as ty
 
-from vkquick.base import text_argument
+from vkquick.base import text_cutter
 
 
-class Bool(text_argument.TextArgument):
+class Bool(text_cutter.TextCutter):
     """
     Аргумент с двумя возможными значениям -- True и False
     """
@@ -67,17 +67,17 @@ class Bool(text_argument.TextArgument):
             self.true_regex, arguments_string
         )
 
-        if value is not text_argument.UnmatchedArgument:
+        if value is not text_cutter.UnmatchedArgument:
             return True, parsed_string
 
         value, parsed_string = self.cut_part_lite(
             self.false_regex, arguments_string
         )
 
-        if value is not text_argument.UnmatchedArgument:
+        if value is not text_cutter.UnmatchedArgument:
             return False, parsed_string
 
-        return text_argument.UnmatchedArgument, parsed_string
+        return text_cutter.UnmatchedArgument, parsed_string
 
     def usage_description(self):
         return "Todo"  # TODO

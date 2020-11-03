@@ -2,8 +2,50 @@ import abc
 import dataclasses
 import typing as ty
 
-import vkquick.event_handling.handling_info_scheme
+import pydantic
+
+import vkquick.base.filter
 import vkquick.events_generators
+
+
+class HandlingStatus(pydantic.BaseModel):
+    """
+    Схема отчета от `EventHandler` по обработке события
+    """
+    all_filters_passed: bool
+    """
+    Все ли фильтры пройдены
+    """
+
+    taken_time: float
+    """
+    Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
+    """
+
+    filters_response: ty.List[
+        ty.Tuple[str, vkquick.base.filter.FilterResponse]
+    ] = pydantic.Field(default_factory=list)
+    """
+    Для каждого элемента списка:
+    * Событие прошло/не прошло
+    * Описание решения фильтра (причина обработки/не обработки) 
+    * Имя фильтра (`__name__` атрибут)
+    """
+
+    passed_arguments: ty.Dict[str, ty.Any] = pydantic.Field(
+        default_factory=dict
+    )
+    """
+    Словарь переданных аргументов в саму функцию обработки
+    (под ключом имя аргумента, под значение само значение аргумента).
+    В случае отсутствия аргументов или какой-либо
+    фильтр не пройден список передается пустой
+    """
+
+    exception_text: str = ""
+    """
+    Если реакция подняла исключение, то его текст отобразится
+    """
 
 
 @dataclasses.dataclass
@@ -22,7 +64,7 @@ class Debugger(abc.ABC):
     Событие, которое было обработано
     """
     schemes: ty.List[
-        vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+        HandlingStatus
     ]
     """
     Набор отчетов об обработке, сформированных обработчиками/командами
@@ -34,3 +76,5 @@ class Debugger(abc.ABC):
         Основной метод визуализации, выстраивающий
         сообщение для отображения в терминале
         """
+
+

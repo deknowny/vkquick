@@ -1,6 +1,6 @@
 import typing as ty
 
-import vkquick.base.text_argument
+import vkquick.base.text_cutter
 
 
 class TextBase:
@@ -42,13 +42,13 @@ class TextBase:
     def check_range(
         self, got_value: ty.Any, parsed_string: str
     ) -> ty.Tuple[ty.Any, str]:
-        if got_value is not vkquick.base.text_argument.UnmatchedArgument:
+        if got_value is not vkquick.base.text_cutter.UnmatchedArgument:
             length = len(got_value)
             if length < self.min_length or (
                 self.max_length is not None and length > self.max_length
             ):
                 return (
-                    vkquick.base.text_argument.UnmatchedArgument,
+                    vkquick.base.text_cutter.UnmatchedArgument,
                     parsed_string,
                 )
         return got_value, parsed_string

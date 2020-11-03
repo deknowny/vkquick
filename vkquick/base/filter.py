@@ -1,30 +1,37 @@
 import abc
 import dataclasses
 import enum
+import typing as ty
 
 import vkquick.utils
 
+#
+# @dataclasses.dataclass(frozen=True)
+# class Decision:
+#     passed: bool
+#     description: str
+#
+#
+# class DecisionStatus(enum.Enum):
+#     ...
+#
+#
+# @dataclasses.dataclass(frozen=True)
+# class FilterResponse:
+#     """
+#     Ответ, который дает фильтр после обработки события
+#     """
+#     status_code: DecisionStatus
+#     decision: Decision
+#     extra: vkquick.utils.AttrDict = dataclasses.field(
+#         default_factory=vkquick.utils.AttrDict
+#     )
+#
 
-@dataclasses.dataclass(frozen=True)
-class Decision:
+
+class Decision(ty.NamedTuple):
     passed: bool
     description: str
-
-
-class DecisionStatus(enum.Enum):
-    ...
-
-
-@dataclasses.dataclass(frozen=True)
-class FilterResponse:
-    """
-    Ответ, который дает фильтр после обработки события
-    """
-    status_code: DecisionStatus
-    decision: Decision
-    extra: vkquick.utils.AttrDict = dataclasses.field(
-        default_factory=vkquick.utils.AttrDict
-    )
 
 
 class Filter(abc.ABC):
@@ -50,8 +57,8 @@ class Filter(abc.ABC):
         """
 
     def __call__(
-        self, event_handler: "vkquick.event_handling.event_handler.EventHandler"
-    ) -> "vkquick.event_handling.event_handler.EventHandler":
+        self, context: "vkquick.event_handling.event_handler.EventHandler"
+    ) -> Decision:
         """
         Вызывается в момент декорирования.
         Фильтры должны быть указаны над хендлером событий

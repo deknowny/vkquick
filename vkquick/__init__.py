@@ -35,17 +35,8 @@ from .events_generators.longpoll import GroupLongPoll, UserLongPoll
 from .event_handling.message import Message
 from .event_handling.command import Command
 from .event_handling.event_handler import EventHandler
-from .event_handling.handling_info_scheme import HandlingInfoScheme
 
-from .event_handling.text_arguments.integer import Integer
-from .event_handling.text_arguments.word import Word
-from .event_handling.text_arguments.string_ import String
-from .event_handling.text_arguments.union import Union
-from .event_handling.text_arguments.regex import Regex
-from .event_handling.text_arguments.bool_ import Bool
-from .event_handling.text_arguments.list_ import List
-from .event_handling.text_arguments.mention import UserMention
-from .event_handling.text_arguments.optional import Optional
+from vkquick.text_arguments.mention import UserMention
 
 from .event_handling.payload_arguments.sender import Sender
 from .event_handling.payload_arguments.replied_user import RepliedUser
@@ -63,9 +54,9 @@ from .event_handling.filters.action import Action, ActionStatus
 
 from .base.payload_argument import PayloadArgument
 from .base.text_values import TextBase
-from .base.text_argument import TextArgument
-from .base.text_argument import UnmatchedArgument
-from .base.debugger import Debugger
+from .base.text_cutter import TextCutter
+from .base.text_cutter import UnmatchedArgument
+from .base.debugger import Debugger, HandlingStatus
 from .base.wrapper import Wrapper
 from .base.synchronizable import Synchronizable
 from .base.json_parser import JSONParser

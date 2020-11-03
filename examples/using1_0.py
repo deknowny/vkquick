@@ -1,48 +1,16 @@
 import os
+import asyncio
 
 import vkquick as vq
 
 
-vq.current.curs["api"] = vq.API(os.getenv("VKDEVGROUPTOKEN"))
-vq.current.curs["lp"] = vq.GroupLongPoll(group_id=int(os.getenv("VKDEVGROUPID")))
-bot = vq.Bot(event_handlers=[], signal_handlers=[])
+async def main():
+    vq.curs.api = vq.API(os.getenv("VKDEVGROUPTOKEN"))
+    lp = vq.GroupLongPoll()
+    await lp.setup()
+    async for events in lp:
+        for event in events:
+            print(event.pretty_view())
 
 
-@bot.event_handlers.append
-@vq.Enable(True)
-@vq.Command(
-    names=["foo", "bar"],
-    prefixes=["/", "!"],
-)
-async def foo(user: vq.UserMention(), other: vq.Union(vq.Integer(), vq.Word())):
-    """
-    Какое-то описание команды. Lorem ipsum
-    """
-    return f"Hello! Num is {locals()}"
-
-
-@bot.event_handlers.append
-@vq.Command(
-    names=["fizz"],
-    prefixes=["/", "!"],
-)
-async def bazz(num: vq.Integer()):
-    """
-    Какое-то описание команды. Lorem ipsum
-    """
-    return f"Hello! Num is {locals()}"
-
-
-@bot.event_handlers.append
-@vq.Command(
-    names=["help"],
-    prefixes=["/"],
-)
-async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
-    for event_handler in bot.event_handlers:
-        if isinstance(event_handler, vq.Command) and com_name in event_handler.origin_names:
-            return await vq.sync_async_run(event_handler.help_reaction(event))
-    return f"Команды с именем `{com_name}` не существует!"
-
-
-bot.run()
+asyncio.run(main())

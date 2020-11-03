@@ -147,7 +147,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def build_exception_header(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ):
         """
         Выстраивает заголовок для исключения
@@ -163,7 +163,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def build_event_handler_message(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> str:
         """
         Собирает сообщение о конкретном обработчике.
@@ -180,7 +180,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def build_event_handler_header(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> str:
         """
         Собирает заголовок обработчика для сообщения
@@ -207,7 +207,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def build_event_handler_filters_decision(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> str:
         """
         Собирает решение фильтров для сообщения
@@ -221,7 +221,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def build_event_handler_arguments(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> str:
         """
         Собирает аргументы для сообщения
@@ -238,7 +238,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def _generate_filters_message(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> ty.Generator[str, None, None]:
         """
         Генерирует информацию по каждому фильтру обработчика
@@ -260,7 +260,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
 
     def _generate_arguments_message(
         self,
-        scheme: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        scheme: vkquick.base.debugger.HandlingStatus,
     ) -> ty.Generator[str, None, None]:
         """
         Генерирует информацию по каждому аргументу, переданного

@@ -109,7 +109,7 @@ def build_text(eh):
     names = "\\n".join(map(lambda x: f"-> [id0|{x}&#8203;]", eh.origin_names))
     params_description = "\\n".join(
         f"[id0|{pos + 1}.] {arg.usage_description()}"
-        for pos, arg in enumerate(eh.text_arguments.values())
+        for pos, arg in enumerate(eh.text_cutters.values())
     )
     description = eh.description or "Описание отсутствует"
     text = (

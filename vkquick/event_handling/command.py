@@ -8,7 +8,7 @@ import vkquick.event_handling.event_handler
 import vkquick.event_handling.message
 import vkquick.events_generators.event
 import vkquick.base.payload_argument
-import vkquick.base.text_argument
+import vkquick.base.text_cutter
 import vkquick.base.filter
 import vkquick.utils
 
@@ -112,7 +112,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         Разделяет `self.reaction_arguments` на `TextArgument` и `PayloadArgument`
         """
         for name, value in self.reaction_arguments.items():
-            if isinstance(value, vkquick.base.text_argument.TextArgument,):
+            if isinstance(value, vkquick.base.text_cutter.TextCutter, ):
                 self.text_arguments[name] = value
             elif isinstance(
                 value, vkquick.base.payload_argument.PayloadArgument,
@@ -137,7 +137,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             return response
 
         # arguments_string -- остаток от текста, откуда вырезались аргументы
-        # text_arguments -- словарь с инстансами `TextArguments`
+        # text_cutters -- словарь с инстансами `TextArguments`
         matched, arguments_string, text_arguments = await self.cut_arguments(
             event, arguments_string
         )
@@ -215,7 +215,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             )
             text_arguments[name] = matched_value
             arguments_string = arguments_string.lstrip()
-            if matched_value is vkquick.base.text_argument.UnmatchedArgument:
+            if matched_value is vkquick.base.text_cutter.UnmatchedArgument:
                 asyncio.create_task(
                     self._on_unsuccessful_cutting(
                         name, arguments_string, value, event
@@ -237,7 +237,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         self,
         argument_name: str,
         argument_string: str,
-        text_argument: vkquick.base.text_argument.TextArgument,
+        text_argument: vkquick.base.text_cutter.TextCutter,
         event: vkquick.events_generators.event.Event,
     ) -> None:
         argument_position = (

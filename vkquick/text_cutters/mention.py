@@ -3,12 +3,12 @@ UserMention аргумент
 """
 import typing as ty
 
-import vkquick.base.text_argument
+import vkquick.base.text_cutter
 import vkquick.wrappers.user
 
 
 # TODO: Links parsing (+ init: allows_links)
-class UserMention(vkquick.base.text_argument.TextArgument):
+class UserMention(vkquick.base.text_cutter.TextCutter):
     """
     Упоминание пользователя
     """
@@ -19,7 +19,7 @@ class UserMention(vkquick.base.text_argument.TextArgument):
             arguments_string,
             lambda x: int(x.group("id")),
         )
-        if value is vkquick.base.text_argument.UnmatchedArgument:
+        if value is vkquick.base.text_cutter.UnmatchedArgument:
             return value, parsed_string
 
         user = await vkquick.wrappers.user.User.build_from_id(value)

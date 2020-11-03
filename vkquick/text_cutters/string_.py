@@ -1,19 +1,19 @@
 """
-Word аргумент
+String аргумент
 """
 import re
 import typing as ty
 
-import vkquick.base.text_argument
+import vkquick.base.text_cutter
 import vkquick.base.text_values
 
 
-class Word(
-    vkquick.base.text_argument.TextArgument,
+class String(
+    vkquick.base.text_cutter.TextCutter,
     vkquick.base.text_values.TextBase,
 ):
     """
-    Слово, содержащее буквы, цифры и _
+    Любая последовательность символов
     """
 
     def __init__(
@@ -23,7 +23,7 @@ class Word(
         * `max_length`: Максимальная длина строки
         * `min_length`: Минимальная длина строки
         """
-        self.pattern = re.compile(r"\w+")
+        self.pattern = re.compile(r".+", flags=re.DOTALL)
         super().__init__(max_length, min_length)
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
@@ -33,5 +33,5 @@ class Word(
         return self.check_range(*parsed_result)
 
     def usage_description(self):
-        desc = "Аргумент может состоять из букв, чисел или знака нижнего подчеркивания. "  # Пробел стоит специально
+        desc = "Аргумент является строкой, содержащей любые символы. "  # Пробел стоит специально
         return self.create_length_rule(desc)

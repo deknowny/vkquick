@@ -1,14 +1,18 @@
-import os
+import typing as ty
 
-import vkquick as vq
-
-
-# Самая обычная команда, которая отвечает `hello!`
-@vq.Command(names=["hi"])
-def hi():
-    return "hello!"
+import pydantic
 
 
-bot = vq.Bot.init_via_token(os.getenv("VKDEVGROUPTOKEN"))
-bot.event_handlers.append(hi)
-bot.run()
+class Model(pydantic.BaseModel):
+    foo: ty.Optional[int]
+
+    def fizz(self):
+        return self.foo
+
+    class Config:
+        extra = "allow"
+
+
+model = Model(foo=123)
+print(Model(bar=123))
+print(model.fizz())

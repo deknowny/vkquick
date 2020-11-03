@@ -4,10 +4,10 @@ Integer аргумент
 import re
 import typing as ty
 
-import vkquick.base.text_argument
+import vkquick.base.text_cutter
 
 
-class Integer(vkquick.base.text_argument.TextArgument):
+class Integer(vkquick.base.text_cutter.TextCutter):
     """
     Целое число
     """
@@ -24,12 +24,12 @@ class Integer(vkquick.base.text_argument.TextArgument):
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not vkquick.base.text_argument.UnmatchedArgument
+            value is not vkquick.base.text_cutter.UnmatchedArgument
             and self.range_ is not None
             and value not in self.range_
         ):
             return (
-                vkquick.base.text_argument.UnmatchedArgument,
+                vkquick.base.text_cutter.UnmatchedArgument,
                 arguments_string,
             )
 

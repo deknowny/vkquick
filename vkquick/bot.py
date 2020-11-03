@@ -14,6 +14,7 @@ import typing as ty
 import huepy
 
 import vkquick.api
+import vkquick.base.debugger
 import vkquick.events_generators.longpoll
 import vkquick.current
 import vkquick.event_handling.event_handler
@@ -138,6 +139,9 @@ class Bot:
         ] = None,
         event_handlers: ty.Optional[
             ty.Collection[vkquick.event_handling.event_handler.EventHandler]
+        ] = None,
+        commands: ty.Optional[
+            ty.Collection
         ] = None,
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
@@ -325,7 +329,7 @@ class Bot:
         self,
         event: vkquick.events_generators.event.Event,
         handling_info: ty.List[
-            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+            vkquick.base.debugger.HandlingStatus
         ],
     ) -> None:
         """
@@ -343,7 +347,7 @@ class Bot:
     async def _call_post_event_handling_signal(
         self,
         event: vkquick.events_generators.event.Event,
-        handling_info: vkquick.event_handling.handling_info_scheme.HandlingInfoScheme,
+        handling_info: vkquick.base.debugger.HandlingStatus,
     ) -> None:
         """
         Вызывает зарезервированный сигнал `POST_EVENT_HANDLING`.
@@ -384,7 +388,7 @@ class Bot:
     def _update_statistic_info(
         self,
         handling_info: ty.List[
-            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+            vkquick.base.debugger.HandlingStatus
         ],
     ) -> None:
         """
@@ -414,7 +418,7 @@ class Bot:
     def show_debug_message_for_release(
         _,
         handling_info: ty.List[
-            vkquick.event_handling.handling_info_scheme.HandlingInfoScheme
+            vkquick.base.debugger.HandlingStatus
         ],
     ) -> None:
         """

@@ -14,7 +14,7 @@ class UnmatchedArgument:
     """
 
 
-class TextArgument(abc.ABC):
+class TextCutter(abc.ABC):
 
     api: vkquick.api.API = vkquick.current.fetch(
         "api_invalid_argument", "api"
