@@ -140,9 +140,7 @@ class Bot:
         event_handlers: ty.Optional[
             ty.Collection[vkquick.event_handling.event_handler.EventHandler]
         ] = None,
-        commands: ty.Optional[
-            ty.Collection
-        ] = None,
+        commands: ty.Optional[ty.Collection] = None,
         debug_filter: ty.Optional[
             ty.Callable[[vkquick.events_generators.event.Event], bool]
         ] = None,
@@ -328,9 +326,7 @@ class Bot:
     def show_debug_info(
         self,
         event: vkquick.events_generators.event.Event,
-        handling_info: ty.List[
-            vkquick.base.debugger.HandlingStatus
-        ],
+        handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
     ) -> None:
         """
         Показывает информацию в дебаггере. Если событие прошло фильтр,
@@ -386,10 +382,7 @@ class Bot:
         return info
 
     def _update_statistic_info(
-        self,
-        handling_info: ty.List[
-            vkquick.base.debugger.HandlingStatus
-        ],
+        self, handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
     ) -> None:
         """
         Обновляет информацию по статистике (количество вызванных команд)
@@ -416,10 +409,7 @@ class Bot:
 
     @staticmethod
     def show_debug_message_for_release(
-        _,
-        handling_info: ty.List[
-            vkquick.base.debugger.HandlingStatus
-        ],
+        _, handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
     ) -> None:
         """
         Плейсхолдер для `show_debug_message` в момент

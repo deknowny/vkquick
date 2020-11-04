@@ -40,7 +40,8 @@ def resolve_alias(alias: ty.Any) -> TextCutter:
         return Word()
     elif alias is bool:
         return Bool()
-    elif isinstance(alias, ty._Gen)
+    elif isinstance(alias, ty._GenericAlias):
+
 
         # try:
         #     real_type = cutters_aliases[alias]

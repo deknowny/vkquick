@@ -12,6 +12,7 @@ class HandlingStatus(pydantic.BaseModel):
     """
     Схема отчета от `EventHandler` по обработке события
     """
+
     all_filters_passed: bool
     """
     Все ли фильтры пройдены
@@ -63,9 +64,7 @@ class Debugger(abc.ABC):
     """
     Событие, которое было обработано
     """
-    schemes: ty.List[
-        HandlingStatus
-    ]
+    schemes: ty.List[HandlingStatus]
     """
     Набор отчетов об обработке, сформированных обработчиками/командами
     """
@@ -76,5 +75,3 @@ class Debugger(abc.ABC):
         Основной метод визуализации, выстраивающий
         сообщение для отображения в терминале
         """
-
-

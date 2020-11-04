@@ -11,6 +11,7 @@ class UserType(vkquick.base.payload_argument.PayloadArgument, abc.ABC):
     """
     Расширяет тип, добавляя `fields` и `name_case`
     """
+
     def __init__(
         self,
         *,

@@ -9,8 +9,7 @@ import vkquick.base.text_values
 
 
 class String(
-    vkquick.base.text_cutter.TextCutter,
-    vkquick.base.text_values.TextBase,
+    vkquick.base.text_cutter.TextCutter, vkquick.base.text_values.TextBase,
 ):
     """
     Любая последовательность символов

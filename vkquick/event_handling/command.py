@@ -62,7 +62,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
             ]
         ] = None,
         ignore_editing: bool = False,
-        extra: ty.Optional[vkquick.utils.AttrDict] = None
+        extra: ty.Optional[vkquick.utils.AttrDict] = None,
     ):
         self.on_invalid_text_argument = on_invalid_text_argument or {}
         self.on_filters_decision = on_filters_decision or {}
@@ -112,7 +112,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
         Разделяет `self.reaction_arguments` на `TextArgument` и `PayloadArgument`
         """
         for name, value in self.reaction_arguments.items():
-            if isinstance(value, vkquick.base.text_cutter.TextCutter, ):
+            if isinstance(value, vkquick.base.text_cutter.TextCutter,):
                 self.text_arguments[name] = value
             elif isinstance(
                 value, vkquick.base.payload_argument.PayloadArgument,

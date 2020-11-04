@@ -280,7 +280,9 @@ class API(vkquick.base.synchronizable.Synchronizable):
         return self._make_async_api_request(method_name, request_params)
 
     @staticmethod
-    def _convert_collections_params(params: ty.Dict[str, ty.Any], /) -> ty.Dict[str, ty.Any]:
+    def _convert_collections_params(
+        params: ty.Dict[str, ty.Any], /
+    ) -> ty.Dict[str, ty.Any]:
         """
         Лучшее API в Интернете не может распарсить массивы,
         поэтому все перечисления нужно собирать в строку и разделять запятой

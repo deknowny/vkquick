@@ -6,9 +6,7 @@ import vkquick.wrappers.user
 import vkquick.base.user_type
 
 
-class RepliedUser(
-    vkquick.base.user_type.UserType
-):
+class RepliedUser(vkquick.base.user_type.UserType):
     """
     Пользователь из сообщения, на которое ответили. Если такого
     нет, значит будет `None`
