@@ -33,6 +33,13 @@ class Command(Filter):
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
         self._reaction_context_argument_name = None
 
+        self._invalid_filter_handlers: ty.Dict[
+            str, sync_async_callable([Context], ...)
+        ] = {}
+        self._invalid_argument_handlers: ty.Dict[
+            str, sync_async_callable([Context], ...)
+        ] = {}
+
         self._build_routing_regex()
 
     @property
@@ -70,7 +77,7 @@ class Command(Filter):
         context = Context(
             source_event=event,
             message=Message.parse_obj(event.object.message()),
-            client_info=ClientInfo.parse_obj(event.object.client_info())
+            client_info=ClientInfo.parse_obj(event.object.client_info()),
         )
         (
             passed_every_filter,
@@ -110,11 +117,25 @@ class Command(Filter):
 
         return True, decisions
 
-    def on_invalid_filter(self, filter_: Filter, /):
-        ...
+    def on_invalid_filter(
+        self, filter_: Filter, /
+    ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
+        def wrapper(handler):
+            self._invalid_filter_handlers[
+                filter_.__class__.__name__
+            ] = handler
+            return handler
 
-    def on_invalid_argument(self, name: str):
-        ...
+        return wrapper
+
+    def on_invalid_argument(
+        self, name: str
+    ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
+        def wrapper(handler):
+            self._invalid_argument_handlers[name] = handler
+            return handler
+
+        return wrapper
 
     async def make_decision(self, context: Context):
         matched = self._command_routing_regex.match(context.message.text)

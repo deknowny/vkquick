@@ -16,14 +16,14 @@ class Context(pydantic.BaseModel):
     source_event: Event
     message: Message
     client_info: ClientInfo
-    filters_response: ty.Dict[
-        str, HandlingStatus
-    ] = pydantic.Field(default_factory=dict)
-    extra: AttrDict = pydantic.Field(
-        default_factory=AttrDict
+    filters_response: ty.Dict[str, HandlingStatus] = pydantic.Field(
+        default_factory=dict
     )
+    extra: AttrDict = pydantic.Field(default_factory=AttrDict)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}" \
-               f"(text={self.message.text!r}, " \
-               f"from={self.message.from_id})"
+        return (
+            f"{self.__class__.__name__}"
+            f"(text={self.message.text!r}, "
+            f"from={self.message.from_id})"
+        )

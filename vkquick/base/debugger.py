@@ -12,6 +12,7 @@ class HandlingStatus(pydantic.BaseModel):
     """
     Схема отчета от `EventHandler` по обработке события
     """
+
     reaction_name: str
 
     all_filters_passed: bool

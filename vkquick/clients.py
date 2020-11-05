@@ -16,9 +16,7 @@ class AIOHTTPClient(AsyncHTTPClient):
     """
 
     def __init__(  # noqa
-        self,
-        url: str,
-        json_parser: ty.Type[JSONParser],
+        self, url: str, json_parser: ty.Type[JSONParser],
     ) -> None:
         self.connector = None
         self.session = None
@@ -54,9 +52,7 @@ class RequestsHTTPClient(SyncHTTPClient):
     """
 
     def __init__(  # noqa
-        self,
-        url: str,
-        json_parser: ty.Type[JSONParser],
+        self, url: str, json_parser: ty.Type[JSONParser],
     ) -> None:
         self.session = requests.session()
         self.url = url

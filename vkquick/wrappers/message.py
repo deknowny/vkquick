@@ -122,7 +122,8 @@ class Message(pydantic.BaseModel):
 
         return await self.api.method("messages.send", params)
 
-    async def reply(self,
+    async def reply(
+        self,
         message: ty.Optional[str] = None,
         /,
         *,
@@ -150,15 +151,15 @@ class Message(pydantic.BaseModel):
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         forward: ty.Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         params = {
             "peer_ids": self.peer_id,
-            f"forward": '{'
-                        '"is_reply":true,'
-                        f'"conversation_message_ids":[{self.conversation_message_id}],'
-                        f'"peer_id":{self.peer_id}'
-                        '}'
+            f"forward": "{"
+            '"is_reply":true,'
+            f'"conversation_message_ids":[{self.conversation_message_id}],'
+            f'"peer_id":{self.peer_id}'
+            "}",
         }
         for name, value in locals().items():
             if name == "kwargs":

@@ -53,7 +53,9 @@ class User(vkquick.base.wrapper.Wrapper):
         """
         users = await cls.api.__get__(cls).users.get(
             allow_cache_=True,
-            user_ids=id_, fields=fields, name_case=name_case
+            user_ids=id_,
+            fields=fields,
+            name_case=name_case,
         )
         self = cls(users[0])
         return self

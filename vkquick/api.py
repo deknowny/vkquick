@@ -214,9 +214,7 @@ class API(Synchronizable):
     чтобы иметь возможность получать поля ответа через точку)
     """
 
-    json_parser: ty.Optional[
-        ty.Type[JSONParser]
-    ] = None
+    json_parser: ty.Optional[ty.Type[JSONParser]] = None
     """
     Парсер для JSON, приходящего от ответа вк
     """
@@ -244,24 +242,16 @@ class API(Synchronizable):
     """
 
     def __post_init__(self) -> None:
-        self.json_parser = (
-            self.json_parser or BuiltinJSONParser
+        self.json_parser = self.json_parser or BuiltinJSONParser
+        self.async_http_session = self.async_http_session or AIOHTTPClient(
+            url="https://api.vk.com/method/", json_parser=self.json_parser,
         )
-        self.async_http_session = (
-            self.async_http_session
-            or AIOHTTPClient(
-                url="https://api.vk.com/method/",
-                json_parser=self.json_parser,
-            )
+        self.sync_http_session = self.sync_http_session or RequestsHTTPClient(
+            url="https://api.vk.com/method/", json_parser=self.json_parser,
         )
-        self.sync_http_session = (
-            self.sync_http_session
-            or RequestsHTTPClient(
-                url="https://api.vk.com/method/",
-                json_parser=self.json_parser,
-            )
+        self.cache_table = self.cache_table or cachetools.TTLCache(
+            ttl=3600, maxsize=2 ** 15
         )
-        self.cache_table = self.cache_table or cachetools.TTLCache(ttl=3600, maxsize=2**15)
         self._method_name = ""
         self._last_request_time = 0
         self._delay = 0
@@ -301,7 +291,11 @@ class API(Synchronizable):
         return self
 
     def __call__(
-        self, use_autocomplete_params_: bool = False, /,  allow_cache_: bool = False, **request_params
+        self,
+        use_autocomplete_params_: bool = False,
+        /,
+        allow_cache_: bool = False,
+        **request_params,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос с именем метода, полученным через
@@ -319,11 +313,18 @@ class API(Synchronizable):
             request_params = {**self.autocomplete_params, **request_params}
         self._method_name = ""
         return self._route_request_scheme(
-            method_name=method_name, request_params=request_params, allow_cache=allow_cache_
+            method_name=method_name,
+            request_params=request_params,
+            allow_cache=allow_cache_,
         )
 
     def method(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any], /, *, allow_cache: bool = False
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        /,
+        *,
+        allow_cache: bool = False,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос, передавая имя метода (`method_name`)
@@ -339,11 +340,16 @@ class API(Synchronizable):
         method_name = self._convert_name(method_name)
         request_params = self._fill_request_params(request_params)
         return self._route_request_scheme(
-            method_name=method_name, request_params=request_params, allow_cache=allow_cache
+            method_name=method_name,
+            request_params=request_params,
+            allow_cache=allow_cache,
         )
 
     def _route_request_scheme(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        allow_cache: bool,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Определяет, как вызывается запрос: синхронно или асинхронно
@@ -351,8 +357,12 @@ class API(Synchronizable):
         """
         request_params = self._convert_collections_params(request_params)
         if self.is_synchronized:
-            return self._make_sync_api_request(method_name, request_params, allow_cache)
-        return self._make_async_api_request(method_name, request_params, allow_cache)
+            return self._make_sync_api_request(
+                method_name, request_params, allow_cache
+            )
+        return self._make_async_api_request(
+            method_name, request_params, allow_cache
+        )
 
     @staticmethod
     def _convert_collections_params(
@@ -400,7 +410,9 @@ class API(Synchronizable):
         return self.response_factory(body["response"])
 
     @staticmethod
-    def _build_cache_hash(method_name: str, data: ty.Dict[str, ty.Any]) -> str:
+    def _build_cache_hash(
+        method_name: str, data: ty.Dict[str, ty.Any]
+    ) -> str:
         """
         Создает хеш для кэш-таблицы, по которому можно
         будет в последующем достать уже отправленный
