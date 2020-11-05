@@ -57,9 +57,7 @@ class _HandlerMarker:
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    def command(
-        self, command: Command
-    ) -> Command:
+    def command(self, command: Command) -> Command:
         """
         Маркер для обработчика событий
         """
@@ -141,6 +139,7 @@ class Bot:
         ] = None,
     ):
         """
+        * `commands`: Список обрабатываемых команд
         * `signal_handlers`: Список доступных обработчиков сигналов
         * `debug_filter`: Фильтр на событие, возвращающий `True`/`False`. Необходим
         для того, чтобы лишние события не засоряли дебаггер. Если вернулось `False`,
@@ -206,13 +205,20 @@ class Bot:
         вызывает зарезервированный сигнал `SHUTDOWN`. С флагом релиза
         бот будет перезагружаться при любых ошибках, т.е. он не упадет.
         """
-        # Сигнал для обозначения начала запуска бота
+        asyncio.run(self.async_run())
+
+    async def async_run(self) -> ty.NoReturn:
+        """
+        Делает все то же самое, что `run`, только
+        этот метод корутинный и его можно вызвать
+        с другой корутиной конкурентно
+        """
         self.call_signal.signal_name = vkquick.signal.ReservedSignal.STARTUP
-        asyncio.run(vkquick.utils.sync_async_run(self.call_signal()))
-        asyncio.run(self.listen_events())
+        await vkquick.utils.sync_async_run(self.call_signal())
+        await self.listen_events()
         # Сигнал для обозначения окончания работы бота
         self.call_signal.signal_name = vkquick.signal.ReservedSignal.SHUTDOWN
-        asyncio.run(vkquick.utils.sync_async_run(self.call_signal()))
+        await vkquick.utils.sync_async_run(self.call_signal())
 
     async def listen_events(self) -> ty.NoReturn:
         """
@@ -232,10 +238,11 @@ class Bot:
                         self.pass_event_trough_commands(event)
                     )
                 if event.from_group:
+                    signal_calling = self.call_signal.via_name(
+                        f"on_{event.type}", event
+                    )
                     asyncio.create_task(
-                        vkquick.utils.sync_async_run(
-                            self.call_signal.via_name(f"on_{event.type}", event)
-                        )
+                        vkquick.utils.sync_async_run(signal_calling)
                     )
 
     async def pass_event_trough_commands(self, event: Event) -> None:
