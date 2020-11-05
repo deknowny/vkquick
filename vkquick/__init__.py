@@ -10,7 +10,7 @@ VK Quick — это высокоуровневная надстройка над
 from .current import fetch, curs
 from .api import API, TokenOwner
 from .exceptions import VkApiError
-from .signal import SignalCaller, SignalName, SignalHandler, ReservedSignal
+from .signal import SignalCaller, SignalName, SignalHandler, ReservedSignal, signal_handler
 
 from .utils import (
     AttrDict,
@@ -28,7 +28,6 @@ from .events_generators.longpoll import GroupLongPoll, UserLongPoll
 
 from .event_handling.message import Message
 
-# from .event_handling.command import Command
 from .command import Command
 from .context import Context
 from .event_handling.event_handler import EventHandler

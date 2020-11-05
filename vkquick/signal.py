@@ -90,7 +90,13 @@ class SignalCaller:
     handlers: ty.Collection[SignalHandler] = dataclasses.field(
         default_factory=tuple
     )
+    """
+    Обработчики сигналов
+    """
     signal_name: ty.Optional[SignalName] = None
+    """
+    Имя сигнала, которое нужно обработать 
+    """
 
     def __getattr__(self, signal_name: SignalName) -> SignalCaller:
         """
@@ -115,5 +121,15 @@ class SignalCaller:
     def via_name(
         self, name: ty.Optional[SignalName], /, *args, **kwargs
     ) -> ty.Any:
+        """
+        Позволяет вызвать сигнал явно передав его имя
+        """
         self.signal_name = name
         return self(*args, **kwargs)
+
+
+def signal_handler(reaction) -> SignalHandler:
+    """
+    Создает обработчик сигнала по его имени
+    """
+    return SignalHandler(reaction.__name__)(reaction)
