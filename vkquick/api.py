@@ -60,8 +60,11 @@ class API(Synchronizable):
 
         import vkquick as vq
 
+
         api = vq.API("mytoken")
-        await api.method("messages.getConversationsById", {"peer_ids": vq.peer(1)})
+        # Про синхронизаторы будет позже
+        with api.synchronize():
+            api.method("messages.getConversationsById", {"peer_ids": vq.peer(1)})
 
 
     > `vq.peer` прибавит к числу 2_000_000_000
@@ -71,8 +74,10 @@ class API(Synchronizable):
 
         import vkquick as vq
 
+
         api = vq.API("mytoken")
-        await api.messages.getConversationsById(peer_ids=vq.peer(1))
+        with api.synchronize():
+            api.messages.getConversationsById(peer_ids=vq.peer(1))
 
 
     VK Quick может преобразовать camelCase в snake_case:
@@ -80,9 +85,29 @@ class API(Synchronizable):
 
         import vkquick as vq
 
-        api = vq.API("mytoken")
-        await api.messages.get_conversations_by_id(peer_ids=vq.peer(1))
 
+        api = vq.API("mytoken")
+        with api.synchronize():
+            # Вызовет метод `messages.getConversationsById`
+            await api.messages.get_conversations_by_id(peer_ids=vq.peer(1))
+
+
+    По умолчанию запросы асинхронные и их можно await'ить или
+    создавать таски
+
+        import asyncio
+
+        import vkquick as vq
+
+
+        api = vq.API("mytoken")
+        async def main():
+            response = await api.messages.get_conversations_by_id(
+                peer_ids=vq.peer(1)
+            )
+            print(response)
+
+        asyncio.run(main())
 
     Автокомплит
 
@@ -93,11 +118,13 @@ class API(Synchronizable):
 
         import vkquick as vq
 
+
         api = vq.API("mytoken", autocomplete_params={"group_id": 123})
-        await api.messages.get_conversations_by_id(
-            ...,  # Подстановка `Ellipsis` первым аргументом вызывает автокомплит
-            peer_ids=vq.peer(1)
-        )
+        with api.synchronize():
+            api.messages.get_conversations_by_id(
+                ...,  # Подстановка `Ellipsis` первым аргументом вызывает автокомплит
+                peer_ids=vq.peer(1)
+            )
 
 
     Теперь метод вызвался с двумя параметрами: `group_id` и `peer_ids`
@@ -110,11 +137,15 @@ class API(Synchronizable):
 
         import vkquick as vq
 
+
         api = vq.API("mytoken")
-        convs = await api.messages.get_conversations_by_id(
-            peer_ids=vq.peer(1)
-        )
-        name = convs[0].chat_settings.title  # Аналогично convs[0]["chat_settings"]["title"]
+        with api.synchronize():
+            convs = await api.messages.get_conversations_by_id(
+                peer_ids=vq.peer(1)
+            )
+
+            # Аналогично convs[0]["chat_settings"]["title"]
+            name = convs[0].chat_settings.title
 
 
     Если вы хотите использовать свою обертку на словари, установите `response_factory`
@@ -135,6 +166,26 @@ class API(Synchronizable):
         # with api.synchronize():
         #     users = api.method("users.get", user_ids=1)
         print(users)
+
+
+    Кэширование
+
+    Вы можете кэшировать некоторые запросы для ускорения.
+    Кэш производится по отправленным параметрам и вызванному методу.
+    Доступен как синхронному, так и асинхронному API
+
+    import vkquick as vq
+
+        api = vq.API("mytoken")
+        with api.synchronize():
+
+            # Обычный запрос
+            api.users.get(allow_cache=True, user_ids=1)
+
+            # Этот вызов будет гораздо быстрее, т.к.
+            # Данные достанутся из кэша
+            api.users.get(allow_cache=True, user_ids=1)
+
     """
 
     token: str
@@ -178,10 +229,19 @@ class API(Synchronizable):
     """
 
     async_http_session: ty.Optional[AsyncHTTPClient] = None
+    """
+    Образ клиента для асинхронных HTTP запросов
+    """
 
     sync_http_session: ty.Optional[SyncHTTPClient] = None
+    """
+    Образ клиента для синхронных HTTP запросов
+    """
 
     cache_table: ty.Optional[cachetools.Cache] = None
+    """
+    Одна из имплементаций алгоритмов кэширования запросов
+    """
 
     def __post_init__(self) -> None:
         self.json_parser = (
@@ -210,6 +270,10 @@ class API(Synchronizable):
 
     @functools.cached_property
     def token_owner_user(self) -> User:
+        """
+        Владелец токена (объект пользовтаеля).
+        Только если токеном владеет юзер
+        """
         with self.synchronize():
             user = self.users.get()
             user = User(user[0])
@@ -245,6 +309,9 @@ class API(Synchronizable):
 
         В случае некорректного запроса поднимается ошибка
         `vkquick.exceptions.VkApiError`
+
+        `allow_cache` разрешает кэшировать текущий запрос
+        и использовать значение из кэша, если такое есть
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
@@ -265,18 +332,12 @@ class API(Synchronizable):
 
         В случае некорректного запроса поднимается ошибка
         `vkquick.exceptions.VkApiError`
+
+        `allow_cache` разрешает кэшировать текущий запрос
+        и использовать значение из кэша, если такое есть
         """
         method_name = self._convert_name(method_name)
         request_params = self._fill_request_params(request_params)
-        # if allow_cache:
-        #     # cache_hash = urllib.parse.urlencode(request_params)
-        #     # cache_hash = f"{method_name}#{cache_hash}"
-        #     # if cache_hash is self.cache_table:
-        #     #     return self.cache_table[cache_hash]
-        #     # response = self._route_request_scheme(
-        #     #     method_name=method_name,
-        #     #     request_params=request_params
-        #     # )
         return self._route_request_scheme(
             method_name=method_name, request_params=request_params, allow_cache=allow_cache
         )
@@ -340,6 +401,11 @@ class API(Synchronizable):
 
     @staticmethod
     def _build_cache_hash(method_name: str, data: ty.Dict[str, ty.Any]) -> str:
+        """
+        Создает хеш для кэш-таблицы, по которому можно
+        будет в последующем достать уже отправленный
+        когда-либо запрос
+        """
         cache_hash = urllib.parse.urlencode(data)
         cache_hash = f"{method_name}#{cache_hash}"
         return cache_hash
