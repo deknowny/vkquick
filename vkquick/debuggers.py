@@ -109,12 +109,11 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         """
         handling_messages: ty.List[str] = []
         for scheme in self.schemes:
-            if scheme.is_correct_event_type:
-                handling_message = self.build_event_handler_message(scheme)
-                if scheme.all_filters_passed:
-                    handling_messages.insert(0, handling_message)
-                else:
-                    handling_messages.append(handling_message)
+            handling_message = self.build_event_handler_message(scheme)
+            if scheme.all_filters_passed:
+                handling_messages.insert(0, handling_message)
+            else:
+                handling_messages.append(handling_message)
 
         separator = self.build_separator(
             self.reactions_separator_symbol, self.reactions_separator_color
@@ -151,7 +150,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         """
         Выстраивает заголовок для исключения
         """
-        reaction_name = scheme.handler.reaction.__name__
+        reaction_name = scheme.reaction_name
         reaction_name = self.exception_header_reaction_name_color(
             reaction_name
         )
@@ -186,7 +185,7 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
             header_color = self.event_handler_passed_color
         else:
             header_color = self.event_handler_not_passed_color
-        reaction_name = scheme.handler.reaction.__name__
+        reaction_name = scheme.reaction_name
         reaction_name = header_color(reaction_name)
         taken_time = scheme.taken_time
         taken_time = format(
@@ -237,12 +236,12 @@ class ColoredDebugger(vkquick.base.debugger.Debugger):
         """
         Генерирует информацию по каждому фильтру обработчика
         """
-        for decision in scheme.filters_response:
+        for filter_response in scheme.filters_response:
+            filter_name, decision = filter_response
             decision_description = self.filter_decision_color(
-                decision[1].decision.description
+                decision.description
             )
-            filter_name = decision[0]
-            if decision[1].decision.passed:
+            if decision.passed:
                 filter_name = self.passed_filter_name_color(filter_name)
             else:
                 filter_name = self.unpassed_filter_name_color(filter_name)

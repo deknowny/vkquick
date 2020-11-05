@@ -4,27 +4,24 @@
 """
 from __future__ import annotations
 import asyncio
-import datetime
 import os
-import time
 import traceback
 import functools
 import typing as ty
-
-import huepy
 
 import vkquick.api
 import vkquick.base.debugger
 import vkquick.events_generators.longpoll
 import vkquick.current
 import vkquick.event_handling.event_handler
-import vkquick.event_handling.command
 import vkquick.signal
 import vkquick.events_generators.event
 import vkquick.event_handling.handling_info_scheme
 import vkquick.exceptions
 import vkquick.utils
 import vkquick.debuggers
+from vkquick.events_generators.event import Event
+from vkquick.command import Command
 
 
 class _HandlerMarker:
@@ -60,14 +57,14 @@ class _HandlerMarker:
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    def event_handler(
-        self, handler: vkquick.event_handling.event_handler.EventHandler
-    ) -> vkquick.event_handling.event_handler.EventHandler:
+    def command(
+        self, command: Command
+    ) -> Command:
         """
         Маркер для обработчика событий
         """
-        self.bot.event_handlers.append(handler)
-        return handler
+        self.bot.commands.append(command)
+        return command
 
     def signal_handler(
         self, handler: vkquick.signal.SignalHandler
@@ -137,23 +134,14 @@ class Bot:
         signal_handlers: ty.Optional[
             ty.Collection[vkquick.signal.SignalHandler]
         ] = None,
-        event_handlers: ty.Optional[
-            ty.Collection[vkquick.event_handling.event_handler.EventHandler]
-        ] = None,
-        commands: ty.Optional[ty.Collection] = None,
-        debug_filter: ty.Optional[
-            ty.Callable[[vkquick.events_generators.event.Event], bool]
-        ] = None,
+        commands: ty.Optional[ty.Collection[Command]] = None,
+        debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
         debugger: ty.Optional[
             ty.Type[vkquick.debuggers.ColoredDebugger]
         ] = None,
     ):
         """
         * `signal_handlers`: Список доступных обработчиков сигналов
-        * `event_handlers`: Список доступных обработчиков событий
-        (`vq.Command` -- тоже обработчик событий). Если
-        работа обработчика переменна (например, одна команда может быть вызвана только
-        после вызова другой), то передавать обработчик в этот аргумент не нужно
         * `debug_filter`: Фильтр на событие, возвращающий `True`/`False`. Необходим
         для того, чтобы лишние события не засоряли дебаггер. Если вернулось `False`,
         информации в дебаггере не будет
@@ -161,18 +149,13 @@ class Bot:
         события сообщение в терминал для наглядного отображения произошедшего
         """
         self.signal_handlers = signal_handlers or []
-        self.event_handlers = event_handlers or []
+        self.commands = commands or []
         self.debug_filter = debug_filter or self.default_debug_filter
         self.debugger = debugger or vkquick.debuggers.ColoredDebugger
         self.call_signal = vkquick.signal.SignalCaller(self.signal_handlers)
 
         self.event_waiters: ty.List[asyncio.Future] = []
         self.mark = _HandlerMarker(self)
-
-        # Статистика
-        self._start_time = time.time()
-        self._handled_events_count = 0
-        self._command_calls_count = 0
 
     @classmethod
     def init_via_token(cls, token: str) -> Bot:
@@ -226,30 +209,7 @@ class Bot:
         # Сигнал для обозначения начала запуска бота
         self.call_signal.signal_name = vkquick.signal.ReservedSignal.STARTUP
         asyncio.run(vkquick.utils.sync_async_run(self.call_signal()))
-        # Отличие в бесконечной перезагрузке
-        if self.release:
-            while True:
-                try:
-                    asyncio.run(self.listen_events())
-                except KeyboardInterrupt:
-                    if self.release:
-                        vkquick.utils.clear_console()
-                    print(huepy.yellow("Bot was stopped\n"))
-                    print(self._fetch_statistic_message())
-                    break
-                except Exception:
-                    traceback.print_exc()
-        else:
-            try:
-                asyncio.run(self.listen_events())
-            except KeyboardInterrupt:
-                if self.release:
-                    vkquick.utils.clear_console()
-                print(huepy.yellow("Bot was stopped\n"))
-                print(self._fetch_statistic_message())
-            except Exception:
-                traceback.print_exc()
-
+        asyncio.run(self.listen_events())
         # Сигнал для обозначения окончания работы бота
         self.call_signal.signal_name = vkquick.signal.ReservedSignal.SHUTDOWN
         asyncio.run(vkquick.utils.sync_async_run(self.call_signal()))
@@ -267,13 +227,18 @@ class Bot:
         await self.events_generator.setup()
         async for events in self.events_generator:
             for event in events:
-                # Для реакций, ожидающих новое событие
-                self._set_new_event(event)
-                asyncio.create_task(self.run_through_event_handlers(event))
+                if event.type in ("message_new", 4):
+                    asyncio.create_task(
+                        self.pass_event_trough_commands(event)
+                    )
+                if event.from_group:
+                    asyncio.create_task(
+                        vkquick.utils.sync_async_run(
+                            self.call_signal.via_name(f"on_{event.type}", event)
+                        )
+                    )
 
-    async def run_through_event_handlers(
-        self, event: vkquick.events_generators.event.Event
-    ) -> None:
+    async def pass_event_trough_commands(self, event: Event) -> None:
         """
         Конкурентно запускает процесс по обработке события
         на каждый `EventHandler`. После обработки выводит
@@ -281,8 +246,8 @@ class Bot:
         показывает только пойманные исключения
         """
         tasks = [
-            asyncio.create_task(event_handler.handle_event(event))
-            for event_handler in self.event_handlers
+            asyncio.create_task(command.handle_event(event))
+            for command in self.commands
         ]
         try:
             handling_info = await asyncio.gather(*tasks)
@@ -290,7 +255,6 @@ class Bot:
             traceback.print_exc()
         else:
             self.show_debug_info(event, handling_info)
-            self._update_statistic_info(handling_info)
             await self._call_post_event_handling_signal(event, handling_info)
 
     def _set_new_event(
@@ -349,50 +313,13 @@ class Bot:
         Вызывает зарезервированный сигнал `POST_EVENT_HANDLING`.
         Вынесено в метод, чтобы избежать повторов
         """
-        self.call_signal.signal_name = (
-            vkquick.signal.ReservedSignal.POST_EVENT_HANDLING
-        )
         await vkquick.utils.sync_async_run(
-            self.call_signal(event, handling_info)
+            self.call_signal.via_name(
+                vkquick.signal.ReservedSignal.POST_EVENT_HANDLING,
+                event,
+                handling_info,
+            )
         )
-
-    def _fetch_statistic_message(self) -> str:
-        """
-        Собирает статистику в сообщение по всей работе
-        бота: время его работы, количество полученных событий
-        и количество вызванных команды. Мелочь, а приятно
-        """
-        data: ty.Dict[str, str] = {}
-
-        uptime = time.time() - self._start_time
-        uptime = int(uptime)
-        since = datetime.datetime.fromtimestamp(self._start_time)
-        uptime = f"{uptime}s (since {since:%H:%M %d-%m-%Y})"
-
-        data["Uptime"] = uptime
-        data["Count of got events"] = str(self._handled_events_count)
-        data["Command calls count"] = str(self._command_calls_count)
-
-        info: ty.List[str] = []
-        for key, value in data.items():
-            key = huepy.blue(key)
-            info.append(f"{key}: {value}")
-
-        info: str = "\n".join(info)
-        return info
-
-    def _update_statistic_info(
-        self, handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
-    ) -> None:
-        """
-        Обновляет информацию по статистике (количество вызванных команд)
-        """
-        self._handled_events_count += 1
-        for info in handling_info:
-            if info.all_filters_passed and isinstance(
-                info.handler, vkquick.event_handling.command.Command
-            ):
-                self._command_calls_count += 1
 
     @staticmethod
     def default_debug_filter(
@@ -401,7 +328,7 @@ class Bot:
         """
         Фильтр на событие для дебаггера по умолчанию --
         Проверка на отправленное сообщение, либо редактирование.
-        Редактирование для пользователей не добавленно, т.к.
+        Редактирование для пользователей не добавлено, т.к.
         команды не адаптированны под обработку редактирования
         в User LP
         """

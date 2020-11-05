@@ -4,10 +4,10 @@
 import functools
 import json
 
-import vkquick.base.json_parser
+from vkquick.base.json_parser import JSONParser
 
 
-class BuiltinJSONParser(vkquick.base.json_parser.JSONParser):
+class BuiltinJSONParser(JSONParser):
     """
     JSON парсер, использующий стандартную библиотеку
     """

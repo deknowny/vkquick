@@ -5,28 +5,7 @@ import typing as ty
 
 import vkquick.utils
 
-#
-# @dataclasses.dataclass(frozen=True)
-# class Decision:
-#     passed: bool
-#     description: str
-#
-#
-# class DecisionStatus(enum.Enum):
-#     ...
-#
-#
-# @dataclasses.dataclass(frozen=True)
-# class FilterResponse:
-#     """
-#     Ответ, который дает фильтр после обработки события
-#     """
-#     status_code: DecisionStatus
-#     decision: Decision
-#     extra: vkquick.utils.AttrDict = dataclasses.field(
-#         default_factory=vkquick.utils.AttrDict
-#     )
-#
+# import vkquick.context
 
 
 class Decision(ty.NamedTuple):
@@ -49,27 +28,15 @@ class Filter(abc.ABC):
     """
 
     @abc.abstractmethod
-    def make_decision(
-        self, event: vkquick.events_generators.event.Event
-    ) -> FilterResponse:
+    def make_decision(self, context: "vkquick.context.Context") -> Decision:
         """
         Определяет, подходит ли событие по критериям фильтра
         """
 
-    def __call__(
-        self, context: "vkquick.event_handling.event_handler.EventHandler"
-    ) -> Decision:
+    def __call__(self, command: "vkquick.command.Command") -> ty.Any:
         """
         Вызывается в момент декорирования.
         Фильтры должны быть указаны над хендлером событий
         """
-        if not isinstance(
-            event_handler, vkquick.event_handling.event_handler.EventHandler
-        ):
-            raise TypeError(
-                "Filters can be used only for `EventHandler` "
-                "and its subclasses. Also all filters should "
-                "be above the `EventHandler`/`Command` decorator"
-            )
-        event_handler.filters.append(self)
-        return event_handler
+        command.filters.append(self)
+        return command

@@ -1,15 +1,16 @@
 from __future__ import annotations
 import json
+import functools
+import typing as ty
 
+import pygments
 import pygments.lexers
 import pygments.formatters
-from pygments import highlight
 import pygments.formatters.terminal
 import pygments.token
 
-import vkquick.base.payload_argument
-import vkquick.utils
-import vkquick.current
+from vkquick.current import fetch
+from vkquick.utils import AttrDict
 
 
 pygments.formatters.terminal.TERMINAL_COLORS[
@@ -26,54 +27,31 @@ pygments.formatters.terminal.TERMINAL_COLORS[
 ] = ("cyan", "_")
 
 
-class Event(vkquick.utils.AttrDict):
+class Event(AttrDict):
     """
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам
     """
 
-    api = vkquick.current.fetch("api_event", "api")
+    api = fetch("api_event", "api")
 
-    def __new__(cls, mapping):
-        if isinstance(mapping, list):
-            elems = [vkquick.utils.AttrDict(i) for i in mapping]
-            return super().__new__(cls, elems)
-        else:
-            return super().__new__(cls, mapping)
-
-    def __init__(self, mapping):
-        # User LongPoll:
-        if isinstance(mapping, list):
-            object.__setattr__(self, "type", mapping[0])
-            object.__setattr__(self, "event_id", mapping[1])
-        super().__init__(mapping)
-
-    def get_message_object(self):
-        """
-        Возвращает объект сообщения в зависимости от версии
-        API или же типа события
-        """
+    @functools.cached_property
+    def from_group(self):
         if isinstance(self(), list):
-            # User LongPoll. Только для нового сообщения
-            return vkquick.utils.AttrDict(
-                {
-                    "event_id": self[0],
-                    "msg_id": self[1],
-                    "flags": self[2],
-                    "peer_id": self[3],
-                    "timestamp": self[4],
-                    "text": self[5],
-                    "from_id": int(self[6]["from"])
-                    if "from" in self[6]
-                    else self.api.token_owner_user.id,
-                    "attachments": self[7],
-                    "random_id": self[8],
-                }
-            )
-        if "message" in self.object:
-            return self.object.message
-        elif isinstance(self(), dict):
-            return self.object
+            return False
+        return True
+
+    @functools.cached_property
+    def type(self) -> ty.Union[str, int]:
+        if isinstance(self(), list):
+            return self[0]
+        return self["type"]
+
+    @functools.cached_property
+    def event_id(self) -> ty.Union[str, int]:
+        if isinstance(self(), list):
+            return self[1]
+        return self["event_id"]
 
     def __eq__(self, other: Event) -> bool:
         """
@@ -92,7 +70,7 @@ class Event(vkquick.utils.AttrDict):
         Цветное отображение JSON события вместе с индентами
         """
         scheme = json.dumps(self(), ensure_ascii=False, indent=4)
-        scheme = highlight(
+        scheme = pygments.highlight(
             scheme,
             pygments.lexers.JsonLexer(),
             pygments.formatters.TerminalFormatter(bg="light"),

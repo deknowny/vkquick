@@ -6,11 +6,11 @@ import typing as ty
 import aiohttp
 import requests
 
-import vkquick.base.client
-import vkquick.base.json_parser
+from vkquick.base.client import AsyncHTTPClient, SyncHTTPClient
+from vkquick.base.json_parser import JSONParser
 
 
-class AIOHTTPClient(vkquick.base.client.AsyncHTTPClient):
+class AIOHTTPClient(AsyncHTTPClient):
     """
     HTTP клиент, базируемый на `AIOHTTP`
     """
@@ -18,7 +18,7 @@ class AIOHTTPClient(vkquick.base.client.AsyncHTTPClient):
     def __init__(  # noqa
         self,
         url: str,
-        json_parser: ty.Type[vkquick.base.json_parser.JSONParser],
+        json_parser: ty.Type[JSONParser],
     ) -> None:
         self.connector = None
         self.session = None
@@ -48,7 +48,7 @@ class AIOHTTPClient(vkquick.base.client.AsyncHTTPClient):
         # await self.connector.close()
 
 
-class RequestsHTTPClient(vkquick.base.client.SyncHTTPClient):
+class RequestsHTTPClient(SyncHTTPClient):
     """
     HTTP клиент, базируемый на `requests`
     """
@@ -56,7 +56,7 @@ class RequestsHTTPClient(vkquick.base.client.SyncHTTPClient):
     def __init__(  # noqa
         self,
         url: str,
-        json_parser: ty.Type[vkquick.base.json_parser.JSONParser],
+        json_parser: ty.Type[JSONParser],
     ) -> None:
         self.session = requests.session()
         self.url = url

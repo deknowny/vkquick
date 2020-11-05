@@ -5,10 +5,10 @@
 """
 import typing as ty
 
-import vkquick.utils
+from vkquick.utils import AttrDict
 
 
-curs = vkquick.utils.AttrDict({})
+curs = AttrDict({})
 
 
 def fetch(*values_name: str) -> ty.Any:

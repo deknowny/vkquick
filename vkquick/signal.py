@@ -87,7 +87,9 @@ class SignalCaller:
     Сама логика по вызову сигналов. Можно интегрировать куда угодно
     """
 
-    handlers: ty.List[SignalHandler] = dataclasses.field(default_factory=list)
+    handlers: ty.Collection[SignalHandler] = dataclasses.field(
+        default_factory=tuple
+    )
     signal_name: ty.Optional[SignalName] = None
 
     def __getattr__(self, signal_name: SignalName) -> SignalCaller:
@@ -109,3 +111,9 @@ class SignalCaller:
                 return vkquick.utils.sync_async_run(
                     handler.reaction(*args, **kwargs)
                 )
+
+    def via_name(
+        self, name: ty.Optional[SignalName], /, *args, **kwargs
+    ) -> ty.Any:
+        self.signal_name = name
+        return self(*args, **kwargs)

@@ -92,7 +92,7 @@ class User(vkquick.base.wrapper.Wrapper):
         return mention
 
 
-class UserField(str, vkquick.utils.AutoUpperNameEnum):
+class UserField(str, vkquick.utils.AutoLowerNameEnum):
     """
     Параметры для `users.get`
     """
@@ -172,7 +172,7 @@ class UserField(str, vkquick.utils.AutoUpperNameEnum):
     LAST_NAME_ABL = enum.auto()
 
 
-class UserNameEnumCase(str, vkquick.utils.AutoUpperNameEnum):
+class UserNameEnumCase(str, vkquick.utils.AutoLowerNameEnum):
     """
     Падежи к имени в поле `name_case`
 

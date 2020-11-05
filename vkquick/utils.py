@@ -101,7 +101,8 @@ class AttrDict:
     """
 
     def __new__(cls, mapping=None):
-        mapping = mapping or {}
+        if mapping is None:
+            mapping = {}
         if isinstance(mapping, (dict, list)):
             self = object.__new__(cls)
             self.__init__(mapping)
@@ -110,10 +111,12 @@ class AttrDict:
         return mapping
 
     def __init__(self, mapping=None):
+        if mapping is None:
+            mapping = {}
         object.__setattr__(self, "mapping_", mapping)
 
     def __getattr__(self, item):
-        return self.__class__(self.mapping_[item])
+        return self.__class__(self()[item])
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.mapping_})"
@@ -152,9 +155,9 @@ def clear_console():
         os.system("clear")
 
 
-class AutoUpperNameEnum(enum.Enum):
+class AutoLowerNameEnum(enum.Enum):
     """
-    Enum, который при авто опускает
+    Enum, который при автоматически опускает
     имя ключа в нижний регистр и дает его в значение
     """
 

@@ -12,6 +12,7 @@ class HandlingStatus(pydantic.BaseModel):
     """
     Схема отчета от `EventHandler` по обработке события
     """
+    reaction_name: str
 
     all_filters_passed: bool
     """
@@ -24,7 +25,7 @@ class HandlingStatus(pydantic.BaseModel):
     """
 
     filters_response: ty.List[
-        ty.Tuple[str, vkquick.base.filter.FilterResponse]
+        ty.Tuple[str, vkquick.base.filter.Decision]
     ] = pydantic.Field(default_factory=list)
     """
     Для каждого элемента списка:

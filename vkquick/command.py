@@ -9,8 +9,8 @@ from vkquick.context import Context
 from vkquick.base.debugger import HandlingStatus
 from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
-from vkquick.argument import Argument
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
+from vkquick.wrappers.message import Message, ClientInfo
 
 
 class Command(Filter):
@@ -29,9 +29,11 @@ class Command(Filter):
         self._routing_command_re_flags = routing_command_re_flags
         self._extra = AttrDict(extra or {})
 
-        self._filters: ty.List[Filter] = [self]
+        self.filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
         self._reaction_context_argument_name = None
+
+        self._build_routing_regex()
 
     @property
     def extra(self) -> AttrDict:
@@ -61,11 +63,14 @@ class Command(Filter):
     def __call__(self, reaction: sync_async_callable(..., None)):
         self.reaction = reaction
         self._resolve_arguments()
+        return self
 
     async def handle_event(self, event: Event):
         start_handling_stamp = time.monotonic()
         context = Context(
-            message=event.message.object, client_info=event.client_info
+            source_event=event,
+            message=Message.parse_obj(event.object.message()),
+            client_info=ClientInfo.parse_obj(event.object.client_info())
         )
         (
             passed_every_filter,
@@ -75,27 +80,31 @@ class Command(Filter):
             end_handling_stamp = time.monotonic()
             taken_time = end_handling_stamp - start_handling_stamp
             return HandlingStatus(
-                all_filters_passed=False, taken_time=taken_time
+                reaction_name=self.reaction.__name__,
+                all_filters_passed=False,
+                filters_response=filters_decision,
+                taken_time=taken_time,
             )
 
         await self.call_reaction(context)
 
         end_handling_stamp = time.monotonic()
         taken_time = end_handling_stamp - start_handling_stamp
-
         return HandlingStatus(
+            reaction_name=self.reaction.__name__,
             all_filters_passed=True,
-            passed_arguments=context.extra.reaction_arguments,
+            filters_response=filters_decision,
+            passed_arguments=context.extra.reaction_arguments(),
             taken_time=taken_time,
         )
 
     async def run_through_filters(
         self, context: Context
-    ) -> ty.Tuple[bool, ty.List[HandlingStatus]]:
+    ) -> ty.Tuple[bool, ty.List[ty.Tuple[str, Decision]]]:
         decisions = []
-        for filter_ in self._filters:
-            decision = await filter_.make_decision(context)
-            decisions.append(decision)
+        for filter_ in self.filters:
+            decision = await sync_async_run(filter_.make_decision(context))
+            decisions.append((filter_.__class__.__name__, decision))
             if not decision.passed:
                 return False, decisions
 
@@ -108,28 +117,38 @@ class Command(Filter):
         ...
 
     async def make_decision(self, context: Context):
-        matched = self._command_routing_regex.match(
-            context.message.text
-        )
+        matched = self._command_routing_regex.match(context.message.text)
         if matched:
-            arguments_string = context.message.text[matched.end():]
+            arguments_string = context.message.text[matched.end() :]
         else:
             return Decision(
                 False,
-                f"Команда не подходит под шаблон `{self._command_routing_regex}`"
+                f"Команда не подходит под шаблон `{self._command_routing_regex.pattern}`",
             )
 
-        is_parsed, arguments = self.init_text_arguments(arguments_string, context)
+        is_parsed, arguments = await self.init_text_arguments(
+            arguments_string, context
+        )
 
         if not is_parsed:
+            if not arguments:
+                return Decision(
+                    False,
+                    "Команде были переданы аргументы, которые не обозначены",
+                )
+
             unparsed_argument_name, _ = arguments.popitem()
+
             return Decision(
                 False,
-                f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`"
+                f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`",
             )
-        # TODO
+        context.extra.reaction_arguments = arguments
+        return Decision(True, "Команда полностью подходит")
 
-    async def init_text_arguments(self, arguments_string: str, context: Context) -> ty.Tuple[bool, dict]:
+    async def init_text_arguments(
+        self, arguments_string: str, context: Context
+    ) -> ty.Tuple[bool, dict]:
         arguments = {}
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
@@ -147,10 +166,8 @@ class Command(Filter):
             return False, arguments
         return True, arguments
 
-
-
     async def call_reaction(self, context: Context) -> None:
-        result = self.reaction(**context.extra.reaction_arguments)
+        result = self.reaction(**context.extra["reaction_arguments"])
         result = await sync_async_run(result)
         if result is not None:
             await context.message.reply(message=result)
@@ -171,9 +188,8 @@ class Command(Filter):
                 and seems_context[1].default is seems_context[1].empty
             )
         ):
-            self._reaction_context_argument_name[
-                seems_context[0]  # black: ignore
-            ] = seems_context[1].annotation
+            self._reaction_context_argument_name = seems_context[0]
+
         else:
             self._resolve_text_cutter(seems_context)
 

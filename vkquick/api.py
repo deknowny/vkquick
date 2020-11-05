@@ -22,13 +22,14 @@ import re
 import time
 import typing as ty
 
-import vkquick.base.json_parser
-import vkquick.base.synchronizable
-import vkquick.exceptions
-import vkquick.utils
-import vkquick.clients
-import vkquick.base.client
-import vkquick.wrappers.user
+from vkquick.base.json_parser import JSONParser
+from vkquick.json_parsers import BuiltinJSONParser
+from vkquick.base.synchronizable import Synchronizable
+from vkquick.exceptions import VkApiError
+from vkquick.utils import AttrDict
+from vkquick.clients import AIOHTTPClient, RequestsHTTPClient
+from vkquick.base.client import SyncHTTPClient, AsyncHTTPClient
+from vkquick.wrappers.user import User
 
 
 class TokenOwner(str, enum.Enum):
@@ -42,7 +43,7 @@ class TokenOwner(str, enum.Enum):
 
 
 @dataclasses.dataclass
-class API(vkquick.base.synchronizable.Synchronizable):
+class API(Synchronizable):
     """
     Обертка для API запросов
 
@@ -153,14 +154,14 @@ class API(vkquick.base.synchronizable.Synchronizable):
 
     response_factory: ty.Callable[
         [ty.Union[dict, list, str, int]], ty.Any
-    ] = vkquick.utils.AttrDict
+    ] = AttrDict
     """
     Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)
     """
 
     json_parser: ty.Optional[
-        ty.Type[vkquick.base.json_parser.JSONParser]
+        ty.Type[JSONParser]
     ] = None
     """
     Парсер для JSON, приходящего от ответа вк
@@ -173,26 +174,24 @@ class API(vkquick.base.synchronizable.Synchronizable):
     для определения задержки между запросами
     """
 
-    async_http_session: ty.Optional[
-        vkquick.base.client.AsyncHTTPClient
-    ] = None
+    async_http_session: ty.Optional[AsyncHTTPClient] = None
 
-    sync_http_session: ty.Optional[vkquick.base.client.SyncHTTPClient] = None
+    sync_http_session: ty.Optional[SyncHTTPClient] = None
 
     def __post_init__(self) -> None:
         self.json_parser = (
-            self.json_parser or vkquick.json_parsers.BuiltinJSONParser
+            self.json_parser or BuiltinJSONParser
         )
         self.async_http_session = (
             self.async_http_session
-            or vkquick.clients.AIOHTTPClient(
+            or AIOHTTPClient(
                 url="https://api.vk.com/method/",
                 json_parser=self.json_parser,
             )
         )
         self.sync_http_session = (
             self.sync_http_session
-            or vkquick.clients.RequestsHTTPClient(
+            or RequestsHTTPClient(
                 url="https://api.vk.com/method/",
                 json_parser=self.json_parser,
             )
@@ -204,10 +203,10 @@ class API(vkquick.base.synchronizable.Synchronizable):
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
 
     @functools.cached_property
-    def token_owner_user(self) -> vkquick.wrappers.user.User:
+    def token_owner_user(self) -> User:
         with self.synchronize():
             user = self.users.get()
-            user = vkquick.wrappers.user.User(user[0])
+            user = User(user[0])
             return user
 
     def __getattr__(self, attribute: str) -> API:
@@ -385,7 +384,7 @@ class API(vkquick.base.synchronizable.Synchronizable):
         Проверяет, является ли ответ от вк ошибкой
         """
         if "error" in response:
-            raise vkquick.exceptions.VkApiError.destruct_response(response)
+            raise VkApiError.destruct_response(response)
 
     def _define_token_owner(self) -> TokenOwner:
         """

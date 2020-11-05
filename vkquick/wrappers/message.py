@@ -1,0 +1,205 @@
+from __future__ import annotations
+import datetime
+import typing as ty
+
+import pydantic
+
+from vkquick.current import fetch
+from vkquick.events_generators.event import Event
+from vkquick.utils import AttrDict
+import vkquick.utils
+
+
+class Message(pydantic.BaseModel):
+
+    # Property игнорируются pydantic
+    api = fetch("api_message", "api")
+
+    class Config:
+        extra = "allow"
+        allow_mutation = False
+        arbitrary_types_allowed = True
+
+    id: int
+    date: datetime.datetime
+    peer_id: int
+    from_id: int
+    text: str
+    random_id: int
+    attachments: ty.List[AttrDict]
+    important: bool
+    is_hidden: bool
+    out: bool
+    conversation_message_id: int
+    keyboard: pydantic.Json
+    fwd_messages: list
+    geo: ty.Optional[AttrDict]
+    payload: ty.Optional[pydantic.Json]
+    reply_message: ty.Optional[AttrDict]
+    action: ty.Optional[AttrDict]
+    ref: ty.Optional[str]
+    ref_source: ty.Optional[str]
+
+    @pydantic.validator("attachments", pre=True)
+    def attachments_to_attrdict(cls, value):
+        return [AttrDict(i) for i in value]
+
+    @pydantic.validator("geo", pre=True)
+    def geo_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @pydantic.validator("reply_message", pre=True)
+    def reply_message_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @pydantic.validator("action", pre=True)
+    def action_message_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @classmethod
+    def from_group_event(cls, event: Event) -> Message:
+        return cls.parse_obj(event.get_message_object())
+
+    @classmethod
+    async def from_user_event(cls, event: Event) -> Message:
+        api = cls.api.__get__(cls)
+        extended_event = await api.messages.get_by_id(message_ids=event[0])
+        extended_event = extended_event[0]
+        return cls.parse_obj(extended_event)
+
+    @classmethod
+    async def from_conversation_message(
+        cls, id_: int, peer_id: int
+    ) -> Message:
+        # TODO: extendeds
+        api = cls.api.__get__(cls)
+        extended_event = await api.messages.get_by_conversation_message_id(
+            peer_id=peer_id, conversation_message_ids=id_
+        )
+        extended_event = extended_event[0]
+        return cls.parse_obj(extended_event)
+
+    async def answer(
+        self,
+        message: ty.Optional[str] = None,
+        /,
+        *,
+        peer_id: ty.Optional[int] = None,
+        random_id: ty.Optional[int] = None,
+        user_id: ty.Optional[int] = None,
+        domain: ty.Optional[str] = None,
+        chat_id: ty.Optional[int] = None,
+        user_ids: ty.Optional[ty.List[int]] = None,
+        peer_ids: ty.Optional[ty.List[int]] = None,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[str]] = None,
+        reply_to: ty.Optional[int] = None,
+        forward_messages: ty.Optional[ty.List[int]] = None,
+        sticker_id: ty.Optional[int] = None,
+        group_id: ty.Optional[int] = None,
+        keyboard: ty.Optional[str] = None,
+        payload: ty.Optional[str] = None,
+        dont_parse_links: ty.Optional[bool] = None,
+        disable_mentions: ty.Optional[bool] = None,
+        intent: ty.Optional[str] = None,
+        expire_ttl: ty.Optional[int] = None,
+        silent: ty.Optional[bool] = None,
+        subscribe_id: ty.Optional[int] = None,
+        content_source: ty.Optional[str] = None,
+        forward: ty.Optional[str] = None,
+        **kwargs,
+    ):
+        params = {"peer_ids": self.peer_id}
+        for name, value in locals().items():
+            if name == "kwargs":
+                params.update(value)
+            elif name != "self" and value is not None:
+                params.update({name: value})
+
+        if random_id is None:
+            params["random_id"] = vkquick.utils.random_id()
+
+        return await self.api.method("messages.send", params)
+
+    async def reply(self,
+        message: ty.Optional[str] = None,
+        /,
+        *,
+        peer_id: ty.Optional[int] = None,
+        random_id: ty.Optional[int] = None,
+        user_id: ty.Optional[int] = None,
+        domain: ty.Optional[str] = None,
+        chat_id: ty.Optional[int] = None,
+        user_ids: ty.Optional[ty.List[int]] = None,
+        peer_ids: ty.Optional[ty.List[int]] = None,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[str]] = None,
+        reply_to: ty.Optional[int] = None,
+        forward_messages: ty.Optional[ty.List[int]] = None,
+        sticker_id: ty.Optional[int] = None,
+        group_id: ty.Optional[int] = None,
+        keyboard: ty.Optional[str] = None,
+        payload: ty.Optional[str] = None,
+        dont_parse_links: ty.Optional[bool] = None,
+        disable_mentions: ty.Optional[bool] = None,
+        intent: ty.Optional[str] = None,
+        expire_ttl: ty.Optional[int] = None,
+        silent: ty.Optional[bool] = None,
+        subscribe_id: ty.Optional[int] = None,
+        content_source: ty.Optional[str] = None,
+        forward: ty.Optional[str] = None,
+        **kwargs
+    ):
+        params = {
+            "peer_ids": self.peer_id,
+            f"forward": '{'
+                        '"is_reply":true,'
+                        f'"conversation_message_ids":[{self.conversation_message_id}],'
+                        f'"peer_id":{self.peer_id}'
+                        '}'
+        }
+        for name, value in locals().items():
+            if name == "kwargs":
+                params.update(value)
+            elif name != "self" and value is not None:
+                params.update({name: value})
+
+        if random_id is None:
+            params["random_id"] = vkquick.utils.random_id()
+
+        return await self.api.method("messages.send", params)
+
+    async def forward(self, *args, **kwargs):
+        ...
+
+    async def fetch_replied_message_sender(self, fields, name_case):
+        ...
+
+    async def fetch_forward_messages_sender(self, fields, name_case):
+        ...
+
+    async def fetch_attached_user(self):
+        ...
+
+    async def fetch_sender(self, fields, name_case):
+        ...
+
+    def get_photos(self):
+        ...
+
+    def get_docs(self):
+        ...
+
+
+# Для возможности полей использовать Message у себя
+Message.update_forward_refs()
+
+
+class ClientInfo(pydantic.BaseModel):
+    button_actions: ty.List[str]
+    keyboard: bool
+    inline_keyboard: bool
+    carousel: bool
+    lang_id: bool
