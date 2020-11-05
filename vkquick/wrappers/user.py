@@ -3,8 +3,6 @@ import enum
 import re
 import typing as ty
 
-import cachetools
-
 import vkquick.base.wrapper
 import vkquick.utils
 import vkquick.utils
@@ -16,9 +14,6 @@ class User(vkquick.base.wrapper.Wrapper):
     """
 
     api = vkquick.current.fetch("api_user_wrapper", "api")
-
-    # cache_algorithm = cachetools.TTLCache(2**20, ttl=1800)
-    # cache = cachetools.cachedmethod(lambda cls: cls.cache_algorithm)
 
     mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
     """
@@ -57,6 +52,7 @@ class User(vkquick.base.wrapper.Wrapper):
         Создает обертку над юзером через его ID или screen name
         """
         users = await cls.api.__get__(cls).users.get(
+            allow_cache_=True,
             user_ids=id_, fields=fields, name_case=name_case
         )
         self = cls(users[0])

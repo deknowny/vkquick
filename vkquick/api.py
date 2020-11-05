@@ -20,7 +20,10 @@ import functools
 import enum
 import re
 import time
+import urllib.parse
 import typing as ty
+
+import cachetools
 
 from vkquick.base.json_parser import JSONParser
 from vkquick.json_parsers import BuiltinJSONParser
@@ -178,6 +181,8 @@ class API(Synchronizable):
 
     sync_http_session: ty.Optional[SyncHTTPClient] = None
 
+    cache_table: ty.Optional[cachetools.Cache] = None
+
     def __post_init__(self) -> None:
         self.json_parser = (
             self.json_parser or BuiltinJSONParser
@@ -196,6 +201,7 @@ class API(Synchronizable):
                 json_parser=self.json_parser,
             )
         )
+        self.cache_table = self.cache_table or cachetools.TTLCache(ttl=3600, maxsize=2**15)
         self._method_name = ""
         self._last_request_time = 0
         self._delay = 0
@@ -231,7 +237,7 @@ class API(Synchronizable):
         return self
 
     def __call__(
-        self, use_autocomplete_params_: bool = False, /, **request_params
+        self, use_autocomplete_params_: bool = False, /,  allow_cache_: bool = False, **request_params
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос с именем метода, полученным через
@@ -246,11 +252,11 @@ class API(Synchronizable):
             request_params = {**self.autocomplete_params, **request_params}
         self._method_name = ""
         return self._route_request_scheme(
-            method_name=method_name, request_params=request_params
+            method_name=method_name, request_params=request_params, allow_cache=allow_cache_
         )
 
     def method(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any], /
+        self, method_name: str, request_params: ty.Dict[str, ty.Any], /, *, allow_cache: bool = False
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос, передавая имя метода (`method_name`)
@@ -262,12 +268,21 @@ class API(Synchronizable):
         """
         method_name = self._convert_name(method_name)
         request_params = self._fill_request_params(request_params)
+        # if allow_cache:
+        #     # cache_hash = urllib.parse.urlencode(request_params)
+        #     # cache_hash = f"{method_name}#{cache_hash}"
+        #     # if cache_hash is self.cache_table:
+        #     #     return self.cache_table[cache_hash]
+        #     # response = self._route_request_scheme(
+        #     #     method_name=method_name,
+        #     #     request_params=request_params
+        #     # )
         return self._route_request_scheme(
-            method_name=method_name, request_params=request_params
+            method_name=method_name, request_params=request_params, allow_cache=allow_cache
         )
 
     def _route_request_scheme(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any]
+        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Определяет, как вызывается запрос: синхронно или асинхронно
@@ -275,8 +290,8 @@ class API(Synchronizable):
         """
         request_params = self._convert_collections_params(request_params)
         if self.is_synchronized:
-            return self._make_sync_api_request(method_name, request_params)
-        return self._make_async_api_request(method_name, request_params)
+            return self._make_sync_api_request(method_name, request_params, allow_cache)
+        return self._make_async_api_request(method_name, request_params, allow_cache)
 
     @staticmethod
     def _convert_collections_params(
@@ -323,14 +338,33 @@ class API(Synchronizable):
         self._check_errors(body)
         return self.response_factory(body["response"])
 
+    @staticmethod
+    def _build_cache_hash(method_name: str, data: ty.Dict[str, ty.Any]) -> str:
+        cache_hash = urllib.parse.urlencode(data)
+        cache_hash = f"{method_name}#{cache_hash}"
+        return cache_hash
+
+    # Need a decorator-factory?
     async def _make_async_api_request(
-        self, method_name: str, data: ty.Dict[str, ty.Any]
+        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос асинхронно с именем API метода из
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
+        if allow_cache:
+            cache_hash = self._build_cache_hash(method_name, data)
+            if cache_hash in self.cache_table:
+                return self.cache_table[cache_hash]
+            await asyncio.sleep(self._get_waiting_time())
+            response = await self.async_http_session.send_get_request(
+                path=method_name, params=data
+            )
+            response = self._prepare_response_body(response)
+            self.cache_table[cache_hash] = response
+            return response
+
         await asyncio.sleep(self._get_waiting_time())
         response = await self.async_http_session.send_get_request(
             path=method_name, params=data
@@ -338,13 +372,24 @@ class API(Synchronizable):
         return self._prepare_response_body(response)
 
     def _make_sync_api_request(
-        self, method_name: str, data: ty.Dict[str, ty.Any]
+        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос синхронно с именем API метода из
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
+        if allow_cache:
+            cache_hash = self._build_cache_hash(method_name, data)
+            if cache_hash in self.cache_table:
+                return self.cache_table[cache_hash]
+            time.sleep(self._get_waiting_time())
+            response = self.sync_http_session.send_get_request(
+                path=method_name, params=data
+            )
+            response = self._prepare_response_body(response)
+            self.cache_table[cache_hash] = response
+            return response
         time.sleep(self._get_waiting_time())
         response = self.sync_http_session.send_get_request(
             path=method_name, params=data
