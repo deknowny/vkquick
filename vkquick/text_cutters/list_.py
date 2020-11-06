@@ -4,17 +4,17 @@ List аргумент
 import dataclasses
 import typing as ty
 
-import vkquick.base.text_cutter
+from vkquick.base.text_cutter import UnmatchedArgument, TextCutter
 import vkquick.utils
 
 
 @dataclasses.dataclass
-class List(vkquick.base.text_cutter.TextCutter):
+class List(TextCutter):
     """
     Список из типов
     """
 
-    element: vkquick.base.text_cutter.TextCutter
+    element: TextCutter
     """
     Тип, из которого должен строиться список
     """
@@ -40,7 +40,7 @@ class List(vkquick.base.text_cutter.TextCutter):
                 self.element.cut_part(remaining_string)
             )
 
-            if chunk is vkquick.base.text_cutter.UnmatchedArgument:
+            if chunk is UnmatchedArgument:
                 if len(values) > self.min_length:
                     break
                 else:

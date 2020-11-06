@@ -4,12 +4,12 @@ String аргумент
 import re
 import typing as ty
 
-import vkquick.base.text_cutter
-import vkquick.base.text_values
+from vkquick.base.text_cutter import TextCutter
+from vkquick.base.text_values import TextBase
 
 
 class String(
-    vkquick.base.text_cutter.TextCutter, vkquick.base.text_values.TextBase,
+    TextCutter, TextBase,
 ):
     """
     Любая последовательность символов

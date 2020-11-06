@@ -6,7 +6,7 @@ import typing as ty
 
 from vkquick.utils import AttrDict, sync_async_run, sync_async_callable
 from vkquick.context import Context
-from vkquick.base.debugger import HandlingStatus
+from vkquick.base.handling_status import HandlingStatus
 from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
@@ -21,6 +21,12 @@ class Command(Filter):
         names: ty.Iterable[str] = (),
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
+        on_invalid_argument: ty.Optional[
+            ty.Dict[str, sync_async_callable([Context], ...), ty.Any]
+        ] = None,
+        on_invalid_filter: ty.Optional[
+            ty.Dict[Filter, sync_async_callable([Context], ...), ty.Any]
+        ] = None,
         extra: ty.Optional[dict] = None,
     ):
         self._prefixes = tuple(prefixes)
@@ -33,12 +39,8 @@ class Command(Filter):
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
         self._reaction_context_argument_name = None
 
-        self._invalid_filter_handlers: ty.Dict[
-            str, sync_async_callable([Context], ...)
-        ] = {}
-        self._invalid_argument_handlers: ty.Dict[
-            str, sync_async_callable([Context], ...)
-        ] = {}
+        self._invalid_filter_handlers = on_invalid_filter or {}
+        self._invalid_argument_handlers = on_invalid_argument or {}
 
         self._build_routing_regex()
 
@@ -121,9 +123,15 @@ class Command(Filter):
         self, filter_: Filter, /
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
         def wrapper(handler):
-            self._invalid_filter_handlers[
-                filter_.__class__.__name__
-            ] = handler
+            self._invalid_filter_handlers[filter_] = handler
+            handler_parameters = inspect.signature(handler).parameters
+            length_parameters = len(handler_parameters)
+            if length_parameters != 1:
+                raise KeyError(
+                    f"Invalid filter handler should "
+                    f"have only the one argument for "
+                    f"context, got {length_parameters}"
+                )
             return handler
 
         return wrapper
@@ -133,6 +141,14 @@ class Command(Filter):
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
         def wrapper(handler):
             self._invalid_argument_handlers[name] = handler
+            handler_parameters = inspect.signature(handler).parameters
+            length_parameters = len(handler_parameters)
+            if length_parameters != 1:
+                raise KeyError(
+                    f"Invalid argument handler should "
+                    f"have only the one argument for "
+                    f"context, got {length_parameters}"
+                )
             return handler
 
         return wrapper
@@ -174,13 +190,18 @@ class Command(Filter):
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
 
-        new_arguments_string = arguments_string
+        new_arguments_string = arguments_string.lstrip()
         for name, cutter in self._reaction_arguments:
             parsed_value, new_arguments_string = await sync_async_run(
-                cutter.cut_part(arguments_string)
+                cutter.cut_part(new_arguments_string)
             )
+            new_arguments_string = new_arguments_string.lstrip()
             arguments[name] = parsed_value
             if parsed_value is UnmatchedArgument:
+                if name in self._invalid_argument_handlers:
+                    await sync_async_run(
+                        self._invalid_argument_handlers[name](context)
+                    )
                 return False, arguments
 
         if new_arguments_string:
@@ -196,6 +217,8 @@ class Command(Filter):
     def _resolve_arguments(self):
         parameters = inspect.signature(self.reaction).parameters
         parameters = list(parameters.items())
+        if not parameters:
+            return
         seems_context, *cutters = parameters
 
         # def foo(ctx: Context): ...
@@ -230,14 +253,23 @@ class Command(Filter):
         elif value.annotation != value.empty:
             cutter = value.annotation
         else:
-            raise TypeError()  # TODO
+            raise TypeError(
+                f"The reaction argument `{name}` "
+                f"should have a default value or an "
+                f"annotation for specific text cutter, "
+                f"nothing is now."
+            )
 
-        if inspect.isclass(value) and issubclass(cutter, TextCutter):
+        if inspect.isclass(cutter) and issubclass(cutter, TextCutter):
             real_type = cutter()
         elif isinstance(cutter, TextCutter):
             real_type = cutter
         else:
-            raise TypeError()  # TODO
+            raise TypeError(
+                f"The reaction argument `{name}` should "
+                "be `TextCutter` subclass or "
+                f"instance, got `{value}`."
+            )
 
         self._reaction_arguments.append((name, real_type))
 

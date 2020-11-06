@@ -4,11 +4,11 @@ Union argument
 import warnings
 import typing as ty
 
-from vkquick.base import text_cutter
+from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 import vkquick.utils
 
 
-class Union(text_cutter.TextCutter):
+class Union(TextCutter):
     """
     Один из вариантов `TextArgument`. Если вариант
     не подходит под первый тип, будет пробовать следующий.
@@ -35,9 +35,9 @@ class Union(text_cutter.TextCutter):
             values = await vkquick.utils.sync_async_run(
                 type_.cut_part(arguments_string)
             )
-            if values[0] is not text_cutter.UnmatchedArgument:
+            if values[0] is not UnmatchedArgument:
                 return values
-        return text_cutter.UnmatchedArgument, arguments_string
+        return UnmatchedArgument, arguments_string
 
     def usage_description(self) -> str:
         description = "Аргумент должен подходить под одно из описаний:\n"

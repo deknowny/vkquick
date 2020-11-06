@@ -3,9 +3,10 @@ import typing as ty
 
 import vkquick.events_generators.event
 import vkquick.event_handling.message
-import vkquick.current
+from vkquick.current import fetch
 import vkquick.wrappers.user
 import vkquick.api
+from vkquick.context import Context
 
 
 class UnmatchedArgument:
@@ -16,7 +17,7 @@ class UnmatchedArgument:
 
 class TextCutter(abc.ABC):
 
-    api: vkquick.api.API = vkquick.current.fetch(
+    api = fetch(
         "api_invalid_argument", "api"
     )
 
@@ -48,19 +49,15 @@ class TextCutter(abc.ABC):
 
         return UnmatchedArgument, arguments_string
 
-    def invalid_value(
-        self,
-        argument_name: str,
-        argument_position: int,
-        argument_string: str,
-        event: vkquick.events_generators.event.Event,
-    ) -> vkquick.event_handling.message.Message:
+    async def invalid_value(
+        self, argument_position: int, seems_missing: bool, context: Context,
+    ) -> None:
         """
         Дефолтный текст для некорректных аргументов
         """
-        seems_missing = ""
-        if not argument_string:
-            seems_missing = (
+        seems_missing_text = ""
+        if seems_missing:
+            seems_missing_text = (
                 "Вероятно, при вызове команды был пропущен аргумент."
             )
 
@@ -68,21 +65,23 @@ class TextCutter(abc.ABC):
         if extra_info:
             extra_info = f"💡 {extra_info}"
 
-        with self.api.synchronize():
-            user = self.api.users.get(
-                user_ids=event.get_message_object().from_id
-            )
-            user = vkquick.wrappers.user.User(user[0])
-            mention = user.mention("{fn}")
+        user = await self.api.users.get(
+            allow_cache_=True,
+            user_ids=event.get_message_object().from_id
+        )
+        user = vkquick.wrappers.user.User(user[0])
+        mention = user.mention("{fn}")
+        response = (
+            f"💥 {mention}, команда вызвана с некорректным по значению аргументом "
+        )
         response = (
             f"💥 {mention}, при попытке достать аргумент №[id0|{argument_position}]"
             f" ({argument_name}) получено некорректное значение "
-            f"`{argument_string}`. {seems_missing}\n\n{extra_info}"
+            f"`{argument_string}`. {seems_missing_text}\n\n{extra_info}"
         )
-        message = vkquick.event_handling.message.Message(
+        await context.message.reply(
             response, disable_mentions=True
         )
-        return message
 
     @staticmethod
     def usage_description() -> str:

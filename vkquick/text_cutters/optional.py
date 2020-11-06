@@ -3,11 +3,11 @@ Optional аргумент
 """
 import typing as ty
 
-import vkquick.base.text_cutter
+from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 import vkquick.utils
 
 
-class Optional(vkquick.base.text_cutter.TextCutter):
+class Optional(TextCutter):
     """
     Опциональный тип. Если тип подходит, значит
     вернется он. Если нет -- значение по умолчанию
@@ -15,7 +15,7 @@ class Optional(vkquick.base.text_cutter.TextCutter):
 
     def __init__(
         self,
-        element: vkquick.base.text_cutter.TextCutter,
+        element: TextCutter,
         /,
         *,
         default: ty.Any = None,
@@ -35,7 +35,7 @@ class Optional(vkquick.base.text_cutter.TextCutter):
         chunk, remaining_string = await vkquick.utils.sync_async_run(
             self.element.cut_part(arguments_string)
         )
-        if chunk is vkquick.base.text_cutter.UnmatchedArgument:
+        if chunk is UnmatchedArgument:
             if self.default_factory is None:
                 placeholder = self.default
             else:

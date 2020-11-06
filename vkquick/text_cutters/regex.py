@@ -4,10 +4,10 @@ Regex аргумент
 import re
 import typing as ty
 
-from vkquick.base import text_cutter
+from vkquick.base.text_cutter import TextCutter
 
 
-class Regex(text_cutter.TextCutter):
+class Regex(TextCutter):
     """
     Тип через регексы. Возвращает match-группу
     """

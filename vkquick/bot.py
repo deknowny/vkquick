@@ -9,18 +9,15 @@ import traceback
 import functools
 import typing as ty
 
-import vkquick.api
-import vkquick.base.debugger
-import vkquick.events_generators.longpoll
-import vkquick.current
-import vkquick.event_handling.event_handler
-import vkquick.signal
-import vkquick.events_generators.event
-import vkquick.event_handling.handling_info_scheme
-import vkquick.exceptions
-import vkquick.utils
-import vkquick.debuggers
+from vkquick.api import API, TokenOwner
+from vkquick.base.debugger import Debugger
+from vkquick.base.handling_status import HandlingStatus
+from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
+from vkquick.current import fetch, curs
+from vkquick.signal import SignalCaller, ReservedSignal, SignalHandler
 from vkquick.events_generators.event import Event
+from vkquick.utils import sync_async_run, clear_console
+from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
 
 
@@ -65,8 +62,8 @@ class _HandlerMarker:
         return command
 
     def signal_handler(
-        self, handler: vkquick.signal.SignalHandler
-    ) -> vkquick.signal.SignalHandler:
+        self, handler: SignalHandler
+    ) -> SignalHandler:
         """
         Маркер для обработчика сигналов
         """
@@ -124,18 +121,18 @@ class Bot:
     использовать маркеры (пример есть в классе выше)
     """
 
-    events_generator = vkquick.current.fetch("events_generator", "cb", "lp")
+    events_generator = fetch("events_generator", "cb", "lp")
 
     def __init__(
         self,
         *,
         signal_handlers: ty.Optional[
-            ty.Collection[vkquick.signal.SignalHandler]
+            ty.Collection[SignalHandler]
         ] = None,
         commands: ty.Optional[ty.Collection[Command]] = None,
         debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
         debugger: ty.Optional[
-            ty.Type[vkquick.debuggers.ColoredDebugger]
+            ty.Type[Debugger]
         ] = None,
     ):
         """
@@ -150,8 +147,8 @@ class Bot:
         self.signal_handlers = signal_handlers or []
         self.commands = commands or []
         self.debug_filter = debug_filter or self.default_debug_filter
-        self.debugger = debugger or vkquick.debuggers.ColoredDebugger
-        self.call_signal = vkquick.signal.SignalCaller(self.signal_handlers)
+        self.debugger = debugger or ColoredDebugger
+        self.call_signal = SignalCaller(self.signal_handlers)
 
         self.event_waiters: ty.List[asyncio.Future] = []
         self.mark = _HandlerMarker(self)
@@ -167,15 +164,15 @@ class Bot:
         """
         # Создание необходимых объектов по информации с токена
         # и добавление их в куррент для использования с любой точки кода
-        api = vkquick.api.API(token)
-        vkquick.current.curs.api = api
-        if api.token_owner == vkquick.api.TokenOwner.GROUP:
-            vkquick.current.curs.lp = (
-                vkquick.events_generators.longpoll.GroupLongPoll()
+        api = API(token)
+        curs.api = api
+        if api.token_owner == TokenOwner.GROUP:
+            curs.lp = (
+                GroupLongPoll()
             )
         else:
-            vkquick.current.curs.lp = (
-                vkquick.events_generators.longpoll.UserLongPoll()
+            curs.lp = (
+                UserLongPoll()
             )
 
         # Сам инстанс бота
@@ -213,12 +210,12 @@ class Bot:
         этот метод корутинный и его можно вызвать
         с другой корутиной конкурентно
         """
-        self.call_signal.signal_name = vkquick.signal.ReservedSignal.STARTUP
-        await vkquick.utils.sync_async_run(self.call_signal())
+        self.call_signal.signal_name = ReservedSignal.STARTUP
+        await sync_async_run(self.call_signal())
         await self.listen_events()
         # Сигнал для обозначения окончания работы бота
-        self.call_signal.signal_name = vkquick.signal.ReservedSignal.SHUTDOWN
-        await vkquick.utils.sync_async_run(self.call_signal())
+        self.call_signal.signal_name = ReservedSignal.SHUTDOWN
+        await sync_async_run(self.call_signal())
 
     async def listen_events(self) -> ty.NoReturn:
         """
@@ -242,7 +239,7 @@ class Bot:
                         f"on_{event.type}", event
                     )
                     asyncio.create_task(
-                        vkquick.utils.sync_async_run(signal_calling)
+                        sync_async_run(signal_calling)
                     )
 
     async def pass_event_trough_commands(self, event: Event) -> None:
@@ -265,7 +262,7 @@ class Bot:
             await self._call_post_event_handling_signal(event, handling_info)
 
     def _set_new_event(
-        self, event: vkquick.events_generators.event.Event
+        self, event: Event
     ) -> None:
         """
         Выдает всем вейтерам событие
@@ -273,7 +270,7 @@ class Bot:
         for waiter in self.event_waiters:
             waiter.set_result(event)
 
-    async def fetch_new_event(self) -> vkquick.events_generators.event.Event:
+    async def fetch_new_event(self) -> Event:
         """
         Аналог `asyncio.Event.wait()`. Используйте внутри своей реакции,
         чтобы получить новое событие
@@ -296,8 +293,8 @@ class Bot:
 
     def show_debug_info(
         self,
-        event: vkquick.events_generators.event.Event,
-        handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
+        event: Event,
+        handling_info: ty.List[HandlingStatus],
     ) -> None:
         """
         Показывает информацию в дебаггере. Если событие прошло фильтр,
@@ -308,21 +305,21 @@ class Bot:
             debugger = self.debugger(event, handling_info)
             debug_message = debugger.render()
             print(event.pretty_view())
-            vkquick.utils.clear_console()
+            clear_console()
             print(debug_message)
 
     async def _call_post_event_handling_signal(
         self,
-        event: vkquick.events_generators.event.Event,
-        handling_info: vkquick.base.debugger.HandlingStatus,
+        event: Event,
+        handling_info: HandlingStatus,
     ) -> None:
         """
         Вызывает зарезервированный сигнал `POST_EVENT_HANDLING`.
         Вынесено в метод, чтобы избежать повторов
         """
-        await vkquick.utils.sync_async_run(
+        await sync_async_run(
             self.call_signal.via_name(
-                vkquick.signal.ReservedSignal.POST_EVENT_HANDLING,
+                ReservedSignal.POST_EVENT_HANDLING,
                 event,
                 handling_info,
             )
@@ -330,7 +327,7 @@ class Bot:
 
     @staticmethod
     def default_debug_filter(
-        event: vkquick.events_generators.event.Event,
+        event: Event,
     ) -> bool:
         """
         Фильтр на событие для дебаггера по умолчанию --
@@ -343,7 +340,7 @@ class Bot:
 
     @staticmethod
     def show_debug_message_for_release(
-        _, handling_info: ty.List[vkquick.base.debugger.HandlingStatus],
+        _, handling_info: ty.List[HandlingStatus],
     ) -> None:
         """
         Плейсхолдер для `show_debug_message` в момент

@@ -4,10 +4,10 @@ Integer аргумент
 import re
 import typing as ty
 
-import vkquick.base.text_cutter
+from vkquick.base.text_cutter import TextCutter
 
 
-class Integer(vkquick.base.text_cutter.TextCutter):
+class Integer(TextCutter):
     """
     Целое число
     """

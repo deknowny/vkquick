@@ -122,7 +122,7 @@ class Command(vkquick.event_handling.event_handler.EventHandler):
 
     async def command_text_filter(
         self, event: vkquick.events_generators.event.Event
-    ) -> vkquick.base.filter.FilterResponse:
+    ) -> vkquick.base.filter.Decision:
         matched, arguments_string = self.matching_command_routing(
             event.get_message_object().text
         )

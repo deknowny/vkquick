@@ -5,6 +5,7 @@ import traceback
 import typing as ty
 
 import vkquick.base.debugger
+import vkquick.base.handling_status
 import vkquick.events_generators.event
 import vkquick.base.payload_argument
 import vkquick.base.filter
@@ -39,7 +40,7 @@ class EventHandler:
 
     async def handle_event(
         self, event: vkquick.events_generators.event.Event
-    ) -> vkquick.base.debugger.HandlingStatus:
+    ) -> vkquick.base.handling_status.HandlingStatus:
         """
         Процесс обработки события.
 
@@ -51,7 +52,7 @@ class EventHandler:
         is_correct_event_type = self.is_correct_event_type(event)
         if not is_correct_event_type:
             end_stamp = time.time()
-            return vkquick.base.debugger.HandlingStatus(
+            return vkquick.base.handling_status.HandlingStatus(
                 handler=self,
                 is_correct_event_type=False,
                 all_filters_passed=False,
@@ -61,7 +62,7 @@ class EventHandler:
         passed_all, filters_response = await self.run_trough_filters(event)
         if not passed_all:
             end_stamp = time.time()
-            return vkquick.base.debugger.HandlingStatus(
+            return vkquick.base.handling_status.HandlingStatus(
                 handler=self,
                 is_correct_event_type=True,
                 all_filters_passed=False,
@@ -78,7 +79,7 @@ class EventHandler:
             exception = ""
         finally:
             end_stamp = time.time()
-            return vkquick.base.debugger.HandlingStatus(
+            return vkquick.base.handling_status.HandlingStatus(
                 handler=self,
                 is_correct_event_type=True,
                 all_filters_passed=True,
