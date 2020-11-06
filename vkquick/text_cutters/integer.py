@@ -4,7 +4,7 @@ Integer аргумент
 import re
 import typing as ty
 
-from vkquick.base.text_cutter import TextCutter
+from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 
 
 class Integer(TextCutter):
@@ -24,12 +24,12 @@ class Integer(TextCutter):
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not vkquick.base.text_cutter.UnmatchedArgument
+            value is not UnmatchedArgument
             and self.range_ is not None
             and value not in self.range_
         ):
             return (
-                vkquick.base.text_cutter.UnmatchedArgument,
+                UnmatchedArgument,
                 arguments_string,
             )
 

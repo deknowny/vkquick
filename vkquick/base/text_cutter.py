@@ -64,20 +64,10 @@ class TextCutter(abc.ABC):
         extra_info = self.usage_description()
         if extra_info:
             extra_info = f"💡 {extra_info}"
-
-        user = await self.api.users.get(
-            allow_cache_=True,
-            user_ids=event.get_message_object().from_id
-        )
-        user = vkquick.wrappers.user.User(user[0])
-        mention = user.mention("{fn}")
         response = (
-            f"💥 {mention}, команда вызвана с некорректным по значению аргументом "
-        )
-        response = (
-            f"💥 {mention}, при попытке достать аргумент №[id0|{argument_position}]"
-            f" ({argument_name}) получено некорректное значение "
-            f"`{argument_string}`. {seems_missing_text}\n\n{extra_info}"
+            f"💥 Команда вызвана с некорректным "
+            f"по значению аргументом №[id0|{argument_position}]."
+            f" {seems_missing_text}\n\n{extra_info} "
         )
         await context.message.reply(
             response, disable_mentions=True

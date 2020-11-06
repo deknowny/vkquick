@@ -199,9 +199,20 @@ class Command(Filter):
             arguments[name] = parsed_value
             if parsed_value is UnmatchedArgument:
                 if name in self._invalid_argument_handlers:
-                    await sync_async_run(
+                    response = await sync_async_run(
                         self._invalid_argument_handlers[name](context)
                     )
+                    if response is not None:
+                        await context.message.reply(response)
+                else:
+                    for position, arg in enumerate(self._reaction_arguments):
+                        if arg[0] == name:
+                            await sync_async_run(
+                                cutter.invalid_value(
+                                    position, not new_arguments_string, context
+                                )
+                            )
+                            break
                 return False, arguments
 
         if new_arguments_string:
