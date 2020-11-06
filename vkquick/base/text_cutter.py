@@ -1,11 +1,7 @@
 import abc
 import typing as ty
 
-import vkquick.events_generators.event
-import vkquick.event_handling.message
 from vkquick.current import fetch
-import vkquick.wrappers.user
-import vkquick.api
 from vkquick.context import Context
 
 

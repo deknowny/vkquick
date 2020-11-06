@@ -16,8 +16,6 @@ import huepy
 
 from vkquick.base.debugger import Debugger
 from vkquick.base.handling_status import HandlingStatus
-import vkquick.event_handling.handling_info_scheme
-import vkquick.events_generators
 
 
 Color = ty.Callable[[str], str]
