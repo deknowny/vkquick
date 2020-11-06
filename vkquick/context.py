@@ -20,7 +20,7 @@ class Context(pydantic.BaseModel):
 
     source_event: Event
     message: Message
-    client_info: ClientInfo
+    client_info: ty.Optional[ClientInfo]
     filters_response: ty.Dict[str, HandlingStatus] = pydantic.Field(
         default_factory=dict
     )

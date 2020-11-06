@@ -76,10 +76,16 @@ class Command(Filter):
 
     async def handle_event(self, event: Event):
         start_handling_stamp = time.monotonic()
+        if event.from_group:
+            message = Message.from_group_event(event)
+            client_info = ClientInfo.parse_obj(event.object.client_info())
+        else:
+            message = await Message.from_user_event(event)
+            client_info = None
         context = Context(
             source_event=event,
-            message=Message.parse_obj(event.object.message()),
-            client_info=ClientInfo.parse_obj(event.object.client_info()),
+            message=message,
+            client_info=client_info,
         )
         (
             passed_every_filter,
