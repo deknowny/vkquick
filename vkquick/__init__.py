@@ -69,4 +69,4 @@ from vkquick.message import Message, ClientInfo
 from .bot import Bot
 
 
-__version__ = "1.0.0a2"
+__version__ = "1.0.0b0"
