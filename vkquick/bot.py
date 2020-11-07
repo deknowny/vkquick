@@ -33,7 +33,7 @@ class _HandlerMarker:
         bot = vq.Bot.init_via_token("your-token")
 
 
-        @bot.mark.event_handler
+        @bot.mark.command
         @vq.Command(names=["hi"])
         def hi():
             return "hello!"
@@ -61,9 +61,7 @@ class _HandlerMarker:
         self.bot.commands.append(command)
         return command
 
-    def signal_handler(
-        self, handler: SignalHandler
-    ) -> SignalHandler:
+    def signal_handler(self, handler: SignalHandler) -> SignalHandler:
         """
         Маркер для обработчика сигналов
         """
@@ -126,14 +124,10 @@ class Bot:
     def __init__(
         self,
         *,
-        signal_handlers: ty.Optional[
-            ty.Collection[SignalHandler]
-        ] = None,
+        signal_handlers: ty.Optional[ty.Collection[SignalHandler]] = None,
         commands: ty.Optional[ty.Collection[Command]] = None,
         debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
-        debugger: ty.Optional[
-            ty.Type[Debugger]
-        ] = None,
+        debugger: ty.Optional[ty.Type[Debugger]] = None,
     ):
         """
         * `commands`: Список обрабатываемых команд
@@ -167,13 +161,9 @@ class Bot:
         api = API(token)
         curs.api = api
         if api.token_owner == TokenOwner.GROUP:
-            curs.lp = (
-                GroupLongPoll()
-            )
+            curs.lp = GroupLongPoll()
         else:
-            curs.lp = (
-                UserLongPoll()
-            )
+            curs.lp = UserLongPoll()
 
         # Сам инстанс бота
         self = object.__new__(cls)
@@ -202,7 +192,10 @@ class Bot:
         вызывает зарезервированный сигнал `SHUTDOWN`. С флагом релиза
         бот будет перезагружаться при любых ошибках, т.е. он не упадет.
         """
-        asyncio.run(self.async_run())
+        try:
+            asyncio.run(self.async_run())
+        except KeyboardInterrupt:
+            pass
 
     async def async_run(self) -> ty.NoReturn:
         """
@@ -210,12 +203,17 @@ class Bot:
         этот метод корутинный и его можно вызвать
         с другой корутиной конкурентно
         """
-        self.call_signal.signal_name = ReservedSignal.STARTUP
-        await sync_async_run(self.call_signal())
-        await self.listen_events()
-        # Сигнал для обозначения окончания работы бота
-        self.call_signal.signal_name = ReservedSignal.SHUTDOWN
-        await sync_async_run(self.call_signal())
+        try:
+            await sync_async_run(
+                self.call_signal.via_name(ReservedSignal.STARTUP)
+            )
+            await self.listen_events()
+        finally:
+            # Сигнал для обозначения окончания работы бота
+            await sync_async_run(
+                self.call_signal.via_name(ReservedSignal.SHUTDOWN)
+            )
+            await self.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
         """
@@ -238,9 +236,7 @@ class Bot:
                     signal_calling = self.call_signal.via_name(
                         f"on_{event.type}", event
                     )
-                    asyncio.create_task(
-                        sync_async_run(signal_calling)
-                    )
+                    asyncio.create_task(sync_async_run(signal_calling))
 
     async def pass_event_trough_commands(self, event: Event) -> None:
         """
@@ -261,9 +257,7 @@ class Bot:
             self.show_debug_info(event, handling_info)
             await self._call_post_event_handling_signal(event, handling_info)
 
-    def _set_new_event(
-        self, event: Event
-    ) -> None:
+    def _set_new_event(self, event: Event) -> None:
         """
         Выдает всем вейтерам событие
         """
@@ -292,9 +286,7 @@ class Bot:
         return new_event
 
     def show_debug_info(
-        self,
-        event: Event,
-        handling_info: ty.List[HandlingStatus],
+        self, event: Event, handling_info: ty.List[HandlingStatus],
     ) -> None:
         """
         Показывает информацию в дебаггере. Если событие прошло фильтр,
@@ -309,9 +301,7 @@ class Bot:
             print(debug_message)
 
     async def _call_post_event_handling_signal(
-        self,
-        event: Event,
-        handling_info: HandlingStatus,
+        self, event: Event, handling_info: HandlingStatus,
     ) -> None:
         """
         Вызывает зарезервированный сигнал `POST_EVENT_HANDLING`.
@@ -319,16 +309,12 @@ class Bot:
         """
         await sync_async_run(
             self.call_signal.via_name(
-                ReservedSignal.POST_EVENT_HANDLING,
-                event,
-                handling_info,
+                ReservedSignal.POST_EVENT_HANDLING, event, handling_info,
             )
         )
 
     @staticmethod
-    def default_debug_filter(
-        event: Event,
-    ) -> bool:
+    def default_debug_filter(event: Event,) -> bool:
         """
         Фильтр на событие для дебаггера по умолчанию --
         Проверка на отправленное сообщение, либо редактирование.

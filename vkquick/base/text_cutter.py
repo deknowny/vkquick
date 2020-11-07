@@ -13,9 +13,7 @@ class UnmatchedArgument:
 
 class TextCutter(abc.ABC):
 
-    api = fetch(
-        "api_invalid_argument", "api"
-    )
+    api = fetch("api_invalid_argument", "api")
 
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
@@ -65,9 +63,7 @@ class TextCutter(abc.ABC):
             f"по значению аргументом №[id0|{argument_position}]."
             f" {seems_missing_text}\n\n{extra_info} "
         )
-        await context.message.reply(
-            response, disable_mentions=True
-        )
+        await context.message.reply(response, disable_mentions=True)
 
     @staticmethod
     def usage_description() -> str:

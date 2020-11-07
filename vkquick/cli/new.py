@@ -41,9 +41,6 @@ VK Bot. In developing now.
 
 
 CONFIGPY = """
-import vkquick as vq
-
-
 api_settings = dict(token="{token}")
 
 longpoll_settings = dict({group_id})
@@ -61,23 +58,24 @@ import src.default.help_
 import src.default.readme
 
 
-def main():
-    vq.curs.api = vq.API(**src.config.api_settings)
-    vq.curs.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
-    vq.curs.bot = vq.Bot(
-        event_handlers=[
-            src.default.help_.help_,
-            src.default.readme.readme
-        ],
-        signal_handlers=[],
-        **src.config.bot_settings
-    )
-    
-    vq.curs.bot.run()
+vq.curs.api = vq.API(**src.config.api_settings)
+vq.curs.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
+vq.curs.bot = vq.Bot(
+    event_handlers=[
+        src.default.help_.help_,
+        src.default.readme.readme
+    ],
+    signal_handlers=[],
+    **src.config.bot_settings
+)
     
 
+def run():
+    vq.curs.bot.run()
+    
+    
 if __name__ == "__main__":
-    main()
+    run()
 """.lstrip()
 
 
@@ -94,19 +92,19 @@ async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
     Показывает информацию по команде:
     способы использования, описание и примеры.
     \"""
-    for event_handler in vq.curs.bot.event_handlers:
-        if isinstance(event_handler, vq.Command) and com_name in event_handler.origin_names:
-            if event_handler.help_reaction is None:
+    for command in vq.curs.bot.commands:
+        if com_name in command.names:
+            if command.help_reaction is None:
                 return build_text(event_handler)
-            return await vq.sync_async_run(event_handler.help_reaction(event))
+            return await vq.sync_async_run(command.help_reaction(event))
     return f"Команды с именем `{com_name}` не существует!"
     
     
-def build_text(eh):
+def build_text(com):
     prefixes = "\\n".join(
-        map(lambda x: f"-> [id0|{x}&#8203;]", eh.origin_prefixes)
+        map(lambda x: f"-> [id0|{x}&#8203;]", com.prefixes)
     )
-    names = "\\n".join(map(lambda x: f"-> [id0|{x}&#8203;]", eh.origin_names))
+    names = "\\n".join(map(lambda x: f"-> [id0|{x}&#8203;]", com.names))
     params_description = "\\n".join(
         f"[id0|{pos + 1}.] {arg.usage_description()}"
         for pos, arg in enumerate(eh.text_cutters.values())
@@ -124,6 +122,8 @@ def build_text(eh):
     return text
 """.lstrip()
 
+# TODO: help py edit
+# TODO: Fix date in readme py
 
 READMEPY = """
 import datetime

@@ -10,7 +10,7 @@ from vkquick.base.handling_status import HandlingStatus
 from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-from vkquick.wrappers.message import Message, ClientInfo
+from vkquick.message import Message, ClientInfo
 
 
 class Command(Filter):
@@ -83,9 +83,7 @@ class Command(Filter):
             message = await Message.from_user_event(event)
             client_info = None
         context = Context(
-            source_event=event,
-            message=message,
-            client_info=client_info,
+            source_event=event, message=message, client_info=client_info,
         )
         (
             passed_every_filter,
@@ -215,7 +213,9 @@ class Command(Filter):
                         if arg[0] == name:
                             await sync_async_run(
                                 cutter.invalid_value(
-                                    position, not new_arguments_string, context
+                                    position,
+                                    not new_arguments_string,
+                                    context,
                                 )
                             )
                             break

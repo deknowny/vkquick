@@ -85,7 +85,7 @@ class User(vkquick.base.wrapper.Wrapper):
         """
         Создает упоминание пользователя с `alias`
         """
-        new_alias = self.__format__(alias)
+        new_alias = format(self, alias)
         mention = f"[id{self.scheme.id}|{new_alias}]"
         return mention
 

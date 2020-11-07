@@ -158,9 +158,7 @@ class ColoredDebugger(Debugger):
         )
         return text
 
-    def build_event_handler_message(
-        self, scheme: HandlingStatus,
-    ) -> str:
+    def build_event_handler_message(self, scheme: HandlingStatus,) -> str:
         """
         Собирает сообщение о конкретном обработчике.
         В начале находится его имя, далее следует
@@ -174,9 +172,7 @@ class ColoredDebugger(Debugger):
 
         return header + filters_decision + arguments
 
-    def build_event_handler_header(
-        self, scheme: HandlingStatus,
-    ) -> str:
+    def build_event_handler_header(self, scheme: HandlingStatus,) -> str:
         """
         Собирает заголовок обработчика для сообщения
         """
@@ -213,9 +209,7 @@ class ColoredDebugger(Debugger):
         )
         return filters_decision
 
-    def build_event_handler_arguments(
-        self, scheme: HandlingStatus,
-    ) -> str:
+    def build_event_handler_arguments(self, scheme: HandlingStatus,) -> str:
         """
         Собирает аргументы для сообщения
         """

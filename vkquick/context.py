@@ -6,7 +6,7 @@ import pydantic
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.wrappers.message import Message, ClientInfo
+from vkquick.message import Message, ClientInfo
 from vkquick.wrappers.user import User
 from vkquick.current import fetch
 

@@ -22,9 +22,9 @@ class HandlingStatus(pydantic.BaseModel):
     Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
     """
 
-    filters_response: ty.List[
-        ty.Tuple[str, Decision]
-    ] = pydantic.Field(default_factory=list)
+    filters_response: ty.List[ty.Tuple[str, Decision]] = pydantic.Field(
+        default_factory=list
+    )
     """
     Для каждого элемента списка:
     * Событие прошло/не прошло

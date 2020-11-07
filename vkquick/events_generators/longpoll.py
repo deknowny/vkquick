@@ -22,6 +22,7 @@ class LongPollBase(abc.ABC):
 
     _lp_settings: ty.Optional[dict] = None
     session: ty.Optional[vkquick.clients.AIOHTTPClient] = None
+    api: vkquick.api.API
 
     def __aiter__(self) -> LongPollBase:
         """
@@ -64,6 +65,10 @@ class LongPollBase(abc.ABC):
             await self.setup()
         else:
             raise ValueError("Invalid longpoll version")
+
+    async def close_session(self):
+        await self.session.close()
+        await self.api.close_session()
 
     @abc.abstractmethod
     async def setup(self) -> None:

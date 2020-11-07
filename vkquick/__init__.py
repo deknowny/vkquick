@@ -63,7 +63,7 @@ from .base.json_parser import JSONParser
 from .base.client import AsyncHTTPClient, SyncHTTPClient
 
 from .wrappers.user import User, UserField, UserNameEnumCase
-from .wrappers.message import Message, ClientInfo
+from vkquick.message import Message, ClientInfo
 
 from .bot import Bot
 

@@ -63,7 +63,10 @@ class Message(pydantic.BaseModel):
     @classmethod
     async def from_user_event(cls, event: Event) -> Message:
         api = cls.api.__get__(cls)
-        extended_event = await api.messages.get_by_id(message_ids=event[0])
+        extended_event = await api.messages.get_by_id(
+            allow_cache_=True,
+            message_ids=event[1]
+        )
         extended_event = extended_event.items[0]
         return cls.parse_obj(extended_event())
 
@@ -74,6 +77,7 @@ class Message(pydantic.BaseModel):
         # TODO: extendeds
         api = cls.api.__get__(cls)
         extended_event = await api.messages.get_by_conversation_message_id(
+            allow_cache_=True,
             peer_id=peer_id, conversation_message_ids=id_
         )
         extended_event = extended_event[0]
