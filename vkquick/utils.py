@@ -74,7 +74,7 @@ class SafeDict(dict):
         return "{" + key + "}"
 
 
-class AttrDict:
+class AttrDict():
     """
     Надстройка к словарю для возможности получения
     значений через точку. Работает рекурсивно,
@@ -171,11 +171,18 @@ class AutoLowerNameEnum(enum.Enum):
         return name.lower()
 
 
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj: ty.Any) -> ty.Any:
+        if isinstance(obj, AttrDict):
+            return obj()
+        return json.JSONEncoder.default(self, obj)
+
+
 def pretty_view(mapping: dict) -> str:
     """
     Цветное отображение JSON словарей
     """
-    scheme = json.dumps(mapping, ensure_ascii=False, indent=4)
+    scheme = json.dumps(mapping, ensure_ascii=False, indent=4, cls=CustomEncoder)
     scheme = pygments.highlight(
         scheme,
         pygments.lexers.JsonLexer(),  # noqa

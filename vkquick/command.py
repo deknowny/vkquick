@@ -13,12 +13,14 @@ from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 from vkquick.message import Message, ClientInfo
 
 
+# TODO: payload
 class Command(Filter):
     def __init__(
         self,
         *,
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
+        title: ty.Optional[str] = None,
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
         on_invalid_argument: ty.Optional[
@@ -34,15 +36,32 @@ class Command(Filter):
         self._description = description
         self._routing_command_re_flags = routing_command_re_flags
         self._extra = AttrDict(extra or {})
+        self._description = description
+        self._title = title
 
         self.filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
         self._reaction_context_argument_name = None
 
         self._invalid_filter_handlers = on_invalid_filter or {}
+        # TODO: available for help_ command
         self._invalid_argument_handlers = on_invalid_argument or {}
 
         self._build_routing_regex()
+        
+    @property
+    def reaction_arguments(self):
+        return self._reaction_arguments
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def description(self) -> str:
+        if self._description is None:
+            return "Описание отсутствует"
+        return self._description
 
     @property
     def extra(self) -> AttrDict:
@@ -72,6 +91,10 @@ class Command(Filter):
     def __call__(self, reaction: sync_async_callable(..., None)):
         self.reaction = reaction
         self._resolve_arguments()
+        if self._description is None:
+            self._description = inspect.getdoc(reaction)
+        if self._title is None:
+            self._title = reaction.__name__
         return self
 
     async def handle_event(self, event: Event):

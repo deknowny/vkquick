@@ -49,6 +49,7 @@ from .text_cutters.bool_ import Bool
 from .text_cutters.list_ import List
 from .text_cutters.mention import UserMention
 from .text_cutters.union import Union
+from .text_cutters.string_ import String
 from .text_cutters.optional import Optional
 from .text_cutters.regex import Regex
 

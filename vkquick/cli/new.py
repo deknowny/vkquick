@@ -61,7 +61,7 @@ import src.default.readme
 vq.curs.api = vq.API(**src.config.api_settings)
 vq.curs.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
 vq.curs.bot = vq.Bot(
-    event_handlers=[
+    commands=[
         src.default.help_.help_,
         src.default.readme.readme
     ],
@@ -87,16 +87,14 @@ import vkquick as vq
     prefixes=["/"],
     names=["help", "помощь"]
 )
-async def help_(com_name: vq.String(), event: vq.CapturedEvent()):
+async def help_(com_name: str = vq.String()):
     \"""
     Показывает информацию по команде:
     способы использования, описание и примеры.
     \"""
     for command in vq.curs.bot.commands:
         if com_name in command.names:
-            if command.help_reaction is None:
-                return build_text(event_handler)
-            return await vq.sync_async_run(command.help_reaction(event))
+            return build_text(command)
     return f"Команды с именем `{com_name}` не существует!"
     
     
@@ -106,13 +104,12 @@ def build_text(com):
     )
     names = "\\n".join(map(lambda x: f"-> [id0|{x}&#8203;]", com.names))
     params_description = "\\n".join(
-        f"[id0|{pos + 1}.] {arg.usage_description()}"
-        for pos, arg in enumerate(eh.text_cutters.values())
+        f"[id0|{pos + 1}.] {arg[1].usage_description()}"
+        for pos, arg in enumerate(com.reaction_arguments)
     )
-    description = eh.description or "Описание отсутствует"
     text = (
-        f"{eh.title}\\n\\n"
-        f"{description}\\n\\n"
+        f"{com.title}\\n\\n"
+        f"{com.description}\\n\\n"
         "[Использование]\\n"
         f"Возможные префиксы:\\n{prefixes or '> Отсутствуют'}\\n"
         f"Возможные имена:\\n{names or '> Отсутствуют'}\\n"
@@ -122,7 +119,6 @@ def build_text(com):
     return text
 """.lstrip()
 
-# TODO: help py edit
 # TODO: Fix date in readme py
 
 READMEPY = """
@@ -151,13 +147,11 @@ Python: {platform.python_version()}
     prefixes=["::"],
     names=["readme"]
 )
-def readme():
+async def readme(ctx: vq.Context):
     \"""
     Сводка по боту.
     \"""
-    return vq.Message(
-        text, disable_mentions=True
-    )
+    await ctx.message.reply(text, disable_mentions=True)
 """.lstrip()
 
 
