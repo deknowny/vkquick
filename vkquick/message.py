@@ -1,13 +1,24 @@
 from __future__ import annotations
+import asyncio
 import datetime
 import typing as ty
 
 import pydantic
 
+from vkquick.wrappers.user import User
 from vkquick.current import fetch
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict
 import vkquick.utils
+
+
+class MessagesSendResponse:
+    """
+    Для ответов, содержащих поля peer_ids
+    """
+    peer_id: int
+    message_id: int
+    conversation_message_id: int
 
 
 class Message(pydantic.BaseModel):
@@ -64,8 +75,7 @@ class Message(pydantic.BaseModel):
     async def from_user_event(cls, event: Event) -> Message:
         api = cls.api.__get__(cls)
         extended_event = await api.messages.get_by_id(
-            allow_cache_=True,
-            message_ids=event[1]
+            allow_cache_=True, message_ids=event[1]
         )
         extended_event = extended_event.items[0]
         return cls.parse_obj(extended_event())
@@ -77,8 +87,7 @@ class Message(pydantic.BaseModel):
         # TODO: extendeds
         api = cls.api.__get__(cls)
         extended_event = await api.messages.get_by_conversation_message_id(
-            allow_cache_=True,
-            peer_id=peer_id, conversation_message_ids=id_
+            allow_cache_=True, peer_id=peer_id, conversation_message_ids=id_
         )
         extended_event = extended_event[0]
         return cls.parse_obj(extended_event)
@@ -88,13 +97,7 @@ class Message(pydantic.BaseModel):
         message: ty.Optional[str] = None,
         /,
         *,
-        peer_id: ty.Optional[int] = None,
         random_id: ty.Optional[int] = None,
-        user_id: ty.Optional[int] = None,
-        domain: ty.Optional[str] = None,
-        chat_id: ty.Optional[int] = None,
-        user_ids: ty.Optional[ty.List[int]] = None,
-        peer_ids: ty.Optional[ty.List[int]] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
         attachment: ty.Optional[ty.List[str]] = None,
@@ -131,18 +134,10 @@ class Message(pydantic.BaseModel):
         message: ty.Optional[str] = None,
         /,
         *,
-        peer_id: ty.Optional[int] = None,
         random_id: ty.Optional[int] = None,
-        user_id: ty.Optional[int] = None,
-        domain: ty.Optional[str] = None,
-        chat_id: ty.Optional[int] = None,
-        user_ids: ty.Optional[ty.List[int]] = None,
-        peer_ids: ty.Optional[ty.List[int]] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
         attachment: ty.Optional[ty.List[str]] = None,
-        reply_to: ty.Optional[int] = None,
-        forward_messages: ty.Optional[ty.List[int]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[str] = None,
@@ -154,9 +149,8 @@ class Message(pydantic.BaseModel):
         silent: ty.Optional[bool] = None,
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
-        forward: ty.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> MessagesSendResponse:
         params = {
             "peer_ids": self.peer_id,
             f"forward": "{"
@@ -174,22 +168,96 @@ class Message(pydantic.BaseModel):
         if random_id is None:
             params["random_id"] = vkquick.utils.random_id()
 
-        return await self.api.method("messages.send", params)
+        response = await self.api.method("messages.send", params)
+        return response[0]
 
-    async def forward(self, *args, **kwargs):
-        ...
+    async def forward(
+        self,
+        message: ty.Optional[str] = None,
+        /,
+        *,
+        random_id: ty.Optional[int] = None,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[str]] = None,
+        sticker_id: ty.Optional[int] = None,
+        group_id: ty.Optional[int] = None,
+        keyboard: ty.Optional[str] = None,
+        payload: ty.Optional[str] = None,
+        dont_parse_links: ty.Optional[bool] = None,
+        disable_mentions: ty.Optional[bool] = None,
+        intent: ty.Optional[str] = None,
+        expire_ttl: ty.Optional[int] = None,
+        silent: ty.Optional[bool] = None,
+        subscribe_id: ty.Optional[int] = None,
+        content_source: ty.Optional[str] = None,
+        **kwargs,
+    ) -> MessagesSendResponse:
+        params = {
+            "peer_ids": self.peer_id,
+            f"forward": "{"
+            f'"conversation_message_ids":[{self.conversation_message_id}],'
+            f'"peer_id":{self.peer_id}'
+            "}",
+        }
+        for name, value in locals().items():
+            if name == "kwargs":
+                params.update(value)
+            elif name != "self" and value is not None:
+                params.update({name: value})
 
-    async def fetch_replied_message_sender(self, fields, name_case):
-        ...
+        if random_id is None:
+            params["random_id"] = vkquick.utils.random_id()
 
-    async def fetch_forward_messages_sender(self, fields, name_case):
-        ...
+        response = await self.api.method("messages.send", params)
+        return response[0]
 
-    async def fetch_attached_user(self):
-        ...
+    async def fetch_replied_message_sender(
+        self, fields: ty.List[str], name_case: str
+    ) -> ty.Optional[User]:
+        if self.reply_message is None:
+            return None
 
-    async def fetch_sender(self, fields, name_case):
-        ...
+        user_id = self.reply_message.from_id
+        user = await User.build_from_id(
+            user_id, fields=fields, name_case=name_case
+        )
+        return user
+
+    async def fetch_forward_messages_sender(
+        self, fields: ty.List[str], name_case: str
+    ) -> ty.List[User]:
+        user_tasks = []
+        for message in self.fwd_messages:
+            user_task = User.build_from_id(
+                message.from_id, fields=fields, name_case=name_case
+            )
+            user_tasks.append(user_task)
+        users = await asyncio.gather(*user_tasks)
+        return users
+
+    async def fetch_attached_user(
+        self, fields: ty.List[str], name_case: str
+    ) -> ty.Optional[User]:
+        replied_user = await self.fetch_replied_message_sender(
+            fields=fields, name_case=name_case
+        )
+        if replied_user is not None:
+            return replied_user
+        if not self.fwd_messages:
+            return None
+        first_user_from_fwd = await User.build_from_id(
+            self.fwd_messages[0].from_id, fields=fields, name_case=name_case
+        )
+        return first_user_from_fwd
+
+    async def fetch_sender(
+        self, fields: ty.List[str], name_case: str
+    ) -> User:
+        sender = await User.build_from_id(
+            self.from_id, fields=fields, name_case=name_case
+        )
+        return sender
 
     def get_photos(self):
         ...
@@ -198,7 +266,7 @@ class Message(pydantic.BaseModel):
         ...
 
 
-# Для возможности полей использовать Message у себя
+# Для возможности полей использовать Message в своих же полях
 Message.update_forward_refs()
 
 
