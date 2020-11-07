@@ -65,14 +65,4 @@ class Event(AttrDict):
         """
         return f"Event(type={self.type})"
 
-    def pretty_view(self) -> str:
-        """
-        Цветное отображение JSON события вместе с индентами
-        """
-        scheme = json.dumps(self(), ensure_ascii=False, indent=4)
-        scheme = pygments.highlight(
-            scheme,
-            pygments.lexers.JsonLexer(),
-            pygments.formatters.TerminalFormatter(bg="light"),
-        )
-        return scheme
+

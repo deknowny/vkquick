@@ -5,10 +5,15 @@
 from __future__ import annotations
 import asyncio
 import enum
+import json
 import random
 import os
 import functools
 import typing as ty
+
+import pygments
+import pygments.formatters
+import pygments.lexers
 
 
 T = ty.TypeVar("T")
@@ -164,3 +169,16 @@ class AutoLowerNameEnum(enum.Enum):
     @staticmethod
     def _generate_next_value_(name, *args):
         return name.lower()
+
+
+def pretty_view(mapping: dict) -> str:
+    """
+    Цветное отображение JSON словарей
+    """
+    scheme = json.dumps(mapping, ensure_ascii=False, indent=4)
+    scheme = pygments.highlight(
+        scheme,
+        pygments.lexers.JsonLexer(),  # noqa
+        pygments.formatters.TerminalFormatter(bg="light"),  # noqa
+    )
+    return scheme

@@ -16,9 +16,11 @@ from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.current import fetch, curs
 from vkquick.signal import SignalCaller, ReservedSignal, SignalHandler
 from vkquick.events_generators.event import Event
-from vkquick.utils import sync_async_run, clear_console
+from vkquick.utils import sync_async_run, clear_console, pretty_view
 from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
+from vkquick.message import Message
+from vkquick.json_parsers import BuiltinJSONParser
 
 
 class _HandlerMarker:
@@ -222,9 +224,6 @@ class Bot:
         на каждый `EventHandler` (или `Command`). Выбор метода
         зависит от флага релиза
         """
-        if self.release:
-            self.show_debug_info = self.show_debug_message_for_release
-
         await self.events_generator.setup()
         async for events in self.events_generator:
             for event in events:
@@ -254,7 +253,8 @@ class Bot:
         except Exception:
             traceback.print_exc()
         else:
-            self.show_debug_info(event, handling_info)
+            if not self.release:
+                await self.show_debug_info(event, handling_info)
             await self._call_post_event_handling_signal(event, handling_info)
 
     def _set_new_event(self, event: Event) -> None:
@@ -285,7 +285,7 @@ class Bot:
         self.event_waiters.remove(waiter)
         return new_event
 
-    def show_debug_info(
+    async def show_debug_info(
         self, event: Event, handling_info: ty.List[HandlingStatus],
     ) -> None:
         """
@@ -294,9 +294,13 @@ class Bot:
         а затем выводит сообщение, собранное дебаггером
         """
         if self.debug_filter(event):
-            debugger = self.debugger(event, handling_info)
+            if event.from_group:
+                message = Message.from_group_event(event)
+            else:
+                message = await Message.from_user_event(event)
+            debugger = self.debugger(message, handling_info)  # noqa
             debug_message = debugger.render()
-            print(event.pretty_view())
+            print(pretty_view(message.dict(exclude={"date"})))
             clear_console()
             print(debug_message)
 

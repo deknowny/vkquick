@@ -15,6 +15,7 @@ import typing as ty
 import huepy
 
 from vkquick.base.debugger import Debugger
+from vkquick.wrappers.user import User
 from vkquick.base.handling_status import HandlingStatus
 
 
@@ -55,8 +56,11 @@ class ColoredDebugger(Debugger):
     event_header_separator_color: Color = staticmethod(true_grey)
     reactions_separator_color: Color = staticmethod(true_grey)
     exception_separator_color: Color = staticmethod(true_grey)
+    sender_name_color: Color = staticmethod(huepy.green)
+    sender_command_color: Color = staticmethod(huepy.cyan)
 
-    event_header_template: str = "-> {event_type}\n{separator}\n\n"
+    sender_info_template: str = "New message from `{sender_name}` with text `{sender_command}`"
+    event_header_template: str = "{sender_info}\n{separator}\n\n"
     event_header_separator_symbol: str = "="
     reactions_separator_symbol: str = "-"
     exception_separator_symbol: str = "!"
@@ -92,8 +96,19 @@ class ColoredDebugger(Debugger):
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
+        with self.api.synchronize():
+            sender = self.api.users.get(
+                allow_cache_=True,
+                user_ids=self.message.from_id
+            )
+            sender = User(sender[0])
+            sender = format(sender, "<fn> <ln>")
+        sender_info = self.sender_info_template.format(
+            sender_name=self.sender_name_color(sender),
+            sender_command=self.sender_command_color(self.message.text)
+        )
         header = self.event_header_template.format(
-            event_type=self.event.type,
+            sender_info=sender_info,
             separator=self.build_separator(
                 self.event_header_separator_symbol,
                 self.event_header_separator_color,
@@ -290,3 +305,5 @@ class UncoloredDebugger(ColoredDebugger):
     event_header_separator_color: Color = staticmethod(uncolored_text)
     reactions_separator_color: Color = staticmethod(uncolored_text)
     exception_separator_color: Color = staticmethod(uncolored_text)
+    sender_name_color: Color = staticmethod(uncolored_text)
+    sender_command_color: Color = staticmethod(uncolored_text)

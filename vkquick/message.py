@@ -50,6 +50,7 @@ class Message(pydantic.BaseModel):
     action: ty.Optional[AttrDict]
     ref: ty.Optional[str]
     ref_source: ty.Optional[str]
+    expire_ttl: ty.Optional[int]
 
     @pydantic.validator("attachments", pre=True)
     def attachments_to_attrdict(cls, value):

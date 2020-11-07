@@ -7,13 +7,9 @@ from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.message import Message, ClientInfo
-from vkquick.wrappers.user import User
-from vkquick.current import fetch
 
 
 class Context(pydantic.BaseModel):
-
-    api = fetch("api_context", "api")
 
     class Config:
         arbitrary_types_allowed = True
@@ -27,13 +23,6 @@ class Context(pydantic.BaseModel):
     extra: AttrDict = pydantic.Field(default_factory=AttrDict)
 
     def __str__(self) -> str:
-        with self.api.synchronize():
-            user = self.api.users.get(
-                allow_cache_=True, user_ids=self.message.from_id
-            )
-            user = User(user[0])
-        return (
-            f"{self.__class__.__name__}"
-            f"(from='{user:<fn> <ln>}', "
-            f"command='{self.message.text}')"
-        )
+        return f"{self.__class__.__name__}" \
+               f"(source_event, message, client_info, " \
+               f"filters_response, extra)"

@@ -2,8 +2,9 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.events_generators.event import Event
+from vkquick.message import Message
 from vkquick.base.handling_status import HandlingStatus
+from vkquick.current import fetch
 
 
 @dataclasses.dataclass
@@ -16,8 +17,9 @@ class Debugger(abc.ABC):
     аргументы были переданы в реакцию, и была ли реакция вызвана
     вообще
     """
+    api = fetch("api_debugger", "api")
 
-    event: Event
+    message: Message
     """
     Событие, которое было обработано
     """
