@@ -1,38 +1,26 @@
 """
 ChatOnly фильтр
 """
-import enum
-
-import vkquick.base.filter
-import vkquick.events_generators.event
-
-
-class ChatOnlyStatus(vkquick.base.filter.DecisionStatus):
-    PASSED = enum.auto()
-    NOT_PASSED = enum.auto()
+from vkquick.context import Context
+from vkquick.base.filter import Filter, Decision
+from vkquick import peer
 
 
-class ChatOnly(vkquick.base.filter.Filter):
+class ChatOnly(Filter):
     """
     Делает команду доступной только в беседе
     """
 
-    passed_decision = vkquick.base.filter.Decision(
+    passed_decision = Decision(
         True, "Сообщение отправлено в чат"
     )
-    not_passed_decision = vkquick.base.filter.Decision(
+    not_passed_decision = Decision(
         False, "Сообщение отправлено в лс"
-    )
-    passed_response = vkquick.base.filter.FilterResponse(
-        ChatOnlyStatus.PASSED, passed_decision
-    )
-    not_passed_response = vkquick.base.filter.FilterResponse(
-        ChatOnlyStatus.NOT_PASSED, not_passed_decision
     )
 
     def make_decision(
-        self, event: vkquick.events_generators.event.Event
-    ) -> vkquick.base.filter.FilterResponse:
-        if event.get_message_object().peer_id > vkquick.peer():
-            return self.passed_response
-        return self.not_passed_response
+        self, context: Context
+    ) -> Decision:
+        if context.message.peer_id > peer():
+            return self.passed_decision
+        return self.not_passed_decision
