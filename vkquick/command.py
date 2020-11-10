@@ -12,7 +12,7 @@ from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 from vkquick.message import Message, ClientInfo
 
-
+# TODO: executor for running
 # TODO: payload
 class Command(Filter):
     def __init__(

@@ -125,6 +125,8 @@ class Message(pydantic.BaseModel):
             elif name != "self" and value is not None:
                 params.update({name: value})
 
+        del params["params"]
+
         if random_id is None:
             params["random_id"] = vkquick.utils.random_id()
 
@@ -165,6 +167,8 @@ class Message(pydantic.BaseModel):
                 params.update(value)
             elif name != "self" and value is not None:
                 params.update({name: value})
+
+        del params["params"]
 
         if random_id is None:
             params["random_id"] = vkquick.utils.random_id()
@@ -207,6 +211,8 @@ class Message(pydantic.BaseModel):
             elif name != "self" and value is not None:
                 params.update({name: value})
 
+        del params["params"]
+
         if random_id is None:
             params["random_id"] = vkquick.utils.random_id()
 
@@ -214,7 +220,7 @@ class Message(pydantic.BaseModel):
         return response[0]
 
     async def fetch_replied_message_sender(
-        self, fields: ty.List[str], name_case: str
+        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
     ) -> ty.Optional[User]:
         if self.reply_message is None:
             return None
@@ -226,7 +232,7 @@ class Message(pydantic.BaseModel):
         return user
 
     async def fetch_forward_messages_sender(
-        self, fields: ty.List[str], name_case: str
+        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
     ) -> ty.List[User]:
         user_tasks = []
         for message in self.fwd_messages:
@@ -238,7 +244,7 @@ class Message(pydantic.BaseModel):
         return users
 
     async def fetch_attached_user(
-        self, fields: ty.List[str], name_case: str
+        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
     ) -> ty.Optional[User]:
         replied_user = await self.fetch_replied_message_sender(
             fields=fields, name_case=name_case
@@ -253,7 +259,7 @@ class Message(pydantic.BaseModel):
         return first_user_from_fwd
 
     async def fetch_sender(
-        self, fields: ty.List[str], name_case: str
+        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
     ) -> User:
         sender = await User.build_from_id(
             self.from_id, fields=fields, name_case=name_case
