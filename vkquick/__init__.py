@@ -63,8 +63,15 @@ from .base.synchronizable import Synchronizable
 from .base.json_parser import JSONParser
 from .base.client import AsyncHTTPClient, SyncHTTPClient
 
+from .filters.action import Action
+from .filters.allow_access_for import AllowAccessFor
+from .filters.chat_only import ChatOnly
+from .filters.direct_only import DirectOnly
+from .filters.ignore_bots_messages import IgnoreBotsMessages
+from .filters.retract_access_for import RetractAccessFor
+
 from .wrappers.user import User, UserField, UserNameEnumCase
-from vkquick.message import Message, ClientInfo
+from .message import Message, ClientInfo
 
 from .bot import Bot
 
