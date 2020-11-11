@@ -6,7 +6,9 @@ import pydantic
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.message import Message, ClientInfo
+from vkquick.wrappers.message import Message, ClientInfo
+from vkquick.shared_box import SharedBox
+from vkquick.api import API
 
 
 class Context(pydantic.BaseModel):
@@ -14,6 +16,7 @@ class Context(pydantic.BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    shared_box: SharedBox
     source_event: Event
     message: Message
     client_info: ty.Optional[ClientInfo]
@@ -21,6 +24,10 @@ class Context(pydantic.BaseModel):
         default_factory=dict
     )
     extra: AttrDict = pydantic.Field(default_factory=AttrDict)
+
+    @property
+    def api(self) -> API:
+        return self.shared_box.api
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}" \

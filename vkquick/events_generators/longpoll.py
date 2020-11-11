@@ -5,7 +5,6 @@ from __future__ import annotations
 import abc
 import typing as ty
 
-import vkquick.api
 import vkquick.base.json_parser
 import vkquick.base.client
 import vkquick.json_parsers
@@ -15,6 +14,10 @@ import vkquick.utils
 import vkquick.clients
 
 
+if ty.TYPE_CHECKING:
+    from vkquick.api import API
+
+
 class LongPollBase(abc.ABC):
     """
     Базовый интерфейс для всех типов LongPoll
@@ -22,7 +25,7 @@ class LongPollBase(abc.ABC):
 
     _lp_settings: ty.Optional[dict] = None
     session: ty.Optional[vkquick.clients.AIOHTTPClient] = None
-    api: vkquick.api.API
+    api: API
 
     def __aiter__(self) -> LongPollBase:
         """
@@ -100,12 +103,8 @@ class GroupLongPoll(LongPollBase):
 
     """
 
-    api: vkquick.api.API = vkquick.current.fetch(
-        "api_lp_group", "api_lp", "api"
-    )
-
     def __init__(
-        self,
+        self, api: API, *,
         group_id: ty.Optional[int] = None,
         wait: int = 25,
         client: ty.Optional[
@@ -122,6 +121,7 @@ class GroupLongPoll(LongPollBase):
         * `client`: HTTP клиент для отправки запросов
         * `json_parser`: Парсер JSON для новых событий
         """
+        self.api = api
         if (
             group_id is None
             and self.api.token_owner == vkquick.api.TokenOwner.USER
@@ -177,12 +177,8 @@ class UserLongPoll(LongPollBase):
         asyncio.run(main())
     """
 
-    api: vkquick.api.API = vkquick.current.fetch(
-        "api_lp_user", "api_lp", "api"
-    )
-
     def __init__(
-        self,
+        self, api: API,
         version: int = 3,
         wait: int = 15,
         mode: int = 234,
@@ -200,6 +196,7 @@ class UserLongPoll(LongPollBase):
         * `client`: HTTP клиент для отправки запросов
         * `json_parser`: парсер JSON для новых событий
         """
+        self.api = api
         self.version = version
         self.wait = wait
         self.mode = mode

@@ -24,6 +24,7 @@ import urllib.parse
 import typing as ty
 
 import cachetools
+import pydantic
 
 from vkquick.base.json_parser import JSONParser
 from vkquick.json_parsers import BuiltinJSONParser
@@ -33,6 +34,7 @@ from vkquick.utils import AttrDict
 from vkquick.clients import AIOHTTPClient, RequestsHTTPClient
 from vkquick.base.client import SyncHTTPClient, AsyncHTTPClient
 from vkquick.wrappers.user import User
+from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 
 
 class TokenOwner(str, enum.Enum):
@@ -45,7 +47,7 @@ class TokenOwner(str, enum.Enum):
     USER = "user"
 
 
-@dataclasses.dataclass
+@pydantic.dataclasses.dataclass
 class API(Synchronizable):
     """
     Обертка для API запросов
@@ -187,10 +189,15 @@ class API(Synchronizable):
             api.users.get(allow_cache=True, user_ids=1)
 
     """
-
     token: str
     """
     Access Token для API запросов
+    """
+
+    autocomplete_params: ty.Dict[str, ty.Any] = pydantic.Field(default_factory=dict)
+    """
+    При вызове API метода первым аргументом можно передать Ellipsis,
+    тогда в вызов подставятся поля из этого аргумента 
     """
 
     version: ty.Union[float, str] = "5.133"
@@ -198,17 +205,9 @@ class API(Synchronizable):
     Версия API
     """
 
-    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(
-        default_factory=dict
-    )
-    """
-    При вызове API метода первым аргументом можно передать Ellipsis,
-    тогда в вызов подставятся поля из этого аргумента 
-    """
-
     response_factory: ty.Callable[
         [ty.Union[dict, list, str, int]], ty.Any
-    ] = AttrDict
+    ] = pydantic.Field(default=AttrDict)
     """
     Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)
@@ -226,12 +225,12 @@ class API(Synchronizable):
     для определения задержки между запросами
     """
 
-    async_http_session: ty.Optional[AsyncHTTPClient] = None
+    async_http_client: ty.Optional[AsyncHTTPClient] = None
     """
     Образ клиента для асинхронных HTTP запросов
     """
 
-    sync_http_session: ty.Optional[SyncHTTPClient] = None
+    sync_http_session: ty.Optional[ty.Type[SyncHTTPClient]] = None
     """
     Образ клиента для синхронных HTTP запросов
     """
@@ -241,9 +240,12 @@ class API(Synchronizable):
     Одна из имплементаций алгоритмов кэширования запросов
     """
 
+    class Config:
+        arbitrary_types_allowed = True
+
     def __post_init__(self) -> None:
         self.json_parser = self.json_parser or BuiltinJSONParser
-        self.async_http_session = self.async_http_session or AIOHTTPClient(
+        self.async_http_client = self.async_http_client or AIOHTTPClient(
             url="https://api.vk.com/method/", json_parser=self.json_parser,
         )
         self.sync_http_session = self.sync_http_session or RequestsHTTPClient(
@@ -436,7 +438,7 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             await asyncio.sleep(self._get_waiting_time())
-            response = await self.async_http_session.send_get_request(
+            response = await self.async_http_client.send_get_request(
                 path=method_name, params=data
             )
             response = self._prepare_response_body(response)
@@ -444,7 +446,7 @@ class API(Synchronizable):
             return response
 
         await asyncio.sleep(self._get_waiting_time())
-        response = await self.async_http_session.send_get_request(
+        response = await self.async_http_client.send_get_request(
             path=method_name, params=data
         )
         return self._prepare_response_body(response)
@@ -541,4 +543,48 @@ class API(Synchronizable):
         """
         Закрывает соединение сессии
         """
-        await self.async_http_session.close()
+        await self.async_http_client.close()
+
+    async def fetch_user_via_id(self,
+        id_: ty.Union[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> User:
+        """
+        Создает обертку над юзером через его ID или screen name
+        """
+        users = await self.users.get(
+            allow_cache_=True,
+            user_ids=id_,
+            fields=fields,
+            name_case=name_case,
+        )
+        user = users[0]
+        return User.parse_obj(user)
+
+    async def fetch_user_via_ids(self,
+        ids: ty.Union[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> ty.Tuple[User, ...]:
+        """
+        Создает обертку над юзером через его ID или screen name
+        """
+        users = await self.users.get(
+            allow_cache_=True,
+            user_ids=ids,
+            fields=fields,
+            name_case=name_case,
+        )
+        users = tuple(User.parse_obj(user) for user in users)
+        return users
+
+    def init_group_lp(self, **kwargs) -> GroupLongPoll:
+        return GroupLongPoll(self, **kwargs)
+
+    def init_user_lp(self, **kwargs) -> UserLongPoll:
+        return UserLongPoll(self, **kwargs)

@@ -10,7 +10,9 @@ from vkquick.base.handling_status import HandlingStatus
 from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-from vkquick.message import Message, ClientInfo
+from vkquick.wrappers.message import Message, ClientInfo
+from vkquick.shared_box import SharedBox
+
 
 # TODO: executor for running
 # TODO: payload
@@ -97,7 +99,7 @@ class Command(Filter):
             self._title = reaction.__name__
         return self
 
-    async def handle_event(self, event: Event):
+    async def handle_event(self, event: Event, shared_box: SharedBox) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
         if event.from_group:
             message = Message.from_group_event(event)
@@ -106,7 +108,10 @@ class Command(Filter):
             message = await Message.from_user_event(event)
             client_info = None
         context = Context(
-            source_event=event, message=message, client_info=client_info,
+            shared_box=shared_box,
+            source_event=event,
+            message=message,
+            client_info=client_info,
         )
         (
             passed_every_filter,
@@ -226,9 +231,7 @@ class Command(Filter):
             arguments[name] = parsed_value
             if parsed_value is UnmatchedArgument:
                 if name in self._invalid_argument_handlers:
-                    response = await sync_async_run(
-                        self._invalid_argument_handlers[name](context)
-                    )
+                    response = self._invalid_argument_handlers[name](context)
                     if response is not None:
                         await context.message.reply(response)
                 else:

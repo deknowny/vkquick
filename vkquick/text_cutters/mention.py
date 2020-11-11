@@ -13,7 +13,7 @@ class UserMention(TextCutter):
     Упоминание пользователя
     """
 
-    async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
+    def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         value, parsed_string = self.cut_part_lite(
             User.mention_regex,
             arguments_string,
@@ -22,8 +22,7 @@ class UserMention(TextCutter):
         if value is UnmatchedArgument:
             return value, parsed_string
 
-        user = await User.build_from_id(value)
-        return user, parsed_string
+        return value, parsed_string
 
     def usage_description(self):
         return "Аргумент является упоминанием пользователя."

@@ -12,63 +12,14 @@ import typing as ty
 from vkquick.api import API, TokenOwner
 from vkquick.base.debugger import Debugger
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
-from vkquick.current import fetch, curs
+from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll, LongPollBase
+from vkquick.shared_box import SharedBox
 from vkquick.signal import SignalCaller, ReservedSignal, SignalHandler
 from vkquick.events_generators.event import Event
 from vkquick.utils import sync_async_run, clear_console, pretty_view
 from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
-from vkquick.message import Message
-from vkquick.json_parsers import BuiltinJSONParser
-
-
-class _HandlerMarker:
-    """
-    Маркер хендлеров для бота. Позволяет помечать
-    хендлер как обработчик событий или же как обработчик
-    сигналов
-
-        import vkquick as vq
-
-
-        bot = vq.Bot.init_via_token("your-token")
-
-
-        @bot.mark.command
-        @vq.Command(names=["hi"])
-        def hi():
-            return "hello!"
-
-
-        @bot.mark.signal_handler
-        @vq.SignalHandler(vq.ReservedSignal.STARTUP)
-        def startup():
-            print("Bot starts listening...")
-
-
-        # В боте будет одна команда и один обработчик сигнала
-        bot.run()
-
-    Маркер нужно располагать над всеми декораторами
-    """
-
-    def __init__(self, bot: Bot):
-        self.bot = bot
-
-    def command(self, command: Command) -> Command:
-        """
-        Маркер для обработчика событий
-        """
-        self.bot.commands.append(command)
-        return command
-
-    def signal_handler(self, handler: SignalHandler) -> SignalHandler:
-        """
-        Маркер для обработчика сигналов
-        """
-        self.bot.signal_handlers.append(handler)
-        return handler
+from vkquick.wrappers.message import Message
 
 
 class Bot:
@@ -93,7 +44,7 @@ class Bot:
 
 
         bot = vq.Bot.init_via_token("your-token")
-        bot.event_handlers.append(hi)
+        bot.commands.append(hi)
         bot.run()
 
 
@@ -121,11 +72,11 @@ class Bot:
     использовать маркеры (пример есть в классе выше)
     """
 
-    events_generator = fetch("events_generator", "cb", "lp")
-
     def __init__(
         self,
         *,
+        api: API,
+        events_generator: LongPollBase,
         signal_handlers: ty.Optional[ty.Collection[SignalHandler]] = None,
         commands: ty.Optional[ty.Collection[Command]] = None,
         debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
@@ -141,13 +92,30 @@ class Bot:
         события сообщение в терминал для наглядного отображения произошедшего
         """
         self.signal_handlers = signal_handlers or []
-        self.commands = commands or []
+        self._commands = commands or []
         self.debug_filter = debug_filter or self.default_debug_filter
         self.debugger = debugger or ColoredDebugger
         self.call_signal = SignalCaller(self.signal_handlers)
 
         self.event_waiters: ty.List[asyncio.Future] = []
         self.mark = _HandlerMarker(self)
+
+        SharedBox.update_forward_refs(Bot=self.__class__)
+        self.shared_box = SharedBox(
+            api=api, events_generator=events_generator, bot=self
+        )
+
+    @property
+    def commands(self) -> ty.List[Command]:
+        return self.commands
+
+    @property
+    def api(self) -> API:
+        return self.shared_box.api
+
+    @property
+    def events_generator(self) -> LongPollBase:
+        return self.shared_box.events_generator
 
     @classmethod
     def init_via_token(cls, token: str) -> Bot:
@@ -161,16 +129,12 @@ class Bot:
         # Создание необходимых объектов по информации с токена
         # и добавление их в куррент для использования с любой точки кода
         api = API(token)
-        curs.api = api
         if api.token_owner == TokenOwner.GROUP:
-            curs.lp = GroupLongPoll()
+            lp = GroupLongPoll(api)
         else:
-            curs.lp = UserLongPoll()
+            lp = UserLongPoll(api)
 
-        # Сам инстанс бота
-        self = object.__new__(cls)
-        self.__init__()
-        return self
+        return cls(api=api, events_generator=lp)
 
     @functools.cached_property
     def release(self) -> bool:
@@ -215,7 +179,7 @@ class Bot:
             await sync_async_run(
                 self.call_signal.via_name(ReservedSignal.SHUTDOWN)
             )
-            await self.events_generator.close_session()
+            await self.shared_box.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
         """
@@ -224,8 +188,8 @@ class Bot:
         на каждый `EventHandler` (или `Command`). Выбор метода
         зависит от флага релиза
         """
-        await self.events_generator.setup()
-        async for events in self.events_generator:
+        await self.shared_box.events_generator.setup()
+        async for events in self.shared_box.events_generator:
             for event in events:
                 if event.type in ("message_new", 4):
                     asyncio.create_task(
@@ -245,7 +209,7 @@ class Bot:
         показывает только пойманные исключения
         """
         tasks = [
-            asyncio.create_task(command.handle_event(event))
+            asyncio.create_task(command.handle_event(event, self.shared_box))
             for command in self.commands
         ]
         try:
@@ -339,3 +303,51 @@ class Bot:
         for scheme in handling_info:
             if scheme.exception_text:
                 print(scheme.exception_text)
+
+
+class _HandlerMarker:
+    """
+    Маркер хендлеров для бота. Позволяет помечать
+    хендлер как обработчик событий или же как обработчик
+    сигналов
+
+        import vkquick as vq
+
+
+        bot = vq.Bot.init_via_token("your-token")
+
+
+        @bot.mark.command
+        @vq.Command(names=["hi"])
+        def hi():
+            return "hello!"
+
+
+        @bot.mark.signal_handler
+        @vq.SignalHandler(vq.ReservedSignal.STARTUP)
+        def startup():
+            print("Bot starts listening...")
+
+
+        # В боте будет одна команда и один обработчик сигнала
+        bot.run()
+
+    Маркер нужно располагать над всеми декораторами
+    """
+
+    def __init__(self, bot: Bot):
+        self.bot = bot
+
+    def command(self, command: Command) -> Command:
+        """
+        Маркер для обработчика событий
+        """
+        self.bot.commands.append(command)
+        return command
+
+    def signal_handler(self, handler: SignalHandler) -> SignalHandler:
+        """
+        Маркер для обработчика сигналов
+        """
+        self.bot.signal_handlers.append(handler)
+        return handler

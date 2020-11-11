@@ -3,91 +3,34 @@ import enum
 import re
 import typing as ty
 
-import vkquick.base.wrapper
+import pydantic
+
+from vkquick.base.wrapper import Wrapper
 import vkquick.utils
 import vkquick.utils
 
 
-class User(vkquick.base.wrapper.Wrapper):
-    """
-    Обертка на объект пользователя
-    """
+mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
-    api = vkquick.current.fetch("api_user_wrapper", "api")
 
-    mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
-    """
-    Регекс на упоминание
-    """
+class User(Wrapper):
+    class Config:
+        extra = "allow"
+        allow_mutation = False
+        arbitrary_types_allowed = True
 
-    fn: str
-    """
-    Имя пользователя
-    """
-    ln: str
-    """
-    Фамилия пользователя
-    """
+    # TODO: other types
+    first_name: str
+    last_name: str
     id: int
-    """
-    ID пользователя
-    """
 
-    def __init__(self, scheme: vkquick.utils.AttrDict):
-        super().__init__(scheme)
-        self.add_scheme_shortcut("fn", scheme.first_name)
-        self.add_scheme_shortcut("ln", scheme.last_name)
-        self.add_scheme_shortcut("id", scheme.id)
+    @property
+    def fn(self):
+        return self.first_name
 
-    @classmethod
-    async def build_from_id(
-        cls,
-        id_: ty.Union[int, str],
-        /,
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> User:
-        """
-        Создает обертку над юзером через его ID или screen name
-        """
-        users = await cls.api.__get__(cls).users.get(
-            allow_cache_=True,
-            user_ids=id_,
-            fields=fields,
-            name_case=name_case,
-        )
-        self = cls(users[0])
-        return self
-
-    @classmethod
-    async def build_from_mention(
-        cls,
-        mention: str,
-        /,
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> User:
-        """
-        Создает обертку над юзером через упоминание пользователя
-        """
-        match = cls.mention_regex.fullmatch(mention)
-        if not match:
-            raise ValueError(f"`{mention}` isn't a user mention")
-
-        user_id = match.group("id")
-        return await cls.build_from_id(
-            user_id, fields=fields, name_case=name_case
-        )
-
-    def mention(self, alias: str, /) -> str:
-        """
-        Создает упоминание пользователя с `alias`
-        """
-        new_alias = format(self, alias)
-        mention = f"[id{self.scheme.id}|{new_alias}]"
-        return mention
+    @property
+    def ln(self):
+        return self.last_name
 
 
 class UserField(str, vkquick.utils.AutoLowerNameEnum):

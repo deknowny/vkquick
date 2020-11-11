@@ -2,7 +2,7 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.message import Message
+from vkquick.wrappers.message import Message
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.current import fetch
 

@@ -71,7 +71,7 @@ from .filters.ignore_bots_messages import IgnoreBotsMessages
 from .filters.retract_access_for import RetractAccessFor
 
 from .wrappers.user import User, UserField, UserNameEnumCase
-from .message import Message, ClientInfo
+from vkquick.wrappers.message import Message, ClientInfo
 
 from .bot import Bot
 
