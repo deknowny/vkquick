@@ -6,7 +6,8 @@ import typing as ty
 import pydantic
 
 from vkquick.base.wrapper import Wrapper
-import vkquick.utils
+from vkquick import fetch
+from vkquick.utils import AttrDict
 import vkquick.utils
 
 
@@ -14,15 +15,122 @@ mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
 
 class User(Wrapper):
+
+    # Property игнорируются pydantic
+    api = fetch("api_user_wrapper", "api")
+
     class Config:
         extra = "allow"
         allow_mutation = False
         arbitrary_types_allowed = True
 
-    # TODO: other types
     first_name: str
-    last_name: str
     id: int
+    last_name: str
+    can_access_closed: bool
+    is_closed: bool
+    sex: ty.Optional[int]
+    screen_name: ty.Optional[str]
+    photo_50: ty.Optional[str]
+    photo_100: ty.Optional[str]
+    online: ty.Optional[int]
+    verified: ty.Optional[int]
+    friend_status: ty.Optional[int]
+    nickname: ty.Optional[str]
+    maiden_name: ty.Optional[str]
+    domain: ty.Optional[str]
+    bdate: ty.Optional[str]
+    city: ty.Optional[AttrDict]
+    country: ty.Optional[AttrDict]
+    photo_200: ty.Optional[str]
+    photo_max: ty.Optional[str]
+    photo_200_orig: ty.Optional[str]
+    photo_400_orig: ty.Optional[str]
+    photo_max_orig: ty.Optional[str]
+    photo_id: ty.Optional[str]
+    has_photo: ty.Optional[int]
+    has_mobile: ty.Optional[int]
+    is_friend: ty.Optional[int]
+    can_post: ty.Optional[int]
+    can_see_all_posts: ty.Optional[int]
+    can_see_audio: ty.Optional[int]
+    interests: ty.Optional[str]
+    books: ty.Optional[str]
+    tv: ty.Optional[str]
+    quotes: ty.Optional[str]
+    about: ty.Optional[str]
+    games: ty.Optional[str]
+    movies: ty.Optional[str]
+    activities: ty.Optional[str]
+    music: ty.Optional[str]
+    can_write_private_message: ty.Optional[int]
+    can_send_friend_request: ty.Optional[int]
+    can_be_invited_group: ty.Optional[bool]
+    mobile_phone: ty.Optional[str]
+    home_phone: ty.Optional[str]
+    site: ty.Optional[str]
+    status: ty.Optional[str]
+    last_seen: ty.Optional[AttrDict]
+
+    @pydantic.validator("city", pre=True)
+    def city_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @pydantic.validator("country", pre=True)
+    def country_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @pydantic.validator("last_seen", pre=True)
+    def last_seen_to_attrdict(cls, value):
+        return AttrDict(value)
+
+    @classmethod
+    async def build_from_id(
+            cls,
+            id_: int,
+            /,
+            *,
+            fields: ty.Optional[ty.List[str]] = None,
+            name_case: ty.Optional[str] = None
+    ) -> User:
+        """
+        Создает обертку над юзером через его ID или screen name
+        """
+        users = await cls.api.__get__(cls).users.get(
+            allow_cache_=True,
+            user_ids=id_,
+            fields=fields,
+            name_case=name_case
+        )
+        return cls(users[0])
+
+    @classmethod
+    async def build_from_mention(
+            cls,
+            mention: str,
+            /,
+            *,
+            fields: ty.Optional[ty.List[str]] = None,
+            name_case: ty.Optional[str] = None,
+    ) -> User:
+        """
+        Создает обертку над юзером через упоминание пользователя
+        """
+        match = mention_regex.fullmatch(mention)
+        if not match:
+            raise ValueError(f"`{mention}` isn't a user mention")
+
+        user_id = match.group("id")
+        return await cls.build_from_id(
+            int(user_id), fields=fields, name_case=name_case
+        )
+
+    def mention(self, alias: ty.Optional[str], /) -> str:
+        """
+        Создает упоминание пользователя с `alias` либо с его именем
+        """
+        mention = f"[id{self.id}|{alias or self.first_name}]"
+        return mention
 
     @property
     def fn(self):
