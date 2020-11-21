@@ -105,7 +105,7 @@ class Command(Filter):
             message = Message.from_group_event(event)
             client_info = ClientInfo.parse_obj(event.object.client_info())
         else:
-            message = await Message.from_user_event(event)
+            message = await Message.from_user_event(shared_box.api, event)
             client_info = None
         context = Context(
             shared_box=shared_box,
@@ -233,7 +233,7 @@ class Command(Filter):
                 if name in self._invalid_argument_handlers:
                     response = self._invalid_argument_handlers[name](context)
                     if response is not None:
-                        await context.message.reply(response)
+                        await context.reply(response)
                 else:
                     for position, arg in enumerate(self._reaction_arguments):
                         if arg[0] == name:
@@ -255,7 +255,7 @@ class Command(Filter):
         result = self.reaction(**context.extra["reaction_arguments"])
         result = await sync_async_run(result)
         if result is not None:
-            await context.message.reply(message=result)
+            await context.reply(message=result)
 
     def _resolve_arguments(self):
         parameters = inspect.signature(self.reaction).parameters

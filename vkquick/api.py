@@ -23,16 +23,15 @@ import time
 import urllib.parse
 import typing as ty
 
+import aiohttp
 import cachetools
-import pydantic
+import requests
 
 from vkquick.base.json_parser import JSONParser
 from vkquick.json_parsers import BuiltinJSONParser
 from vkquick.base.synchronizable import Synchronizable
 from vkquick.exceptions import VkApiError
 from vkquick.utils import AttrDict
-from vkquick.clients import AIOHTTPClient, RequestsHTTPClient
-from vkquick.base.client import SyncHTTPClient, AsyncHTTPClient
 from vkquick.wrappers.user import User
 from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 
@@ -47,7 +46,7 @@ class TokenOwner(str, enum.Enum):
     USER = "user"
 
 
-@pydantic.dataclasses.dataclass
+@dataclasses.dataclass
 class API(Synchronizable):
     """
     Обертка для API запросов
@@ -189,12 +188,13 @@ class API(Synchronizable):
             api.users.get(allow_cache=True, user_ids=1)
 
     """
+
     token: str
     """
     Access Token для API запросов
     """
 
-    autocomplete_params: ty.Dict[str, ty.Any] = pydantic.Field(default_factory=dict)
+    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(default_factory=dict)
     """
     При вызове API метода первым аргументом можно передать Ellipsis,
     тогда в вызов подставятся поля из этого аргумента 
@@ -207,10 +207,15 @@ class API(Synchronizable):
 
     response_factory: ty.Callable[
         [ty.Union[dict, list, str, int]], ty.Any
-    ] = pydantic.Field(default=AttrDict)
+    ] = dataclasses.field(default=AttrDict)
     """
-    Обертка для ответов (по умолчанию -- `attrdict.AttrMap`,
+    Обертка для ответов (по умолчанию -- `vkquick.utils.AttrMap`,
     чтобы иметь возможность получать поля ответа через точку)
+    """
+
+    URL: str = "https://api.vk.com/method/"
+    """
+    URL для API запросов. 
     """
 
     json_parser: ty.Optional[ty.Type[JSONParser]] = None
@@ -225,33 +230,14 @@ class API(Synchronizable):
     для определения задержки между запросами
     """
 
-    async_http_client: ty.Optional[AsyncHTTPClient] = None
-    """
-    Образ клиента для асинхронных HTTP запросов
-    """
-
-    sync_http_session: ty.Optional[ty.Type[SyncHTTPClient]] = None
-    """
-    Образ клиента для синхронных HTTP запросов
-    """
-
-    cache_table: ty.Optional[cachetools.Cache] = None
-    """
-    Одна из имплементаций алгоритмов кэширования запросов
-    """
-
     class Config:
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed = False
 
     def __post_init__(self) -> None:
         self.json_parser = self.json_parser or BuiltinJSONParser
-        self.async_http_client = self.async_http_client or AIOHTTPClient(
-            url="https://api.vk.com/method/", json_parser=self.json_parser,
-        )
-        self.sync_http_session = self.sync_http_session or RequestsHTTPClient(
-            url="https://api.vk.com/method/", json_parser=self.json_parser,
-        )
-        self.cache_table = self.cache_table or cachetools.TTLCache(
+        self.async_http_session = None
+        self.sync_http_session = requests.Session()
+        self.cache_table = cachetools.TTLCache(
             ttl=3600, maxsize=2 ** 15
         )
         self._method_name = ""
@@ -268,7 +254,7 @@ class API(Synchronizable):
         """
         with self.synchronize():
             user = self.users.get()
-            user = User(user[0])
+            user = User.parse_obj(user[0])
             return user
 
     def __getattr__(self, attribute: str) -> API:
@@ -438,7 +424,7 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             await asyncio.sleep(self._get_waiting_time())
-            response = await self.async_http_client.send_get_request(
+            response = await self.send_async_api_request(
                 path=method_name, params=data
             )
             response = self._prepare_response_body(response)
@@ -446,10 +432,24 @@ class API(Synchronizable):
             return response
 
         await asyncio.sleep(self._get_waiting_time())
-        response = await self.async_http_client.send_get_request(
+        response = await self.send_async_api_request(
             path=method_name, params=data
         )
         return self._prepare_response_body(response)
+
+    async def send_async_api_request(self, path, params):
+        if self.async_http_session is None:
+            self.async_http_session = aiohttp.ClientSession(
+                connector=aiohttp.TCPConnector(ssl=False),
+                skip_auto_headers={"User-Agent"},
+                raise_for_status=True,
+                json_serialize=self.json_parser.dumps,
+            )
+        async with self.async_http_session.get(
+            f"{self.URL}{path}", params=params
+        ) as response:
+            loaded_response = await response.json(loads=self.json_parser.loads)
+            return loaded_response
 
     def _make_sync_api_request(
         self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
@@ -464,17 +464,24 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             time.sleep(self._get_waiting_time())
-            response = self.sync_http_session.send_get_request(
+            response = self.send_sync_api_request(
                 path=method_name, params=data
             )
             response = self._prepare_response_body(response)
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.sync_http_session.send_get_request(
+        response = self.send_sync_api_request(
             path=method_name, params=data
         )
         return self._prepare_response_body(response)
+
+    def send_sync_api_request(self, path, params):
+        response = self.sync_http_session.get(
+            f"{self.URL}{path}", params=params
+        )
+        json_response = self.json_parser.loads(response.content)
+        return json_response
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
         """
@@ -543,7 +550,7 @@ class API(Synchronizable):
         """
         Закрывает соединение сессии
         """
-        await self.async_http_client.close()
+        await self.async_http_session.close()
 
     async def fetch_user_via_id(self,
         id_: ty.Union[int, str],

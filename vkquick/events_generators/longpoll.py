@@ -5,6 +5,8 @@ from __future__ import annotations
 import abc
 import typing as ty
 
+import aiohttp
+
 import vkquick.base.json_parser
 import vkquick.base.client
 import vkquick.json_parsers
@@ -24,7 +26,9 @@ class LongPollBase(abc.ABC):
     """
 
     _lp_settings: ty.Optional[dict] = None
-    session: ty.Optional[vkquick.clients.AIOHTTPClient] = None
+    session: aiohttp.ClientSession
+    json_parser: ty.Optional[ty.Type[vkquick.base.json_parser.JSONParser]]
+    server_url: str
     api: API
 
     def __aiter__(self) -> LongPollBase:
@@ -42,8 +46,11 @@ class LongPollBase(abc.ABC):
         в некоторых случаях может сделать интерфейс
         пользовательского лонгпула аналогичным групповому
         """
-        response = await self.session.send_get_request("", self._lp_settings)
-        response = vkquick.utils.AttrDict(response)
+        async with self.session.get(
+            self.server_url, params=self._lp_settings
+        ) as response:
+            # TODO: X-Next-Ts header
+            response = vkquick.utils.AttrDict(await response.json(loads=self.json_parser.loads))
 
         if "failed" in response:
             await self._resolve_faileds(response)
@@ -80,6 +87,14 @@ class LongPollBase(abc.ABC):
         и открывает соединение
         """
 
+    async def init_session(self):
+        self.session = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=False),
+            skip_auto_headers={"User-Agent"},
+            raise_for_status=True,
+            json_serialize=self.json_parser.dumps,
+        )
+
 
 class GroupLongPoll(LongPollBase):
     """
@@ -107,9 +122,6 @@ class GroupLongPoll(LongPollBase):
         self, api: API, *,
         group_id: ty.Optional[int] = None,
         wait: int = 25,
-        client: ty.Optional[
-            ty.Type[vkquick.base.client.AsyncHTTPClient]
-        ] = None,
         json_parser: ty.Optional[
             ty.Type[vkquick.base.json_parser.JSONParser]
         ] = None,
@@ -131,11 +143,11 @@ class GroupLongPoll(LongPollBase):
             )
         self.group_id = group_id
         self.wait = wait
-        self.session = None
-        self.client = client or vkquick.clients.AIOHTTPClient
+
         self.json_parser = (
             json_parser or vkquick.json_parsers.BuiltinJSONParser
         )
+
         self._server_path = self._params = self._lp_settings = None
 
     async def setup(self) -> None:
@@ -148,11 +160,11 @@ class GroupLongPoll(LongPollBase):
         new_lp_settings = await self.api.groups.getLongPollServer(
             group_id=group_id
         )
-        server_url = new_lp_settings().pop("server")
+        self.server_url = new_lp_settings().pop("server")
         self._lp_settings = dict(
             act="a_check", wait=self.wait, **new_lp_settings.mapping_
         )
-        self.session = self.client(server_url, self.json_parser)
+        await self.init_session()
 
 
 class UserLongPoll(LongPollBase):
@@ -201,9 +213,14 @@ class UserLongPoll(LongPollBase):
         self.wait = wait
         self.mode = mode
 
-        self.client = client or vkquick.clients.AIOHTTPClient
         self.json_parser = (
             json_parser or vkquick.json_parsers.BuiltinJSONParser
+        )
+        self.session = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=False),
+            skip_auto_headers={"User-Agent"},
+            raise_for_status=True,
+            json_serialize=self.json_parser.dumps,
         )
         self._server_path = (
             self._params
@@ -214,6 +231,7 @@ class UserLongPoll(LongPollBase):
             lp_version=self.version
         )
         server_url = new_lp_settings().pop("server")
+        self.server_url = f"https://{server_url}"
         self._lp_settings = dict(
             act="a_check",
             wait=self.wait,
@@ -221,4 +239,4 @@ class UserLongPoll(LongPollBase):
             version=self.version,
             **new_lp_settings(),
         )
-        self.session = self.client(f"https://{server_url}", self.json_parser)
+        await self.init_session()

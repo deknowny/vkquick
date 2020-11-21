@@ -25,7 +25,7 @@ class AIOHTTPClient(AsyncHTTPClient):
 
     async def send_get_request(
         self, path: str, params: ty.Dict[str, ty.Any]
-    ) -> ty.Dict[str, ty.Any]:
+    ) -> aiohttp.ClientResponse:
         if self.session is None:
             self.connector = aiohttp.TCPConnector(ssl=False)
             self.session = aiohttp.ClientSession(
@@ -37,12 +37,11 @@ class AIOHTTPClient(AsyncHTTPClient):
         async with self.session.get(
             f"{self.url}{path}", params=params
         ) as response:
-            json_response = await response.json(loads=self.json_parser.loads)
-            return json_response
+            return response
 
     async def close(self):
         await self.session.close()
-        # Если сессия может делаться коннекторами:
+        # Если сессия может делиться коннекторами:
         # await self.connector.close()
 
 

@@ -102,7 +102,7 @@ class ColoredDebugger(Debugger):
                     allow_cache_=True,
                     user_ids=self.message.from_id
                 )
-                sender = User(sender[0])
+                sender = User.parse_obj(sender[0]())
                 sender = format(sender, "<fn> <ln>")
             else:
                 sender = self.api.groups.get_by_id(

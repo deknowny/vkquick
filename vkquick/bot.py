@@ -100,14 +100,13 @@ class Bot:
         self.event_waiters: ty.List[asyncio.Future] = []
         self.mark = _HandlerMarker(self)
 
-        SharedBox.update_forward_refs(Bot=self.__class__)
         self.shared_box = SharedBox(
             api=api, events_generator=events_generator, bot=self
         )
 
     @property
     def commands(self) -> ty.List[Command]:
-        return self.commands
+        return self._commands
 
     @property
     def api(self) -> API:
@@ -126,8 +125,6 @@ class Bot:
         Не забудьте передать все необходимые обработчики событий
         и сигналов! Этот метод их не добавляет
         """
-        # Создание необходимых объектов по информации с токена
-        # и добавление их в куррент для использования с любой точки кода
         api = API(token)
         if api.token_owner == TokenOwner.GROUP:
             lp = GroupLongPoll(api)
@@ -262,7 +259,7 @@ class Bot:
                 message = Message.from_group_event(event)
             else:
                 message = await Message.from_user_event(event)
-            debugger = self.debugger(message, handling_info)  # noqa
+            debugger = self.debugger(self.api, message, handling_info)  # noqa
             debug_message = debugger.render()
             print(pretty_view(message.dict(exclude={"date"})))
             clear_console()

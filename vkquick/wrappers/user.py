@@ -16,9 +16,6 @@ mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
 class User(Wrapper):
 
-    # Property игнорируются pydantic
-    api = fetch("api_user_wrapper", "api")
-
     class Config:
         extra = "allow"
         allow_mutation = False
@@ -72,58 +69,9 @@ class User(Wrapper):
     status: ty.Optional[str]
     last_seen: ty.Optional[AttrDict]
 
-    @pydantic.validator("city", pre=True)
-    def city_to_attrdict(cls, value):
+    @pydantic.validator("city", "country", "last_seen", pre=True)
+    def to_attrdict(cls, value):
         return AttrDict(value)
-
-    @pydantic.validator("country", pre=True)
-    def country_to_attrdict(cls, value):
-        return AttrDict(value)
-
-    @pydantic.validator("last_seen", pre=True)
-    def last_seen_to_attrdict(cls, value):
-        return AttrDict(value)
-
-    @classmethod
-    async def build_from_id(
-            cls,
-            id_: int,
-            /,
-            *,
-            fields: ty.Optional[ty.List[str]] = None,
-            name_case: ty.Optional[str] = None
-    ) -> User:
-        """
-        Создает обертку над юзером через его ID или screen name
-        """
-        users = await cls.api.__get__(cls).users.get(
-            allow_cache_=True,
-            user_ids=id_,
-            fields=fields,
-            name_case=name_case
-        )
-        return cls(users[0])
-
-    @classmethod
-    async def build_from_mention(
-            cls,
-            mention: str,
-            /,
-            *,
-            fields: ty.Optional[ty.List[str]] = None,
-            name_case: ty.Optional[str] = None,
-    ) -> User:
-        """
-        Создает обертку над юзером через упоминание пользователя
-        """
-        match = mention_regex.fullmatch(mention)
-        if not match:
-            raise ValueError(f"`{mention}` isn't a user mention")
-
-        user_id = match.group("id")
-        return await cls.build_from_id(
-            int(user_id), fields=fields, name_case=name_case
-        )
 
     def mention(self, alias: ty.Optional[str], /) -> str:
         """
@@ -139,6 +87,12 @@ class User(Wrapper):
     @property
     def ln(self):
         return self.last_name
+
+    def extra_fields_to_format(self):
+        return {
+            "fn": self.fn,
+            "ln": self.ln
+        }
 
 
 class UserField(str, vkquick.utils.AutoLowerNameEnum):

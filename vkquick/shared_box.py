@@ -1,20 +1,16 @@
-import typing
-
-import pydantic
+import dataclasses
+import typing as ty
 
 from vkquick.api import API
 from vkquick.events_generators.longpoll import LongPollBase
 
-if typing.TYPE_CHECKING:
+if ty.TYPE_CHECKING:
     from vkquick.bot import Bot
 
 
-class SharedBox(pydantic.BaseModel):
+@dataclasses.dataclass
+class SharedBox:
 
-    class Config:
-        extra = "allow"
-        arbitrary_types_allowed = True
-
-    api: API
-    events_generator: LongPollBase
-    bot: "Bot"
+    api: ty.Optional[API] = None
+    events_generator: ty.Optional[LongPollBase] = None
+    bot: ty.Optional["Bot"] = None
