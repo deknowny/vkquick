@@ -436,7 +436,7 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             await asyncio.sleep(self._get_waiting_time())
-            response = await self.async_http_session.send_get_request(
+            response = await self.async_http_session.send_post_request(
                 path=method_name, params=data
             )
             response = self._prepare_response_body(response)
@@ -444,7 +444,7 @@ class API(Synchronizable):
             return response
 
         await asyncio.sleep(self._get_waiting_time())
-        response = await self.async_http_session.send_get_request(
+        response = await self.async_http_session.send_post_request(
             path=method_name, params=data
         )
         return self._prepare_response_body(response)
@@ -462,14 +462,14 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             time.sleep(self._get_waiting_time())
-            response = self.sync_http_session.send_get_request(
+            response = self.sync_http_session.send_post_request(
                 path=method_name, params=data
             )
             response = self._prepare_response_body(response)
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.sync_http_session.send_get_request(
+        response = self.sync_http_session.send_post_request(
             path=method_name, params=data
         )
         return self._prepare_response_body(response)
