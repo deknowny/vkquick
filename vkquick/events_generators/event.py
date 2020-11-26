@@ -1,10 +1,7 @@
 from __future__ import annotations
-import json
 import functools
 import typing as ty
 
-import pygments
-import pygments.lexers
 import pygments.formatters
 import pygments.formatters.terminal
 import pygments.token
