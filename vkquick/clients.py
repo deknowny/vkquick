@@ -27,18 +27,32 @@ class AIOHTTPClient(AsyncHTTPClient):
         self, path: str, params: ty.Dict[str, ty.Any]
     ) -> ty.Dict[str, ty.Any]:
         if self.session is None:
-            self.connector = aiohttp.TCPConnector(ssl=False)
-            self.session = aiohttp.ClientSession(
-                connector=self.connector,
-                skip_auto_headers={"User-Agent"},
-                raise_for_status=True,
-                json_serialize=self.json_parser.dumps,
-            )
+            self._update_session()
         async with self.session.get(
             f"{self.url}{path}", params=params
         ) as response:
             json_response = await response.json(loads=self.json_parser.loads)
             return json_response
+
+    async def send_post_request(
+            self, path: str, params: ty.Dict[str, ty.Any]
+    ):
+        if self.session is None:
+            self._update_session()
+        async with self.session.post(
+            f"{self.url}{path}", data=params
+        ) as response:
+            json_response = await response.json(loads=self.json_parser.loads)
+            return json_response
+
+    def _update_session(self):
+        self.connector = aiohttp.TCPConnector(ssl=False)
+        self.session = aiohttp.ClientSession(
+            connector=self.connector,
+            skip_auto_headers={"User-Agent"},
+            raise_for_status=True,
+            json_serialize=self.json_parser.dumps,
+        )
 
     async def close(self):
         await self.session.close()
@@ -62,5 +76,12 @@ class RequestsHTTPClient(SyncHTTPClient):
         self, path: str, params: ty.Dict[str, ty.Any]
     ) -> ty.Dict[str, ty.Any]:
         response = self.session.get(f"{self.url}{path}", params=params)
+        json_response = self.json_parser.loads(response.content)
+        return json_response
+
+    def send_post_request(
+        self, path: str, params: ty.Dict[str, ty.Any]
+    ) -> ty.Dict[str, ty.Any]:
+        response = self.session.post(f"{self.url}{path}", data=params)
         json_response = self.json_parser.loads(response.content)
         return json_response
