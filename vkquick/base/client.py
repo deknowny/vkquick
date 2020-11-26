@@ -26,7 +26,16 @@ class SyncHTTPClient(_HTTPClient):
         self, path: str, params: ty.Dict[str, ty.Any]
     ) -> ty.Dict[str, ty.Any]:
         """
-        Отправляет HTTP запрос и парсит JSON из тела респонза,
+        Отправляет GET запрос и парсит JSON из тела респонза,
+        возвращая словарь
+        """
+
+    @abc.abstractmethod
+    def send_post_request(
+        self, path: str, params: ty.Dict[str, ty.Any]
+    ) -> ty.Dict[str, ty.Any]:
+        """
+        Отправляет POST запрос и парсит JSON из тела респонза,
         возвращая словарь
         """
 
@@ -41,7 +50,16 @@ class AsyncHTTPClient(_HTTPClient, abc.ABC):
         self, path: str, params: ty.Dict[str, ty.Any]
     ) -> ty.Dict[str, ty.Any]:
         """
-        Отправляет HTTP запрос и парсит JSON из тела респонза,
+        Отправляет GET запрос и парсит JSON из тела респонза,
+        возвращая словарь
+        """
+
+    @abc.abstractmethod
+    async def send_post_request(
+        self, path: str, params: ty.Dict[str, ty.Any]
+    ) -> ty.Dict[str, ty.Any]:
+        """
+        Отправляет POST запрос и парсит JSON из тела респонза,
         возвращая словарь
         """
 
