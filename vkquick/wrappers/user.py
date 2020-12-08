@@ -90,16 +90,7 @@ class User(Wrapper):
 
     def extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln}
-
-    def __format__(self, format_spec: str) -> str:
-        inserted_fields = {
-            "fn": self.first_name,
-            "ln": self.last_name,
-            **self.__dict__,
-        }
-        format_spec = format_spec.replace(">", "}").replace("<", "{")
-        return format_spec.format_map(inserted_fields)
-
+    
 
 class UserField(str, vkquick.utils.AutoLowerNameEnum):
     """
