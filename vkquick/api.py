@@ -18,6 +18,7 @@ import asyncio
 import dataclasses
 import functools
 import enum
+import json
 import re
 import time
 import urllib.parse
@@ -374,6 +375,12 @@ class API(Synchronizable):
         for key, value in params.items():
             if isinstance(value, (list, set, tuple)):
                 new_params[key] = ",".join(map(str, value))
+
+            # Автодамп словарей
+            elif isinstance(value, dict):
+                new_params[key] = json.dumps(
+                    value, separators=(',', ':'), ensure_ascii=False
+                )
 
             # Для aiohttp
             elif isinstance(value, bool):

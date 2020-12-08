@@ -56,18 +56,9 @@ class Context:
         **kwargs,
     ):
         params = {"peer_ids": self.message.peer_id}
-        for name, value in locals().items():
-            if name == "kwargs":
-                params.update(value)
-            elif name != "self" and value is not None:
-                params.update({name: value})
-
-        del params["params"]
-
-        if random_id is None:
-            params["random_id"] = random_id_()
-
-        return await self.api.method("messages.send", params)
+        return await self._send_message_via_local_kwargs(
+            locals(), params
+        )
 
     async def reply(
         self,
@@ -99,19 +90,9 @@ class Context:
             f'"peer_id":{self.message.peer_id}'
             "}",
         }
-        for name, value in locals().items():
-            if name == "kwargs":
-                params.update(value)
-            elif name != "self" and value is not None:
-                params.update({name: value})
-
-        del params["params"]
-
-        if random_id is None:
-            params["random_id"] = random_id_()
-
-        response = await self.api.method("messages.send", params)
-        return response[0]
+        return await self._send_message_via_local_kwargs(
+            locals(), params
+        )
 
     async def forward(
         self,
@@ -137,24 +118,16 @@ class Context:
     ) -> MessagesSendResponse:
         params = {
             "peer_ids": self.message.peer_id,
-            f"forward": "{"
-            f'"conversation_message_ids":[{self.message.conversation_message_id}],'
-            f'"peer_id":{self.message.peer_id}'
-            "}",
+            "forward": {
+                "conversation_message_ids": [
+                    self.message.conversation_message_id
+                ],
+                "peer_id": self.message.peer_id
+            }
         }
-        for name, value in locals().items():
-            if name == "kwargs":
-                params.update(value)
-            elif name != "self" and value is not None:
-                params.update({name: value})
-
-        del params["params"]
-
-        if random_id is None:
-            params["random_id"] = random_id_()
-
-        response = await self.api.method("messages.send", params)
-        return response[0]
+        return await self._send_message_via_local_kwargs(
+            locals(), params
+        )
 
     async def fetch_replied_message_sender(
         self,
@@ -225,3 +198,19 @@ class Context:
             f"(source_event, message, client_info, "
             f"filters_response, extra)"
         )
+
+    async def _send_message_via_local_kwargs(self, local_kwargs, pre_params):
+        for name, value in local_kwargs.items():
+            if name == "kwargs":
+                pre_params.update(value)
+            elif name != "self" and value is not None:
+                pre_params.update({name: value})
+
+        del pre_params["params"]
+
+        if local_kwargs["random_id"] is None:
+            pre_params["random_id"] = random_id_()
+
+        response = await self.api.method("messages.send", pre_params)
+        return response[0]
+
