@@ -1,5 +1,7 @@
 from __future__ import annotations
 import datetime
+import functools
+import json
 import typing as ty
 
 import pydantic
@@ -47,19 +49,11 @@ class Message(pydantic.BaseModel):
     expire_ttl: ty.Optional[int]
 
     @pydantic.validator("attachments", pre=True)
-    def attachments_to_attrdict(cls, value):
+    def to_list_with_attrdict(cls, value):
         return [AttrDict(i) for i in value]
 
-    @pydantic.validator("geo", pre=True)
-    def geo_to_attrdict(cls, value):
-        return AttrDict(value)
-
-    @pydantic.validator("reply_message", pre=True)
+    @pydantic.validator("geo", "reply_message", "action", pre=True)
     def reply_message_to_attrdict(cls, value):
-        return AttrDict(value)
-
-    @pydantic.validator("action", pre=True)
-    def action_message_to_attrdict(cls, value):
         return AttrDict(value)
 
     @classmethod

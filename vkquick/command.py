@@ -1,7 +1,11 @@
 from __future__ import annotations
+
+import asyncio
+import functools
 import re
 import time
 import inspect
+import concurrent.futures
 import typing as ty
 
 from vkquick.utils import AttrDict, sync_async_run, sync_async_callable
@@ -14,7 +18,6 @@ from vkquick.wrappers.message import Message, ClientInfo
 from vkquick.shared_box import SharedBox
 
 
-# TODO: executor for running
 # TODO: payload
 class Command(Filter):
     def __init__(
@@ -32,6 +35,8 @@ class Command(Filter):
             ty.Dict[Filter, sync_async_callable([Context], ...), ty.Any]
         ] = None,
         extra: ty.Optional[dict] = None,
+        run_in_thread: bool = False,
+        run_in_process: bool = False
     ):
         self._prefixes = tuple(prefixes)
         self._names = tuple(names)
@@ -48,6 +53,20 @@ class Command(Filter):
         self._invalid_filter_handlers = on_invalid_filter or {}
         # TODO: available for help_ command
         self._invalid_argument_handlers = on_invalid_argument or {}
+
+        if run_in_process and run_in_thread:
+            raise ValueError(
+                "Command can be run only at "
+                "the same time in a process "
+                "and in a thread"
+            )
+
+        if run_in_thread:
+            self.pool = concurrent.futures.ThreadPoolExecutor()
+        elif run_in_process:
+            self.pool = concurrent.futures.ProcessPoolExecutor()
+        else:
+            self.pool = None
 
         self._build_routing_regex()
 
@@ -97,6 +116,11 @@ class Command(Filter):
             self._description = inspect.getdoc(reaction)
         if self._title is None:
             self._title = reaction.__name__
+        if self.pool is not None and inspect.iscoroutinefunction(reaction):
+            raise ValueError(
+                "Can't run a command in thread/process "
+                "if it is a coroutine function"
+            )
         return self
 
     async def handle_event(
@@ -202,6 +226,7 @@ class Command(Filter):
         )
 
         if not is_parsed:
+            breakpoint()
             if not arguments:
                 return Decision(
                     False,
@@ -254,7 +279,14 @@ class Command(Filter):
         return True, arguments
 
     async def call_reaction(self, context: Context) -> None:
-        result = self.reaction(**context.extra["reaction_arguments"])
+        if self.pool is not None:
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(
+                self.pool,
+                functools.partial(self.reaction, **context.extra["reaction_arguments"])
+            )
+        else:
+            result = self.reaction(**context.extra["reaction_arguments"])
         result = await sync_async_run(result)
         if result is not None:
             await context.reply(message=result)
