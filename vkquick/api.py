@@ -568,10 +568,10 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        user = users[0]
+        user = users[0]()
         return User.parse_obj(user)
 
-    async def fetch_user_via_ids(self,
+    async def fetch_users_via_ids(self,
         ids: ty.Union[int, str],
         /,
         *,
@@ -587,7 +587,7 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        users = tuple(User.parse_obj(user) for user in users)
+        users = tuple(User.parse_obj(user()) for user in users)
         return users
 
     def init_group_lp(self, **kwargs) -> GroupLongPoll:
