@@ -445,8 +445,8 @@ class API(Synchronizable):
                 raise_for_status=True,
                 json_serialize=self.json_parser.dumps,
             )
-        async with self.async_http_session.get(
-            f"{self.URL}{path}", params=params
+        async with self.async_http_session.post(
+            f"{self.URL}{path}", data=params
         ) as response:
             loaded_response = await response.json(loads=self.json_parser.loads)
             return loaded_response
@@ -477,8 +477,8 @@ class API(Synchronizable):
         return self._prepare_response_body(response)
 
     def send_sync_api_request(self, path, params):
-        response = self.sync_http_session.get(
-            f"{self.URL}{path}", params=params
+        response = self.sync_http_session.post(
+            f"{self.URL}{path}", data=params
         )
         json_response = self.json_parser.loads(response.content)
         return json_response

@@ -77,7 +77,8 @@ class User(Wrapper):
         """
         Создает упоминание пользователя с `alias` либо с его именем
         """
-        mention = f"[id{self.id}|{alias or self.first_name}]"
+        updated_alias = format(self, alias)
+        mention = f"[id{self.id}|{updated_alias or self.first_name}]"
         return mention
 
     @property
@@ -93,6 +94,15 @@ class User(Wrapper):
             "fn": self.fn,
             "ln": self.ln
         }
+
+    def __format__(self, format_spec: str) -> str:
+        inserted_fields = {
+            "fn": self.first_name,
+            "ln": self.last_name,
+            **self.__dict__,
+        }
+        format_spec = format_spec.replace(">", "}").replace("<", "{")
+        return format_spec.format_map(inserted_fields)
 
 
 class UserField(str, vkquick.utils.AutoLowerNameEnum):

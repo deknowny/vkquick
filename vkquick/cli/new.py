@@ -40,42 +40,27 @@ VK Bot. In developing now.
 """.lstrip()
 
 
-CONFIGPY = """
-api_settings = dict(token="{token}")
-
-longpoll_settings = dict({group_id})
-
-bot_settings = dict()
-""".lstrip()
-
-
 MAINPY = """
 import vkquick as vq
-
-import src.config
 
 import src.default.help_
 import src.default.readme
 
 
-vq.curs.api = vq.API(**src.config.api_settings)
-vq.curs.lp = vq.{lp_type}LongPoll(**src.config.longpoll_settings)
-vq.curs.bot = vq.Bot(
-    commands=[
-        src.default.help_.help_,
-        src.default.readme.readme
-    ],
-    signal_handlers=[],
-    **src.config.bot_settings
+bot = vq.Bot.init_via_token(
+    "{token}"
 )
-    
 
-def run():
-    vq.curs.bot.run()
-    
-    
+bot.mark.command(src.default.help_.help_)
+bot.mark.command(src.default.readme.readme)
+
+
+run = bot.run
+
+
 if __name__ == "__main__":
     run()
+
 """.lstrip()
 
 
@@ -128,14 +113,14 @@ import platform
 import vkquick as vq
 
 
-creation_date = datetime.datetime.fromtimestamp({creation_date})
+creation_date = datetime.datetime.fromtimestamp({creation_timestamp})
 now = datetime.datetime.now()
 text = f\"""
 Бот {bot_name}
 
 <Описание>
 
-Создан: {creation_date:%d.%m.%Y} ({(now - creation_date).days} дней)
+Создан: {creation_date:%d.%m.%Y}
 Создатель: {owner_mention}
 Python: {platform.python_version()}
 
@@ -151,7 +136,7 @@ async def readme(ctx: vq.Context):
     \"""
     Сводка по боту.
     \"""
-    await ctx.message.reply(text, disable_mentions=True)
+    await ctx.reply(text, disable_mentions=True)
 """.lstrip()
 
 
@@ -180,7 +165,8 @@ class New(cleo.Command):
                     True,
                 )
             else:
-                owner_mention = owner.format("{fn} {ln}")
+
+                owner_mention = format(owner, "{fn} {ln}")
                 confirmed = self.confirm(
                     f"\nYou want to create a user bot "
                     f"for the account\n<info>{owner_mention}</info>"
@@ -203,7 +189,7 @@ class New(cleo.Command):
                 if member.role == "creator":
                     creator_id = member.id
                     creator = self.api.users.get(user_ids=creator_id)
-                    creator = vq.User(creator[0])
+                    creator = vq.User.parse_obj(creator[0]())
                     return group, creator
 
             raise ValueError("Can't get group's creator")
@@ -211,7 +197,7 @@ class New(cleo.Command):
     def _fetch_user(self):
         with self.api.synchronize():
             user = self.api.users.get()
-            user = vq.User(user[0])
+            user = vq.User.parse_obj(user[0]())
             return None, user
 
     def _get_info_by_token(
@@ -251,7 +237,7 @@ class New(cleo.Command):
         license_.write_text(
             LICENSE_TEXT.format(
                 year=datetime.datetime.now().year,
-                owner=self.option("owner") or owner.format("{fn} {ln}"),
+                owner=self.option("owner") or format(owner, "{fn} {ln}"),
             ),
             encoding="utf-8",
         )
@@ -265,25 +251,10 @@ class New(cleo.Command):
         src = bot_dir / "src"
         src.mkdir()
 
-        config = src / "config.py"
-        config.touch()
-        if self.api.token_owner == vq.TokenOwner.GROUP:
-            group_id = f"group_id={current_group.id}"
-        else:
-            group_id = ""
-        config.write_text(
-            CONFIGPY.format(token=self.token, group_id=group_id),
-            encoding="utf-8",
-        )
-
         mainpy = src / "__main__.py"
         mainpy.touch()
         mainpy.write_text(
-            MAINPY.format(
-                lp_type="Group"
-                if self.api.token_owner == vq.TokenOwner.GROUP
-                else "User"
-            ),
+            MAINPY.format(token=self.token),
             encoding="utf-8",
         )
 
@@ -296,10 +267,9 @@ class New(cleo.Command):
 
         readme = default / "readme.py"
         readme.touch()
-        # TODO: format_map
         readme.write_text(
             READMEPY.replace("{bot_name}", self.argument("name"))
             .replace("{owner_mention}", owner.mention("{fn} {ln}"))
-            .replace("{creation_date}", str(int(time.time()))),
+            .replace("{creation_timestamp}", str(int(time.time()))),
             encoding="utf-8",
         )

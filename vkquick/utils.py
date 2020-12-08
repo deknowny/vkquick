@@ -70,7 +70,7 @@ class SafeDict(dict):
     (формат с возможными пропусками)
     """
 
-    def __missing__(self, key):
+    def __missing__(self, key: str) -> str:
         return "{" + key + "}"
 
 
