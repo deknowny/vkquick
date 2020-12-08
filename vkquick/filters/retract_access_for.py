@@ -20,9 +20,7 @@ class RetractAccessFor(Filter):
     def __init__(self, *ids):
         self.ids = ids
 
-    def make_decision(
-        self, context: Context
-    ) -> Decision:
+    def make_decision(self, context: Context) -> Decision:
         if context.message.from_id not in self.ids:
             return self.passed_decision
         return self.not_passed_decision

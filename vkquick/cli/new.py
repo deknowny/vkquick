@@ -254,8 +254,7 @@ class New(cleo.Command):
         mainpy = src / "__main__.py"
         mainpy.touch()
         mainpy.write_text(
-            MAINPY.format(token=self.token),
-            encoding="utf-8",
+            MAINPY.format(token=self.token), encoding="utf-8",
         )
 
         default = src / "default"

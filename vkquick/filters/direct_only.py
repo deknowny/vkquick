@@ -14,13 +14,9 @@ class DirectOnly(Filter):
     passed_decision = Decision(
         True, "Сообщение отправлено в личные сообщения"
     )
-    not_passed_decision = Decision(
-        False, "Сообщение отправлено в лс"
-    )
+    not_passed_decision = Decision(False, "Сообщение отправлено в лс")
 
-    def make_decision(
-        self, context: Context
-    ) -> Decision:
+    def make_decision(self, context: Context) -> Decision:
         if context.message.peer_id < peer():
             return self.passed_decision
         return self.not_passed_decision

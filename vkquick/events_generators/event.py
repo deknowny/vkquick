@@ -64,5 +64,3 @@ class Event(AttrDict):
         Минималистичное отображение события
         """
         return f"Event(type={self.type})"
-
-

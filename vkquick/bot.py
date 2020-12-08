@@ -12,7 +12,11 @@ import typing as ty
 from vkquick.api import API, TokenOwner
 from vkquick.base.debugger import Debugger
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll, LongPollBase
+from vkquick.events_generators.longpoll import (
+    GroupLongPoll,
+    UserLongPoll,
+    LongPollBase,
+)
 from vkquick.shared_box import SharedBox
 from vkquick.signal import SignalCaller, ReservedSignal, SignalHandler
 from vkquick.events_generators.event import Event

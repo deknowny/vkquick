@@ -13,13 +13,13 @@ class MessagesSendResponse:
     """
     Для ответов, содержащих поля peer_ids
     """
+
     peer_id: int
     message_id: int
     conversation_message_id: int
 
 
 class Message(pydantic.BaseModel):
-
     class Config:
         extra = "allow"
         allow_mutation = False

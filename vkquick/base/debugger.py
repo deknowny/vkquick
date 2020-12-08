@@ -18,6 +18,7 @@ class Debugger(abc.ABC):
     аргументы были переданы в реакцию, и была ли реакция вызвана
     вообще
     """
+
     api: API
 
     message: Message

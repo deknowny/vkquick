@@ -194,7 +194,9 @@ class API(Synchronizable):
     Access Token для API запросов
     """
 
-    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(default_factory=dict)
+    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(
+        default_factory=dict
+    )
     """
     При вызове API метода первым аргументом можно передать Ellipsis,
     тогда в вызов подставятся поля из этого аргумента 
@@ -237,9 +239,7 @@ class API(Synchronizable):
         self.json_parser = self.json_parser or BuiltinJSONParser
         self.async_http_session = None
         self.sync_http_session = requests.Session()
-        self.cache_table = cachetools.TTLCache(
-            ttl=3600, maxsize=2 ** 15
-        )
+        self.cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
         self._method_name = ""
         self._last_request_time = 0
         self._delay = 0
@@ -448,7 +448,9 @@ class API(Synchronizable):
         async with self.async_http_session.post(
             f"{self.URL}{path}", data=params
         ) as response:
-            loaded_response = await response.json(loads=self.json_parser.loads)
+            loaded_response = await response.json(
+                loads=self.json_parser.loads
+            )
             return loaded_response
 
     def _make_sync_api_request(
@@ -471,9 +473,7 @@ class API(Synchronizable):
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.send_sync_api_request(
-            path=method_name, params=data
-        )
+        response = self.send_sync_api_request(path=method_name, params=data)
         return self._prepare_response_body(response)
 
     def send_sync_api_request(self, path, params):
@@ -552,7 +552,8 @@ class API(Synchronizable):
         """
         await self.async_http_session.close()
 
-    async def fetch_user_via_id(self,
+    async def fetch_user_via_id(
+        self,
         id_: ty.Union[int, str],
         /,
         *,
@@ -571,7 +572,8 @@ class API(Synchronizable):
         user = users[0]()
         return User.parse_obj(user)
 
-    async def fetch_users_via_ids(self,
+    async def fetch_users_via_ids(
+        self,
         ids: ty.Union[int, str],
         /,
         *,

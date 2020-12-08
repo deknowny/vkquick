@@ -10,9 +10,7 @@ class AllowAccessFor(Filter):
     Разрешает доступ к команде определенным пользователям/сообществам
     """
 
-    passed_decision = Decision(
-        True, "Пользователь имеет доступ к команде"
-    )
+    passed_decision = Decision(True, "Пользователь имеет доступ к команде")
     not_passed_decision = Decision(
         False, "Пользователь не имеет доступ к команде"
     )
@@ -20,9 +18,7 @@ class AllowAccessFor(Filter):
     def __init__(self, *ids):
         self.ids = ids
 
-    def make_decision(
-        self, context: Context
-    ) -> Decision:
+    def make_decision(self, context: Context) -> Decision:
         if context.message.from_id in self.ids:
             return self.passed_decision
         return self.not_passed_decision

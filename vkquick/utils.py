@@ -58,7 +58,7 @@ async def sync_async_run(
 
 def random_id(side: int = 2 ** 31 - 1) -> int:
     """
-    Случайное число в дипазоне +-`side`.
+    Случайное число в диапазоне +-`side`.
     Используется для API метода `messages.send`
     """
     return random.randint(-side, +side)
@@ -74,7 +74,7 @@ class SafeDict(dict):
         return "{" + key + "}"
 
 
-class AttrDict():
+class AttrDict:
     """
     Надстройка к словарю для возможности получения
     значений через точку. Работает рекурсивно,
@@ -182,7 +182,9 @@ def pretty_view(mapping: dict) -> str:
     """
     Цветное отображение JSON словарей
     """
-    scheme = json.dumps(mapping, ensure_ascii=False, indent=4, cls=CustomEncoder)
+    scheme = json.dumps(
+        mapping, ensure_ascii=False, indent=4, cls=CustomEncoder
+    )
     scheme = pygments.highlight(
         scheme,
         pygments.lexers.JsonLexer(),  # noqa

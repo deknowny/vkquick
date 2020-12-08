@@ -11,9 +11,7 @@ class Action(Filter):
     выход из беседы, закрепление сообщения...)
     """
 
-    passed_decision = Decision(
-        True, "В сообщение содержится нужное действие"
-    )
+    passed_decision = Decision(True, "В сообщение содержится нужное действие")
     not_passed_decision = Decision(
         False, "В сообщение не содержится нужное действие"
     )
@@ -53,9 +51,7 @@ class Action(Filter):
                 "least 1 type, got nothing in __init__"
             )
 
-    def make_decision(
-        self, context: Context
-    ) -> Decision:
+    def make_decision(self, context: Context) -> Decision:
         if "action" in context.message:
             if context.message.action.type in self.handled_actions:
                 return self.passed_decision

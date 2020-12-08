@@ -50,7 +50,7 @@ class Command(Filter):
         self._invalid_argument_handlers = on_invalid_argument or {}
 
         self._build_routing_regex()
-        
+
     @property
     def reaction_arguments(self):
         return self._reaction_arguments
@@ -99,7 +99,9 @@ class Command(Filter):
             self._title = reaction.__name__
         return self
 
-    async def handle_event(self, event: Event, shared_box: SharedBox) -> HandlingStatus:
+    async def handle_event(
+        self, event: Event, shared_box: SharedBox
+    ) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
         if event.from_group:
             message = Message.from_group_event(event)

@@ -21,7 +21,9 @@ class Context:
     source_event: Event
     message: Message
     client_info: ty.Optional[ClientInfo] = None
-    filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(default_factory=dict)
+    filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(
+        default_factory=dict
+    )
     extra: AttrDict = dataclasses.field(default_factory=AttrDict)
 
     @property
@@ -155,7 +157,9 @@ class Context:
         return response[0]
 
     async def fetch_replied_message_sender(
-        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
+        self,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> ty.Optional[User]:
         if self.message.reply_message is None:
             return None
@@ -167,7 +171,9 @@ class Context:
         return user
 
     async def fetch_forward_messages_sender(
-        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
+        self,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> ty.List[User]:
         user_tasks = []
         for message in self.message.fwd_messages:
@@ -179,7 +185,9 @@ class Context:
         return users
 
     async def fetch_attached_user(
-        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
+        self,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> ty.Optional[User]:
         replied_user = await self.fetch_replied_message_sender(
             fields=fields, name_case=name_case
@@ -189,12 +197,16 @@ class Context:
         if not self.message.fwd_messages:
             return None
         first_user_from_fwd = await User.build_from_id(
-            self.message.fwd_messages[0].from_id, fields=fields, name_case=name_case
+            self.message.fwd_messages[0].from_id,
+            fields=fields,
+            name_case=name_case,
         )
         return first_user_from_fwd
 
     async def fetch_sender(
-        self, fields: ty.Optional[ty.List[str]] = None, name_case: ty.Optional[str] = None
+        self,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> User:
         sender = await User.build_from_id(
             self.message.from_id, fields=fields, name_case=name_case
@@ -208,6 +220,8 @@ class Context:
         ...
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}" \
-               f"(source_event, message, client_info, " \
-               f"filters_response, extra)"
+        return (
+            f"{self.__class__.__name__}"
+            f"(source_event, message, client_info, "
+            f"filters_response, extra)"
+        )

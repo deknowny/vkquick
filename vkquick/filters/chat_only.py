@@ -11,16 +11,10 @@ class ChatOnly(Filter):
     Делает команду доступной только в беседе
     """
 
-    passed_decision = Decision(
-        True, "Сообщение отправлено в чат"
-    )
-    not_passed_decision = Decision(
-        False, "Сообщение отправлено в лс"
-    )
+    passed_decision = Decision(True, "Сообщение отправлено в чат")
+    not_passed_decision = Decision(False, "Сообщение отправлено в лс")
 
-    def make_decision(
-        self, context: Context
-    ) -> Decision:
+    def make_decision(self, context: Context) -> Decision:
         if context.message.peer_id > peer():
             return self.passed_decision
         return self.not_passed_decision

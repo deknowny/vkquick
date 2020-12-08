@@ -99,20 +99,18 @@ class ColoredDebugger(Debugger):
         with self.api.synchronize():
             if self.message.from_id > 0:
                 sender = self.api.users.get(
-                    allow_cache_=True,
-                    user_ids=self.message.from_id
+                    allow_cache_=True, user_ids=self.message.from_id
                 )
                 sender = User.parse_obj(sender[0]())
                 sender = format(sender, "<fn> <ln>")
             else:
                 sender = self.api.groups.get_by_id(
-                    allow_cache_=True,
-                    group_id=abs(self.message.from_id)
+                    allow_cache_=True, group_id=abs(self.message.from_id)
                 )
                 sender = sender[0].name
         sender_info = self.sender_info_template.format(
             sender_name=self.sender_name_color(sender),
-            sender_command=self.sender_command_color(self.message.text)
+            sender_command=self.sender_command_color(self.message.text),
         )
         header = self.event_header_template.format(
             sender_info=sender_info,

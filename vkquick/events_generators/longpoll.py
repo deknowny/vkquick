@@ -50,7 +50,9 @@ class LongPollBase(abc.ABC):
             self.server_url, params=self._lp_settings
         ) as response:
             # TODO: X-Next-Ts header
-            response = vkquick.utils.AttrDict(await response.json(loads=self.json_parser.loads))
+            response = vkquick.utils.AttrDict(
+                await response.json(loads=self.json_parser.loads)
+            )
 
         if "failed" in response:
             await self._resolve_faileds(response)
@@ -119,7 +121,9 @@ class GroupLongPoll(LongPollBase):
     """
 
     def __init__(
-        self, api: API, *,
+        self,
+        api: API,
+        *,
         group_id: ty.Optional[int] = None,
         wait: int = 25,
         json_parser: ty.Optional[
@@ -190,7 +194,8 @@ class UserLongPoll(LongPollBase):
     """
 
     def __init__(
-        self, api: API,
+        self,
+        api: API,
         version: int = 3,
         wait: int = 15,
         mode: int = 234,

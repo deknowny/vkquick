@@ -15,7 +15,6 @@ mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
 
 class User(Wrapper):
-
     class Config:
         extra = "allow"
         allow_mutation = False
@@ -90,10 +89,7 @@ class User(Wrapper):
         return self.last_name
 
     def extra_fields_to_format(self):
-        return {
-            "fn": self.fn,
-            "ln": self.ln
-        }
+        return {"fn": self.fn, "ln": self.ln}
 
     def __format__(self, format_spec: str) -> str:
         inserted_fields = {
