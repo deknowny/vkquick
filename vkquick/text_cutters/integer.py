@@ -13,10 +13,11 @@ class Integer(TextCutter):
     """
 
     def __init__(
-        self, *, only_decimal: bool = False, range_: ty.Optional[range] = None
+        self, *, only_decimal: bool = False, min_: int = None, max_: int = None
     ):
         self.only_decimal = only_decimal  # TODO
-        self.range_ = range_
+        self.min_ = min_
+        self.max_ = max_
         self.pattern = re.compile(r"-?\d+")
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
@@ -24,24 +25,18 @@ class Integer(TextCutter):
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not UnmatchedArgument
-            and self.range_ is not None
-            and value not in self.range_
-        ):
-            return (
-                UnmatchedArgument,
-                arguments_string,
-            )
+            value is not UnmatchedArgument and
+            self.min_ is not None and value < self.min_
+            or self.max_ is not None and value > self.max_
+        )
+            return UnmatchedArgument, parsed_string
 
         return value, parsed_string
 
     def usage_description(self):
         description = "Аргумент должен быть целым числом."
-        if self.range_ is not None:
-            range_info = f" Число должно быть ≥ {self.range_.start}, ≤ {self.range_.stop - 1}"
-            if self.range_.step == 1:
-                range_info += "."
-            else:
-                range_info += f" с шагом {self.range_.step}."
-            description += range_info
+        if self.min_ is not None:
+            description += f" Минимальное значение {self.min_}."
+        if self.max_ is not None:
+            description += f" Максимальное значение {self.max_}."
         return description
