@@ -71,7 +71,9 @@ from .filters.ignore_bots_messages import IgnoreBotsMessages
 from .filters.retract_access_for import RetractAccessFor
 
 from .wrappers.user import User, UserField, UserNameEnumCase
-from vkquick.wrappers.message import Message, ClientInfo
+from .wrappers.message import Message, ClientInfo
+
+from .uploaders import upload_photo_to_message
 
 from .bot import Bot
 

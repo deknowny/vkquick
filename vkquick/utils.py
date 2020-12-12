@@ -11,6 +11,7 @@ import os
 import functools
 import typing as ty
 
+import aiohttp
 import pygments
 import pygments.formatters
 import pygments.lexers
@@ -191,3 +192,12 @@ def pretty_view(mapping: dict) -> str:
         pygments.formatters.TerminalFormatter(bg="light"),  # noqa
     )
     return scheme
+
+
+async def download_file(url: str) -> bytes:
+    """
+    Скачивание файлов по их прямой ссылке
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.read()
