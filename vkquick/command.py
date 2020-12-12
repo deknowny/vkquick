@@ -20,6 +20,190 @@ from vkquick.shared_box import SharedBox
 
 # TODO: payload
 class Command(Filter):
+    """
+    Команда -- продвинутая реакция на новое сообщение,
+    совмещающая в себе возможности указания удобной текстовой
+    сигнатуры (имена, префиксы, аргументы...) и некоторых дополнительных
+    фичах, о которых речь ниже. В 99% случаев вам не потребуется
+    использовать ни один метод или поле, образованные инстансом команды,
+    потому что они созданы для сторонних расширений,
+    которые можно будет в бота подключить.
+    Самое важное здесь просто познакомиться с аргументами,
+    которые можно передать в инициализацию. Создавать команды просто,
+    нужно лишь повесить декоратор над обработчиком команды (функцией, которую
+    в последующем мы будем называть реакцией)
+
+    Все созданные команды необходимо передать в инстанс бота либо через
+    марки, либо при инициализации (см. пример примитивного бота в файле `vkquick/bot.py`)
+
+
+    * `prefixes`:
+        Префиксы, на которые реагирует команда
+
+    * `names`:
+        Имена, на которые реагирует команда.
+        Фактически, это то, что идет сразу после префикса, т.е.
+
+            @Command(prefixes=["/", "!"], names="hi")
+
+        означает, что команда среагирует на:
+            * !hi
+            * /hi
+
+    * `title`:
+        Заголовок (название?) команды. В 2-3х словах, что делает команда.
+        Исключение пользователя, генерация случайного числа... Используется
+        так же в автодоке. По умолчанию команда называется так же, как и реакция
+
+    * `description`:
+        Полное описание того, что делает команда. Если у реакции есть
+        докстринга, она будет использована в качестве описания
+
+    * `routing_command_re_flags`:
+        Этап парсинга команды можно разбить надвое:
+
+            1. Проверка на совпадение префикса и имени с помощью регулярок
+            2. Если прошел первый, идет валидация аргументов
+
+        Так вот сюда можно передать флаги, которые будут использоваться
+        в проверке первого этапа. По умолчанию это `re.IGNORECASE`,
+        т.е. все команды не чувствительны к регистру символов.
+
+        Pro tip: Если нужно передать несколько флагов, сделать можно так:
+
+            ...
+            routing_command_re_flags=re.IGNORECASE | re.DOTALL,
+            ...
+
+    * `on_invalid_argument`:
+        Если вдруг человек передал некорректный по значению
+        аргумент, то команда автоматически сообщит об этом,
+        но вы можете установить собственное поведение, передав
+        в качестве ключа аргумент, на который нужно реагировать, и
+        функцию, в качестве значения, которая должна сработать.
+        Функция принимает контекст
+
+    * `on_invalid_filter`:
+        Можно задать свое поведение фильтру, который не прошел,
+        указав в ключе фильтр, а в значении саму функцию.
+        Функция принимает в аргумент контекст
+
+    * `extra`:
+         Поля, которые можно передать для сторонних расширений.
+
+    * `run_in_thread` & `run_in_process`:
+        Команда может автоматически запустить реакцию
+        в потоке/процессе (соответствуя названиям). Нельзя
+        использовать одновременно и то, и другое, или же
+        делать реакцию асинхронной (она и так асинхронно запустится)
+
+
+    ## О реакциях
+    Реакции -- обработчики самой команды, если она было вызвана.
+    У реакций есть некоторые возможности и некоторые правила,
+    с которыми их необходимо использовать.
+
+    ### Как их делать
+    Пример в самом начале файла
+    (ха, ты реально думал, что я буду как попугай 200 раз показывать один и тот же код?)
+
+
+    ### Быстрые ответы
+    Давайте рассмотрим обычную команду, отвечающую `hello!` на `hi`
+    (да, ты оказался прав(а) :P)
+
+        import vkquick as vq
+
+
+        @vq.Command(names=["hi"])
+        def hello():
+            return "hello!"
+
+    Мы можем просто вернуть строку, и она отправится
+    в ответ на сообщение пользователя! Если нужны расширенные
+    возможности отправки сообщений, то для таких целей
+    существует контекст (о нем речь ниже)
+
+    ### Аргументы команды
+    По умолчанию реакция не принимает ничего,
+    а может принимать текстовые аргументы. Например,
+    пользователю нужно передать какое-то значение (
+    упоминание другого пользователя, или даже просто число).
+    Конечно, можно измучить текст команды разными сплитами и
+    потом с ужасом смотреть на получившийся плов. Этот класс
+    дает возможности легкого добавления команд. Пусть команда `hello`,
+    пример которой был выше, должна принимать какое-то слово -- то,
+    как она должна называть нас, когда отвечает `hello!`. Например,
+    му пишем `hi Tom`, и нам отвечают `Hello, Tom!`. Внимание на экран:
+
+        import vkquick as vq
+
+
+        @vq.Command(names=["hi"])
+        def hello(name: vq.Word):
+            return f"hello!, {name}"
+
+
+    Теперь наша команда принимает аргумент в виде слова (т.е. имени).
+
+    Можно указать несколько аргументов, которые должны принимать команда,
+    просто перечислив их в аргументах самой реакции.
+
+    Возможности типов для реакций на этом не заканчиваются. Например, можно
+    указать максимальную длину слова (в нашем случае имени).
+
+        import vkquick as vq
+
+
+        @vq.Command(names=["hi"])
+        def hello(name: vq.Word(max_length=10)):
+            return f"hello!, {name}"
+
+    Бот сам сообщит пользователю, если он передаст слово, длиной более
+    чем в 10 символов.
+
+    Если ваш линтер сходит с ума,
+    тип аргумента можно передать через дефолтное значение
+    (`str` в примере ниже опционален. Можно без него)
+
+        import vkquick as vq
+
+
+        @vq.Command(names=["hi"])
+        def hello(name: str = vq.Word(max_length=10)):
+            return f"hello!, {name}"
+
+    Обобщая, вот всевозможные применения текстовых аргументов
+    на примере `Integer`
+
+        def foo(arg: int = vq.Integer()): ...
+        def foo(arg: vq.Integer()): ...
+
+        # Учитывайте, что некоторые аргументы все же требуют обязательных значений,
+        # Например, `List`
+        def foo(arg: int = vq.Integer): ...
+        def foo(arg=vq.Integer): ...
+
+
+    ### Контекст
+    От вк во время нового сообщения прилетает много разной информации.
+    Его можно получить, указав __первым__ аргументом функции тип контекста
+
+        import vkquick as vq
+
+
+        @vq.Command(names=["hi"])
+        async def hello(ctx: vq.Context):
+            \"""
+            Здоровается с пользователем, передавая его имя
+            \"""
+            sender = await ctx.fetch_sender()
+            return "Hi, {sender:<fn> <ln>}!"
+
+    Если кратко о возможностях -- хранит сам объект события
+    и содержит некоторые плюшки для быстрого взаимодействия.
+    О всем о том можно почитать непосредственно его докстрингу (`context.py`)
+    """
     def __init__(
         self,
         *,
@@ -29,10 +213,10 @@ class Command(Filter):
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
         on_invalid_argument: ty.Optional[
-            ty.Dict[str, sync_async_callable([Context], ...), ty.Any]
+            ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]
         ] = None,
         on_invalid_filter: ty.Optional[
-            ty.Dict[Filter, sync_async_callable([Context], ...), ty.Any]
+            ty.Dict[Filter, ty.Union[sync_async_callable([Context], ...), str]]
         ] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
@@ -46,7 +230,7 @@ class Command(Filter):
         self._description = description
         self._title = title
 
-        self.filters: ty.List[Filter] = [self]
+        self._filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
         self._reaction_context_argument_name = None
 
@@ -56,9 +240,9 @@ class Command(Filter):
 
         if run_in_process and run_in_thread:
             raise ValueError(
-                "Command can be run only at "
-                "the same time in a process "
-                "and in a thread"
+                "Command can be run only in "
+                "a process or in a thread, "
+                "not both at the same time"
             )
 
         if run_in_thread:
@@ -72,14 +256,24 @@ class Command(Filter):
 
     @property
     def reaction_arguments(self):
+        """
+        Текстовые аргументы, принимаемые командой
+        """
         return self._reaction_arguments
 
     @property
     def title(self):
+        """
+        Имя команды (максимально краткое описание того, что она делает)
+        """
         return self._title
 
     @property
     def description(self) -> str:
+        """
+        Описание команды. В случае отсутствия
+        возвращает соответствующую строку об отсутствии описания
+        """
         if self._description is None:
             return "Описание отсутствует"
         return self._description
@@ -87,12 +281,16 @@ class Command(Filter):
     @property
     def extra(self) -> AttrDict:
         """
-        Extra values
+        Дополнительные параметры. Используется
+        расширениями/плагинами для дополнительных возможностей
         """
         return self._extra
 
     @property
     def prefixes(self) -> ty.Tuple[str]:
+        """
+        Префиксы, на которые реагирует команда
+        """
         return self._prefixes
 
     @prefixes.setter
@@ -102,12 +300,29 @@ class Command(Filter):
 
     @property
     def names(self) -> ty.Tuple[str]:
+        """
+        Имена, на которые реагирует команда
+        """
         return self._names
 
     @names.setter
     def names(self, value: ty.Iterable[str]) -> None:
         self._prefixes = tuple(value)
         self._build_routing_regex()
+
+    @property
+    def filters(self) -> ty.List[Filter]:
+        """
+        Фильтры, которые есть у команды (включая сам `Command`)
+        """
+        return self._filters
+
+    @property
+    def invalid_argument_handlers(self) -> ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]:
+        """
+        Обработчики, либо готовые ответы на некорректные аргументы
+        """
+        return self._invalid_argument_handlers
 
     def __call__(self, reaction: sync_async_callable(..., None)):
         self.reaction = reaction
@@ -226,7 +441,6 @@ class Command(Filter):
         )
 
         if not is_parsed:
-            breakpoint()
             if not arguments:
                 return Decision(
                     False,
@@ -323,7 +537,7 @@ class Command(Filter):
         # def foo(arg: int = vq.Integer()): ...
         # def foo(arg: vq.Integer()): ...
         # def foo(arg: int = vq.Integer): ...
-        # def foo(arg: vq.Integer): ...
+        # def foo(arg=vq.Integer): ...
         name, value = argument
         if value.default != value.empty:
             cutter = value.default

@@ -90,7 +90,7 @@ class User(Wrapper):
 
     def extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln}
-    
+
 
 class UserField(str, vkquick.utils.AutoLowerNameEnum):
     """
