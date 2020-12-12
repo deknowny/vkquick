@@ -218,20 +218,24 @@ class Command(Filter):
         ] = None,
         on_invalid_filter: ty.Optional[
             ty.Dict[
-                Filter, ty.Union[sync_async_callable([Context], ...), str]
+                ty.Type[Filter], ty.Union[sync_async_callable([Context], ...), str]
             ]
         ] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
         run_in_process: bool = False,
-    ):
-        self._prefixes = tuple(prefixes)
-        self._names = tuple(names)
+        use_regex_escape: bool = True
+    ) -> None:
+        # Note: используется property
+        self.prefixes = prefixes
+        self.names = names
+
         self._description = description
         self._routing_command_re_flags = routing_command_re_flags
         self._extra = AttrDict(extra or {})
         self._description = description
         self._title = title
+        self._use_regex_escape = use_regex_escape
 
         self._filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
@@ -249,13 +253,11 @@ class Command(Filter):
             )
 
         if run_in_thread:
-            self.pool = concurrent.futures.ThreadPoolExecutor()
+            self._pool = concurrent.futures.ThreadPoolExecutor()
         elif run_in_process:
-            self.pool = concurrent.futures.ProcessPoolExecutor()
+            self._pool = concurrent.futures.ProcessPoolExecutor()
         else:
-            self.pool = None
-
-        self._build_routing_regex()
+            self._pool = None
 
     @property
     def reaction_arguments(self):
@@ -298,7 +300,10 @@ class Command(Filter):
 
     @prefixes.setter
     def prefixes(self, value: ty.Iterable[str]) -> None:
-        self._prefixes = tuple(value)
+        if isinstance(value, str):
+            self._prefixes = (value,)
+        else:
+            self._prefixes = tuple(value)
         self._build_routing_regex()
 
     @property
@@ -310,7 +315,10 @@ class Command(Filter):
 
     @names.setter
     def names(self, value: ty.Iterable[str]) -> None:
-        self._prefixes = tuple(value)
+        if isinstance(value, str):
+            self._names = (value,)
+        else:
+            self._names = tuple(value)
         self._build_routing_regex()
 
     @property
@@ -329,6 +337,19 @@ class Command(Filter):
         """
         return self._invalid_argument_handlers
 
+    @property
+    def invalid_filter_handlers(
+            self,
+    ) -> ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]:
+        """
+        Обработчики, либо готовые ответы на фильтры, которые не прошли
+        """
+        return self._invalid_filter_handlers
+
+    @property
+    def use_regex_escape(self):
+        return self.use_regex_escape
+
     def __call__(self, reaction: sync_async_callable(..., None)):
         self.reaction = reaction
         self._resolve_arguments()
@@ -336,7 +357,7 @@ class Command(Filter):
             self._description = inspect.getdoc(reaction)
         if self._title is None:
             self._title = reaction.__name__
-        if self.pool is not None and inspect.iscoroutinefunction(reaction):
+        if self._pool is not None and inspect.iscoroutinefunction(reaction):
             raise ValueError(
                 "Can't run a command in thread/process "
                 "if it is a coroutine function"
@@ -388,18 +409,33 @@ class Command(Filter):
     async def run_through_filters(
         self, context: Context
     ) -> ty.Tuple[bool, ty.List[ty.Tuple[str, Decision]]]:
+        """
+        Проходит по всем обозначенным на команду фильтрам
+        для выявления того, нужно ли ее вызывать на данное событие
+        """
         decisions = []
         for filter_ in self.filters:
             decision = await sync_async_run(filter_.make_decision(context))
             decisions.append((filter_.__class__.__name__, decision))
             if not decision.passed:
+                if filter_.__class__ in self._invalid_filter_handlers:
+                    handler = self._invalid_filter_handlers[filter_.__class__]
+                    response = await sync_async_run(
+                        handler(context)
+                    )
+                    if response is not None:
+                        await context.reply(response)
                 return False, decisions
 
         return True, decisions
 
     def on_invalid_filter(
-        self, filter_: Filter, /
+        self, filter_: ty.Type[Filter], /
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
+        """
+        Этим декоратором можно пометить обработчик, который будет
+        вызван, если фильтр вернул ложь
+        """
         def wrapper(handler):
             self._invalid_filter_handlers[filter_] = handler
             handler_parameters = inspect.signature(handler).parameters
@@ -417,6 +453,10 @@ class Command(Filter):
     def on_invalid_argument(
         self, name: str
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
+        """
+        Этим декоратором можно пометить обработчик, который будет
+        вызван, аргумент оказался некорректным по значению
+        """
         def wrapper(handler):
             self._invalid_argument_handlers[name] = handler
             handler_parameters = inspect.signature(handler).parameters
@@ -464,6 +504,10 @@ class Command(Filter):
     async def init_text_arguments(
         self, arguments_string: str, context: Context
     ) -> ty.Tuple[bool, dict]:
+        """
+        Инициализация текстовых аргументов из сообщения.
+        Это работает каким-то чудом, просто поверьте
+        """
         arguments = {}
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
@@ -477,7 +521,9 @@ class Command(Filter):
             arguments[name] = parsed_value
             if parsed_value is UnmatchedArgument:
                 if name in self._invalid_argument_handlers:
-                    response = self._invalid_argument_handlers[name](context)
+                    response = await sync_async_run(
+                        self._invalid_argument_handlers[name](context)
+                    )
                     if response is not None:
                         await context.reply(response)
                 else:
@@ -498,10 +544,16 @@ class Command(Filter):
         return True, arguments
 
     async def call_reaction(self, context: Context) -> None:
-        if self.pool is not None:
+        """
+        Вызывает реакцию, передавая все собранные аргументы.
+        При вызове учитывается то, как реакцию запустить (поток/процесс...)
+        и то, что она вернула. Если реакция вернула не `None`, это отправится
+        в ответ на сообщение вызванной команды
+        """
+        if self._pool is not None:
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
-                self.pool,
+                self._pool,
                 functools.partial(
                     self.reaction, **context.extra["reaction_arguments"]
                 ),
@@ -512,7 +564,11 @@ class Command(Filter):
         if result is not None:
             await context.reply(message=result)
 
-    def _resolve_arguments(self):
+    def _resolve_arguments(self) -> None:
+        """
+        Вызывается в момент декорирования для распознания того,
+        какие аргументы следует передавать в реакцию
+        """
         parameters = inspect.signature(self.reaction).parameters
         parameters = list(parameters.items())
         if not parameters:
@@ -541,6 +597,10 @@ class Command(Filter):
     def _resolve_text_cutter(
         self, argument: ty.Tuple[str, inspect.Parameter]
     ):
+        """
+        Вызывается в момент декорирования.
+        Определяется аргументы текстовой команды
+        """
         # def foo(arg: int = vq.Integer()): ...
         # def foo(arg: vq.Integer()): ...
         # def foo(arg: int = vq.Integer): ...
@@ -572,12 +632,29 @@ class Command(Filter):
         self._reaction_arguments.append((name, real_type))
 
     def _build_routing_regex(self):
-        self._prefixes_regex = "|".join(self._prefixes)
-        self._names_regex = "|".join(self._names)
-        if len(self._prefixes) > 1:
+        """
+        Выстраивает регулярное выражение, по которому
+        определяется вызов команды. Не включает в себя
+        аргументы, т.к. для них задается своя логика фильтром
+        """
+        # Экранирование специальных символов, если такое указано
+        if self.use_regex_escape:
+            prefixes = map(re.escape, self.prefixes)
+            names = map(re.escape, self.names)
+        else:
+            prefixes = self.prefixes
+            names = self.names
+
+        # Объединение имен и префиксов через или
+        self._prefixes_regex = "|".join(prefixes)
+        self._names_regex = "|".join(names)
+
+        # Проверка длины, чтобы не создавать лишние группы
+        if len(self.prefixes) > 1:
             self.prefixes_regex = f"(?:{self._prefixes_regex})"
-        if len(self._names) > 1:
+        if len(self.names) > 1:
             self._names_regex = f"(?:{self._names_regex})"
+
         self._command_routing_regex = re.compile(
             self._prefixes_regex + self._names_regex,
             flags=self._routing_command_re_flags,
