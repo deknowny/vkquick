@@ -226,11 +226,9 @@ class Command(Filter):
         run_in_process: bool = False,
         use_regex_escape: bool = True
     ) -> None:
-        # Note: используется property
-        self.prefixes = prefixes
-        self.names = names
-
         self._description = description
+        self._names = names
+        self._prefixes = prefixes
         self._routing_command_re_flags = routing_command_re_flags
         self._extra = AttrDict(extra or {})
         self._description = description
@@ -258,6 +256,10 @@ class Command(Filter):
             self._pool = concurrent.futures.ProcessPoolExecutor()
         else:
             self._pool = None
+
+        # Note: используется property
+        self.prefixes = self._prefixes
+        self.names = self._names
 
     @property
     def reaction_arguments(self):
@@ -296,7 +298,7 @@ class Command(Filter):
         """
         Префиксы, на которые реагирует команда
         """
-        return self._prefixes
+        return self._prefixes  # noqa
 
     @prefixes.setter
     def prefixes(self, value: ty.Iterable[str]) -> None:
@@ -311,7 +313,7 @@ class Command(Filter):
         """
         Имена, на которые реагирует команда
         """
-        return self._names
+        return self._names  # noqa
 
     @names.setter
     def names(self, value: ty.Iterable[str]) -> None:
@@ -348,7 +350,7 @@ class Command(Filter):
 
     @property
     def use_regex_escape(self):
-        return self.use_regex_escape
+        return self._use_regex_escape
 
     def __call__(self, reaction: sync_async_callable(..., None)):
         self.reaction = reaction
