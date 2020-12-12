@@ -204,6 +204,7 @@ class Command(Filter):
     и содержит некоторые плюшки для быстрого взаимодействия.
     О всем о том можно почитать непосредственно его докстрингу (`context.py`)
     """
+
     def __init__(
         self,
         *,
@@ -216,11 +217,13 @@ class Command(Filter):
             ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]
         ] = None,
         on_invalid_filter: ty.Optional[
-            ty.Dict[Filter, ty.Union[sync_async_callable([Context], ...), str]]
+            ty.Dict[
+                Filter, ty.Union[sync_async_callable([Context], ...), str]
+            ]
         ] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
-        run_in_process: bool = False
+        run_in_process: bool = False,
     ):
         self._prefixes = tuple(prefixes)
         self._names = tuple(names)
@@ -318,7 +321,9 @@ class Command(Filter):
         return self._filters
 
     @property
-    def invalid_argument_handlers(self) -> ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]:
+    def invalid_argument_handlers(
+        self,
+    ) -> ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]:
         """
         Обработчики, либо готовые ответы на некорректные аргументы
         """
@@ -497,7 +502,9 @@ class Command(Filter):
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
                 self.pool,
-                functools.partial(self.reaction, **context.extra["reaction_arguments"])
+                functools.partial(
+                    self.reaction, **context.extra["reaction_arguments"]
+                ),
             )
         else:
             result = self.reaction(**context.extra["reaction_arguments"])

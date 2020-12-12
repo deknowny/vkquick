@@ -379,7 +379,7 @@ class API(Synchronizable):
             # Автодамп словарей
             elif isinstance(value, dict):
                 new_params[key] = json.dumps(
-                    value, separators=(',', ':'), ensure_ascii=False
+                    value, separators=(",", ":"), ensure_ascii=False
                 )
 
             # Для aiohttp
