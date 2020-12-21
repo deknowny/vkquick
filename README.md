@@ -20,7 +20,7 @@ import vkquick as vq
 bot =  vq.Bot.init_via_token("your-group-token")
 
 
-@bot.mark.event_handler
+@bot.mark.command
 @vq.Command(names=["hello"])
 def hello():
     return "hi!"
