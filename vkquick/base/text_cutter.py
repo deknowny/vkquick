@@ -63,7 +63,7 @@ class TextCutter(abc.ABC):
             f"по значению аргументом №[id0|{argument_position}]."
             f" {seems_missing_text}\n\n{extra_info} "
         )
-        await context.msg.reply(response, disable_mentions=True)
+        await context.reply(response, disable_mentions=True)
 
     @staticmethod
     def usage_description() -> str:
