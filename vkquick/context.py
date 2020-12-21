@@ -1,14 +1,17 @@
 from __future__ import annotations
 import asyncio
 import dataclasses
+import itertools
 import typing as ty
 
 from vkquick.wrappers.user import User
+from vkquick.wrappers.photo import Photo
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict, random_id as random_id_
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.shared_box import SharedBox
 from vkquick.api import API
+from vkquick.uploaders import upload_photos_to_message, upload_photo_to_message
 
 
 class _MessagesSendResponse:
@@ -30,6 +33,9 @@ class Context:
         default_factory=dict
     )
     extra: AttrDict = dataclasses.field(default_factory=AttrDict)
+
+    def __post_init__(self):
+        self._attached_photos = []
 
     @property
     def msg(self):
@@ -236,11 +242,29 @@ class Context:
         )
         return sender
 
-    def get_photos(self):
-        ...
+    def get_photos(self) -> ty.List[Photo]:
+        photos = [
+            Photo(attachment)
+            for attachment in self.msg.attachments
+            if attachment.type == "photo"
+        ]
+        return photos
 
     def get_docs(self):
         ...
+
+    def attach_photo(self, *photos: ty.Union[bytes, str]) -> None:
+        self._attached_photos.extend(photos)
+
+    async def load_photos(self, *photos: ty.Union[bytes, str]) -> ty.List[Photo]:
+        return await upload_photos_to_message(
+            *photos, api=self.api, peer_id=self.msg.peer_id
+        )
+
+    async def load_photo(self, photo: ty.Union[bytes, str]) -> Photo:
+        return await upload_photo_to_message(
+            photo, api=self.api, peer_id=self.msg.peer_id
+        )
 
     def __str__(self) -> str:
         return (
@@ -267,6 +291,21 @@ class Context:
 
         if local_kwargs["random_id"] is None:
             pre_params["random_id"] = random_id_()
+
+        if "attachment" not in pre_params:
+            attachments_tasks = []
+            if self._attached_photos:
+                sending_coroutine = upload_photos_to_message(
+                    *self._attached_photos, api=self.api, peer_id=self.msg.peer_id
+                )
+                attachments_tasks.append(
+                    asyncio.create_task(sending_coroutine)
+                )
+
+            # TODO: docs uploading
+            if attachments_tasks:
+                attachments = await asyncio.gather(*attachments_tasks)
+                pre_params["attachment"] = list(itertools.chain.from_iterable(attachments))
 
         response = await self.api.method("messages.send", pre_params)
         return response[0]

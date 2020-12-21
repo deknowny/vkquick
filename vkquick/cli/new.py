@@ -72,12 +72,12 @@ import vkquick as vq
     prefixes=["/"],
     names=["help", "помощь"]
 )
-async def help_(com_name: str = vq.String()):
+async def help_(ctx: vq.Context, com_name: str = vq.String()):
     \"""
     Показывает информацию по команде:
     способы использования, описание и примеры.
     \"""
-    for command in vq.curs.bot.commands:
+    for command in ctx.shared_box.bot.commands:
         if com_name in command.names:
             return build_text(command)
     return f"Команды с именем `{com_name}` не существует!"

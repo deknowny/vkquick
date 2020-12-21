@@ -1,14 +1,13 @@
-import pathlib
 import json
-import urllib
-import aiohttp
 import typing as ty
 
+import aiohttp
+
 from vkquick.api import API
-from vkquick.utils import download_file
+from vkquick.wrappers.photo import Photo
 
 
-async def upload_photo_to_message(*photos, api: API, peer_id: int = 0):
+async def upload_photos_to_message(*photos: ty.Union[bytes, str], api: API, peer_id: int = 0) -> ty.List[Photo]:
     if not (0 < len(photos) < 11):
         raise ValueError("You can attach from 1 to 10 photos")
     data = aiohttp.FormData()
@@ -32,5 +31,10 @@ async def upload_photo_to_message(*photos, api: API, peer_id: int = 0):
         response = json.loads(response)
 
     photos = await api.photos.save_messages_photo(**response)
-    # TODO
+    photos = [Photo(photo) for photo in photos]
+    return photos
 
+
+async def upload_photo_to_message(photo: ty.Union[bytes, str], api: API, peer_id: int = 0) -> Photo:
+    photos = await upload_photos_to_message(photo, api=api, peer_id=peer_id)
+    return photos[0]
