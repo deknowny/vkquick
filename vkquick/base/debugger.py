@@ -3,9 +3,8 @@ import dataclasses
 import typing as ty
 
 from vkquick import API
-from vkquick.wrappers.message import Message
+from vkquick.events_generators.event import Event
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.current import fetch
 
 
 @dataclasses.dataclass
@@ -19,16 +18,10 @@ class Debugger(abc.ABC):
     вообще
     """
 
-    api: API
-
-    message: Message
-    """
-    Событие, которое было обработано
-    """
-    schemes: ty.List[HandlingStatus]
-    """
-    Набор отчетов об обработке, сформированных обработчиками/командами
-    """
+    def __init__(self, api: API, event: Event, schemes: ty.List[HandlingStatus]) -> None:
+        self._api = api
+        self._message = event.msg
+        self._schemes = schemes
 
     @abc.abstractmethod
     def render(self):

@@ -13,7 +13,7 @@ def hello(sender: vq.User):
 
 
 api = vk_api.VkApi(token=os.getenv("VKDEVGROUPTOKEN"))
-vq.curs.api = vq.API(api.token["access_token"])
+vq.curs._api = vq.API(api.token["access_token"])
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(api, os.getenv("VKDEVGROUPID"))
 loop = asyncio.get_event_loop()
 

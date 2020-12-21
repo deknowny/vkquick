@@ -10,7 +10,6 @@ import aiohttp
 import vkquick.base.json_parser
 import vkquick.base.client
 import vkquick.json_parsers
-import vkquick.current
 import vkquick.events_generators.event
 import vkquick.utils
 import vkquick.clients

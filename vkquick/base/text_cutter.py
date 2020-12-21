@@ -1,7 +1,6 @@
 import abc
 import typing as ty
 
-from vkquick.current import fetch
 from vkquick.context import Context
 
 
@@ -12,8 +11,6 @@ class UnmatchedArgument:
 
 
 class TextCutter(abc.ABC):
-
-    api = fetch("api_invalid_argument", "api")
 
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:

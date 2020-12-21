@@ -1,16 +1,19 @@
+import dataclasses
 import typing as ty
-
-import pydantic
 
 from vkquick.base.filter import Decision
 
 
-class HandlingStatus(pydantic.BaseModel):
+@dataclasses.dataclass
+class HandlingStatus:
     """
     Схема отчета от `EventHandler` по обработке события
     """
 
     reaction_name: str
+    """
+    Имя реакции (обработчика)
+    """
 
     all_filters_passed: bool
     """
@@ -22,7 +25,7 @@ class HandlingStatus(pydantic.BaseModel):
     Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
     """
 
-    filters_response: ty.List[ty.Tuple[str, Decision]] = pydantic.Field(
+    filters_response: ty.List[ty.Tuple[str, Decision]] = dataclasses.field(
         default_factory=list
     )
     """
@@ -32,7 +35,7 @@ class HandlingStatus(pydantic.BaseModel):
     * Имя фильтра (`__name__` атрибут)
     """
 
-    passed_arguments: ty.Dict[str, ty.Any] = pydantic.Field(
+    passed_arguments: ty.Dict[str, ty.Any] = dataclasses.field(
         default_factory=dict
     )
     """

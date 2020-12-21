@@ -23,7 +23,6 @@ from vkquick.events_generators.event import Event
 from vkquick.utils import sync_async_run, clear_console, pretty_view
 from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
-from vkquick.wrappers.message import Message
 
 
 class Bot:
@@ -197,13 +196,14 @@ class Bot:
                         self.pass_event_trough_commands(event)
                     )
                 elif event.type == 4:
-                    extended_event = await self.shared_box.api.messages.get_by_id(
+                    extended_message = await self.shared_box.api.messages.get_by_id(
                         allow_cache_=True, message_ids=event[1]
                     )
-                    extended_event = extended_event.items[0]
+                    extended_message = extended_message.items[0]
+                    event.msg = extended_message
                     asyncio.create_task(
                         self.pass_event_trough_commands(
-                            extended_event
+                            event
                         )
                     )
                 if event.from_group:
@@ -269,13 +269,9 @@ class Bot:
         а затем выводит сообщение, собранное дебаггером
         """
         if self.debug_filter(event):
-            if event.from_group:
-                message = Message.from_group_event(event)
-            else:
-                message = await Message.from_user_event(event)
-            debugger = self.debugger(self.api, message, handling_info)  # noqa
+            debugger = self.debugger(self.api, event, handling_info)  # noqa
             debug_message = debugger.render()
-            print(pretty_view(message.dict(exclude={"date"})))
+            print(pretty_view(event.msg))
             clear_console()
             print(debug_message)
 

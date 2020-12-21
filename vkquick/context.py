@@ -25,7 +25,7 @@ class _MessagesSendResponse:
 class Context:
 
     shared_box: SharedBox
-    source_event: Event
+    event: Event
     filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(
         default_factory=dict
     )
@@ -33,7 +33,7 @@ class Context:
 
     @property
     def msg(self):
-        return self.source_event.message
+        return self.event.msg
 
     @property
     def api(self) -> API:

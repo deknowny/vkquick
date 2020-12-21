@@ -96,21 +96,21 @@ class ColoredDebugger(Debugger):
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
-        with self.api.synchronize():
-            if self.message.from_id > 0:
-                sender = self.api.users.get(
-                    allow_cache_=True, user_ids=self.message.from_id
+        with self._api.synchronize():
+            if self._message.from_id > 0:
+                sender = self._api.users.get(
+                    allow_cache_=True, user_ids=self._message.from_id
                 )
-                sender = User.parse_obj(sender[0]())
+                sender = User(sender[0])
                 sender = format(sender, "<fn> <ln>")
             else:
-                sender = self.api.groups.get_by_id(
-                    allow_cache_=True, group_id=abs(self.message.from_id)
+                sender = self._api.groups.get_by_id(
+                    allow_cache_=True, group_id=abs(self._message.from_id)
                 )
                 sender = sender[0].name
         sender_info = self.sender_info_template.format(
             sender_name=self.sender_name_color(sender),
-            sender_command=self.sender_command_color(self.message.text),
+            sender_command=self.sender_command_color(self._message.text),
         )
         header = self.event_header_template.format(
             sender_info=sender_info,
@@ -127,7 +127,7 @@ class ColoredDebugger(Debugger):
         разделителями информация о каждом обработчике
         """
         handling_messages: ty.List[str] = []
-        for scheme in self.schemes:
+        for scheme in self._schemes:
             handling_message = self.build_event_handler_message(scheme)
             if scheme.all_filters_passed:
                 handling_messages.insert(0, handling_message)
@@ -146,7 +146,7 @@ class ColoredDebugger(Debugger):
         Выстраивает текст поднятых исключений
         """
         exceptions: ty.List[str] = []
-        for scheme in self.schemes:
+        for scheme in self._schemes:
             if scheme.exception_text:
                 exc_header = self.build_exception_header(scheme)
                 exc_text = exc_header + scheme.exception_text

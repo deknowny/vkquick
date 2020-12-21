@@ -7,7 +7,6 @@ VK Quick — это высокоуровневная надстройка над
 огромное множество специальных оберток и функций,
 создание документации к боту в виде команд в боте или же полноценного сайта
 """
-from .current import fetch, curs
 from .api import API, TokenOwner
 from .exceptions import VkApiError
 from .events_generators.event import Event
@@ -70,8 +69,7 @@ from .filters.direct_only import DirectOnly
 from .filters.ignore_bots_messages import IgnoreBotsMessages
 from .filters.retract_access_for import RetractAccessFor
 
-from .wrappers.user import User, UserField, UserNameEnumCase
-from .wrappers.message import Message, ClientInfo
+from .wrappers.user import User
 
 from .uploaders import upload_photo_to_message
 

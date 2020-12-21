@@ -5,7 +5,7 @@ import vkquick as vq
 
 
 async def main():
-    vq.curs.api = vq.API(os.getenv("VKDEVGROUPTOKEN"))
+    vq.curs._api = vq.API(os.getenv("VKDEVGROUPTOKEN"))
     lp = vq.GroupLongPoll()
     await lp.setup()
     async for events in lp:

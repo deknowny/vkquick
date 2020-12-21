@@ -213,7 +213,7 @@ class New(cleo.Command):
             self.token = os.getenv(self.token[1:])
 
         self.api = vq.API(self.token)
-        vq.current.curs.api = self.api
+        vq.current.curs._api = self.api
 
         if self.api.token_owner == vq.TokenOwner.GROUP:
             return self._fetch_group_and_user()

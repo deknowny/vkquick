@@ -1,15 +1,11 @@
 from __future__ import annotations
-import json
 import functools
 import typing as ty
 
-import pygments
-import pygments.lexers
 import pygments.formatters
 import pygments.formatters.terminal
 import pygments.token
 
-from vkquick.current import fetch
 from vkquick.utils import AttrDict
 
 
@@ -32,8 +28,9 @@ class Event(AttrDict):
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам
     """
-
-    api = fetch("api_event", "api")
+    def __init__(self, value):
+        super().__init__(value)
+        self._message = None
 
     @functools.cached_property
     def from_group(self):
@@ -53,9 +50,23 @@ class Event(AttrDict):
             return self[1]
         return self["event_id"]
 
+    @property
+    def msg(self):
+        if self["_message"] is not None:
+            return self["_message"]
+        if self.type not in ("message_new", 4):
+            raise TypeError(f"Can't get message if event.type is `{self.type}`")
+        if "message" in self.object:
+            return self.object.message
+        return self.object
+
+    @msg.setter
+    def msg(self, message):
+        self._message = message
+
     def __eq__(self, other: Event) -> bool:
         """
-        Сравнение событий по их айди
+        Сравнение событий по их ID
         """
         return self.event_id == other.event_id
 

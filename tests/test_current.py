@@ -7,7 +7,7 @@ class SomeClassThatHasAPI:
 
 
 def test_fetch():
-    vq.current.curs.api = 1
+    vq.current.curs._api = 1
     inst1 = SomeClassThatHasAPI()
     vq.current.curs.api_spec = 1
     inst2 = SomeClassThatHasAPI()

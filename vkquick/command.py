@@ -14,7 +14,6 @@ from vkquick.base.handling_status import HandlingStatus
 from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-from vkquick.wrappers.message import Message, ClientInfo
 from vkquick.shared_box import SharedBox
 
 
@@ -372,7 +371,7 @@ class Command(Filter):
         start_handling_stamp = time.monotonic()
         context = Context(
             shared_box=shared_box,
-            source_event=event,
+            event=event,
         )
         (
             passed_every_filter,

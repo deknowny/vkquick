@@ -75,6 +75,20 @@ class SafeDict(dict):
         return "{" + key + "}"
 
 
+def _key_check(func):
+    @functools.wraps(func)
+    def wrapper(self, item):
+        try:
+            return func(self, item)
+        except KeyError as err:
+            available_keys = tuple(self().keys())
+            raise KeyError(
+                f"There isn't a key `{item}` in keys {available_keys}"
+            ) from err
+
+    return wrapper
+
+
 class AttrDict:
     """
     Надстройка к словарю для возможности получения
@@ -121,6 +135,7 @@ class AttrDict:
             mapping = {}
         object.__setattr__(self, "mapping_", mapping)
 
+    @_key_check
     def __getattr__(self, item):
         return self.__class__(self()[item])
 
@@ -132,6 +147,7 @@ class AttrDict:
             return self.mapping_
         return self.__getattr__(item)
 
+    @_key_check
     def __getitem__(self, item):
         val = self.mapping_[item]
         if isinstance(self.mapping_, list):
