@@ -33,4 +33,4 @@ async def upload_photo_to_message(*photos, api: API, peer_id: int = 0):
 
     photos = await api.photos.save_messages_photo(**response)
     # TODO
-    
+

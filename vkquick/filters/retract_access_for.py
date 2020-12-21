@@ -21,6 +21,6 @@ class RetractAccessFor(Filter):
         self.ids = ids
 
     def make_decision(self, context: Context) -> Decision:
-        if context.message.from_id not in self.ids:
+        if context.msg.from_id not in self.ids:
             return self.passed_decision
         return self.not_passed_decision

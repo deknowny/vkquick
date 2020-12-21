@@ -15,6 +15,6 @@ class ChatOnly(Filter):
     not_passed_decision = Decision(False, "Сообщение отправлено в лс")
 
     def make_decision(self, context: Context) -> Decision:
-        if context.message.peer_id > peer():
+        if context.msg.peer_id > peer():
             return self.passed_decision
         return self.not_passed_decision

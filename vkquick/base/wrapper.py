@@ -1,19 +1,26 @@
-import dataclasses
 import typing as ty
 
-import pydantic
-
-import vkquick.utils
+from vkquick.utils import AttrDict, SafeDict
 
 
-class Wrapper(pydantic.BaseModel):
+class Wrapper:
+
+    def __init__(self, fields: ty.Union[dict, AttrDict]) -> None:
+        if isinstance(fields, dict):
+            fields = AttrDict(fields)
+        self._fields = fields
+
     def __format__(self, format_spec: str) -> str:
         format_spec = format_spec.replace(">", "}")
         format_spec = format_spec.replace("<", "{")
         extra_fields = self.extra_fields_to_format()
-        format_fields = {**self.dict(), **extra_fields}
-        inserted_values = vkquick.utils.SafeDict(format_fields)
+        format_fields = {**self.fields, **extra_fields}
+        inserted_values = SafeDict(format_fields)
         return format_spec.format_map(inserted_values)
+
+    @property
+    def fields(self):
+        return self._fields
 
     def extra_fields_to_format(self):
         return {}

@@ -576,8 +576,8 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        user = users[0]()
-        return User.parse_obj(user)
+        user = users[0]
+        return User(user)
 
     async def fetch_users_via_ids(
         self,
@@ -586,7 +586,7 @@ class API(Synchronizable):
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
-    ) -> ty.Tuple[User, ...]:
+    ) -> ty.List[User]:
         """
         Создает обертку над юзером через его ID или screen name
         """
@@ -596,7 +596,7 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        users = tuple(User.parse_obj(user()) for user in users)
+        users = [User(user) for user in users]
         return users
 
     def init_group_lp(self, **kwargs) -> GroupLongPoll:

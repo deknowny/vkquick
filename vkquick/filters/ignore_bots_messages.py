@@ -14,6 +14,6 @@ class IgnoreBotsMessages(Filter):
     not_passed_decision = Decision(False, "Сообщение отправлено от бота")
 
     def make_decision(self, context: Context) -> Decision:
-        if context.message.from_id > 0:
+        if context.msg.from_id > 0:
             return self.passed_decision
         return self.not_passed_decision

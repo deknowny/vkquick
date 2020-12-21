@@ -7,9 +7,18 @@ from vkquick.wrappers.user import User
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict, random_id as random_id_
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.wrappers.message import Message, ClientInfo, MessagesSendResponse
 from vkquick.shared_box import SharedBox
 from vkquick.api import API
+
+
+class _MessagesSendResponse:
+    """
+    Для ответов, содержащих поля peer_ids
+    """
+
+    peer_id: int
+    message_id: int
+    conversation_message_id: int
 
 
 @dataclasses.dataclass
@@ -17,12 +26,14 @@ class Context:
 
     shared_box: SharedBox
     source_event: Event
-    message: Message
-    client_info: ty.Optional[ClientInfo] = None
     filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(
         default_factory=dict
     )
     extra: AttrDict = dataclasses.field(default_factory=AttrDict)
+
+    @property
+    def msg(self):
+        return self.source_event.message
 
     @property
     def api(self) -> API:
@@ -56,13 +67,13 @@ class Context:
         content_source: ty.Optional[str] = None,
         forward: ty.Optional[str] = None,
         **kwargs,
-    ) -> MessagesSendResponse:
+    ) -> _MessagesSendResponse:
         """
         Отправляет сообщение в тот же диалог/беседу,
         откуда пришло. Все поля соответствуют
         методу `messages.send`
         """
-        params = {"peer_ids": self.message.peer_id}
+        params = {"peer_ids": self.msg.peer_id}
         return await self._send_message_via_local_kwargs(locals(), params)
 
     async def reply(
@@ -86,19 +97,19 @@ class Context:
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> MessagesSendResponse:
+    ) -> _MessagesSendResponse:
         """
         Отвечает на сообщение, которым была вызвана команда.
         Все поля соответствуют методу `messages.send`
         """
         params = {
-            "peer_ids": self.message.peer_id,
+            "peer_ids": self.msg.peer_id,
             "forward": {
                 "is_reply": True,
                 "conversation_message_ids": [
-                    self.message.conversation_message_id
+                    self.msg.conversation_message_id
                 ],
-                "peer_id": self.message.peer_id,
+                "peer_id": self.msg.peer_id,
             },
         }
         return await self._send_message_via_local_kwargs(locals(), params)
@@ -124,18 +135,18 @@ class Context:
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> MessagesSendResponse:
+    ) -> _MessagesSendResponse:
         """
         Пересылает сообщение, которым была вызвана команда.
         Все поля соответствуют методу `messages.send`
         """
         params = {
-            "peer_ids": self.message.peer_id,
+            "peer_ids": self.msg.peer_id,
             "forward": {
                 "conversation_message_ids": [
-                    self.message.conversation_message_id
+                    self.msg.conversation_message_id
                 ],
-                "peer_id": self.message.peer_id,
+                "peer_id": self.msg.peer_id,
             },
         }
         return await self._send_message_via_local_kwargs(locals(), params)
@@ -151,10 +162,10 @@ class Context:
         Получение пользователя использует кэширование.
         Аргументы этой функции будут переданы в `users.get`
         """
-        if self.message.reply_message is None:
+        if self.msg.reply_message is None:
             return None
 
-        user_id = self.message.reply_message.from_id
+        user_id = self.msg.reply_message.from_id
         user = await self.api.fetch_user_via_id(
             user_id, fields=fields, name_case=name_case
         )
@@ -174,7 +185,7 @@ class Context:
         на каждого пользователя
         """
         user_tasks = []
-        for message in self.message.fwd_messages:
+        for message in self.msg.fwd_messages:
             user_task = await self.api.fetch_user_via_id(
                 message.from_id, fields=fields, name_case=name_case
             )
@@ -200,10 +211,10 @@ class Context:
         )
         if replied_user is not None:
             return replied_user
-        if not self.message.fwd_messages:
+        if not self.msg.fwd_messages:
             return None
         first_user_from_fwd = await self.api.fetch_user_via_id(
-            self.message.fwd_messages[0].from_id,
+            self.msg.fwd_messages[0].from_id,
             fields=fields,
             name_case=name_case,
         )
@@ -221,7 +232,7 @@ class Context:
         Аргументы этой функции будут переданы в `users.get`
         """
         sender = await self.api.fetch_user_via_id(
-            self.message.from_id, fields=fields, name_case=name_case
+            self.msg.from_id, fields=fields, name_case=name_case
         )
         return sender
 
@@ -240,7 +251,7 @@ class Context:
 
     async def _send_message_via_local_kwargs(
         self, local_kwargs, pre_params
-    ) -> MessagesSendResponse:
+    ) -> _MessagesSendResponse:
         """
         Вспомогательная функция для методов,
         реализующих отправку сообщений (reply. answer).

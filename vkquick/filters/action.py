@@ -52,8 +52,8 @@ class Action(Filter):
             )
 
     def make_decision(self, context: Context) -> Decision:
-        if "action" in context.message:
-            if context.message.action.type in self.handled_actions:
+        if "action" in context.msg:
+            if context.msg.action.type in self.handled_actions:
                 return self.passed_decision
             return self.another_action_decision
         return self.not_passed_decision

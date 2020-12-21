@@ -370,17 +370,9 @@ class Command(Filter):
         self, event: Event, shared_box: SharedBox
     ) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
-        if event.from_group:
-            message = Message.from_group_event(event)
-            client_info = ClientInfo.parse_obj(event.object.client_info())
-        else:
-            message = await Message.from_user_event(shared_box.api, event)
-            client_info = None
         context = Context(
             shared_box=shared_box,
             source_event=event,
-            message=message,
-            client_info=client_info,
         )
         (
             passed_every_filter,
@@ -474,9 +466,9 @@ class Command(Filter):
         return wrapper
 
     async def make_decision(self, context: Context):
-        matched = self._command_routing_regex.match(context.message.text)
+        matched = self._command_routing_regex.match(context.msg.text)
         if matched:
-            arguments_string = context.message.text[matched.end() :]
+            arguments_string = context.msg.text[matched.end():]
         else:
             return Decision(
                 False,

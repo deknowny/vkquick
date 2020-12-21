@@ -192,9 +192,19 @@ class Bot:
         await self.shared_box.events_generator.setup()
         async for events in self.shared_box.events_generator:
             for event in events:
-                if event.type in ("message_new", 4):
+                if event.type == "message_new":
                     asyncio.create_task(
                         self.pass_event_trough_commands(event)
+                    )
+                elif event.type == 4:
+                    extended_event = await self.shared_box.api.messages.get_by_id(
+                        allow_cache_=True, message_ids=event[1]
+                    )
+                    extended_event = extended_event.items[0]
+                    asyncio.create_task(
+                        self.pass_event_trough_commands(
+                            extended_event
+                        )
                     )
                 if event.from_group:
                     signal_calling = self.call_signal.via_name(
