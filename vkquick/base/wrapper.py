@@ -4,7 +4,6 @@ from vkquick.utils import AttrDict, SafeDict
 
 
 class Wrapper:
-
     def __init__(self, fields: ty.Union[dict, AttrDict]) -> None:
         if isinstance(fields, dict):
             fields = AttrDict(fields)

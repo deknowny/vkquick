@@ -11,7 +11,6 @@ class UnmatchedArgument:
 
 
 class TextCutter(abc.ABC):
-
     @abc.abstractmethod
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         """

@@ -157,11 +157,9 @@ class GroupLongPoll(LongPollBase):
         if self.group_id is None:
             groups = await self.api.groups.get_by_id()
             group = groups[0]
-            group_id = group.id
-        else:
-            group_id = self.group_id
+            self.group_id = group.id
         new_lp_settings = await self.api.groups.getLongPollServer(
-            group_id=group_id
+            group_id=self.group_id
         )
         self.server_url = new_lp_settings().pop("server")
         self._lp_settings = dict(

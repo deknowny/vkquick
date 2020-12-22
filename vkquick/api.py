@@ -581,7 +581,7 @@ class API(Synchronizable):
 
     async def fetch_users_via_ids(
         self,
-        ids: ty.Union[int, str],
+        ids: ty.Iterable[int, str],
         /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
@@ -592,7 +592,7 @@ class API(Synchronizable):
         """
         users = await self.users.get(
             allow_cache_=True,
-            user_ids=ids,
+            user_ids=tuple(ids),
             fields=fields,
             name_case=name_case,
         )

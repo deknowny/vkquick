@@ -71,7 +71,11 @@ from .filters.retract_access_for import RetractAccessFor
 
 from .wrappers.user import User
 
-from .uploaders import upload_photo_to_message
+from .uploaders import (
+    upload_photo_to_message,
+    upload_photos_to_message,
+    upload_doc_to_message
+)
 
 from .bot import Bot
 

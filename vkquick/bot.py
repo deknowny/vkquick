@@ -202,9 +202,7 @@ class Bot:
                     extended_message = extended_message.items[0]
                     event.msg = extended_message
                     asyncio.create_task(
-                        self.pass_event_trough_commands(
-                            event
-                        )
+                        self.pass_event_trough_commands(event)
                     )
                 if event.from_group:
                     signal_calling = self.call_signal.via_name(

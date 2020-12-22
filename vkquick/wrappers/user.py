@@ -9,7 +9,6 @@ mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
 
 class User(Wrapper):
-
     def mention(self, alias: ty.Optional[str], /) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем

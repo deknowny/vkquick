@@ -18,7 +18,9 @@ class Debugger(abc.ABC):
     вообще
     """
 
-    def __init__(self, api: API, event: Event, schemes: ty.List[HandlingStatus]) -> None:
+    def __init__(
+        self, api: API, event: Event, schemes: ty.List[HandlingStatus]
+    ) -> None:
         self._api = api
         self._message = event.msg
         self._schemes = schemes

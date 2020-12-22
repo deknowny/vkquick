@@ -28,6 +28,7 @@ class Event(AttrDict):
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам
     """
+
     def __init__(self, value):
         super().__init__(value)
         self._message = None
@@ -55,7 +56,9 @@ class Event(AttrDict):
         if self["_message"] is not None:
             return self["_message"]
         if self.type not in ("message_new", 4):
-            raise TypeError(f"Can't get message if event.type is `{self.type}`")
+            raise TypeError(
+                f"Can't get message if event.type is `{self.type}`"
+            )
         if "message" in self.object:
             return self.object.message
         return self.object

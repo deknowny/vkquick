@@ -165,7 +165,6 @@ class New(cleo.Command):
                     True,
                 )
             else:
-
                 owner_mention = format(owner, "{fn} {ln}")
                 confirmed = self.confirm(
                     f"\nYou want to create a user bot "
@@ -174,7 +173,7 @@ class New(cleo.Command):
                     True,
                 )
             if confirmed:
-                self._make_files(current_group, owner)
+                self._make_files(owner)
                 break
 
     def _fetch_group_and_user(self) -> ty.Tuple[vq.AttrDict, vq.User]:
@@ -189,7 +188,7 @@ class New(cleo.Command):
                 if member.role == "creator":
                     creator_id = member.id
                     creator = self.api.users.get(user_ids=creator_id)
-                    creator = vq.User.parse_obj(creator[0]())
+                    creator = vq.User(creator[0])
                     return group, creator
 
             raise ValueError("Can't get group's creator")
@@ -213,16 +212,13 @@ class New(cleo.Command):
             self.token = os.getenv(self.token[1:])
 
         self.api = vq.API(self.token)
-        vq.current.curs._api = self.api
 
         if self.api.token_owner == vq.TokenOwner.GROUP:
             return self._fetch_group_and_user()
         else:
             return self._fetch_user()
 
-    def _make_files(
-        self, current_group: ty.Optional[vq.AttrDict], owner: vq.User
-    ):
+    def _make_files(self, owner: vq.User):
         root_path = pathlib.Path()
 
         # Main bot's directory
