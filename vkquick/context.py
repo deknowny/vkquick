@@ -5,13 +5,17 @@ import itertools
 import typing as ty
 
 from vkquick.wrappers.user import User
-from vkquick.wrappers.photo import Photo
+from vkquick.wrappers.attachment import Photo, Document, Attachment
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict, random_id as random_id_
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.shared_box import SharedBox
 from vkquick.api import API
-from vkquick.uploaders import upload_photos_to_message, upload_photo_to_message
+from vkquick.uploaders import (
+    upload_photos_to_message,
+    upload_photo_to_message,
+)
+from vkquick.events_generators.longpoll import GroupLongPoll
 
 
 class _MessagesSendResponse:
@@ -34,8 +38,9 @@ class Context:
     )
     extra: AttrDict = dataclasses.field(default_factory=AttrDict)
 
-    def __post_init__(self):
-        self._attached_photos = []
+    def __post_init__(self) -> None:
+        self._attached_photos: ty.List[str, bytes] = []
+        self._auto_set_content_source = True
 
     @property
     def msg(self):
@@ -49,6 +54,14 @@ class Context:
         """
         return self.shared_box.api
 
+    def exclude_content_source(self) -> None:
+        """
+        После вызова этого метода автоматически
+        сгенерированный `content_source` не добавится
+        в `messages.send`
+        """
+        self._auto_set_content_source = False
+
     async def answer(
         self,
         message: ty.Optional[str] = None,
@@ -57,7 +70,7 @@ class Context:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[str]] = None,
+        attachment: ty.Optional[ty.List[str, Attachment]] = None,
         reply_to: ty.Optional[int] = None,
         forward_messages: ty.Optional[ty.List[int]] = None,
         sticker_id: ty.Optional[int] = None,
@@ -90,7 +103,7 @@ class Context:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[str]] = None,
+        attachment: ty.Optional[ty.List[str, Attachment]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[str] = None,
@@ -128,7 +141,7 @@ class Context:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[str]] = None,
+        attachment: ty.Optional[ty.List[str, Attachment]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[str] = None,
@@ -190,13 +203,13 @@ class Context:
         Аргументы этой функции будут переданы в `users.get`
         на каждого пользователя
         """
-        user_tasks = []
-        for message in self.msg.fwd_messages:
-            user_task = await self.api.fetch_user_via_id(
-                message.from_id, fields=fields, name_case=name_case
-            )
-            user_tasks.append(user_task)
-        users = await asyncio.gather(*user_tasks)
+        user_ids = [
+            message.from_id
+            for message in self.msg.fwd_messages
+        ]
+        users = await self.api.fetch_users_via_ids(
+            user_ids, fields=fields, name_case=name_case
+        )
         return users
 
     async def fetch_attached_user(
@@ -242,7 +255,11 @@ class Context:
         )
         return sender
 
-    def get_photos(self) -> ty.List[Photo]:
+    def fetch_photos(self) -> ty.List[Photo]:
+        """
+        Возвращает только фотографии из всего,
+        что есть во вложениях, оборачивая их в обертку
+        """
         photos = [
             Photo(attachment)
             for attachment in self.msg.attachments
@@ -250,18 +267,33 @@ class Context:
         ]
         return photos
 
-    def get_docs(self):
-        ...
+    def fetch_docs(self):
+        """
+        Возвращает только вложения с типом документ из всего,
+        что есть во вложениях, оборачивая их в обертку
+        """
+        docs = [
+            Document(attachment)
+            for attachment in self.msg.attachments
+            if attachment.type == "doc"
+        ]
+        return docs
 
-    def attach_photo(self, *photos: ty.Union[bytes, str]) -> None:
+    def attach_photos(self, *photos: ty.Union[bytes, str]) -> None:
+        """
+        Позволяет добавить фотографию к следующему сообщению,
+        которое будет отправлено
+        """
         self._attached_photos.extend(photos)
 
-    async def load_photos(self, *photos: ty.Union[bytes, str]) -> ty.List[Photo]:
+    async def upload_photos(
+        self, *photos: ty.Union[bytes, str]
+    ) -> ty.List[Photo]:
         return await upload_photos_to_message(
             *photos, api=self.api, peer_id=self.msg.peer_id
         )
 
-    async def load_photo(self, photo: ty.Union[bytes, str]) -> Photo:
+    async def upload_photo(self, photo: ty.Union[bytes, str]) -> Photo:
         return await upload_photo_to_message(
             photo, api=self.api, peer_id=self.msg.peer_id
         )
@@ -269,12 +301,11 @@ class Context:
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__}"
-            f"(source_event, message, client_info, "
-            f"filters_response, extra)"
+            f"(event, filters_response, extra, shared_box)"
         )
 
     async def _send_message_via_local_kwargs(
-        self, local_kwargs, pre_params
+        self, local_kwargs: dict, pre_params: dict
     ) -> _MessagesSendResponse:
         """
         Вспомогательная функция для методов,
@@ -292,20 +323,29 @@ class Context:
         if local_kwargs["random_id"] is None:
             pre_params["random_id"] = random_id_()
 
-        if "attachment" not in pre_params:
+        if "attachment" not in pre_params and self._attached_photos:  # TODO: or _attached_docs
             attachments_tasks = []
             if self._attached_photos:
-                sending_coroutine = upload_photos_to_message(
-                    *self._attached_photos, api=self.api, peer_id=self.msg.peer_id
-                )
+                sending_coroutine = self.upload_photos(*self._attached_photos)
                 attachments_tasks.append(
                     asyncio.create_task(sending_coroutine)
                 )
 
-            # TODO: docs uploading
-            if attachments_tasks:
-                attachments = await asyncio.gather(*attachments_tasks)
-                pre_params["attachment"] = list(itertools.chain.from_iterable(attachments))
+            attachments = await asyncio.gather(*attachments_tasks)
+            pre_params["attachment"] = list(
+                itertools.chain.from_iterable(attachments)
+            )
 
+        if (
+            self._auto_set_content_source
+            and "content_source" not in pre_params
+            and isinstance(self.shared_box.events_generator, GroupLongPoll)
+        ):
+            pre_params["content_source"] = {
+                "type": "message",
+                "owner_id": -self.shared_box.events_generator.group_id,
+                "peer_id": self.msg.peer_id,
+                "conversation_message_id": self.msg.conversation_message_id,
+            }
         response = await self.api.method("messages.send", pre_params)
         return response[0]

@@ -217,13 +217,14 @@ class Command(Filter):
         ] = None,
         on_invalid_filter: ty.Optional[
             ty.Dict[
-                ty.Type[Filter], ty.Union[sync_async_callable([Context], ...), str]
+                ty.Type[Filter],
+                ty.Union[sync_async_callable([Context], ...), str],
             ]
         ] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
         run_in_process: bool = False,
-        use_regex_escape: bool = True
+        use_regex_escape: bool = True,
     ) -> None:
         self._description = description
         self._names = names
@@ -340,7 +341,7 @@ class Command(Filter):
 
     @property
     def invalid_filter_handlers(
-            self,
+        self,
     ) -> ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]:
         """
         Обработчики, либо готовые ответы на фильтры, которые не прошли
@@ -369,10 +370,7 @@ class Command(Filter):
         self, event: Event, shared_box: SharedBox
     ) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
-        context = Context(
-            shared_box=shared_box,
-            event=event,
-        )
+        context = Context(shared_box=shared_box, event=event,)
         (
             passed_every_filter,
             filters_decision,
@@ -413,9 +411,7 @@ class Command(Filter):
             if not decision.passed:
                 if filter_.__class__ in self._invalid_filter_handlers:
                     handler = self._invalid_filter_handlers[filter_.__class__]
-                    response = await sync_async_run(
-                        handler(context)
-                    )
+                    response = await sync_async_run(handler(context))
                     if response is not None:
                         await context.reply(response)
                 return False, decisions
@@ -429,6 +425,7 @@ class Command(Filter):
         Этим декоратором можно пометить обработчик, который будет
         вызван, если фильтр вернул ложь
         """
+
         def wrapper(handler):
             self._invalid_filter_handlers[filter_] = handler
             handler_parameters = inspect.signature(handler).parameters
@@ -450,6 +447,7 @@ class Command(Filter):
         Этим декоратором можно пометить обработчик, который будет
         вызван, аргумент оказался некорректным по значению
         """
+
         def wrapper(handler):
             self._invalid_argument_handlers[name] = handler
             handler_parameters = inspect.signature(handler).parameters
@@ -467,7 +465,7 @@ class Command(Filter):
     async def make_decision(self, context: Context):
         matched = self._command_routing_regex.match(context.msg.text)
         if matched:
-            arguments_string = context.msg.text[matched.end():]
+            arguments_string = context.msg.text[matched.end() :]
         else:
             return Decision(
                 False,
