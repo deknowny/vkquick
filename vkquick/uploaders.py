@@ -66,6 +66,7 @@ async def upload_doc_to_message(
     filepath: str,
     api: API,
     peer_id: int,
+    filename: ty.Optional[str] = None,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
     type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
@@ -90,7 +91,7 @@ async def upload_doc_to_message(
             "Can't upload 2 attachments. "
             "A file can be passed only via "
             "content and filename or only "
-            "via filepath, not both"
+            "via filepath with optional filename, not both"
         )
     if filepath is not None:
         path = pathlib.Path(filepath)
