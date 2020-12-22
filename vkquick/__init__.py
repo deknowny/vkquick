@@ -60,7 +60,8 @@ from .base.handling_status import HandlingStatus
 from .base.wrapper import Wrapper
 from .base.synchronizable import Synchronizable
 from .base.json_parser import JSONParser
-from .base.client import AsyncHTTPClient, SyncHTTPClient
+from .base.client import AsyncHTTPClient
+from .base.serializable import APISerializable
 
 from .filters.action import Action
 from .filters.allow_access_for import AllowAccessFor
@@ -70,14 +71,18 @@ from .filters.ignore_bots_messages import IgnoreBotsMessages
 from .filters.retract_access_for import RetractAccessFor
 
 from .wrappers.user import User
+from .wrappers.attachment import Document, Photo
 
 from .uploaders import (
     upload_photo_to_message,
     upload_photos_to_message,
-    upload_doc_to_message
+    upload_doc_to_message,
 )
 
 from .bot import Bot
+
+from .keyboard import Keyboard
+from .button import Button
 
 
 __version__ = "1.0.0b0"

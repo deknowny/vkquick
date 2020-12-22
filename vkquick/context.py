@@ -5,7 +5,8 @@ import itertools
 import typing as ty
 
 from vkquick.wrappers.user import User
-from vkquick.wrappers.attachment import Photo, Document, Attachment
+from vkquick.wrappers.attachment import Photo, Document
+from vkquick.base.serializable import Attachment
 from vkquick.events_generators.event import Event
 from vkquick.utils import AttrDict, random_id as random_id_
 from vkquick.base.handling_status import HandlingStatus
@@ -203,10 +204,7 @@ class Context:
         Аргументы этой функции будут переданы в `users.get`
         на каждого пользователя
         """
-        user_ids = [
-            message.from_id
-            for message in self.msg.fwd_messages
-        ]
+        user_ids = [message.from_id for message in self.msg.fwd_messages]
         users = await self.api.fetch_users_via_ids(
             user_ids, fields=fields, name_case=name_case
         )
@@ -323,7 +321,9 @@ class Context:
         if local_kwargs["random_id"] is None:
             pre_params["random_id"] = random_id_()
 
-        if "attachment" not in pre_params and self._attached_photos:  # TODO: or _attached_docs
+        if (
+            "attachment" not in pre_params and self._attached_photos
+        ):  # TODO: or _attached_docs
             attachments_tasks = []
             if self._attached_photos:
                 sending_coroutine = self.upload_photos(*self._attached_photos)
