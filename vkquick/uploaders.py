@@ -55,7 +55,7 @@ async def upload_doc_to_message(
     peer_id: int,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
 ) -> ty.List[Document]:
     pass
 
@@ -69,7 +69,7 @@ async def upload_doc_to_message(
     filename: ty.Optional[str] = None,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
 ) -> ty.List[Document]:
     pass
 
@@ -83,7 +83,7 @@ async def upload_doc_to_message(
     filepath: ty.Optional[str] = None,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
 ) -> Document:
 
     if content is not None and filename is not None and filepath is not None:
@@ -109,18 +109,19 @@ async def upload_doc_to_message(
         f"file",
         content,
         content_type="multipart/form-data",
-        filename=filename
+        filename=filename,
     )
 
-    upload_info = await api.docs.get_messages_upload_server(peer_id=peer_id, type=type_)
+    upload_info = await api.docs.get_messages_upload_server(
+        peer_id=peer_id, type=type_
+    )
     async with api.async_http_session.post(
         upload_info.upload_url, data=data
     ) as response:
         response = await response.read()
         response = json.loads(response)
     doc = await api.docs.save(
-        **response,
-        title=filename, tags=tags, return_tags=return_tags
+        **response, title=filename, tags=tags, return_tags=return_tags
     )
     doc = Document(doc[type_ or "doc"])
     return doc
