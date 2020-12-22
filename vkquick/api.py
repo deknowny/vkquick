@@ -31,6 +31,7 @@ import requests
 from vkquick.base.json_parser import JSONParser
 from vkquick.json_parsers import BuiltinJSONParser
 from vkquick.base.synchronizable import Synchronizable
+from vkquick.base.serializable import APISerializable
 from vkquick.exceptions import VkApiError
 from vkquick.utils import AttrDict
 from vkquick.wrappers.user import User
@@ -388,6 +389,10 @@ class API(Synchronizable):
 
             elif value is None:
                 continue
+
+            elif isinstance(value, APISerializable):
+                new_params[key] = value.api_param_representation()
+
             else:
                 new_params[key] = str(value)
 

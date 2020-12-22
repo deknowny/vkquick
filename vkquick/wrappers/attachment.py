@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from vkquick.base.wrapper import Wrapper
+from vkquick.base.serializable import APISerializable
 
 
-class Attachment(Wrapper):
+class Attachment(Wrapper, APISerializable):
 
     _name = None
 
-    def __repr__(self):
+    def api_param_representation(self) -> str:
         if "access_key" in self.fields:
             access_key = f"_{self.fields.access_key}"
         else:
