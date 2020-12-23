@@ -69,6 +69,7 @@ from .filters.chat_only import ChatOnly
 from .filters.direct_only import DirectOnly
 from .filters.ignore_bots_messages import IgnoreBotsMessages
 from .filters.retract_access_for import RetractAccessFor
+from .filters.required_attachments import RequiredAttachments
 
 from .wrappers.user import User
 from .wrappers.attachment import Document, Photo
