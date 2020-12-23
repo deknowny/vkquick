@@ -15,7 +15,8 @@ class RequiredAttachments(Filter):
     )
 
     def __init__(
-        self, *,
+        self,
+        *,
         photo: ty.Optional[ty.Union[int, range]] = None,
         video: ty.Optional[ty.Union[int, range]] = None,
         audio: ty.Optional[ty.Union[int, range]] = None,

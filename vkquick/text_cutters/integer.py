@@ -13,7 +13,11 @@ class Integer(TextCutter):
     """
 
     def __init__(
-        self, *, only_decimal: bool = False, min_: int = None, max_: int = None
+        self,
+        *,
+        only_decimal: bool = False,
+        min_: int = None,
+        max_: int = None,
     ):
         self.only_decimal = only_decimal  # TODO
         self.min_ = min_
@@ -25,8 +29,11 @@ class Integer(TextCutter):
             self.pattern, arguments_string, lambda x: int(x.group(0)),
         )
         if (
-            value is not UnmatchedArgument and
-            self.min_ is None or value >= self.min_ and self.max_ is None or value <= self.max_
+            value is not UnmatchedArgument
+            and self.min_ is None
+            or value >= self.min_
+            and self.max_ is None
+            or value <= self.max_
         ):
             return UnmatchedArgument, parsed_string
 

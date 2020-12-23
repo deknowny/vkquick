@@ -51,7 +51,9 @@ def _convert_payload(func):
         if "payload" in kwargs:
             if isinstance(kwargs["payload"], dict):
                 kwargs["payload"] = json.dumps(
-                    kwargs["payload"], ensure_ascii=False, separators=(",", ":")
+                    kwargs["payload"],
+                    ensure_ascii=False,
+                    separators=(",", ":"),
                 )
             elif not isinstance(kwargs["payload"], str):
                 raise TypeError(

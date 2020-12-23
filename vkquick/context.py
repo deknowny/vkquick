@@ -18,7 +18,7 @@ from vkquick.uploaders import (
 )
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.keyboard import Keyboard
-from vkquick.button import Button
+from vkquick.button import Button, InitializedButton
 
 
 class _MessagesSendResponse:
@@ -257,7 +257,12 @@ class Context:
         )
         return sender
 
-    def attach_keyboard(self, *buttons: Button, one_time: bool = True, inline: bool = False) -> None:
+    def attach_keyboard(
+        self,
+        *buttons: ty.Union[InitializedButton, type(Ellipsis)],
+        one_time: bool = True,
+        inline: bool = False,
+    ) -> None:
         self._attached_keyboard = Keyboard(one_time=one_time, inline=inline)
         self._attached_keyboard.build(*buttons)
 
