@@ -261,7 +261,7 @@ class Context:
         что есть во вложениях, оборачивая их в обертку
         """
         photos = [
-            Photo(attachment)
+            Photo(attachment.photo)
             for attachment in self.msg.attachments
             if attachment.type == "photo"
         ]
@@ -273,7 +273,7 @@ class Context:
         что есть во вложениях, оборачивая их в обертку
         """
         docs = [
-            Document(attachment)
+            Document(getattr(attachment, attachment.type))
             for attachment in self.msg.attachments
             if attachment.type == "doc"
         ]
