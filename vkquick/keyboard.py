@@ -23,13 +23,14 @@ class Keyboard(UIBuilder):
         self.scheme["buttons"][-1].append(button.scheme)
         return self
 
-    def add_line(self):
+    def add_line(self) -> Keyboard:
         if not self.scheme["buttons"]:
             raise ValueError("Can't add a new line if the last line is empty")
         self.scheme["buttons"].append([])
+        return self
 
     def build(
-        self, *buttons: ty.Union[InitializedButton, Ellipsis]
+        self, *buttons: ty.Union[InitializedButton, type(Ellipsis)]
     ) -> Keyboard:
         for button in buttons:
             if button is Ellipsis:

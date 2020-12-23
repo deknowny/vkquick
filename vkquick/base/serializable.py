@@ -12,11 +12,11 @@ class APISerializable(abc.ABC):
 
 class UIBuilder(APISerializable):
 
-    _scheme = None
+    scheme = None
 
     def api_param_representation(self) -> str:
         return json.dumps(
-            self._scheme, ensure_ascii=False, separators=(",", ":")
+            self.scheme, ensure_ascii=False, separators=(",", ":")
         )
 
 

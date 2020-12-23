@@ -1,7 +1,6 @@
 from __future__ import annotations
 import asyncio
 import dataclasses
-import itertools
 import typing as ty
 
 from vkquick.wrappers.user import User
@@ -18,6 +17,8 @@ from vkquick.uploaders import (
     upload_doc_to_message,
 )
 from vkquick.events_generators.longpoll import GroupLongPoll
+from vkquick.keyboard import Keyboard
+from vkquick.button import Button
 
 
 class _MessagesSendResponse:
@@ -44,6 +45,7 @@ class Context:
         self._attached_photos: ty.List[str, bytes] = []
         self._attached_docs: ty.List[dict] = []
         self._auto_set_content_source: bool = True
+        self._attached_keyboard = None
 
     @property
     def msg(self):
@@ -78,7 +80,7 @@ class Context:
         forward_messages: ty.Optional[ty.List[int]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[str] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: ty.Optional[bool] = None,
@@ -109,7 +111,7 @@ class Context:
         attachment: ty.Optional[ty.List[ty.Union[str, Attachment]]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[str] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: ty.Optional[bool] = None,
@@ -147,7 +149,7 @@ class Context:
         attachment: ty.Optional[ty.List[ty.Union[str, Attachment]]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[str] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: ty.Optional[bool] = None,
@@ -254,6 +256,10 @@ class Context:
             self.msg.from_id, fields=fields, name_case=name_case
         )
         return sender
+
+    def attach_keyboard(self, *buttons: Button, one_time: bool = True, inline: bool = False) -> None:
+        self._attached_keyboard = Keyboard(one_time=one_time, inline=inline)
+        self._attached_keyboard.build(*buttons)
 
     def fetch_photos(self) -> ty.List[Photo]:
         """
@@ -393,5 +399,7 @@ class Context:
                 "peer_id": self.msg.peer_id,
                 "conversation_message_id": self.msg.conversation_message_id,
             }
+        if self._attached_keyboard is not None:
+            pre_params["keyboard"] = self._attached_keyboard
         response = await self.api.method("messages.send", pre_params)
         return response[0]

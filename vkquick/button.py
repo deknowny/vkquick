@@ -6,6 +6,8 @@ import typing as ty
 
 class InitializedButton:
     def __init__(self, **scheme) -> None:
+        if scheme["payload"] is None:
+            del scheme["payload"]
         self.scheme = scheme
 
 
@@ -46,18 +48,17 @@ class _UncoloredButton(InitializedButton):
 def _convert_payload(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if isinstance(kwargs["payload"], dict):
-            kwargs["payload"] = json.dumps(
-                kwargs["payload"], ensure_ascii=False, separators=(",", ":")
-            )
-        elif not (
-            kwargs["payload"] is None or isinstance(kwargs["payload"], str)
-        ):
-            raise TypeError(
-                "Invalid type for payload. "
-                "Payload can be only str, "
-                "dict or not passed"
-            )
+        if "payload" in kwargs:
+            if isinstance(kwargs["payload"], dict):
+                kwargs["payload"] = json.dumps(
+                    kwargs["payload"], ensure_ascii=False, separators=(",", ":")
+                )
+            elif not isinstance(kwargs["payload"], str):
+                raise TypeError(
+                    "Invalid type for payload. "
+                    "Payload can be only str, "
+                    "dict or not passed"
+                )
         return func(*args, **kwargs)
 
     return wrapper
@@ -73,7 +74,7 @@ class Button:
         Кнопка типа `text`
         """
         return _ColoredButton(
-            info={"label": label, "type": "text"}, payload=payload
+            action={"label": label, "type": "text"}, payload=payload
         )
 
     @classmethod
@@ -89,7 +90,7 @@ class Button:
         Кнопка типа `open_link`
         """
         return _UncoloredButton(
-            info={"label": label, "link": link, "type": "open_link"},
+            action={"label": label, "link": link, "type": "open_link"},
             payload=payload,
         )
 
@@ -101,7 +102,7 @@ class Button:
         """
         Кнопка типа `location`
         """
-        return _UncoloredButton(info={"type": "location"}, payload=payload)
+        return _UncoloredButton(action={"type": "location"}, payload=payload)
 
     @classmethod
     @_convert_payload
@@ -112,7 +113,7 @@ class Button:
         Кнопка типа `vkpay`
         """
         return _UncoloredButton(
-            info={"hash": hash_, "type": "vkpay"}, payload=payload
+            action={"hash": hash_, "type": "vkpay"}, payload=payload
         )
 
     @classmethod
@@ -130,7 +131,7 @@ class Button:
         Кнопка типа `open_app`
         """
         return _UncoloredButton(
-            info={
+            action={
                 "label": label,
                 "app_id": app_id,
                 "owner_id": owner_id,
@@ -149,5 +150,5 @@ class Button:
         Кнопка типа `callback`
         """
         return _ColoredButton(
-            info={"label": label, "type": "callback"}, payload=payload
+            action={"label": label, "type": "callback"}, payload=payload
         )
