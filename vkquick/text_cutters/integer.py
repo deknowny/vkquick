@@ -18,7 +18,9 @@ class Integer(TextCutter):
         only_decimal: bool = False,
         min_: int = None,
         max_: int = None,
-    ):
+    ) -> None:
+        if min_ > max_:
+            raise ValueError("max_ can't be less than min_")
         self.only_decimal = only_decimal  # TODO
         self.min_ = min_
         self.max_ = max_

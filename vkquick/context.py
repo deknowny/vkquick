@@ -405,6 +405,12 @@ class Context:
                 "conversation_message_id": self.msg.conversation_message_id,
             }
         if self._attached_keyboard is not None:
+            if "keyboard" in pre_params:
+                raise ValueError(
+                    "Unexpected passed keyboard. "
+                    "You already attached a keyboard "
+                    "before via `attach_keyboard`"
+                )
             pre_params["keyboard"] = self._attached_keyboard
         response = await self.api.method("messages.send", pre_params)
         return response[0]

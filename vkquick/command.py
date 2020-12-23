@@ -411,7 +411,10 @@ class Command(Filter):
             if not decision.passed:
                 if filter_.__class__ in self._invalid_filter_handlers:
                     handler = self._invalid_filter_handlers[filter_.__class__]
-                    response = await sync_async_run(handler(context))
+                    if isinstance(handler, str):
+                        response = handler
+                    else:
+                        response = await sync_async_run(handler(context))
                     if response is not None:
                         await context.reply(response)
                 return False, decisions
@@ -618,6 +621,11 @@ class Command(Filter):
         elif isinstance(cutter, TextCutter):
             real_type = cutter
         else:
+            if cutter is Context:
+                raise TypeError(
+                    "Context argument should be "
+                    "the first in reactiom arguments"
+                )
             raise TypeError(
                 f"The reaction argument `{name}` should "
                 "be `TextCutter` subclass or "
