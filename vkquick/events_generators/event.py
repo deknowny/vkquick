@@ -31,7 +31,7 @@ class Event(AttrDict):
 
     def __init__(self, value):
         super().__init__(value)
-        self._message = None
+        object.__setattr__(self, "_message", None)
 
     @functools.cached_property
     def from_group(self):
@@ -53,8 +53,8 @@ class Event(AttrDict):
 
     @property
     def msg(self):
-        if self["_message"] is not None:
-            return self["_message"]
+        if self._message is not None:
+            return self._message
         if self.type not in ("message_new", 4):
             raise TypeError(
                 f"Can't get message if event.type is `{self.type}`"
@@ -63,9 +63,9 @@ class Event(AttrDict):
             return self.object.message
         return self.object
 
-    @msg.setter
-    def msg(self, message):
-        self._message = message
+    # Здесь нельзя использовать property, т.к. помимо property дергается `__setattr__`
+    def set_message(self, message):
+        object.__setattr__(self, "_message", message)
 
     def __eq__(self, other: Event) -> bool:
         """

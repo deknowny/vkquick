@@ -200,7 +200,7 @@ class Bot:
                         allow_cache_=True, message_ids=event[1]
                     )
                     extended_message = extended_message.items[0]
-                    event.msg = extended_message
+                    event.set_message(extended_message)
                     asyncio.create_task(
                         self.pass_event_trough_commands(event)
                     )
