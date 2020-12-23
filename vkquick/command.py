@@ -512,9 +512,13 @@ class Command(Filter):
             arguments[name] = parsed_value
             if parsed_value is UnmatchedArgument:
                 if name in self._invalid_argument_handlers:
-                    response = await sync_async_run(
-                        self._invalid_argument_handlers[name](context)
-                    )
+                    reaction = self._invalid_argument_handlers[name]
+                    if isinstance(reaction, str):
+                        response = reaction
+                    else:
+                        response = await sync_async_run(
+                            self._invalid_argument_handlers[name](context)
+                        )
                     if response is not None:
                         await context.reply(response)
                 else:
