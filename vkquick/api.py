@@ -256,7 +256,7 @@ class API(Synchronizable):
         """
         with self.synchronize():
             user = self.users.get()
-            user = User.parse_obj(user[0])
+            user = User(user[0])
             return user
 
     def __getattr__(self, attribute: str) -> API:
