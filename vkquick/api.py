@@ -251,7 +251,7 @@ class API(Synchronizable):
     @functools.cached_property
     def token_owner_user(self) -> User:
         """
-        Владелец токена (объект пользовтаеля).
+        Владелец токена (объект пользователя).
         Только если токеном владеет юзер
         """
         with self.synchronize():
@@ -281,11 +281,11 @@ class API(Synchronizable):
         return self
 
     def __call__(
-            self,
-            use_autocomplete_params_: bool = False,
-            /,
-            allow_cache_: bool = False,
-            **request_params,
+        self,
+        use_autocomplete_params_: bool = False,
+        /,
+        allow_cache_: bool = False,
+        **request_params,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос с именем метода, полученным через
@@ -309,12 +309,12 @@ class API(Synchronizable):
         )
 
     def method(
-            self,
-            method_name: str,
-            request_params: ty.Dict[str, ty.Any],
-            /,
-            *,
-            allow_cache: bool = False,
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        /,
+        *,
+        allow_cache: bool = False,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Вызывает API запрос, передавая имя метода (`method_name`)
@@ -336,10 +336,10 @@ class API(Synchronizable):
         )
 
     def _route_request_scheme(
-            self,
-            method_name: str,
-            request_params: ty.Dict[str, ty.Any],
-            allow_cache: bool,
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        allow_cache: bool,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Определяет, как вызывается запрос: синхронно или асинхронно
@@ -356,7 +356,7 @@ class API(Synchronizable):
 
     @staticmethod
     def _convert_collections_params(
-            params: ty.Dict[str, ty.Any], /
+        params: ty.Dict[str, ty.Any], /
     ) -> ty.Dict[str, ty.Any]:
         """
         Лучшее API в Интернете не может распарсить массивы,
@@ -409,7 +409,7 @@ class API(Synchronizable):
         return new_params
 
     def _prepare_response_body(
-            self, body: ty.Dict[str, ty.Any]
+        self, body: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Подготавливает ответ API в надлежащий вид:
@@ -421,7 +421,7 @@ class API(Synchronizable):
 
     @staticmethod
     def _build_cache_hash(
-            method_name: str, data: ty.Dict[str, ty.Any]
+        method_name: str, data: ty.Dict[str, ty.Any]
     ) -> str:
         """
         Создает хеш для кэш-таблицы, по которому можно
@@ -434,7 +434,7 @@ class API(Synchronizable):
 
     # Need a decorator-factory?
     async def _make_async_api_request(
-            self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
+        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос асинхронно с именем API метода из
@@ -468,7 +468,7 @@ class API(Synchronizable):
                 json_serialize=self.json_parser.dumps,
             )
         async with self.async_http_session.post(
-                f"{self.URL}{path}", data=params
+            f"{self.URL}{path}", data=params
         ) as response:
             loaded_response = await response.json(
                 loads=self.json_parser.loads
@@ -476,7 +476,7 @@ class API(Synchronizable):
             return loaded_response
 
     def _make_sync_api_request(
-            self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
+        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос синхронно с именем API метода из
@@ -575,12 +575,12 @@ class API(Synchronizable):
         await self.async_http_session.close()
 
     async def fetch_user_via_id(
-            self,
-            id_: ty.Union[int, str],
-            /,
-            *,
-            fields: ty.Optional[ty.List[str]] = None,
-            name_case: ty.Optional[str] = None,
+        self,
+        id_: ty.Union[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> User:
         """
         Создает обертку над юзером через его ID или screen name
@@ -595,12 +595,12 @@ class API(Synchronizable):
         return User(user)
 
     async def fetch_users_via_ids(
-            self,
-            ids: ty.Iterable[int, str],
-            /,
-            *,
-            fields: ty.Optional[ty.List[str]] = None,
-            name_case: ty.Optional[str] = None,
+        self,
+        ids: ty.Iterable[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
     ) -> ty.List[User]:
         """
         Создает обертку над юзером через его ID или screen name

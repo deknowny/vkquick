@@ -15,7 +15,7 @@ from vkquick.api import API
 from vkquick.uploaders import (
     upload_photos_to_message,
     upload_photo_to_message,
-    upload_doc_to_message
+    upload_doc_to_message,
 )
 from vkquick.events_generators.longpoll import GroupLongPoll
 
@@ -287,13 +287,16 @@ class Context:
         self._attached_photos.extend(photos)
 
     def attach_doc(
-        self, *,
+        self,
+        *,
         content: ty.Optional[ty.Union[str, bytes]] = None,
         filename: ty.Optional[str] = None,
         filepath: ty.Optional[str] = None,
         tags: ty.Optional[str] = None,
         return_tags: ty.Optional[bool] = None,
-        type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+        type_: ty.Optional[
+            ty.Literal["doc", "audio_message", "graffiti"]
+        ] = None,
     ) -> None:
         baked_params = locals().copy()
         del baked_params["self"]
@@ -312,13 +315,16 @@ class Context:
         )
 
     async def upload_doc(
-        self, *,
+        self,
+        *,
         content: ty.Optional[ty.Union[str, bytes]] = None,
         filename: ty.Optional[str] = None,
         filepath: ty.Optional[str] = None,
         tags: ty.Optional[str] = None,
         return_tags: ty.Optional[bool] = None,
-        type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+        type_: ty.Optional[
+            ty.Literal["doc", "audio_message", "graffiti"]
+        ] = None,
     ) -> Document:
         baked_params = locals().copy()
         del baked_params["self"]
@@ -351,13 +357,15 @@ class Context:
         if local_kwargs["random_id"] is None:
             pre_params["random_id"] = random_id_()
 
-        if (
-            "attachment" not in pre_params and (self._attached_photos or self._attached_docs)
+        if "attachment" not in pre_params and (
+            self._attached_photos or self._attached_docs
         ):
             photos_uploading_task = None
             docs_uploading_tasks = []
             if self._attached_photos:
-                photos_uploading_task = self.upload_photos(*self._attached_photos)
+                photos_uploading_task = self.upload_photos(
+                    *self._attached_photos
+                )
 
             if self._attached_docs:
                 docs_uploading_tasks = [
