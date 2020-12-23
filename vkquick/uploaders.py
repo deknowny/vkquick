@@ -56,7 +56,7 @@ async def upload_doc_to_message(
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
     type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
-) -> ty.List[Document]:
+) -> Document:
     pass
 
 
@@ -70,7 +70,7 @@ async def upload_doc_to_message(
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
     type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
-) -> ty.List[Document]:
+) -> Document:
     pass
 
 

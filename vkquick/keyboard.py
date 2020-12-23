@@ -9,7 +9,9 @@ class Keyboard(UIBuilder):
 
     empty = '{"buttons":[],"one_time":true}'
 
-    def __init__(self, *, one_time: bool = True, inline: bool = False) -> None:
+    def __init__(
+        self, *, one_time: bool = True, inline: bool = False
+    ) -> None:
         self.scheme = {"inline": inline, "buttons": [[]]}
         if not inline:
             self.scheme.update(one_time=one_time)
@@ -26,7 +28,9 @@ class Keyboard(UIBuilder):
             raise ValueError("Can't add a new line if the last line is empty")
         self.scheme["buttons"].append([])
 
-    def build(self, *buttons: ty.Union[InitializedButton, Ellipsis]) -> Keyboard:
+    def build(
+        self, *buttons: ty.Union[InitializedButton, Ellipsis]
+    ) -> Keyboard:
         for button in buttons:
             if button is Ellipsis:
                 self.add_line()

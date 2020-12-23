@@ -15,6 +15,7 @@ from vkquick.api import API
 from vkquick.uploaders import (
     upload_photos_to_message,
     upload_photo_to_message,
+    upload_doc_to_message
 )
 from vkquick.events_generators.longpoll import GroupLongPoll
 
@@ -41,7 +42,8 @@ class Context:
 
     def __post_init__(self) -> None:
         self._attached_photos: ty.List[str, bytes] = []
-        self._auto_set_content_source = True
+        self._attached_docs: ty.List[dict] = []
+        self._auto_set_content_source: bool = True
 
     @property
     def msg(self):
@@ -284,6 +286,19 @@ class Context:
         """
         self._attached_photos.extend(photos)
 
+    def attach_doc(
+        self, *,
+        content: ty.Optional[ty.Union[str, bytes]] = None,
+        filename: ty.Optional[str] = None,
+        filepath: ty.Optional[str] = None,
+        tags: ty.Optional[str] = None,
+        return_tags: ty.Optional[bool] = None,
+        type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+    ) -> None:
+        baked_params = locals().copy()
+        del baked_params["self"]
+        self._attached_docs.append(baked_params)
+
     async def upload_photos(
         self, *photos: ty.Union[bytes, str]
     ) -> ty.List[Photo]:
@@ -294,6 +309,21 @@ class Context:
     async def upload_photo(self, photo: ty.Union[bytes, str]) -> Photo:
         return await upload_photo_to_message(
             photo, api=self.api, peer_id=self.msg.peer_id
+        )
+
+    async def upload_doc(
+        self, *,
+        content: ty.Optional[ty.Union[str, bytes]] = None,
+        filename: ty.Optional[str] = None,
+        filepath: ty.Optional[str] = None,
+        tags: ty.Optional[str] = None,
+        return_tags: ty.Optional[bool] = None,
+        type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None
+    ) -> Document:
+        baked_params = locals().copy()
+        del baked_params["self"]
+        return await upload_doc_to_message(
+            **baked_params, api=self.api, peer_id=self.msg.peer_id
         )
 
     def __str__(self) -> str:
@@ -322,20 +352,28 @@ class Context:
             pre_params["random_id"] = random_id_()
 
         if (
-            "attachment" not in pre_params and self._attached_photos
-        ):  # TODO: or _attached_docs
-            attachments_tasks = []
+            "attachment" not in pre_params and (self._attached_photos or self._attached_docs)
+        ):
+            photos_uploading_task = None
+            docs_uploading_tasks = []
             if self._attached_photos:
-                sending_coroutine = self.upload_photos(*self._attached_photos)
-                attachments_tasks.append(
-                    asyncio.create_task(sending_coroutine)
+                photos_uploading_task = self.upload_photos(*self._attached_photos)
+
+            if self._attached_docs:
+                docs_uploading_tasks = [
+                    self.upload_doc(**params)
+                    for params in self._attached_docs
+                ]
+            if photos_uploading_task is not None:
+                photo_attachments, *docs_attachments = await asyncio.gather(
+                    photos_uploading_task, *docs_uploading_tasks
                 )
-
-            attachments = await asyncio.gather(*attachments_tasks)
-            pre_params["attachment"] = list(
-                itertools.chain.from_iterable(attachments)
-            )
-
+                photo_attachments.extend(docs_attachments)
+                pre_params["attachment"] = photo_attachments
+            else:
+                pre_params["attachment"] = await asyncio.gather(
+                    *docs_uploading_tasks
+                )
         if (
             self._auto_set_content_source
             and "content_source" not in pre_params

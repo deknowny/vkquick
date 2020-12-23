@@ -73,8 +73,7 @@ class Button:
         Кнопка типа `text`
         """
         return _ColoredButton(
-            info={"label": label, "type": "text"},
-            payload=payload
+            info={"label": label, "type": "text"}, payload=payload
         )
 
     @classmethod
@@ -102,9 +101,7 @@ class Button:
         """
         Кнопка типа `location`
         """
-        return _UncoloredButton(
-            info={"type": "location"}, payload=payload
-        )
+        return _UncoloredButton(info={"type": "location"}, payload=payload)
 
     @classmethod
     @_convert_payload
@@ -115,8 +112,7 @@ class Button:
         Кнопка типа `vkpay`
         """
         return _UncoloredButton(
-            info={"hash": hash_, "type": "vkpay"},
-            payload=payload
+            info={"hash": hash_, "type": "vkpay"}, payload=payload
         )
 
     @classmethod
@@ -153,6 +149,5 @@ class Button:
         Кнопка типа `callback`
         """
         return _ColoredButton(
-            info={"label": label, "type": "callback"},
-            payload=payload
+            info={"label": label, "type": "callback"}, payload=payload
         )
