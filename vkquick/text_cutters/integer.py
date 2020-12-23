@@ -30,10 +30,8 @@ class Integer(TextCutter):
         )
         if (
             value is not UnmatchedArgument
-            and self.min_ is None
-            or value >= self.min_
-            and self.max_ is None
-            or value <= self.max_
+            and (self.min_ is None or value >= self.min_)
+            and (self.max_ is None or value <= self.max_)
         ):
             return UnmatchedArgument, parsed_string
 
