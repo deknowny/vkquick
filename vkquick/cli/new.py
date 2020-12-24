@@ -195,7 +195,7 @@ class New(cleo.Command):
     def _fetch_user(self):
         with self.api.synchronize():
             user = self.api.users.get()
-            user = vq.User.parse_obj(user[0]())
+            user = vq.User(user[0])
             return None, user
 
     def _get_info_by_token(

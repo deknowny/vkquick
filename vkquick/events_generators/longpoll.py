@@ -25,7 +25,6 @@ class LongPollBase(abc.ABC):
 
     _lp_settings: ty.Optional[dict] = None
     session: aiohttp.ClientSession
-    json_parser: ty.Optional[ty.Type[vkquick.base.json_parser.JSONParser]]
     server_url: str
     api: API
 
@@ -205,7 +204,7 @@ class UserLongPoll(LongPollBase):
             connector=aiohttp.TCPConnector(ssl=False),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
-            json_serialize=self.json_parser.dumps,
+            json_serialize=json_parser_policy.dumps,
         )
         self._server_path = (
             self._params
