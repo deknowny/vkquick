@@ -104,7 +104,6 @@ def build_text(com):
     return text
 """.lstrip()
 
-# TODO: Fix date in readme py
 
 READMEPY = """
 import datetime

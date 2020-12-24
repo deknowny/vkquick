@@ -38,7 +38,7 @@ class Carousel(UIBuilder):
         self.scheme = {"type": "carousel", "elements": []}
 
     def __call__(self, *args, **kwargs):
-        self.scheme = [
+        self.scheme["elements"] = [
             elem.scheme
             for elem in self._gen(*args, **kwargs)
         ]
