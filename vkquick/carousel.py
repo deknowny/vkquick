@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import functools
 import typing as ty
 
-from vkquick.button import InitializedButton
 from vkquick.base.serializable import UIBuilder
+from vkquick.button import InitializedButton
 
 
 class Element:
