@@ -9,11 +9,9 @@ import aiohttp
 
 from vkquick.json_parsers import json_parser_policy
 import vkquick.base.json_parser
-import vkquick.base.client
 import vkquick.json_parsers
 import vkquick.events_generators.event
 import vkquick.utils
-import vkquick.clients
 
 
 if ty.TYPE_CHECKING:
@@ -125,10 +123,7 @@ class GroupLongPoll(LongPollBase):
         api: API,
         *,
         group_id: ty.Optional[int] = None,
-        wait: int = 25,
-        json_parser: ty.Optional[
-            ty.Type[vkquick.base.json_parser.JSONParser]
-        ] = None,
+        wait: int = 25
     ) -> None:
         """
         * `group_id`: Если вы хотите получать события из сообщества через
@@ -192,13 +187,7 @@ class UserLongPoll(LongPollBase):
         api: API,
         version: int = 3,
         wait: int = 15,
-        mode: int = 234,
-        client: ty.Optional[
-            ty.Type[vkquick.base.client.AsyncHTTPClient]
-        ] = None,
-        json_parser: ty.Optional[
-            ty.Type[vkquick.base.json_parser.JSONParser]
-        ] = None,
+        mode: int = 234
     ):
         """
         * `version`: Версия LongPoll

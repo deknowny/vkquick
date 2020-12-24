@@ -34,7 +34,6 @@ from .utils import (
 )
 
 from .json_parsers import JsonParser, UjsonParser, OrjsonParser, json_parser_policy
-from .clients import AIOHTTPClient, RequestsHTTPClient
 
 from .events_generators.event import Event
 from .events_generators.longpoll import GroupLongPoll, UserLongPoll
@@ -60,7 +59,6 @@ from .base.handling_status import HandlingStatus
 from .base.wrapper import Wrapper
 from .base.synchronizable import Synchronizable
 from .base.json_parser import JSONParser
-from .base.client import AsyncHTTPClient
 from .base.serializable import APISerializable
 
 from .filters.action import Action
