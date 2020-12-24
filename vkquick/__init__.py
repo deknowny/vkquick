@@ -82,6 +82,7 @@ from .bot import Bot
 
 from .keyboard import Keyboard
 from .button import Button
+from .carousel import Carousel, Element
 
 
 __version__ = "1.0.0b0"
