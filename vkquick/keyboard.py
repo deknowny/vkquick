@@ -18,7 +18,7 @@ class Keyboard(UIBuilder):
 
     def add(self, button: InitializedButton) -> Keyboard:
         """
-        Добавляет в клавиатуру кнопку или пустую строку
+        Добавляет в клавиатуру кнопку
         """
         self.scheme["buttons"][-1].append(button.scheme)
         return self

@@ -1,11 +1,7 @@
 from __future__ import annotations
-import re
 import typing as ty
 
 from vkquick.base.wrapper import Wrapper
-
-
-mention_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
 
 
 class User(Wrapper):
