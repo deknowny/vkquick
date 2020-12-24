@@ -166,6 +166,9 @@ class AttrDict:
     def __len__(self):
         return len(self())
 
+    def __bool__(self):
+        return bool(self())
+
 
 def clear_console():
     """
