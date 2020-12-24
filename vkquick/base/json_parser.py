@@ -10,7 +10,7 @@ class JSONParser(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def dumps(data: ty.Dict[str, ty.Any]) -> str:
+    def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
         """
         Сериалиация объекта `data`
         """

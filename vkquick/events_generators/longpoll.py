@@ -7,6 +7,7 @@ import typing as ty
 
 import aiohttp
 
+from vkquick.json_parsers import json_parser_policy
 import vkquick.base.json_parser
 import vkquick.base.client
 import vkquick.json_parsers
@@ -50,7 +51,7 @@ class LongPollBase(abc.ABC):
         ) as response:
             # TODO: X-Next-Ts header
             response = vkquick.utils.AttrDict(
-                await response.json(loads=self.json_parser.loads)
+                await response.json(loads=json_parser_policy.loads)
             )
 
         if "failed" in response:
@@ -93,7 +94,7 @@ class LongPollBase(abc.ABC):
             connector=aiohttp.TCPConnector(ssl=False),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
-            json_serialize=self.json_parser.dumps,
+            json_serialize=json_parser_policy.dumps,
         )
 
 
@@ -146,10 +147,6 @@ class GroupLongPoll(LongPollBase):
             )
         self.group_id = group_id
         self.wait = wait
-
-        self.json_parser = (
-            json_parser or vkquick.json_parsers.BuiltinJSONParser
-        )
 
         self._server_path = self._params = self._lp_settings = None
 
@@ -215,9 +212,6 @@ class UserLongPoll(LongPollBase):
         self.wait = wait
         self.mode = mode
 
-        self.json_parser = (
-            json_parser or vkquick.json_parsers.BuiltinJSONParser
-        )
         self.session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False),
             skip_auto_headers={"User-Agent"},

@@ -1,10 +1,10 @@
-import json
 import pathlib
 import typing as ty
 
 import aiohttp
 
 from vkquick.api import API
+from vkquick.json_parsers import json_parser_policy
 from vkquick.wrappers.attachment import Photo, Document
 
 
@@ -32,7 +32,7 @@ async def upload_photos_to_message(
     ) as response:
         # Нельзя .json() из-за некорректного хедера text/html, хотя там application/json
         response = await response.read()
-        response = json.loads(response)
+        response = json_parser_policy.loads(response)
 
     photos = await api.photos.save_messages_photo(**response)
     photos = [Photo(photo) for photo in photos]
@@ -119,7 +119,7 @@ async def upload_doc_to_message(
         upload_info.upload_url, data=data
     ) as response:
         response = await response.read()
-        response = json.loads(response)
+        response = json_parser_policy.loads(response)
     doc = await api.docs.save(
         **response, title=filename, tags=tags, return_tags=return_tags
     )

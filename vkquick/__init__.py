@@ -33,7 +33,7 @@ from .utils import (
     sync_async_run,
 )
 
-from .json_parsers import BuiltinJSONParser
+from .json_parsers import JsonParser, UjsonParser, OrjsonParser, json_parser_policy
 from .clients import AIOHTTPClient, RequestsHTTPClient
 
 from .events_generators.event import Event
@@ -46,7 +46,7 @@ from .text_cutters.integer import Integer
 from .text_cutters.word import Word
 from .text_cutters.bool_ import Bool
 from .text_cutters.list_ import List
-from .text_cutters.mention import UserMention
+from .text_cutters.mention import UserMention, GroupMention
 from .text_cutters.union import Union
 from .text_cutters.string_ import String
 from .text_cutters.optional import Optional

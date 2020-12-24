@@ -28,8 +28,7 @@ import aiohttp
 import cachetools
 import requests
 
-from vkquick.base.json_parser import JSONParser
-from vkquick.json_parsers import BuiltinJSONParser
+from vkquick.json_parsers import json_parser_policy
 from vkquick.base.synchronizable import Synchronizable
 from vkquick.base.serializable import APISerializable
 from vkquick.exceptions import VkApiError
@@ -222,11 +221,6 @@ class API(Synchronizable):
     URL для API запросов. 
     """
 
-    json_parser: ty.Optional[ty.Type[JSONParser]] = None
-    """
-    Парсер для JSON, приходящего от ответа вк
-    """
-
     token_owner: ty.Optional[TokenOwner] = None
     """
     Владелец токена: пользователь/группа. если не передано,
@@ -238,7 +232,6 @@ class API(Synchronizable):
         arbitrary_types_allowed = False
 
     def __post_init__(self) -> None:
-        self.json_parser = self.json_parser or BuiltinJSONParser
         self.async_http_session = None
         self.sync_http_session = requests.Session()
         self.cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
@@ -465,13 +458,13 @@ class API(Synchronizable):
                 connector=aiohttp.TCPConnector(ssl=False),
                 skip_auto_headers={"User-Agent"},
                 raise_for_status=True,
-                json_serialize=self.json_parser.dumps,
+                json_serialize=json_parser_policy.dumps,
             )
         async with self.async_http_session.post(
             f"{self.URL}{path}", data=params
         ) as response:
             loaded_response = await response.json(
-                loads=self.json_parser.loads
+                loads=json_parser_policy.loads
             )
             return loaded_response
 
@@ -502,7 +495,7 @@ class API(Synchronizable):
         response = self.sync_http_session.post(
             f"{self.URL}{path}", data=params
         )
-        json_response = self.json_parser.loads(response.content)
+        json_response = json_parser_policy.loads(response.content)
         return json_response
 
     def _fill_request_params(self, params: ty.Dict[str, ty.Any]):

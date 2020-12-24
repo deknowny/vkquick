@@ -1,6 +1,6 @@
 import abc
-import json
 
+from vkquick.json_parsers import json_parser_policy
 from vkquick.base.wrapper import Wrapper
 
 
@@ -15,9 +15,7 @@ class UIBuilder(APISerializable):
     scheme = None
 
     def api_param_representation(self) -> str:
-        return json.dumps(
-            self.scheme, ensure_ascii=False, separators=(",", ":")
-        )
+        return json_parser_policy.dumps(self.scheme)
 
 
 class Attachment(Wrapper, APISerializable):
