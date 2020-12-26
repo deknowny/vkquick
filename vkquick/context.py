@@ -36,7 +36,9 @@ class SentMessage:
 
     async def edit(
         self,
-        message: ty.Optional[str] = None, /, *,
+        message: ty.Optional[str] = None,
+        /,
+        *,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
         attachment: ty.Optional[ty.List[ty.Union[str, Attachment]]] = None,
@@ -46,19 +48,20 @@ class SentMessage:
         dont_parse_links: ty.Optional[bool] = None,
         template: ty.Optional[ty.Union[str, Carousel]] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
-        **kwargs
+        **kwargs,
     ) -> int:
         real_params = locals().copy()
         del real_params["self"]
         kwargs = real_params.pop("kwargs")
         real_params.update(
-            kwargs,
-            peer_id=self.peer_id,
+            kwargs, peer_id=self.peer_id,
         )
         if self.message_id:
             real_params["message_id"] = self.message_id
         else:
-            real_params["conversation_message_id"] = self.conversation_message_id
+            real_params[
+                "conversation_message_id"
+            ] = self.conversation_message_id
         return await self.api.method("messages.edit", real_params)
 
     async def delete(
@@ -66,14 +69,13 @@ class SentMessage:
         spam: ty.Optional[bool] = None,
         group_id: ty.Optional[int] = None,
         delete_for_all: bool = True,
-        **kwargs
+        **kwargs,
     ) -> ty.List[int]:
         real_params = locals().copy()
         del real_params["self"]
         kwargs = real_params.pop("kwargs")
         real_params.update(
-            kwargs,
-            message_ids=self.message_id,
+            kwargs, message_ids=self.message_id,
         )
         return await self.api.method("messages.delete", real_params)
 

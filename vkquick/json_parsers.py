@@ -22,11 +22,10 @@ class JsonParser(JSONParser):
     """
     JSON парсер, использующий стандартную библиотеку
     """
+
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
-        return json.dumps(
-            data, ensure_ascii=False, separators=(",", ":")
-        )
+        return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
     @staticmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
@@ -55,4 +54,3 @@ class UjsonParser(JSONParser):
 
 # Значение этой переменной используется везде
 json_parser_policy = JsonParser
-

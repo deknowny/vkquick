@@ -19,10 +19,7 @@ from vkquick.cli.run import DebugRun
 
 
 app = cleo.Application()
-app.add_commands(
-    New(),
-    DebugRun()
-)
+app.add_commands(New(), DebugRun())
 
 
 if __name__ == "__main__":

@@ -118,11 +118,7 @@ class GroupLongPoll(LongPollBase):
     """
 
     def __init__(
-        self,
-        api: API,
-        *,
-        group_id: ty.Optional[int] = None,
-        wait: int = 25
+        self, api: API, *, group_id: ty.Optional[int] = None, wait: int = 25
     ) -> None:
         """
         * `group_id`: Если вы хотите получать события из сообщества через
@@ -182,11 +178,7 @@ class UserLongPoll(LongPollBase):
     """
 
     def __init__(
-        self,
-        api: API,
-        version: int = 3,
-        wait: int = 15,
-        mode: int = 234
+        self, api: API, version: int = 3, wait: int = 15, mode: int = 234
     ):
         """
         * `version`: Версия LongPoll

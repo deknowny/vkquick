@@ -9,7 +9,6 @@ from vkquick.base.wrapper import Wrapper
 
 
 class Message(Wrapper):
-
     @property
     def id(self) -> int:
         return self.fields.id
@@ -54,21 +53,15 @@ class Message(Wrapper):
     def out(self) -> bool:
         return bool(self.fields.out)
 
-
-
     @functools.cached_property
     def keyboard(self) -> ty.Optional[AttrDict]:
         if "keyboard" in self.fields:
-            return AttrDict(
-                json.loads(self.fields.keyboard)
-            )
+            return AttrDict(json.loads(self.fields.keyboard))
         return None
 
     @functools.cached_property
     def fwd_messages(self) -> ty.List[Message]:
-        return list(
-            map(self.__class__, self.fields.fwd_messages)
-        )
+        return list(map(self.__class__, self.fields.fwd_messages))
 
     @property
     def geo(self) -> ty.Optional[AttrDict]:

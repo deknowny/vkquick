@@ -33,7 +33,12 @@ from .utils import (
     sync_async_run,
 )
 
-from .json_parsers import JsonParser, UjsonParser, OrjsonParser, json_parser_policy
+from .json_parsers import (
+    JsonParser,
+    UjsonParser,
+    OrjsonParser,
+    json_parser_policy,
+)
 
 from .events_generators.event import Event
 from .events_generators.longpoll import GroupLongPoll, UserLongPoll
