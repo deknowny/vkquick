@@ -15,11 +15,11 @@
 import cleo
 
 from vkquick.cli.new import New
-from vkquick.cli.run import DebugRun
+from vkquick.cli.run import DebugRun, ReleaseRun
 
 
 app = cleo.Application()
-app.add_commands(New(), DebugRun())
+app.add_commands(New(), DebugRun(), ReleaseRun())
 
 
 if __name__ == "__main__":
