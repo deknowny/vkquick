@@ -269,7 +269,7 @@ class Bot:
         if self.debug_filter(event):
             debugger = self.debugger(self.api, event, handling_info)  # noqa
             debug_message = debugger.render()
-            print(pretty_view(event.msg))
+            print(pretty_view(event.msg.fields))
             clear_console()
             print(debug_message)
 

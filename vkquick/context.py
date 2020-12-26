@@ -4,6 +4,7 @@ import dataclasses
 import typing as ty
 
 from vkquick.wrappers.user import User
+from vkquick.wrappers.message import Message
 from vkquick.wrappers.attachment import Photo, Document
 from vkquick.base.serializable import Attachment
 from vkquick.events_generators.event import Event
@@ -18,10 +19,12 @@ from vkquick.uploaders import (
 )
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.keyboard import Keyboard
-from vkquick.button import Button, InitializedButton
+from vkquick.button import InitializedButton
+from vkquick.carousel import Carousel
 
 
-class _MessagesSendResponse:
+@dataclasses.dataclass
+class SentMessage:
     """
     Для ответов, содержащих поля peer_ids
     """
@@ -29,6 +32,50 @@ class _MessagesSendResponse:
     peer_id: int
     message_id: int
     conversation_message_id: int
+    api: API
+
+    async def edit(
+        self,
+        message: ty.Optional[str] = None, /, *,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[ty.Union[str, Attachment]]] = None,
+        keep_forward_messages: ty.Optional[bool] = None,
+        keep_snippets: ty.Optional[bool] = None,
+        group_id: ty.Optional[int] = None,
+        dont_parse_links: ty.Optional[bool] = None,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+        **kwargs
+    ) -> int:
+        real_params = locals().copy()
+        del real_params["self"]
+        kwargs = real_params.pop("kwargs")
+        real_params.update(
+            kwargs,
+            peer_id=self.peer_id,
+        )
+        if self.message_id:
+            real_params["message_id"] = self.message_id
+        else:
+            real_params["conversation_message_id"] = self.conversation_message_id
+        return await self.api.method("messages.edit", real_params)
+
+    async def delete(
+        self,
+        spam: ty.Optional[bool] = None,
+        group_id: ty.Optional[int] = None,
+        delete_for_all: bool = True,
+        **kwargs
+    ) -> ty.List[int]:
+        real_params = locals().copy()
+        del real_params["self"]
+        kwargs = real_params.pop("kwargs")
+        real_params.update(
+            kwargs,
+            message_ids=self.message_id,
+        )
+        return await self.api.method("messages.delete", real_params)
 
 
 @dataclasses.dataclass
@@ -48,7 +95,7 @@ class Context:
         self._attached_keyboard = None
 
     @property
-    def msg(self):
+    def msg(self) -> Message:
         return self.event.msg
 
     @property
@@ -91,7 +138,7 @@ class Context:
         content_source: ty.Optional[str] = None,
         forward: ty.Optional[str] = None,
         **kwargs,
-    ) -> _MessagesSendResponse:
+    ) -> SentMessage:
         """
         Отправляет сообщение в тот же диалог/беседу,
         откуда пришло. Все поля соответствуют
@@ -121,7 +168,7 @@ class Context:
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> _MessagesSendResponse:
+    ) -> SentMessage:
         """
         Отвечает на сообщение, которым была вызвана команда.
         Все поля соответствуют методу `messages.send`
@@ -159,7 +206,7 @@ class Context:
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> _MessagesSendResponse:
+    ) -> SentMessage:
         """
         Пересылает сообщение, которым была вызвана команда.
         Все поля соответствуют методу `messages.send`
@@ -351,7 +398,7 @@ class Context:
 
     async def _send_message_via_local_kwargs(
         self, local_kwargs: dict, pre_params: dict
-    ) -> _MessagesSendResponse:
+    ) -> SentMessage:
         """
         Вспомогательная функция для методов,
         реализующих отправку сообщений (reply. answer).
@@ -413,4 +460,5 @@ class Context:
                 )
             pre_params["keyboard"] = self._attached_keyboard
         response = await self.api.method("messages.send", pre_params)
-        return response[0]
+        response = SentMessage(**response[0](), api=self.api)
+        return response

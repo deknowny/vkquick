@@ -9,17 +9,22 @@ from vkquick.base.wrapper import Wrapper
 
 
 class Message(Wrapper):
+
     @property
     def id(self) -> int:
         return self.fields.id
 
-    @functools.cached_property
-    def date(self) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(self.fields.date)
-
     @property
     def peer_id(self) -> int:
         return self.fields.peer_id
+
+    @property
+    def conversation_message_id(self) -> int:
+        return self.fields.conversation_message_id
+
+    @functools.cached_property
+    def date(self) -> datetime.datetime:
+        return datetime.datetime.fromtimestamp(self.fields.date)
 
     @property
     def from_id(self) -> int:
@@ -49,9 +54,7 @@ class Message(Wrapper):
     def out(self) -> bool:
         return bool(self.fields.out)
 
-    @property
-    def conversation_message_id(self) -> int:
-        return self.fields.conversation_message_id
+
 
     @functools.cached_property
     def keyboard(self) -> ty.Optional[AttrDict]:
@@ -98,3 +101,5 @@ class Message(Wrapper):
     @property
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.expire_ttl if "expire_ttl" in self.fields else None
+
+    cmid = conversation_message_id

@@ -7,6 +7,7 @@ import pygments.formatters.terminal
 import pygments.token
 
 from vkquick.utils import AttrDict
+from vkquick.wrappers.message import Message
 
 
 pygments.formatters.terminal.TERMINAL_COLORS[
@@ -52,16 +53,16 @@ class Event(AttrDict):
         return self["event_id"]
 
     @property
-    def msg(self):
+    def msg(self) -> Message:
         if self._message is not None:
-            return self._message
+            return Message(self._message)
         if self.type not in ("message_new", 4):
             raise TypeError(
                 f"Can't get message if event.type is `{self.type}`"
             )
         if "message" in self.object:
-            return self.object.message
-        return self.object
+            return Message(self.object.message)
+        return Message(self.object)
 
     # Здесь нельзя использовать property, т.к. помимо property дергается `__setattr__`
     def set_message(self, message):
