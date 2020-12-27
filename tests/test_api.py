@@ -124,7 +124,7 @@ class TestAPI:
         ],
     )
     def test_convert_collections_params(self, params, output):
-        vq.API._convert_collections_params(params)
+        vq.API._convert_params_for_api(params)
         assert params == output
 
     @pytest.mark.parametrize(

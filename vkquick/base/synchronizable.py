@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+import dataclasses
+import functools
+import typing as ty
+
+
 class Synchronizable:
     """
     Протокол для синхронизации объектов
@@ -39,3 +46,25 @@ class Synchronizable:
 
     def __exit__(self, *args):
         self.__synchronized = False
+
+
+def synchronizable_function(func) -> _SynchronizableFunction:
+    return _SynchronizableFunction(async_func=func)
+
+
+@dataclasses.dataclass
+class _SynchronizableFunction:
+
+    async_func: ty.Callable[
+        ..., ty.Awaitable[ty.Any],
+    ]
+    sync_func: ty.Optional[ty.Callable[..., ty.Any]] = None
+
+    def __get__(self, instance, owner):
+        if instance.is_synchronized:
+            return functools.partial(self.sync_func, instance)
+        return functools.partial(self.async_func, instance)
+
+    def sync_edition(self, func: ty.Callable[..., ty.Any]) -> _SynchronizableFunction:
+        self.sync_func = func
+        return self

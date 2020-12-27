@@ -29,7 +29,7 @@ import cachetools
 import requests
 
 from vkquick.json_parsers import json_parser_policy
-from vkquick.base.synchronizable import Synchronizable
+from vkquick.base.synchronizable import Synchronizable, synchronizable_function
 from vkquick.base.serializable import APISerializable
 from vkquick.exceptions import VkApiError
 from vkquick.utils import AttrDict
@@ -292,10 +292,11 @@ class API(Synchronizable):
         """
         method_name = self._convert_name(self._method_name)
         request_params = self._fill_request_params(request_params)
+        request_params = self._convert_params_for_api(request_params)
         if use_autocomplete_params_:
             request_params = {**self.autocomplete_params, **request_params}
         self._method_name = ""
-        return self._route_request_scheme(
+        return self._make_api_request(
             method_name=method_name,
             request_params=request_params,
             allow_cache=allow_cache_,
@@ -322,33 +323,15 @@ class API(Synchronizable):
         """
         method_name = self._convert_name(method_name)
         request_params = self._fill_request_params(request_params)
-        return self._route_request_scheme(
+        request_params = self._convert_params_for_api(request_params)
+        return self._make_api_request(
             method_name=method_name,
             request_params=request_params,
             allow_cache=allow_cache,
         )
 
-    def _route_request_scheme(
-        self,
-        method_name: str,
-        request_params: ty.Dict[str, ty.Any],
-        allow_cache: bool,
-    ) -> ty.Union[str, int, API.default_factory]:
-        """
-        Определяет, как вызывается запрос: синхронно или асинхронно
-        в зависимости от того значения синхронизации
-        """
-        request_params = self._convert_collections_params(request_params)
-        if self.is_synchronized:
-            return self._make_sync_api_request(
-                method_name, request_params, allow_cache
-            )
-        return self._make_async_api_request(
-            method_name, request_params, allow_cache
-        )
-
     @staticmethod
-    def _convert_collections_params(
+    def _convert_params_for_api(
         params: ty.Dict[str, ty.Any], /
     ) -> ty.Dict[str, ty.Any]:
         """
@@ -426,8 +409,9 @@ class API(Synchronizable):
         return cache_hash
 
     # Need a decorator-factory?
-    async def _make_async_api_request(
-        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
+    @synchronizable_function
+    async def _make_api_request(
+        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос асинхронно с именем API метода из
@@ -435,12 +419,12 @@ class API(Synchronizable):
         в query string
         """
         if allow_cache:
-            cache_hash = self._build_cache_hash(method_name, data)
+            cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             await asyncio.sleep(self._get_waiting_time())
             response = await self.send_async_api_request(
-                path=method_name, params=data
+                path=method_name, params=request_params
             )
             response = self._prepare_response_body(response)
             self.cache_table[cache_hash] = response
@@ -448,7 +432,7 @@ class API(Synchronizable):
 
         await asyncio.sleep(self._get_waiting_time())
         response = await self.send_async_api_request(
-            path=method_name, params=data
+            path=method_name, params=request_params
         )
         return self._prepare_response_body(response)
 
@@ -468,8 +452,9 @@ class API(Synchronizable):
             )
             return loaded_response
 
-    def _make_sync_api_request(
-        self, method_name: str, data: ty.Dict[str, ty.Any], allow_cache: bool
+    @_make_api_request.sync_edition
+    def _make_api_request(
+        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос синхронно с именем API метода из
@@ -477,18 +462,18 @@ class API(Synchronizable):
         в query string
         """
         if allow_cache:
-            cache_hash = self._build_cache_hash(method_name, data)
+            cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             time.sleep(self._get_waiting_time())
             response = self.send_sync_api_request(
-                path=method_name, params=data
+                path=method_name, params=request_params
             )
             response = self._prepare_response_body(response)
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.send_sync_api_request(path=method_name, params=data)
+        response = self.send_sync_api_request(path=method_name, params=request_params)
         return self._prepare_response_body(response)
 
     def send_sync_api_request(self, path, params):

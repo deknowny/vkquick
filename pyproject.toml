@@ -50,6 +50,7 @@ pytest-mock = "^3.3.1"
 
 [tool.poetry.extras]
 watchgod = ["watchgod"]
+json-libs = ["orjson", "ujson"]
 
 [tool.poetry.urls]
 "VK group" = "https://vk.com/vkquick"

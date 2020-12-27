@@ -56,7 +56,7 @@ from .base.text_cutter import UnmatchedArgument
 from .base.debugger import Debugger
 from .base.handling_status import HandlingStatus
 from .base.wrapper import Wrapper
-from .base.synchronizable import Synchronizable
+from .base.synchronizable import Synchronizable, synchronizable_function
 from .base.json_parser import JSONParser
 from .base.serializable import APISerializable
 
