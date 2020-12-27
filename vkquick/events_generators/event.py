@@ -79,3 +79,7 @@ class Event(AttrDict):
         Минималистичное отображение события
         """
         return f"Event(type={self.type})"
+
+    def __getattr__(self, item):
+        field = super().__getattr__(item)
+        return AttrDict(field())
