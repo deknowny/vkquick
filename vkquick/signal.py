@@ -1,135 +1,122 @@
-"""
-Сигналы — кастомные события. Например, вам нужно, чтобы
-когда бот прекращал работу, происходила какая-то логика. Или
-же у вас есть у вас есть вспомогательная функция для обращения
-в базу данных. Для обоих случаев вы можете сделать обработчик сигнала.
-Сигналы делятся на встроенные
-(т.е. зарезервированные. `STARTUP`, `SHUTDOWN`... Всех их можно найти ниже)
-и кастомные, которые можно использовать внутри своего бота (или даже внутри другого)
-
-    import vkquick as vq
-
-
-    # Создаст обработчик сигнала на событие по завершению работы бота
-    @vq.SignalHandler(vq.ReservedSignal.SHUTDOWN)
-    def shutdown():
-        print("Turn off the bot...")
-
-
-    # Создаст обработчик на кастомное событие
-    @vq.SignalHandler("send_data")
-    def send_data(data):
-        print("Send the data to database...")
-        return "OK!"
-
-
-    # С инстансом `vq.Bot` в любой точке кода:
-    response = bot.call_signal.send_data({"foo": "bar"})
-    print(response)  # OK!
-    # Не забудьте передать сам объект обработчика в бота
-"""
 from __future__ import annotations
-import dataclasses
-import enum
 import typing as ty
 
-import vkquick.utils
+from vkquick.utils import sync_async_callable
+from vkquick.events_generators.event import Event
 
 
-class ReservedSignal(enum.Enum):
-    """
-    Зарезервированные сигналы
-
-    * `STARTUP`: Вызывается в момент запуска бота
-    * `SHUTDOWN`: Вызывается в момент завершения работы бота
-    * `POST_EVENT_HANDLING`: Вызывается после того, как все обработчики событий обработали событие.
-    Передает первым аргументом само событие, а вторым -- список из `HandlingInfo`
-    """
-
-    STARTUP = enum.auto()
-    SHUTDOWN = enum.auto()
-    POST_EVENT_HANDLING = enum.auto()
-
-
-SignalName = ty.Union[str, ReservedSignal]
-"""
-Тайпинг для имени сигнала. В принципе, в качестве имени можно использовтаь что
-угодно, но мы рекомендуем использовать строки и именовать сигналы в `snake_case`,
-чтобы их можно было удонбо вызвать через `__getattr__`
-"""
-
-
-@dataclasses.dataclass
 class SignalHandler:
-    """
-    Обработчик сигнала (и кастомного, и зарезервированного). Пример
-    есть в описании модуля
-    """
+    @ty.overload
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        extra_names: ty.Optional[ty.Collection[str]] = None,
+    ) -> None:
+        ...
 
-    name: SignalName
-    """
-    Имя обрабатываемого сигнала
-    """
+    @ty.overload
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        all_names: ty.Optional[ty.Collection[str]] = None,
+    ) -> None:
+        ...
 
-    def __call__(
-        self, reaction: vkquick.utils.sync_async_callable(..., ty.Any)
-    ) -> SignalHandler:
-        """
-        Декорирование для передачи реакции на сигнал
-        """
-        self.reaction = reaction
-        return self
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        extra_names: ty.Optional[ty.Collection[str]] = None,
+        all_names: ty.Optional[ty.Collection[str]] = None,
+    ) -> None:
+        if extra_names and all_names:
+            raise ValueError(
+                "Should pass only `extra_names` or `all_names`, not both"
+            )
 
+        self._handler = handler
+        if extra_names:
+            self._names = list(extra_names)
+        elif all_names:
+            self._names = extra_names
+        else:
+            if handler is None:
+                raise ValueError("Should pass a handler or handled names")
+            self._names = [handler.__name__]
+            
+    def __call__(self, handler: sync_async_callable(..., ty.Any)) -> ty.Any:
+        self._handler = handler
+        if isinstance(self._names, list):
+            self._names.append(handler.__name__)
 
-@dataclasses.dataclass
-class SignalCaller:
-    """
-    Сама логика по вызову сигналов. Можно интегрировать куда угодно
-    """
+    def call(self, *args, **kwargs) -> ty.Any:
+        return self._handler(*args, **kwargs)
 
-    handlers: ty.Collection[SignalHandler] = dataclasses.field(
-        default_factory=tuple
-    )
-    """
-    Обработчики сигналов
-    """
-    signal_name: ty.Optional[SignalName] = None
-    """
-    Имя сигнала, которое нужно обработать 
-    """
-
-    def __getattr__(self, signal_name: SignalName) -> SignalCaller:
-        """
-        Так можно указать имя обработчика сигнала, который нужно вызвать
-        """
-        self.signal_name = signal_name
-        return self
-
-    def __call__(self, *args, **kwargs) -> ty.Any:
-        """
-        Вызов сигнала с нужным именем. Если сигнала с таким
-        именем нет, ничего не случится.
-        """
-        signal_name = self.signal_name
-        self.signal_name = None
-        for handler in self.handlers:
-            if handler.name == signal_name:
-                return vkquick.utils.sync_async_run(
-                    handler.reaction(*args, **kwargs)
-                )
-
-    def via_name(
-        self, name: ty.Optional[SignalName], /, *args, **kwargs
-    ) -> ty.Any:
-        """
-        Позволяет вызвать сигнал явно передав его имя
-        """
-        self.signal_name = name
-        return self(*args, **kwargs)
+    def is_handling_name(self, name: str) -> bool:
+        return name in self._names
 
 
-def signal_handler(reaction) -> SignalHandler:
-    """
-    Создает обработчик сигнала по его имени
-    """
-    return SignalHandler(reaction.__name__)(reaction)
+class EventHandler(SignalHandler):
+
+    @ty.overload
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        extra_types: ty.Optional[ty.Collection[str]] = None,
+    ) -> None:
+        ...
+
+    @ty.overload
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        all_types: ty.Optional[ty.Collection[str]] = None,
+    ) -> None:
+        ...
+
+    @ty.overload
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        handle_every_event: bool = False
+    ) -> None:
+        ...
+
+    def __init__(
+        self,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Any)
+        ] = None, /, *,
+        extra_types: ty.Optional[ty.Collection[str]] = None,
+        all_types: ty.Optional[ty.Collection[str]] = None,
+        handle_every_event: bool = False
+    ) -> None:
+        super().__init__(  # noqa
+            handler,
+            extra_names=extra_types,
+            all_names=all_types
+        )
+        if handle_every_event and (extra_types or all_types):
+            raise ValueError(
+                "Should use only `handle_every_event` "
+                "or `extra_types` or `all_types`"
+            )
+
+        self._handle_every_event = handle_every_event
+
+    def call(self, event: Event) -> ty.Any:
+        return self._handler(event)
+
+    def is_handling_name(self, name: str) -> bool:
+        return super().is_handling_name(name) or self._handle_every_event

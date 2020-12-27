@@ -19,11 +19,10 @@ python -m pip install vkquick
 import vkquick as vq
 
 
-bot =  vq.Bot.init_via_token("your-group-token")
+bot =  vq.Bot.init_via_token("token")
 
 
-@bot.mark.command
-@vq.Command(names=["hello"])
+@bot.add_command(names="hello")
 def hello():
     return "hi!"
 

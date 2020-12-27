@@ -17,11 +17,7 @@ from .debuggers import (
     Color,
 )
 from .signal import (
-    SignalCaller,
-    SignalName,
-    SignalHandler,
-    ReservedSignal,
-    signal_handler,
+    SignalHandler, EventHandler
 )
 
 from .utils import (
