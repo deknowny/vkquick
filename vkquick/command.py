@@ -654,7 +654,7 @@ class Command(Filter):
 
         # Проверка длины, чтобы не создавать лишние группы
         if len(self.prefixes) > 1:
-            self.prefixes_regex = f"(?:{self._prefixes_regex})"
+            self._prefixes_regex = f"(?:{self._prefixes_regex})"
         if len(self.names) > 1:
             self._names_regex = f"(?:{self._names_regex})"
 
