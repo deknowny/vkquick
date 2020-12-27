@@ -95,4 +95,5 @@ class Message(Wrapper):
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.expire_ttl if "expire_ttl" in self.fields else None
 
+    # Shortcuts
     cmid = conversation_message_id
