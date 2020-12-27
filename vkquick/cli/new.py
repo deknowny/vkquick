@@ -51,8 +51,8 @@ bot = vq.Bot.init_via_token(
     "{token}"
 )
 
-bot.mark.command(src.default.help_.help_)
-bot.mark.command(src.default.readme.readme)
+bot.add_command(src.default.help_.help_)
+bot.add_command(src.default.readme.readme)
 
 
 run = bot.run
