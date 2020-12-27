@@ -352,7 +352,7 @@ class Command(Filter):
     def use_regex_escape(self):
         return self._use_regex_escape
 
-    def __call__(self, reaction: sync_async_callable(..., None)):
+    def __call__(self, reaction: sync_async_callable(..., ty.Optional[str])):
         self.reaction = reaction
         self._resolve_arguments()
         if self._description is None:
