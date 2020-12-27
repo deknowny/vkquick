@@ -20,7 +20,7 @@ from vkquick.uploaders import (
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.keyboard import Keyboard
 from vkquick.button import InitializedButton
-from vkquick.carousel import Carousel
+from vkquick.carousel import Carousel, Element
 
 
 @dataclasses.dataclass
@@ -95,6 +95,7 @@ class Context:
         self._attached_docs: ty.List[dict] = []
         self._auto_set_content_source: bool = True
         self._attached_keyboard = None
+        self._attached_carousel = None
 
     @property
     def msg(self) -> Message:
@@ -362,6 +363,10 @@ class Context:
         del baked_params["self"]
         self._attached_docs.append(baked_params)
 
+    def attach_carousel(self, *elements: Element) -> None:
+        carousel = Carousel.build(*elements)
+        self._attached_carousel = carousel
+
     async def upload_photos(
         self, *photos: ty.Union[bytes, str]
     ) -> ty.List[Photo]:
@@ -460,7 +465,15 @@ class Context:
                     "You already attached a keyboard "
                     "before via `attach_keyboard`"
                 )
-            pre_params["keyboard"] = self._attached_keyboard
+        if self._attached_carousel is not None:
+            if "template" in pre_params:
+                raise ValueError(
+                    "Unexpected passed keyboard. "
+                    "You already attached a keyboard "
+                    "before via `attach_keyboard`"
+                )
+            pre_params["template"] = self._attached_carousel
+            
         response = await self.api.method("messages.send", pre_params)
         response = SentMessage(**response[0](), api=self.api)
         return response
