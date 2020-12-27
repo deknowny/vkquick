@@ -9,9 +9,9 @@ class SignalHandler:
     @ty.overload
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         extra_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...
@@ -19,18 +19,18 @@ class SignalHandler:
     @ty.overload
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         all_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...
 
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         extra_names: ty.Optional[ty.Collection[str]] = None,
         all_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
@@ -48,7 +48,7 @@ class SignalHandler:
             if handler is None:
                 raise ValueError("Should pass a handler or handled names")
             self._names = [handler.__name__]
-            
+
     def __call__(self, handler: sync_async_callable(..., ty.Any)) -> ty.Any:
         self._handler = handler
         if isinstance(self._names, list):
@@ -62,13 +62,12 @@ class SignalHandler:
 
 
 class EventHandler(SignalHandler):
-
     @ty.overload
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         extra_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...
@@ -76,9 +75,9 @@ class EventHandler(SignalHandler):
     @ty.overload
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         all_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...
@@ -86,26 +85,24 @@ class EventHandler(SignalHandler):
     @ty.overload
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
-        handle_every_event: bool = False
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
+        handle_every_event: bool = False,
     ) -> None:
         ...
 
     def __init__(
         self,
-        handler: ty.Optional[
-            sync_async_callable(..., ty.Any)
-        ] = None, /, *,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
+        *,
         extra_types: ty.Optional[ty.Collection[str]] = None,
         all_types: ty.Optional[ty.Collection[str]] = None,
-        handle_every_event: bool = False
+        handle_every_event: bool = False,
     ) -> None:
         super().__init__(  # noqa
-            handler,
-            extra_names=extra_types,
-            all_names=all_types
+            handler, extra_names=extra_types, all_names=all_types
         )
         if handle_every_event and (extra_types or all_types):
             raise ValueError(

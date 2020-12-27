@@ -16,9 +16,7 @@ from .debuggers import (
     uncolored_text,
     Color,
 )
-from .signal import (
-    SignalHandler, EventHandler
-)
+from .signal import SignalHandler, EventHandler
 
 from .utils import (
     AttrDict,

@@ -21,7 +21,12 @@ from vkquick.events_generators.longpoll import (
 from vkquick.shared_box import SharedBox
 from vkquick.signal import SignalHandler, EventHandler
 from vkquick.events_generators.event import Event
-from vkquick.utils import sync_async_run, clear_console, pretty_view, sync_async_callable
+from vkquick.utils import (
+    sync_async_run,
+    clear_console,
+    pretty_view,
+    sync_async_callable,
+)
 from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
 from vkquick.base.filter import Filter
@@ -159,7 +164,11 @@ class Bot:
 
     def add_command(
         self,
-        handler: ty.Optional[sync_async_callable(..., ty.Optional[str])] = None, /, *,
+        handler: ty.Optional[
+            sync_async_callable(..., ty.Optional[str])
+        ] = None,
+        /,
+        *,
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
         title: ty.Optional[str] = None,
@@ -198,28 +207,26 @@ class Bot:
 
     def add_signal_handler(
         self,
-        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None, /,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
         extra_names: ty.Optional[ty.List[str]] = None,
         all_names: ty.Optional[ty.List[str]] = None,
     ) -> SignalHandler:
         signal_handler = SignalHandler(  # noqa
-            handler,
-            extra_names=extra_names,
-            all_names=all_names
+            handler, extra_names=extra_names, all_names=all_names
         )
         self._signal_handlers.append(signal_handler)
         return signal_handler
 
     def add_event_handler(
         self,
-        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None, /,
+        handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
+        /,
         extra_types: ty.Optional[ty.List[str]] = None,
         all_types: ty.Optional[ty.List[str]] = None,
     ) -> EventHandler:
         event_handler = EventHandler(  # noqa
-            handler,
-            extra_types=extra_types,
-            all_types=all_types
+            handler, extra_types=extra_types, all_types=all_types
         )
         self._event_handlers.append(event_handler)
         return event_handler
@@ -244,15 +251,11 @@ class Bot:
         с другой корутиной конкурентно
         """
         try:
-            await sync_async_run(
-                self.call_signal("startup")
-            )
+            await sync_async_run(self.call_signal("startup"))
             await self.listen_events()
         finally:
             # Сигнал для обозначения окончания работы бота
-            await sync_async_run(
-                self.call_signal("shutdown")
-            )
+            await sync_async_run(self.call_signal("shutdown"))
             await self._shared_box.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
