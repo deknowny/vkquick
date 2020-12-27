@@ -27,3 +27,6 @@ class User(Wrapper):
 
     def extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln}
+
+    def __str__(self):
+        return f"<User id={self.id}, fn={self.fn!r}, ln={self.ln!r}>"

@@ -662,3 +662,6 @@ class Command(Filter):
             self._prefixes_regex + self._names_regex,
             flags=self._routing_command_re_flags,
         )
+
+    def __str__(self):
+        return f"<Command title={self.title}, prefixes={self.prefixes}, names={self.names}>"

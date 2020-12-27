@@ -23,3 +23,7 @@ class Wrapper:
 
     def extra_fields_to_format(self):
         return {}
+
+    def __repr__(self):
+        cls = self.__class__
+        return f"{cls}({self.fields()})"
