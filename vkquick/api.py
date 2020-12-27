@@ -552,6 +552,7 @@ class API(Synchronizable):
         """
         await self.async_http_session.close()
 
+    @synchronizable_function
     async def fetch_user_via_id(
         self,
         id_: ty.Union[int, str],
@@ -572,6 +573,28 @@ class API(Synchronizable):
         user = users[0]
         return User(user)
 
+    @fetch_user_via_id.sync_edition
+    def fetch_user_via_id(
+        self,
+        id_: ty.Union[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> User:
+        """
+        Создает обертку над юзером через его ID или screen name
+        """
+        users = self.users.get(
+            allow_cache_=True,
+            user_ids=id_,
+            fields=fields,
+            name_case=name_case,
+        )
+        user = users[0]
+        return User(user)
+
+    @synchronizable_function
     async def fetch_users_via_ids(
         self,
         ids: ty.Iterable[int, str],
@@ -584,6 +607,27 @@ class API(Synchronizable):
         Создает обертку над юзером через его ID или screen name
         """
         users = await self.users.get(
+            allow_cache_=True,
+            user_ids=tuple(ids),
+            fields=fields,
+            name_case=name_case,
+        )
+        users = [User(user) for user in users]
+        return users
+
+    @fetch_users_via_ids.sync_edition
+    def fetch_users_via_ids(
+        self,
+        ids: ty.Iterable[int, str],
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> ty.List[User]:
+        """
+        Создает обертку над юзером через его ID или screen name
+        """
+        users = self.users.get(
             allow_cache_=True,
             user_ids=tuple(ids),
             fields=fields,
