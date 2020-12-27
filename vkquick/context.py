@@ -473,7 +473,7 @@ class Context:
                     "before via `attach_keyboard`"
                 )
             pre_params["template"] = self._attached_carousel
-            
+
         response = await self.api.method("messages.send", pre_params)
         response = SentMessage(**response[0](), api=self.api)
         return response
