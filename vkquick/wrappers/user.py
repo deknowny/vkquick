@@ -1,7 +1,12 @@
 from __future__ import annotations
+
+import datetime
 import typing as ty
 
+import aiohttp
+
 from vkquick.base.wrapper import Wrapper
+from vkquick.utils import get_user_registration_date
 
 
 class User(Wrapper):
@@ -27,6 +32,12 @@ class User(Wrapper):
 
     def extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln}
+
+    # TODO: cache?
+    async def get_registration_date(
+        self, session: ty.Optional[aiohttp.ClientSession] = None
+    ) -> datetime.datetime:
+        return await get_user_registration_date(self.id, session=session)
 
     def __str__(self):
         return f"<User id={self.id}, fn={self.fn!r}, ln={self.ln!r}>"
