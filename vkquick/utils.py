@@ -233,6 +233,8 @@ async def get_user_registration_date(
             user_info = await response.text()
             registration_date = _registration_date_regex.search(user_info)
             registration_date = registration_date.group("date")
+            if registration_date is None:
+                raise ValueError(f"No such user with id `{id_}`")
             registration_date = datetime.datetime.fromisoformat(
                 registration_date
             )
