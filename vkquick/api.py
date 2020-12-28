@@ -540,7 +540,7 @@ class API(Synchronizable):
         diff = now - self._last_request_time
         if diff < self._delay:
             wait_time = self._delay - diff
-            self._last_request_time += self._delay
+            self._last_request_time += wait_time
             return wait_time
         else:
             self._last_request_time = now
