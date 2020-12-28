@@ -221,6 +221,7 @@ class Command(Filter):
                 ty.Union[sync_async_callable([Context], ...), str],
             ]
         ] = None,
+        human_style_arguments_name: ty.Optional[ty.Dict[str, str]] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
         run_in_process: bool = False,
@@ -233,6 +234,7 @@ class Command(Filter):
         self._extra = AttrDict(extra or {})
         self._description = description
         self._title = title
+        self._human_style_arguments_name = human_style_arguments_name
         self._use_regex_escape = use_regex_escape
 
         self._filters: ty.List[Filter] = [self]
@@ -240,7 +242,6 @@ class Command(Filter):
         self._reaction_context_argument_name = None
 
         self._invalid_filter_handlers = on_invalid_filter or {}
-        # TODO: available for help_ command
         self._invalid_argument_handlers = on_invalid_argument or {}
 
         if run_in_process and run_in_thread:
@@ -329,6 +330,10 @@ class Command(Filter):
         Фильтры, которые есть у команды (включая сам `Command`)
         """
         return self._filters
+
+    @property
+    def human_style_arguments_name(self) -> ty.Dict[str, str]:
+        return self._human_style_arguments_name
 
     @property
     def invalid_argument_handlers(
