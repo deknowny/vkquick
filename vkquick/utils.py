@@ -218,7 +218,7 @@ _registration_date_regex = re.compile('ya:created dc:date="(?P<date>.*?)"')
 
 
 async def get_user_registration_date(
-    id_: int, session: ty.Optional[aiohttp.ClientSession] = None
+    id_: int, *, session: ty.Optional[aiohttp.ClientSession] = None
 ) -> datetime.datetime:
     request_session = session or aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=False),
