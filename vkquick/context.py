@@ -49,7 +49,7 @@ class SentMessage:
         template: ty.Optional[ty.Union[str, Carousel]] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         **kwargs,
-    ) -> int:
+    ) -> ty.Any:
         real_params = locals().copy()
         del real_params["self"]
         kwargs = real_params.pop("kwargs")
@@ -70,7 +70,7 @@ class SentMessage:
         group_id: ty.Optional[int] = None,
         delete_for_all: bool = True,
         **kwargs,
-    ) -> ty.List[int]:
+    ) -> ty.Any:
         real_params = locals().copy()
         del real_params["self"]
         kwargs = real_params.pop("kwargs")
@@ -401,6 +401,64 @@ class Context:
         del baked_params["self"]
         return await upload_doc_to_message(
             **baked_params, api=self.api, peer_id=self.msg.peer_id
+        )
+
+    async def edit(
+        self,
+        message: ty.Optional[str] = None,
+        /,
+        *,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[ty.Union[str, Attachment]]] = None,
+        keep_forward_messages: ty.Optional[bool] = None,
+        keep_snippets: ty.Optional[bool] = None,
+        group_id: ty.Optional[int] = None,
+        dont_parse_links: ty.Optional[bool] = None,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+        **kwargs,
+    ) -> ty.Any:
+        if not self.msg.out:
+            raise Exception("Can't edit message if it isn't yours")
+        mock_message = SentMessage(
+            message_id=self.msg.id,
+            peer_id=self.msg.peer_id,
+            conversation_message_id=self.msg.cmid,
+            api=self.api
+        )
+        return await mock_message.edit(
+            message,
+            lat=lat,
+            long=long,
+            attachment=attachment,
+            keep_forward_messages=keep_forward_messages,
+            keep_snippets=keep_snippets,
+            dont_parse_links=dont_parse_links,
+            group_id=group_id,
+            template=template,
+            keyboard=keyboard,
+            **kwargs
+        )
+
+    async def delete(
+        self,
+        spam: ty.Optional[bool] = None,
+        group_id: ty.Optional[int] = None,
+        delete_for_all: bool = True,
+        **kwargs,
+    ) -> ty.Any:
+        mock_message = SentMessage(
+            message_id=self.msg.id,
+            peer_id=self.msg.peer_id,
+            conversation_message_id=self.msg.cmid,
+            api=self.api
+        )
+        return await mock_message.delete(
+            spam=spam,
+            group_id=group_id,
+            delete_for_all=delete_for_all,
+            **kwargs
         )
 
     def __str__(self) -> str:

@@ -268,11 +268,12 @@ class Bot:
         await self._shared_box.events_generator.setup()
         async for events in self._shared_box.events_generator:
             for event in events:
-                if event.type == "message_new":
+                if event.type in ("message_new", "message_reply"):
                     asyncio.create_task(
                         self.pass_event_trough_commands(event)
                     )
                 elif event.type == 4:
+                    # TODO: optimize (#34)
                     extended_message = await self._shared_box.api.messages.get_by_id(
                         allow_cache_=True, message_ids=event[1]
                     )
@@ -375,7 +376,7 @@ class Bot:
         команды не адаптированны под обработку редактирования
         в User LP
         """
-        return event.type in ("message_new", "message_edit", 4)
+        return event.type in ("message_new", "message_reply", 4)
 
     @staticmethod
     def show_debug_message_for_release(

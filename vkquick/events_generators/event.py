@@ -56,7 +56,7 @@ class Event(AttrDict):
     def msg(self) -> Message:
         if self._message is not None:
             return Message(self._message)
-        if self.type not in ("message_new", 4):
+        if self.type not in ("message_new", "message_reply", 4):
             raise TypeError(
                 f"Can't get message if event.type is `{self.type}`"
             )
