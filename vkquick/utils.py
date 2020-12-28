@@ -4,7 +4,8 @@
 """
 from __future__ import annotations
 import asyncio
-import enum
+import datetime
+import re
 import json
 import random
 import os
@@ -15,6 +16,8 @@ import aiohttp
 import pygments
 import pygments.formatters
 import pygments.lexers
+
+from vkquick.json_parsers import json_parser_policy
 
 
 T = ty.TypeVar("T")
@@ -180,17 +183,6 @@ def clear_console():
         os.system("clear")
 
 
-class AutoLowerNameEnum(enum.Enum):
-    """
-    Enum, который при автоматически опускает
-    имя ключа в нижний регистр и дает его в значение
-    """
-
-    @staticmethod
-    def _generate_next_value_(name, *args):
-        return name.lower()
-
-
 class CustomEncoder(json.JSONEncoder):
     def default(self, obj: ty.Any) -> ty.Any:
         if isinstance(obj, AttrDict):
@@ -220,3 +212,28 @@ async def download_file(url: str) -> bytes:
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             return await response.read()
+
+
+_registration_date_regex = re.compile('ya:created dc:date="(?P<date>.*?)"')
+
+
+async def get_user_registration_date(
+    id_: int, session: ty.Optional[aiohttp.ClientSession] = None
+) -> datetime.datetime:
+    request_session = session or aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(ssl=False),
+        skip_auto_headers={"User-Agent"},
+        raise_for_status=True,
+        json_serialize=json_parser_policy.dumps,
+    )
+    async with request_session:
+        async with request_session.get(
+            "https://vk.com/foaf.php", params={"id": id_}
+        ) as response:
+            user_info = await response.text()
+            registration_date = _registration_date_regex.search(user_info)
+            registration_date = registration_date.group("date")
+            registration_date = datetime.datetime.fromisoformat(
+                registration_date
+            )
+            return registration_date
