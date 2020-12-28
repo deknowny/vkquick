@@ -187,7 +187,7 @@ class Context:
                 "conversation_message_ids": [
                     self.msg.conversation_message_id
                 ],
-                "peer_id": self.msg.peer_id
+                "peer_id": self.msg.peer_id,
             }
         return await self._send_message_via_local_kwargs(locals(), params)
 
@@ -227,7 +227,7 @@ class Context:
                 "conversation_message_ids": [
                     self.msg.conversation_message_id
                 ],
-                "peer_id": self.msg.peer_id
+                "peer_id": self.msg.peer_id,
             }
         return await self._send_message_via_local_kwargs(locals(), params)
 

@@ -65,6 +65,8 @@ class _SynchronizableFunction:
             return functools.partial(self.sync_func, instance)
         return functools.partial(self.async_func, instance)
 
-    def sync_edition(self, func: ty.Callable[..., ty.Any]) -> _SynchronizableFunction:
+    def sync_edition(
+        self, func: ty.Callable[..., ty.Any]
+    ) -> _SynchronizableFunction:
         self.sync_func = func
         return self

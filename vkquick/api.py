@@ -29,7 +29,10 @@ import cachetools
 import requests
 
 from vkquick.json_parsers import json_parser_policy
-from vkquick.base.synchronizable import Synchronizable, synchronizable_function
+from vkquick.base.synchronizable import (
+    Synchronizable,
+    synchronizable_function,
+)
 from vkquick.base.serializable import APISerializable
 from vkquick.exceptions import VkApiError
 from vkquick.utils import AttrDict
@@ -411,7 +414,10 @@ class API(Synchronizable):
     # Need a decorator-factory?
     @synchronizable_function
     async def _make_api_request(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        allow_cache: bool,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос асинхронно с именем API метода из
@@ -454,7 +460,10 @@ class API(Synchronizable):
 
     @_make_api_request.sync_edition
     def _make_api_request(
-        self, method_name: str, request_params: ty.Dict[str, ty.Any], allow_cache: bool
+        self,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        allow_cache: bool,
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Отправляет API запрос синхронно с именем API метода из
@@ -473,7 +482,9 @@ class API(Synchronizable):
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.send_sync_api_request(path=method_name, params=request_params)
+        response = self.send_sync_api_request(
+            path=method_name, params=request_params
+        )
         return self._prepare_response_body(response)
 
     def send_sync_api_request(self, path, params):

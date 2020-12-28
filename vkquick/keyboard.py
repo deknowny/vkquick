@@ -38,3 +38,5 @@ class Keyboard(UIBuilder):
             else:
                 self.add(button)
         return self
+
+    # TODO: __str__ returns keyboard size

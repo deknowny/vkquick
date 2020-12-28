@@ -26,7 +26,7 @@ from .utils import (
     clear_console,
     sync_async_run,
     download_file,
-    get_user_registration_date
+    get_user_registration_date,
 )
 
 from .json_parsers import (
