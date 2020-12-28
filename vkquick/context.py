@@ -178,14 +178,17 @@ class Context:
         """
         params = {
             "peer_ids": self.msg.peer_id,
-            "forward": {
+        }
+        if self.msg.id:
+            params["reply_to"] = self.msg.id
+        else:
+            params["forward"] = {
                 "is_reply": True,
                 "conversation_message_ids": [
                     self.msg.conversation_message_id
                 ],
-                "peer_id": self.msg.peer_id,
-            },
-        }
+                "peer_id": self.msg.peer_id
+            }
         return await self._send_message_via_local_kwargs(locals(), params)
 
     async def forward(
@@ -216,13 +219,16 @@ class Context:
         """
         params = {
             "peer_ids": self.msg.peer_id,
-            "forward": {
+        }
+        if self.msg.id:
+            params["forward_messages"] = self.msg.id
+        else:
+            params["forward"] = {
                 "conversation_message_ids": [
                     self.msg.conversation_message_id
                 ],
-                "peer_id": self.msg.peer_id,
-            },
-        }
+                "peer_id": self.msg.peer_id
+            }
         return await self._send_message_via_local_kwargs(locals(), params)
 
     async def fetch_replied_message_sender(
