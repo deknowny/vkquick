@@ -367,6 +367,31 @@ class Bot:
             if handler.is_handling_name(name):
                 return handler.call(*args, **kwargs)
 
+    def copy(self, new_token: str) -> Bot:
+        api = API(new_token)
+        if api.token_owner == TokenOwner.GROUP:
+            lp = GroupLongPoll(api)
+        else:
+            lp = UserLongPoll(api)
+
+        new_bot = self.__class__(
+            api=api,
+            events_generator=lp,
+            signal_handlers=self._signal_handlers,
+            commands=self._commands,
+            event_handlers=self._event_handlers,
+            debug_filter=self._debug_filter,
+            debugger=self._debugger
+        )
+        return new_bot
+
+    def make_many_copies(self, tokens: ty.Iterable[str]) -> ty.List[Bot]:
+        multiplied_bots = [self]
+        for token in tokens:
+            new_bot = self.copy(token)
+            multiplied_bots.append(new_bot)
+        return multiplied_bots
+
     @staticmethod
     def default_debug_filter(event: Event,) -> bool:
         """
@@ -389,3 +414,16 @@ class Bot:
         for scheme in handling_info:
             if scheme.exception_text:
                 print(scheme.exception_text)
+
+
+async def async_run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:
+    os.environ["VKQUICK_RELEASE"] = "1"
+    run_tasks = [
+        bot.async_run()
+        for bot in bots
+    ]
+    await asyncio.wait(run_tasks)
+
+
+def run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:
+    asyncio.run(async_run_many_bots(bots))

@@ -79,7 +79,7 @@ from .uploaders import (
     upload_doc_to_message,
 )
 
-from .bot import Bot
+from .bot import Bot, async_run_many_bots, run_many_bots
 
 from .keyboard import Keyboard
 from .button import Button
