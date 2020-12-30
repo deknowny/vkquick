@@ -228,8 +228,8 @@ class Command(Filter):
         use_regex_escape: bool = True,
     ) -> None:
         self._description = description
-        self._names = names
-        self._prefixes = prefixes
+        self._names = None
+        self._prefixes = None
         self._routing_command_re_flags = routing_command_re_flags
         self._extra = AttrDict(extra or {})
         self._description = description
@@ -259,8 +259,9 @@ class Command(Filter):
             self._pool = None
 
         # Note: используется property
-        self.prefixes = self._prefixes
-        self.names = self._names
+        self.prefixes = prefixes
+        self.names = names
+        self._build_routing_regex()
 
     @property
     def reaction_arguments(self):
@@ -303,11 +304,13 @@ class Command(Filter):
 
     @prefixes.setter
     def prefixes(self, value: ty.Iterable[str]) -> None:
+        should_rebuild = self._prefixes is not None
         if isinstance(value, str):
             self._prefixes = (value,)
         else:
             self._prefixes = tuple(value)
-        self._build_routing_regex()
+        if should_rebuild:
+            self._build_routing_regex()
 
     @property
     def names(self) -> ty.Tuple[str]:
@@ -318,11 +321,13 @@ class Command(Filter):
 
     @names.setter
     def names(self, value: ty.Iterable[str]) -> None:
+        should_rebuild = self._prefixes is not None
         if isinstance(value, str):
             self._names = (value,)
         else:
             self._names = tuple(value)
-        self._build_routing_regex()
+        if should_rebuild:
+            self._build_routing_regex()
 
     @property
     def filters(self) -> ty.List[Filter]:
