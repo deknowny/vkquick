@@ -213,12 +213,12 @@ class Command(Filter):
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
         on_invalid_argument: ty.Optional[
-            ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str]]
+            ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]]
         ] = None,
         on_invalid_filter: ty.Optional[
             ty.Dict[
                 ty.Type[Filter],
-                ty.Union[sync_async_callable([Context], ...), str],
+                ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]
             ]
         ] = None,
         human_style_arguments_name: ty.Optional[ty.Dict[str, str]] = None,
@@ -421,12 +421,7 @@ class Command(Filter):
             if not decision.passed:
                 if filter_.__class__ in self._invalid_filter_handlers:
                     handler = self._invalid_filter_handlers[filter_.__class__]
-                    if isinstance(handler, str):
-                        response = handler
-                    else:
-                        response = await sync_async_run(handler(context))
-                    if response is not None:
-                        await context.reply(response)
+                    await _optional_call_with_autoreply(handler, context)
                 return False, decisions
 
         return True, decisions
@@ -443,37 +438,42 @@ class Command(Filter):
             self._invalid_filter_handlers[filter_] = handler
             handler_parameters = inspect.signature(handler).parameters
             length_parameters = len(handler_parameters)
-            if length_parameters != 1:
+            if length_parameters not in (1, 0):
                 raise KeyError(
-                    f"Invalid filter handler should "
-                    f"have only the one argument for "
-                    f"context, got {length_parameters}"
+                    f"Invalid argument handler should "
+                    f"have one argument for context or nothing, "
+                    f"got {length_parameters} arguments"
                 )
             return handler
 
         return wrapper
 
     def on_invalid_argument(
-        self, name: str
+        self, name: ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
         """
         Этим декоратором можно пометить обработчик, который будет
         вызван, аргумент оказался некорректным по значению
         """
-
         def wrapper(handler):
             self._invalid_argument_handlers[name] = handler
             handler_parameters = inspect.signature(handler).parameters
             length_parameters = len(handler_parameters)
-            if length_parameters != 1:
+            if length_parameters not in (1, 0):
                 raise KeyError(
                     f"Invalid argument handler should "
-                    f"have only the one argument for "
-                    f"context, got {length_parameters}"
+                    f"have one argument for context or nothing, "
+                    f"got {length_parameters} arguments"
                 )
             return handler
 
-        return wrapper
+        if isinstance(name, str):
+            return wrapper
+        else:
+            handler = name
+            name = name.__name__
+            real_handler = wrapper(handler)
+            return real_handler
 
     async def make_decision(self, context: Context):
         matched = self._command_routing_regex.match(context.msg.text)
@@ -526,14 +526,7 @@ class Command(Filter):
             if parsed_value is UnmatchedArgument:
                 if name in self._invalid_argument_handlers:
                     reaction = self._invalid_argument_handlers[name]
-                    if isinstance(reaction, str):
-                        response = reaction
-                    else:
-                        response = await sync_async_run(
-                            self._invalid_argument_handlers[name](context)
-                        )
-                    if response is not None:
-                        await context.reply(response)
+                    await _optional_call_with_autoreply(reaction, context)
                 else:
                     for position, arg in enumerate(self._reaction_arguments):
                         if arg[0] == name:
@@ -675,3 +668,28 @@ class Command(Filter):
 
     def __str__(self):
         return f"<Command title={self.title}, prefixes={self.prefixes}, names={self.names}>"
+
+
+def _call_with_optional_context(func, context: Context):
+    parameters = inspect.signature(func).parameters
+    if len(parameters) == 1:
+        return func(context)
+    elif len(parameters) == 0:
+        return func()
+    else:
+        raise TypeError(
+            "Handler to invalid can take from 0 to 1 parameters."
+        )
+
+
+async def _optional_call_with_autoreply(func, context: Context):
+    if isinstance(func, str):
+        response = func
+    else:
+        response = await sync_async_run(
+            _call_with_optional_context(
+                func, context
+            )
+        )
+    if response is not None:
+        await context.reply(response)
