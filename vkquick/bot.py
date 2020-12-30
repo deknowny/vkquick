@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 import asyncio
+import inspect
 import os
 import traceback
 import functools
@@ -251,11 +252,15 @@ class Bot:
         с другой корутиной конкурентно
         """
         try:
-            await sync_async_run(self.call_signal("startup"))
+            await sync_async_run(
+                self._call_signal_with_optional_shared_box("startup")
+            )
             await self.listen_events()
         finally:
             # Сигнал для обозначения окончания работы бота
-            await sync_async_run(self.call_signal("shutdown"))
+            await sync_async_run(
+                self._call_signal_with_optional_shared_box("shutdown")
+            )
             await self._shared_box.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
@@ -367,6 +372,20 @@ class Bot:
             if handler.is_handling_name(name):
                 return handler.call(*args, **kwargs)
 
+    def _call_signal_with_optional_shared_box(self, name: str):
+        for handler in self._signal_handlers:
+            if handler.is_handling_name(name):
+                parameters = inspect.signature(handler.handler).parameters
+                if len(parameters) == 1:
+                    return handler.call(self.shared_box)
+                elif len(parameters) == 0:
+                    return handler.call()
+                else:
+                    raise TypeError(
+                        f"Signal with name `{name}` should"
+                        f"take only 1 or 0 arguments"
+                    )
+
     def copy(self, new_token: str) -> Bot:
         api = API(new_token)
         if api.token_owner == TokenOwner.GROUP:
@@ -381,7 +400,7 @@ class Bot:
             commands=self._commands,
             event_handlers=self._event_handlers,
             debug_filter=self._debug_filter,
-            debugger=self._debugger
+            debugger=self._debugger,
         )
         return new_bot
 
@@ -418,10 +437,7 @@ class Bot:
 
 async def async_run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:
     os.environ["VKQUICK_RELEASE"] = "1"
-    run_tasks = [
-        bot.async_run()
-        for bot in bots
-    ]
+    run_tasks = [bot.async_run() for bot in bots]
     await asyncio.wait(run_tasks)
 
 

@@ -60,6 +60,10 @@ class SignalHandler:
     def is_handling_name(self, name: str) -> bool:
         return name in self._names
 
+    @property
+    def handler(self) -> sync_async_callable(..., ty.Any):
+        return self._handler
+
 
 class EventHandler(SignalHandler):
     @ty.overload
