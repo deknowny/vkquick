@@ -36,6 +36,7 @@ aiohttp = "^3.7.2"
 cachetools = "^4.1.1"
 orjson = { version = "^3.4.6", optional = true }
 ujson = { version = "^4.0.1", optional = true }
+typer = "^0.3.2"
 
 [tool.poetry.dev-dependencies]
 mkdocs-material = "^5.4.0"
@@ -57,7 +58,7 @@ json-libs = ["orjson", "ujson"]
 "Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
 
 [tool.poetry.scripts]
-vq = "vkquick.__main__:app.run"
+vq = "vkquick.__main__:app"
 
 [tool.black]
 line-length = 78
