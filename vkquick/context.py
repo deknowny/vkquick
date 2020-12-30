@@ -425,7 +425,7 @@ class Context:
             message_id=self.msg.id,
             peer_id=self.msg.peer_id,
             conversation_message_id=self.msg.cmid,
-            api=self.api
+            api=self.api,
         )
         return await mock_message.edit(
             message,
@@ -438,7 +438,7 @@ class Context:
             group_id=group_id,
             template=template,
             keyboard=keyboard,
-            **kwargs
+            **kwargs,
         )
 
     async def delete(
@@ -452,13 +452,13 @@ class Context:
             message_id=self.msg.id,
             peer_id=self.msg.peer_id,
             conversation_message_id=self.msg.cmid,
-            api=self.api
+            api=self.api,
         )
         return await mock_message.delete(
             spam=spam,
             group_id=group_id,
             delete_for_all=delete_for_all,
-            **kwargs
+            **kwargs,
         )
 
     def __str__(self) -> str:

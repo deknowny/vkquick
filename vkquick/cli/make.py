@@ -66,7 +66,6 @@ def com(
         docstring=docstring,
     )
 
-
     if show:
         print(command_code)
     else:
@@ -88,4 +87,3 @@ def com(
         )
         commands_config_new = f"from .{command_name} import {command_name}\n{commands_config_new}"
         commands_init.write_text(commands_config_new, encoding="utf-8")
-

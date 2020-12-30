@@ -16,7 +16,11 @@ class String(
     """
 
     def __init__(
-        self, *, max_length: ty.Optional[int] = None, min_length: int = 1, dotall: bool = True
+        self,
+        *,
+        max_length: ty.Optional[int] = None,
+        min_length: int = 1,
+        dotall: bool = True
     ):
         """
         * `max_length`: Максимальная длина строки
