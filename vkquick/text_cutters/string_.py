@@ -16,13 +16,15 @@ class String(
     """
 
     def __init__(
-        self, *, max_length: ty.Optional[int] = None, min_length: int = 1
+        self, *, max_length: ty.Optional[int] = None, min_length: int = 1, dotall: bool = True
     ):
         """
         * `max_length`: Максимальная длина строки
         * `min_length`: Минимальная длина строки
+        * `dotall`: Использовать ли `re.DOTALL` флаг длс регулярки
         """
-        self.pattern = re.compile(r".+", flags=re.DOTALL)
+        flags = re.DOTALL if dotall else 0
+        self.pattern = re.compile(r".+", flags=flags)
         super().__init__(max_length, min_length)
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
