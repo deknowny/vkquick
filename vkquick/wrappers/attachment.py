@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import io
-
 from vkquick.base.serializable import Attachment
 from vkquick.utils import download_file
 
