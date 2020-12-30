@@ -5,7 +5,7 @@ from vkquick.api import API
 from vkquick.events_generators.longpoll import LongPollBase
 from vkquick.utils import AttrDict
 
-if ty.TYPE_CHECKING:
+if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.bot import Bot
 
 

@@ -35,9 +35,9 @@ class Integer(TextCutter):
             and (self.min_ is None or value >= self.min_)
             and (self.max_ is None or value <= self.max_)
         ):
-            return UnmatchedArgument, parsed_string
+            return value, parsed_string
 
-        return value, parsed_string
+        return UnmatchedArgument, parsed_string
 
     def usage_description(self):
         description = "Аргумент должен быть целым числом."

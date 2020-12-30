@@ -54,11 +54,11 @@ class List(TextCutter):
         part_desc = self.element.usage_description().rstrip()
         length_rule = (
             part_desc
-            + f" Минимальное количество элементов >= {self.min_length}, а максимальное "
+            + f" Минимальное количество подобных аргументов больше или равно {self.min_length}, а максимальное "
         )
         if self.max_length is Ellipsis:
             max_length_desc = "не ограничено."
         else:
-            max_length_desc = f"<={self.max_length}."
+            max_length_desc = f"меньше или равно {self.max_length}."
         length_rule += max_length_desc
         return length_rule

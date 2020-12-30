@@ -61,8 +61,10 @@ from .base.wrapper import Wrapper
 from .base.synchronizable import Synchronizable, synchronizable_function
 from .base.json_parser import JSONParser
 from .base.serializable import APISerializable
+from .base.filter import Filter
 
 from .filters.action import Action
+from .filters.enable import Enable
 from .filters.allow_access_for import AllowAccessFor
 from .filters.chat_only import ChatOnly
 from .filters.direct_only import DirectOnly
@@ -86,4 +88,4 @@ from .button import Button
 from .carousel import Carousel, Element
 
 
-__version__ = "1.0.0b4"
+__version__ = "1.0.0g0"

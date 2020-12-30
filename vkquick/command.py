@@ -213,12 +213,23 @@ class Command(Filter):
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
         on_invalid_argument: ty.Optional[
-            ty.Dict[str, ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]]
+            ty.Dict[
+                str,
+                ty.Union[
+                    sync_async_callable([Context], ...),
+                    str,
+                    sync_async_callable([], ...),
+                ],
+            ]
         ] = None,
         on_invalid_filter: ty.Optional[
             ty.Dict[
                 ty.Type[Filter],
-                ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]
+                ty.Union[
+                    sync_async_callable([Context], ...),
+                    str,
+                    sync_async_callable([], ...),
+                ],
             ]
         ] = None,
         human_style_arguments_name: ty.Optional[ty.Dict[str, str]] = None,
@@ -449,12 +460,18 @@ class Command(Filter):
         return wrapper
 
     def on_invalid_argument(
-        self, name: ty.Union[sync_async_callable([Context], ...), str, sync_async_callable([], ...)]
+        self,
+        name: ty.Union[
+            sync_async_callable([Context], ...),
+            str,
+            sync_async_callable([], ...),
+        ],
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
         """
         Этим декоратором можно пометить обработчик, который будет
         вызван, аргумент оказался некорректным по значению
         """
+
         def wrapper(handler):
             self._invalid_argument_handlers[name] = handler
             handler_parameters = inspect.signature(handler).parameters
@@ -523,7 +540,13 @@ class Command(Filter):
             )
             new_arguments_string = new_arguments_string.lstrip()
             arguments[name] = parsed_value
-            if parsed_value is UnmatchedArgument:
+            # Значение от парсера некорректное или
+            # Осталась часть, которую уже нечем парсить
+            if (
+                parsed_value is UnmatchedArgument
+                or len(arguments) == len(self._reaction_arguments)
+                and new_arguments_string
+            ):
                 if name in self._invalid_argument_handlers:
                     reaction = self._invalid_argument_handlers[name]
                     await _optional_call_with_autoreply(reaction, context)
@@ -677,9 +700,7 @@ def _call_with_optional_context(func, context: Context):
     elif len(parameters) == 0:
         return func()
     else:
-        raise TypeError(
-            "Handler to invalid can take from 0 to 1 parameters."
-        )
+        raise TypeError("Handler to invalid can take from 0 to 1 parameters.")
 
 
 async def _optional_call_with_autoreply(func, context: Context):
@@ -687,9 +708,7 @@ async def _optional_call_with_autoreply(func, context: Context):
         response = func
     else:
         response = await sync_async_run(
-            _call_with_optional_context(
-                func, context
-            )
+            _call_with_optional_context(func, context)
         )
     if response is not None:
         await context.reply(response)

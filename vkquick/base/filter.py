@@ -1,11 +1,9 @@
 import abc
-import dataclasses
-import enum
 import typing as ty
 
-import vkquick.utils
-
-# import vkquick.context
+if ty.TYPE_CHECKING:  # pragma: no cover
+    from vkquick.command import Command
+    from vkquick.context import Context
 
 
 class Decision(ty.NamedTuple):
@@ -28,15 +26,15 @@ class Filter(abc.ABC):
     """
 
     @abc.abstractmethod
-    def make_decision(self, context: "vkquick.context.Context") -> Decision:
+    def make_decision(self, context: "Context") -> Decision:
         """
         Определяет, подходит ли событие по критериям фильтра
         """
 
-    def __call__(self, command: "vkquick.command.Command") -> ty.Any:
+    def __call__(self, command: "Command") -> ty.Any:
         """
         Вызывается в момент декорирования.
-        Фильтры должны быть указаны над хендлером событий
+        Фильтры должны быть указаны над командой
         """
         command.filters.append(self)
         return command

@@ -14,8 +14,8 @@ class Regex(TextCutter):
 
     def __init__(
         self,
-        *,
         regex: ty.Union[str, ty.Pattern],
+        *,
         factory: ty.Callable[[ty.Match], ty.Any] = lambda match: match,
     ):
         """
@@ -30,5 +30,5 @@ class Regex(TextCutter):
             self.pattern, arguments_string, self.factory
         )
 
-    async def usage_description(self) -> str:
-        return f"Параметер должен подходить под шаблон {self.pattern}"
+    def usage_description(self) -> str:
+        return f"Аргумент должен подходить под шаблон {self.pattern.pattern}."

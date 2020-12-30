@@ -80,4 +80,4 @@ class Bool(TextCutter):
         return UnmatchedArgument, parsed_string
 
     def usage_description(self):
-        return "Todo"  # TODO
+        return "Аргумент является булевым значением (да/нет, +/-, on/off...)."

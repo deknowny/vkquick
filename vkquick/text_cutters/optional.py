@@ -47,6 +47,6 @@ class Optional(TextCutter):
 
     def usage_description(self):
         element_desc = self.element.usage_description().rstrip()
-        addiction = "Может быть пропущен."
+        addiction = " Передаваемое значение может быть полностью пропущено."
         desc = element_desc + addiction
         return desc

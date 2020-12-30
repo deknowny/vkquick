@@ -38,5 +38,9 @@ class String(
         return self.check_range(*parsed_result)
 
     def usage_description(self):
-        desc = "Аргумент является строкой, содержащей любые символы. "  # Пробел стоит специально
+        desc = "Аргумент является строкой, содержащей любые символы"
+        if self.pattern.flags & re.DOTALL:
+            desc += ". "  # Пробел стоит специально
+        else:
+            desc += ", кроме новой строки. "
         return self.create_length_rule(desc)

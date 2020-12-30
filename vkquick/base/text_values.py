@@ -32,8 +32,8 @@ class TextBase:
         if self.max_length is None:
             max_length_desc = "не ограничена"
         else:
-            max_length_desc = f"<= {self.max_length}"
-        min_length_desc = f">= {self.min_length}"
+            max_length_desc = f"меньше или равна {self.max_length}"
+        min_length_desc = f"больше или равна {self.min_length}"
         length_rule = length_rule.format(
             min_length=min_length_desc, max_length=max_length_desc
         )
