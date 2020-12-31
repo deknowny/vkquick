@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "vkquick"
-version = "1.0.0g0"
+version = "1.0.0b5"
 description = "Package for quick writing vk chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
@@ -37,6 +37,7 @@ cachetools = "^4.1.1"
 orjson = { version = "^3.4.6", optional = true }
 ujson = { version = "^4.0.1", optional = true }
 typer = "^0.3.2"
+pytest-asyncio = "^0.14.0"
 
 [tool.poetry.dev-dependencies]
 mkdocs-material = "^5.4.0"
