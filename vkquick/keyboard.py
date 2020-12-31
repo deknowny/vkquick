@@ -24,7 +24,7 @@ class Keyboard(UIBuilder):
         return self
 
     def add_line(self) -> Keyboard:
-        if not self.scheme["buttons"]:
+        if not self.scheme["buttons"][-1]:
             raise ValueError("Can't add a new line if the last line is empty")
         self.scheme["buttons"].append([])
         return self

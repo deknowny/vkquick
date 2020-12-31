@@ -8,6 +8,8 @@ import pytest
 import pytest_mock
 import vkquick as vq
 
+import unittest.mock
+
 
 class TestAPI:
     @pytest.mark.asyncio
@@ -106,10 +108,8 @@ class TestAPI:
         mocked_parser.return_value = "b"
         assert vq.API._build_cache_hash("bar", {}) == "bar#b"
 
+    @unittest.mock.patch.object(vq.VkApiError, "destruct_response", return_value=Exception())
     def test_prepare_response_body(self, mocker: pytest_mock.MockerFixture):
-        vq.VkApiError.destruct_response = mocker.Mock(
-            return_value=Exception()
-        )
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
         api._prepare_response_body({"response": 1})
         vq.VkApiError.destruct_response.assert_not_called()

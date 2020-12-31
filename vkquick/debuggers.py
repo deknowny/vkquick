@@ -59,7 +59,7 @@ class ColoredDebugger(Debugger):
     sender_name_color: Color = staticmethod(huepy.green)
     sender_command_color: Color = staticmethod(huepy.cyan)
 
-    sender_info_template: str = "New message from `{sender_name}` with text `{sender_command}`"
+    sender_info_template: str = "Новое сообщение от `{sender_name}` с текстом `{sender_command}`"
     event_header_template: str = "{sender_info}\n{separator}\n\n"
     event_header_separator_symbol: str = "="
     reactions_separator_symbol: str = "-"
@@ -98,6 +98,7 @@ class ColoredDebugger(Debugger):
         """
         with self._api.synchronize():
             if self._message.from_id > 0:
+                sender = self._api.fetch_user_via_id(self._message.from_id)
                 sender = self._api.users.get(
                     allow_cache_=True, user_ids=self._message.from_id
                 )

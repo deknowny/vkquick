@@ -97,6 +97,17 @@ class TestAttrDict:
         assert not (vq.AttrDict())
         assert vq.AttrDict({"a": 1})
 
+    def test_contains(self):
+        assert "a" in vq.AttrDict({"a": 1})
+        assert "a" not in vq.AttrDict({"b": 1})
+
+    def test_len(self):
+        assert len(vq.AttrDict({"a": 1, "b": 2})) == 2
+        assert len(vq.AttrDict()) == 0
+
+    def test_eq(self):
+        assert vq.AttrDict({"a": 1, "b": 2}) == {"a": 1, "b": 2}
+        assert vq.AttrDict() == {}
 
 def test_clear_console(mocker: pytest_mock.MockerFixture):
     mocked_system = mocker.patch("os.system")

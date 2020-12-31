@@ -49,13 +49,7 @@ def _convert_payload(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if "payload" in kwargs:
-            if isinstance(kwargs["payload"], dict):
-                kwargs["payload"] = json.dumps(
-                    kwargs["payload"],
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                )
-            elif not isinstance(kwargs["payload"], str):
+            if not isinstance(kwargs["payload"], (str, dict)):
                 raise TypeError(
                     "Invalid type for payload. "
                     "Payload can be only str, "
