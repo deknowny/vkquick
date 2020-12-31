@@ -429,7 +429,7 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             await asyncio.sleep(self._get_waiting_time())
-            response = await self.send_async_api_request(
+            response = await self._send_async_api_request(
                 path=method_name, params=request_params
             )
             response = self._prepare_response_body(response)
@@ -437,12 +437,12 @@ class API(Synchronizable):
             return response
 
         await asyncio.sleep(self._get_waiting_time())
-        response = await self.send_async_api_request(
+        response = await self._send_async_api_request(
             path=method_name, params=request_params
         )
         return self._prepare_response_body(response)
 
-    async def send_async_api_request(self, path, params):
+    async def _send_async_api_request(self, path, params):
         if self.async_http_session is None:
             self.async_http_session = aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(ssl=False),
@@ -475,19 +475,19 @@ class API(Synchronizable):
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
             time.sleep(self._get_waiting_time())
-            response = self.send_sync_api_request(
+            response = self._send_sync_api_request(
                 path=method_name, params=request_params
             )
             response = self._prepare_response_body(response)
             self.cache_table[cache_hash] = response
             return response
         time.sleep(self._get_waiting_time())
-        response = self.send_sync_api_request(
+        response = self._send_sync_api_request(
             path=method_name, params=request_params
         )
         return self._prepare_response_body(response)
 
-    def send_sync_api_request(self, path, params):
+    def _send_sync_api_request(self, path, params):
         response = self.sync_http_session.post(
             f"{self.URL}{path}", data=params
         )
@@ -537,7 +537,7 @@ class API(Synchronizable):
         with self.synchronize():
             users = self.users.get()
 
-        return TokenOwner.USER if users() else TokenOwner.GROUP
+        return TokenOwner.USER if users else TokenOwner.GROUP
 
     def _get_waiting_time(self) -> float:
         """
