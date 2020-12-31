@@ -88,4 +88,4 @@ from .button import Button
 from .carousel import Carousel, Element
 
 
-__version__ = "1.0.0b5"
+__version__ = "1.0.0b6"
