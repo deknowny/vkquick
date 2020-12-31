@@ -1,9 +1,13 @@
+import datetime
+import json
 import os
 import unittest.mock
 
 import pytest
 import pytest_mock
+import pygments
 import vkquick as vq
+import vkquick.utils
 
 
 class _StreamWriter:
@@ -109,6 +113,11 @@ class TestAttrDict:
         assert vq.AttrDict({"a": 1, "b": 2}) == {"a": 1, "b": 2}
         assert vq.AttrDict() == {}
 
+    def test_pretty_error(self):
+        with pytest.raises(KeyError):
+            vq.AttrDict().a
+
+
 def test_clear_console(mocker: pytest_mock.MockerFixture):
     mocked_system = mocker.patch("os.system")
     original_os_name = os.name
@@ -122,3 +131,51 @@ def test_clear_console(mocker: pytest_mock.MockerFixture):
     ]
     mocked_system.assert_has_calls(calls)
     os.name = original_os_name
+
+
+def test_sync_async_callable():
+    # It just wroks, no more tests
+    vq.sync_async_callable(...)
+    vq.sync_async_callable([int], int)
+
+
+def test_pretty_view(mocker: pytest_mock.MockerFixture):
+    pygments.highlight = mocker.Mock()
+    vq.pretty_view(vq.AttrDict({"a": 1}))
+    pygments.highlight.assert_called_once_with(
+        json.dumps(vq.AttrDict({"a": 1}), ensure_ascii=False, indent=4, cls=vkquick.utils._CustomEncoder), mocker.ANY, mocker.ANY
+    )
+    pygments.highlight.reset_mock()
+    json.JSONEncoder.default = mocker.Mock(return_value=1)
+    vq.pretty_view({"a": 1})
+    pygments.highlight.assert_called_once_with(
+        json.dumps({"a": 1}, ensure_ascii=False, indent=4, cls=vkquick.utils._CustomEncoder), mocker.ANY, mocker.ANY
+    )
+
+
+
+@pytest.mark.asyncio
+async def test_download_file(mocker: pytest_mock.MockerFixture):
+    session = mocker.patch("aiohttp.ClientSession", name="session")
+    session.return_value = session
+    response = mocker.Mock(name="request")
+    response.get = mocker.Mock(return_value=response)
+    response.__aexit__ = mocker.AsyncMock()
+    response.__aenter__ = mocker.AsyncMock(return_value=response)
+    response.read = mocker.AsyncMock(return_value=1)
+    session.__aexit__ = mocker.AsyncMock()
+    session.__aenter__ = mocker.AsyncMock(return_value=response)
+
+    assert await vq.download_file("a") == 1
+    response.get.assert_called_once_with("a")
+    response.read.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_user_registration_date():
+    date = datetime.datetime.fromisoformat("2006-09-23T20:27:12+03:00")
+    real_date = await vq.get_user_registration_date(1)
+    assert date == real_date
+
+    with pytest.raises(ValueError):
+        await vq.get_user_registration_date("asdasdasd asdasavsda")

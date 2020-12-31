@@ -8,13 +8,13 @@ from vkquick.base.json_parser import JSONParser
 
 try:
     import orjson
-except ImportError:
+except ImportError:  # pragma: no cover
     orjson = None
 
 
 try:
     import ujson
-except ImportError:
+except ImportError:  # pragma: no cover
     ujson = None
 
 

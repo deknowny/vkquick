@@ -24,7 +24,7 @@ T = ty.TypeVar("T")
 
 
 def sync_async_callable(
-    args: ty.Union[ty.List[ty.Any], type(...)], returns: ty.Any
+    args: ty.Union[ty.List[ty.Any], type(...)], returns: ty.Any = ty.Any
 ) -> ty.Type[ty.Callable]:
     if args is not Ellipsis:
         return ty.Callable[
@@ -186,19 +186,19 @@ def clear_console():
         os.system("clear")
 
 
-class CustomEncoder(json.JSONEncoder):
+class _CustomEncoder(json.JSONEncoder):
     def default(self, obj: ty.Any) -> ty.Any:
         if isinstance(obj, AttrDict):
             return obj()
-        return json.JSONEncoder.default(self, obj)
+        return super().default(obj)  # pragma: no cover
 
 
-def pretty_view(mapping: dict) -> str:
+def pretty_view(mapping: ty.Union[dict, AttrDict]) -> str:
     """
     Цветное отображение JSON словарей
     """
     scheme = json.dumps(
-        mapping, ensure_ascii=False, indent=4, cls=CustomEncoder
+        mapping, ensure_ascii=False, indent=4, cls=_CustomEncoder
     )
     scheme = pygments.highlight(
         scheme,
@@ -235,9 +235,9 @@ async def get_user_registration_date(
         ) as response:
             user_info = await response.text()
             registration_date = _registration_date_regex.search(user_info)
-            registration_date = registration_date.group("date")
             if registration_date is None:
                 raise ValueError(f"No such user with id `{id_}`")
+            registration_date = registration_date.group("date")
             registration_date = datetime.datetime.fromisoformat(
                 registration_date
             )

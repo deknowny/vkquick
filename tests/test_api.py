@@ -108,14 +108,14 @@ class TestAPI:
         mocked_parser.return_value = "b"
         assert vq.API._build_cache_hash("bar", {}) == "bar#b"
 
-    @unittest.mock.patch.object(vq.VkApiError, "destruct_response", return_value=Exception())
     def test_prepare_response_body(self, mocker: pytest_mock.MockerFixture):
+        mocked_exception = mocker.patch.object(vq.VkApiError, "destruct_response", return_value=Exception())
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
         api._prepare_response_body({"response": 1})
-        vq.VkApiError.destruct_response.assert_not_called()
+        mocked_exception.assert_not_called()
         with pytest.raises(Exception):
             api._prepare_response_body({"error": 0})
-        vq.VkApiError.destruct_response.assert_called_once()
+        mocked_exception.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_make_async_api_request(
@@ -155,27 +155,27 @@ class TestAPI:
         self, mocker: pytest_mock.MockerFixture
     ):
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
-        aiohttp.TCPConnector = mocker.Mock()
-        aiohttp.ClientSession = mocker.Mock(name="session")
-        aiohttp.ClientSession.return_value = aiohttp.ClientSession
+        mocker.patch("aiohttp.TCPConnector")
+        session = mocker.patch("aiohttp.ClientSession", name="session")
+        session.return_value = session
         response_mock = mocker.Mock()
         response_mock.json = mocker.AsyncMock(return_value={"response": 1})
-        aiohttp.ClientSession.post = mocker.Mock(
-            return_value=aiohttp.ClientSession
+        session.post = mocker.Mock(
+            return_value=session
         )
-        aiohttp.ClientSession.__aenter__ = mocker.AsyncMock(return_value=response_mock)
-        aiohttp.ClientSession.__aexit__ = mocker.AsyncMock(return_value=response_mock)
+        session.__aenter__ = mocker.AsyncMock(return_value=response_mock)
+        session.__aexit__ = mocker.AsyncMock(return_value=response_mock)
         req1 = await api.users.get()
         assert req1 == 1
         response_mock.json.assert_called_once_with(
             loads=vq.json_parser_policy.loads
         )
-        aiohttp.ClientSession.post.assert_called_once_with(
+        session.post.assert_called_once_with(
             f"https://api.vk.com/method/users.get",
             data={"access_token": api.token, "v": api.version},
         )
         await api.users.get()
-        aiohttp.ClientSession.assert_called_once()
+        session.assert_called_once()
 
     def test_make_sync_api_request(
         self, mocker: pytest_mock.MockerFixture
@@ -218,7 +218,7 @@ class TestAPI:
         response.content = '{"response":1}'
         api.sync_http_session = mocker.Mock(name="session")
         api.sync_http_session.post = mocker.Mock(name="session", return_value=response)
-        vq.json_parser_policy.loads = mocker.Mock(return_value={"response": 1})
+        mocker.patch.object(vq.json_parser_policy, "loads", return_value={"response": 1})
 
         with api.synchronize():
             req1 = api.users.get()
@@ -285,7 +285,8 @@ class TestAPI:
             assert isinstance(user, vq.User)
             assert info == user.fields()
 
-    def test_init_lp(self):
+    @pytest.mark.asyncio
+    async def test_init_lp(self):
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
         group_lp = api.init_group_lp()
         assert isinstance(group_lp, vq.GroupLongPoll)
