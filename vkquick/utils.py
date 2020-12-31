@@ -172,6 +172,9 @@ class AttrDict:
     def __bool__(self):
         return bool(self())
 
+    def __eq__(self, other):
+        return self() == other
+
 
 def clear_console():
     """

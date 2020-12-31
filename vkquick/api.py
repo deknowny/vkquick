@@ -231,9 +231,6 @@ class API(Synchronizable):
     для определения задержки между запросами
     """
 
-    class Config:
-        arbitrary_types_allowed = False
-
     def __post_init__(self) -> None:
         self.async_http_session = None
         self.sync_http_session = requests.Session()
@@ -243,17 +240,6 @@ class API(Synchronizable):
         self._delay = 0
         self.token_owner = self.token_owner or self._define_token_owner()
         self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
-
-    @functools.cached_property
-    def token_owner_user(self) -> User:
-        """
-        Владелец токена (объект пользователя).
-        Только если токеном владеет юзер
-        """
-        with self.synchronize():
-            user = self.users.get()
-            user = User(user[0])
-            return user
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -269,7 +255,6 @@ class API(Synchronizable):
         Вызовет API метод `messages.send`. Также есть
         поддержка конвертации snake_case в camelCase:
         """
-        attribute = self._convert_name(attribute)
         if self._method_name:
             self._method_name += f".{attribute}"
         else:
@@ -355,16 +340,12 @@ class API(Synchronizable):
         new_params = {}
         for key, value in params.items():
             if isinstance(value, (list, set, tuple)):
-                new_params[key] = ",".join(
-                    map(
-                        lambda x: (
-                            x.api_param_representation()
-                            if isinstance(x, APISerializable)
-                            else str(x)
-                        ),
-                        value,
-                    )
+                change_rule = lambda x: (
+                    x.api_param_representation()
+                    if isinstance(x, APISerializable)
+                    else str(x)
                 )
+                new_params[key] = ",".join(map(change_rule, value))
 
             # Автодамп словарей
             elif isinstance(value, dict):
@@ -388,15 +369,16 @@ class API(Synchronizable):
         return new_params
 
     def _prepare_response_body(
-        self, body: ty.Dict[str, ty.Any]
+        self, response: ty.Dict[str, ty.Any]
     ) -> ty.Union[str, int, API.default_factory]:
         """
         Подготавливает ответ API в надлежащий вид:
         парсит JSON, проверяет на наличие ошибок
         и оборачивает в `self.response_factory`
         """
-        self._check_errors(body)
-        return self.response_factory(body["response"])
+        if "error" in response:
+            raise VkApiError.destruct_response(response)
+        return self.response_factory(response["response"])
 
     @staticmethod
     def _build_cache_hash(
@@ -428,19 +410,15 @@ class API(Synchronizable):
             cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
-            await asyncio.sleep(self._get_waiting_time())
-            response = await self._send_async_api_request(
-                path=method_name, params=request_params
-            )
-            response = self._prepare_response_body(response)
-            self.cache_table[cache_hash] = response
-            return response
 
         await asyncio.sleep(self._get_waiting_time())
         response = await self._send_async_api_request(
             path=method_name, params=request_params
         )
-        return self._prepare_response_body(response)
+        response = self._prepare_response_body(response)
+        if allow_cache:
+            self.cache_table[cache_hash] = response
+        return response
 
     async def _send_async_api_request(self, path, params):
         if self.async_http_session is None:
@@ -474,18 +452,15 @@ class API(Synchronizable):
             cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
                 return self.cache_table[cache_hash]
-            time.sleep(self._get_waiting_time())
-            response = self._send_sync_api_request(
-                path=method_name, params=request_params
-            )
-            response = self._prepare_response_body(response)
-            self.cache_table[cache_hash] = response
-            return response
+
         time.sleep(self._get_waiting_time())
         response = self._send_sync_api_request(
             path=method_name, params=request_params
         )
-        return self._prepare_response_body(response)
+        response = self._prepare_response_body(response)
+        if allow_cache:
+            self.cache_table[cache_hash] = response
+        return response
 
     def _send_sync_api_request(self, path, params):
         response = self.sync_http_session.post(
@@ -521,14 +496,6 @@ class API(Synchronizable):
         """
         return re.sub(r"_(?P<let>[a-z])", cls._upper_zero_group, name)
 
-    @staticmethod
-    def _check_errors(response: ty.Dict[str, ty.Any]) -> None:
-        """
-        Проверяет, является ли ответ от вк ошибкой
-        """
-        if "error" in response:
-            raise VkApiError.destruct_response(response)
-
     def _define_token_owner(self) -> TokenOwner:
         """
         Определяет владельца токена: группу или пользователя.
@@ -561,7 +528,8 @@ class API(Synchronizable):
         """
         Закрывает соединение сессии
         """
-        await self.async_http_session.close()
+        if self.async_http_session is not None:
+            await self.async_http_session.close()
 
     @synchronizable_function
     async def fetch_user_via_id(
@@ -587,7 +555,7 @@ class API(Synchronizable):
     @fetch_user_via_id.sync_edition
     def fetch_user_via_id(
         self,
-        id_: ty.Union[int, str],
+        id_: ty.Optional[ty.Union[int, str]] = None,
         /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
@@ -623,8 +591,8 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        users = [User(user) for user in users]
-        return users
+        wrapped_users = [User(user) for user in users]
+        return wrapped_users
 
     @fetch_users_via_ids.sync_edition
     def fetch_users_via_ids(
@@ -644,8 +612,8 @@ class API(Synchronizable):
             fields=fields,
             name_case=name_case,
         )
-        users = [User(user) for user in users]
-        return users
+        wrapped_users = [User(user) for user in users]
+        return wrapped_users
 
     def init_group_lp(self, **kwargs) -> GroupLongPoll:
         return GroupLongPoll(self, **kwargs)

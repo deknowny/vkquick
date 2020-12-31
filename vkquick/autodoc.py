@@ -1,3 +1,4 @@
+# TODO: appears in 1.1
 import typing as ty
 
 from vkquick.bot import Bot

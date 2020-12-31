@@ -25,5 +25,5 @@ class Wrapper:
         return {}
 
     def __repr__(self):
-        cls = self.__class__
-        return f"{cls}({self.fields()})"
+        cls_name = self.__class__.__name__
+        return f"{cls_name}({self.fields()})"

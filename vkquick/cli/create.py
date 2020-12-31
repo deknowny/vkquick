@@ -158,7 +158,7 @@ def fetch_group_and_user(
 ) -> ty.Tuple[ty.Optional[vq.AttrDict], vq.User]:
     with api.synchronize():
         if api.token_owner == vq.TokenOwner.USER:
-            creator = api.token_owner_user
+            creator = api.fetch_user_via_id()
             return None, creator
         else:
             groups = api.groups.get_by_id()

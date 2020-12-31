@@ -1,116 +1,80 @@
 """
 Test `api.py` module
 """
+import re
+
+import aiohttp
 import pytest
 import pytest_mock
 import vkquick as vq
 
-import unittest.mock
-import copy
-
-
-class _ImplementedRead:
-    def __init__(self, read_return_value):
-        self.read_return_value = read_return_value
-
-    def read(self):
-        return self.read_return_value
-
 
 class TestAPI:
-    async_data_request = [
-        [
-            "users",
-            "get",
-            {"fetch": "name"},
-            b"GET /method/users.get?"
-            + b"access_token=token&v="
-            + vq.API.version.encode("utf-8")
-            + b"&fetch=name "
-            + b"HTTP/1.1\n"
-            + b"Host: api.vk.com\n\n",
-            '{"response": {"name": "Bob"}}',
-            {"name": "Bob"},
-        ],
-        [
-            "some",
-            "api_method_with_underscores",
-            {"param1": [1, 2], "foo": ("egg", "spam")},
-            b"GET /method/some.apiMethodWithUnderscores?"
-            + b"access_token=token&v="
-            + vq.API.version.encode("utf-8")
-            + b"&param1=1%2C2&foo=egg%2Cspam "
-            + b"HTTP/1.1\n"
-            + b"Host: api.vk.com\n\n",
-            '{"response": {"method": "called", "foo": [1, 2]}}',
-            {"method": "called", "foo": [1, 2]},
-        ],
-    ]
-    sync_data_request = copy.deepcopy(async_data_request)
-    sync_data_request[0][3] = (
-        "https://api.vk.com/method/users.get?"
-        f"access_token=token&v={vq.API.version}&fetch=name"
-    )
-    sync_data_request[1][3] = (
-        "https://api.vk.com/method/some.apiMethodWithUnderscores?"
-        f"access_token=token&v={vq.API.version}&"
-        f"param1=1%2C2&foo=egg%2Cspam"
-    )
+    @pytest.mark.asyncio
+    async def test_getattr(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._convert_name = mocker.MagicMock(return_value="foo.bar")
+        api._make_api_request = mocker.AsyncMock()
+        await api.users.get()
+        await api.some.other()
+        await api.foo.bar()
 
-    def test_token_owner_definer(self):
-        api = vq.API("group_token", token_owner=vq.TokenOwner.GROUP)
-        assert api.token_owner == vq.TokenOwner.GROUP
+        calls = [
+            mocker.call("users.get"),
+            mocker.call("some.other"),
+            mocker.call("foo.bar"),
+        ]
 
-        api = vq.API("user_token", token_owner=vq.TokenOwner.USER)
-        assert api.token_owner == vq.TokenOwner.USER
+        api._convert_name.assert_has_calls(calls)
 
-    @pytest.mark.parametrize(
-        "token_owner,return_value",
-        [(vq.TokenOwner.GROUP, {}), (vq.TokenOwner.USER, {"some": "user"})],
-    )
-    def test_auto_token_owner_definer(
-        self, mocker: pytest_mock.MockerFixture, token_owner, return_value
+    @pytest.mark.asyncio
+    async def test_autocomplete_params(
+        self, mocker: pytest_mock.MockerFixture
     ):
-        mocked_definer = mocker.patch.object(
-            vq.API,
-            "_make_sync_api_request",
-            return_value=vq.AttrDict(return_value),
-        )
-        api = vq.API("token")
-        mocked_definer.assert_called_once_with(
-            "users.get", f"access_token={api.token}&v={api.version}"
-        )
-        assert api.token_owner == token_owner
-
-    @pytest.mark.parametrize(
-        "token,version,params,output",
-        [
-            (
-                "token",
-                "5.110",
-                {"foo": "bar"},
-                {"access_token": "token", "v": "5.110", "foo": "bar"},
-            ),
-            (
-                "token",
-                "5.110",
-                {"access_token": "bar"},
-                {"access_token": "bar", "v": "5.110"},
-            ),
-            (
-                "token",
-                "5.110",
-                {"access_token": "bar", "v": "foo"},
-                {"access_token": "bar", "v": "foo"},
-            ),
-            ("token", "5.110", {}, {"access_token": "token", "v": "5.110"},),
-        ],
-    )
-    def test_fill_request_params(self, token, version, params, output):
         api = vq.API(
-            token=token, version=version, token_owner=vq.TokenOwner.GROUP
+            "token",
+            token_owner=vq.TokenOwner.GROUP,
+            autocomplete_params={"foo": "bar"},
         )
-        assert api._fill_request_params(params) == output
+        api._make_api_request = mocker.AsyncMock()
+        await api.foo.bar()
+        await api.foo.bar(...)
+        calls = [
+            mocker.call(
+                method_name=mocker.ANY,
+                request_params={"access_token": api.token, "v": api.version},
+                allow_cache=mocker.ANY,
+            ),
+            mocker.call(
+                method_name=mocker.ANY,
+                request_params={
+                    "access_token": api.token,
+                    "foo": "bar",
+                    "v": api.version,
+                },
+                allow_cache=mocker.ANY,
+            ),
+        ]
+        api._make_api_request.assert_has_calls(calls)
+
+    @pytest.mark.asyncio
+    async def test_call_via_method(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API(
+            "token",
+            token_owner=vq.TokenOwner.GROUP,
+            autocomplete_params={"foo": "bar"},
+        )
+        api._make_api_request = mocker.AsyncMock()
+        await api.method("foo.bar", {"a": 1})
+        api._make_api_request.assert_called_once_with(
+            method_name="foo.bar",
+            request_params={
+                "access_token": api.token,
+                "a": "1",
+                "v": api.version,
+            },
+            allow_cache=False,
+        )
 
     @pytest.mark.parametrize(
         "params,output",
@@ -119,132 +83,215 @@ class TestAPI:
             ({"foo": ["fizz", "bazz"]}, {"foo": "fizz,bazz"}),
             (
                 {"list": [1, 2], "int": 1, "tuple": (1, 2), "set": {1, 2}},
-                {"list": "1,2", "int": 1, "tuple": "1,2", "set": "1,2"},
+                {"list": "1,2", "int": "1", "tuple": "1,2", "set": "1,2"},
             ),
+            ({"foo": {"a": 1}}, {"foo": '{"a":1}'}),
+            (
+                {"foo": vq.Keyboard().build()},
+                {"foo": vq.Keyboard().build().api_param_representation()},
+            ),
+            ({"foo": True}, {"foo": 1}),
+            ({"foo": None}, {}),
         ],
     )
-    def test_convert_collections_params(self, params, output):
-        vq.API._convert_params_for_api(params)
-        assert params == output
+    def test_convert_params(self, params, output):
+        new_params = vq.API._convert_params_for_api(params)
+        assert new_params == output
 
-    @pytest.mark.parametrize(
-        "method_header,method_name,params,posted_message,return_value,output",
-        async_data_request,
-    )
+    def test_build_cache_hash(self, mocker: pytest_mock.MockerFixture):
+        mocked_parser = mocker.patch(
+            "urllib.parse.urlencode", return_value="a"
+        )
+        assert vq.API._build_cache_hash("foo", {}) == "foo#a"
+        mocked_parser.return_value = "b"
+        assert vq.API._build_cache_hash("bar", {}) == "bar#b"
+
+    def test_prepare_response_body(self, mocker: pytest_mock.MockerFixture):
+        vq.VkApiError.destruct_response = mocker.Mock(
+            return_value=Exception()
+        )
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._prepare_response_body({"response": 1})
+        vq.VkApiError.destruct_response.assert_not_called()
+        with pytest.raises(Exception):
+            api._prepare_response_body({"error": 0})
+        vq.VkApiError.destruct_response.assert_called_once()
+
     @pytest.mark.asyncio
-    async def test_async_api_calls(
-        self,
-        mocker,
-        method_header,
-        method_name,
-        params,
-        posted_message,
-        return_value,
-        output,
+    async def test_make_async_api_request(
+        self, mocker: pytest_mock.MockerFixture
     ):
-
-        mocked_request_writer = mocker.patch.object(
-            vq.RequestsSession, "write"
-        )
-        mocker.patch.object(
-            vq.RequestsSession, "fetch_body", return_value=return_value
-        )
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
-        getattr(api, method_header)
-        getattr(api, method_name)
-        response1 = await api(**params)
-        response2 = await api.method(f"{method_header}.{method_name}", params)
-        calls = [unittest.mock.call(posted_message)] * 2
-        mocked_request_writer.assert_has_calls(calls)
-        assert response1() == response2() == output
+        api._send_async_api_request = mocker.AsyncMock(
+            return_value={"response": 1}
+        )
+        request = await api.users.get(foo=1)
+        api._send_async_api_request.assert_called_once_with(
+            path="users.get",
+            params={"access_token": api.token, "foo": "1", "v": api.version,},
+        )
+        assert request == 1
 
-    @pytest.mark.parametrize(
-        "method_header,method_name,params,posted_message,return_value,output",
-        sync_data_request,
-    )
-    def test_sync_api_calls(
-        self,
-        mocker,
-        method_header,
-        method_name,
-        params,
-        posted_message,
-        return_value,
-        output,
+    @pytest.mark.asyncio
+    async def test_make_cached_async_api_request(
+        self, mocker: pytest_mock.MockerFixture
     ):
-        mocked_urlopen = mocker.patch(
-            "urllib.request.urlopen",
-            return_value=_ImplementedRead(return_value),
-        )
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
-        with api.synchronize():
-            getattr(api, method_header)
-            getattr(api, method_name)
-            response1 = api(**params)
-            response2 = api.method(f"{method_header}.{method_name}", params)
-        calls = [
-            unittest.mock.call(posted_message, context=unittest.mock.ANY)
-        ] * 2
-        mocked_urlopen.asser_has_calls(calls)
-        assert response1() == response2() == output
-
-    @pytest.mark.parametrize(
-        "name,output",
-        [
-            ("some_fizz_bazz", "someFizzBazz"),
-            ("some", "some"),
-            ("some_mixedCase", "someMixedCase"),
-        ],
-    )
-    def test_convert_name(self, name, output):
-        assert vq.API._convert_name(name) == output
-
-    def test_check_errors(self):
-        vq.API._check_errors({"response": "normal response"})
-        with pytest.raises(vq.VkApiError):
-            vq.API._check_errors(
-                {
-                    "error": {
-                        "error_msg": 1,
-                        "error_code": 1,
-                        "request_params": {},
-                    }
-                }
-            )
-
-    def test_autocomplete_params(self, mocker: pytest_mock.MockerFixture):
-        api = vq.API(
-            "token",
-            token_owner=vq.TokenOwner.GROUP,
-            autocomplete_params={"foo": "bar"},
+        api._build_cache_hash = mocker.Mock(return_value="a")
+        api._send_async_api_request = mocker.AsyncMock(
+            return_value={"response": 1}
         )
-        mocked_rout = mocker.patch.object(vq.API, "_route_request_scheme")
+        request1 = await api.users.get(foo=1, allow_cache_=True)
+        request2 = await api.users.get(foo=1, allow_cache_=True)
+        api._send_async_api_request.assert_called_once_with(
+            path="users.get",
+            params={"access_token": api.token, "foo": "1", "v": api.version,},
+        )
+        assert api._build_cache_hash.call_count == 2
+        assert request1 == request2 == 1 == api.cache_table["a"]
+
+    @pytest.mark.asyncio
+    async def test_sending_async_api_request(
+        self, mocker: pytest_mock.MockerFixture
+    ):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        aiohttp.TCPConnector = mocker.Mock()
+        aiohttp.ClientSession = mocker.Mock(name="session")
+        aiohttp.ClientSession.return_value = aiohttp.ClientSession
+        response_mock = mocker.Mock()
+        response_mock.json = mocker.AsyncMock(return_value={"response": 1})
+        aiohttp.ClientSession.post = mocker.Mock(
+            return_value=aiohttp.ClientSession
+        )
+        aiohttp.ClientSession.__aenter__ = mocker.AsyncMock(return_value=response_mock)
+        aiohttp.ClientSession.__aexit__ = mocker.AsyncMock(return_value=response_mock)
+        req1 = await api.users.get()
+        assert req1 == 1
+        response_mock.json.assert_called_once_with(
+            loads=vq.json_parser_policy.loads
+        )
+        aiohttp.ClientSession.post.assert_called_once_with(
+            f"https://api.vk.com/method/users.get",
+            data={"access_token": api.token, "v": api.version},
+        )
+        await api.users.get()
+        aiohttp.ClientSession.assert_called_once()
+
+    def test_make_sync_api_request(
+        self, mocker: pytest_mock.MockerFixture
+    ):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._send_sync_api_request = mocker.Mock(
+            return_value={"response": 1}
+        )
         with api.synchronize():
-            api.some.egg(...)
-            api.some.egg(..., other="value")
-            api.some.egg(..., foo="fizz")
+            request = api.users.get(foo=1)
+        api._send_sync_api_request.assert_called_once_with(
+            path="users.get",
+            params={"access_token": api.token, "foo": "1", "v": api.version,},
+        )
+        assert request == 1
 
-        token_and_version = {"access_token": "token", "v": "5.133"}
-        calls = [
-            unittest.mock.call(
-                method_name=unittest.mock.ANY,
-                request_params={"foo": "bar", **token_and_version},
-            ),
-            unittest.mock.call(
-                method_name=unittest.mock.ANY,
-                request_params={
-                    "foo": "bar",
-                    "other": "value",
-                    **token_and_version,
-                },
-            ),
-            unittest.mock.call(
-                method_name=unittest.mock.ANY,
-                request_params={"foo": "fizz", **token_and_version},
-            ),
-        ]
-        mocked_rout.assert_has_calls(calls)
+    def test_make_cached_sync_api_request(
+        self, mocker: pytest_mock.MockerFixture
+    ):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._build_cache_hash = mocker.Mock(return_value="a")
+        api._send_sync_api_request = mocker.Mock(
+            return_value={"response": 1}
+        )
+        with api.synchronize():
+            request1 = api.users.get(foo=1, allow_cache_=True)
+            request2 = api.users.get(foo=1, allow_cache_=True)
+        api._send_sync_api_request.assert_called_once_with(
+            path="users.get",
+            params={"access_token": api.token, "foo": "1", "v": api.version,},
+        )
+        assert api._build_cache_hash.call_count == 2
+        assert request1 == request2 == 1 == api.cache_table["a"]
 
+    def test_sending_sync_api_request(
+        self, mocker: pytest_mock.MockerFixture
+    ):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        response = mocker.Mock()
+        response.content = '{"response":1}'
+        api.sync_http_session = mocker.Mock(name="session")
+        api.sync_http_session.post = mocker.Mock(name="session", return_value=response)
+        vq.json_parser_policy.loads = mocker.Mock(return_value={"response": 1})
+
+        with api.synchronize():
+            req1 = api.users.get()
+        assert req1 == 1
+        vq.json_parser_policy.loads.assert_called_once_with(
+            response.content
+        )
+        api.sync_http_session.post.assert_called_once_with(
+            f"https://api.vk.com/method/users.get",
+            data={"access_token": api.token, "v": api.version},
+
+        )
+
+    def test_upper_zero_group(self):
+        match = re.fullmatch(r"(?P<let>foo)", "foo")
+        assert vq.API._upper_zero_group(match) == "FOO"
+
+    def test_define_token_owner(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._make_api_request = mocker.MagicMock(return_value=vq.AttrDict([]))
+        assert api._define_token_owner() == vq.TokenOwner.GROUP
+        api._make_api_request = mocker.MagicMock(return_value=vq.AttrDict([{"some": "user"}]))
+        assert api._define_token_owner() == vq.TokenOwner.USER
+
+    @pytest.mark.asyncio
+    async def test_close_session(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api.async_http_session = mocker.Mock()
+        api.async_http_session.close = mocker.AsyncMock()
+        await api.close_session()
+        api.async_http_session.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_async_fetch_user_via_id(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._make_api_request = mocker.AsyncMock(return_value=vq.AttrDict([{"foo": 1}]))
+        user = await api.fetch_user_via_id(1)
+        assert user.fields() == {"foo": 1}
+
+    def test_fetch_user_via_id(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        api._make_api_request = mocker.Mock(return_value=vq.AttrDict([{"foo": 1}]))
+        with api.synchronize():
+            user = api.fetch_user_via_id(1)
+        assert user.fields() == {"foo": 1}
+
+    @pytest.mark.asyncio
+    async def test_async_fetch_user_via_ids(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        infos = [{"foo": 1}, {"foo": 2}, {"foo": 3}]
+        api._make_api_request = mocker.AsyncMock(return_value=vq.AttrDict([{"foo": 1}, {"foo": 2}, {"foo": 3}]))
+        users = await api.fetch_users_via_ids([1, 2, 3])
+        for user, info in zip(users, infos):
+            assert isinstance(user, vq.User)
+            assert info == user.fields()
+
+    def test_sync_fetch_user_via_ids(self, mocker: pytest_mock.MockerFixture):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        infos = [{"foo": 1}, {"foo": 2}, {"foo": 3}]
+        api._make_api_request = mocker.Mock(return_value=vq.AttrDict([{"foo": 1}, {"foo": 2}, {"foo": 3}]))
+        with api.synchronize():
+            users = api.fetch_users_via_ids([1, 2, 3])
+        for user, info in zip(users, infos):
+            assert isinstance(user, vq.User)
+            assert info == user.fields()
+
+    def test_init_lp(self):
+        api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
+        group_lp = api.init_group_lp()
+        assert isinstance(group_lp, vq.GroupLongPoll)
+        api = vq.API("token", token_owner=vq.TokenOwner.USER)
+        user_lp = api.init_user_lp()
+        assert isinstance(user_lp, vq.UserLongPoll)
 
 def test_token_owner():
     assert vq.TokenOwner.GROUP == "group"
