@@ -11,10 +11,10 @@ from vkquick.wrappers.attachment import Photo, Document
 async def upload_photos_to_message(
     *photos: ty.Union[bytes, str], api: API, peer_id: int = 0
 ) -> ty.List[Photo]:
-    if not (0 < len(photos) < 11):
-        raise ValueError("You can attach from 1 to 10 photos")
+    if not (0 < len(photos) < 6):
+        raise ValueError("You can upload only from 1 to 5 photos")
     data = aiohttp.FormData()
-    for ind, photo in enumerate(photos, 1):
+    for ind, photo in enumerate(photos):
         if isinstance(photo, str):
             real_photo = open(photo, "rb").read()
         else:

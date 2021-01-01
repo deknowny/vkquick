@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import dataclasses
+import itertools
 import typing as ty
 
 from vkquick.wrappers.user import User
@@ -489,28 +490,45 @@ class Context:
         if "attachment" not in pre_params and (
             self._attached_photos or self._attached_docs
         ):
-            photos_uploading_task = None
+            photos_uploading_tasks = []
             docs_uploading_tasks = []
             if self._attached_photos:
-                photos_uploading_task = self.upload_photos(
-                    *self._attached_photos
-                )
+                if len(self._attached_photos) > 10:
+                    raise ValueError("Can't send more than 10 photos")
+                if len(self._attached_photos) > 5:
+                    first_part = self._attached_photos[:5]
+                    second_part = self._attached_photos[5:]
+                    photos_uploading_tasks.append(
+                        self.upload_photos(*first_part),
+                    )
+                    photos_uploading_tasks.append(
+                        self.upload_photos(*second_part)
+                    )
+                else:
+                    photos_uploading_tasks.append(
+                        self.upload_photos(*self._attached_photos)
+                    )
 
             if self._attached_docs:
-                docs_uploading_tasks = [
+                upload_tasks = [
                     self.upload_doc(**params)
                     for params in self._attached_docs
                 ]
-            if photos_uploading_task is not None:
-                photo_attachments, *docs_attachments = await asyncio.gather(
-                    photos_uploading_task, *docs_uploading_tasks
-                )
-                photo_attachments.extend(docs_attachments)
-                pre_params["attachment"] = photo_attachments
-            else:
-                pre_params["attachment"] = await asyncio.gather(
-                    *docs_uploading_tasks
-                )
+                doc_upload_task = asyncio.gather(*upload_tasks)
+                docs_uploading_tasks.append(doc_upload_task)
+            if photos_uploading_tasks or docs_uploading_tasks:
+                if photos_uploading_tasks:
+                    attachments = await asyncio.gather(
+                        *photos_uploading_tasks,
+                        *docs_uploading_tasks
+                    )
+                    attachments = list(
+                        itertools.chain.from_iterable(attachments)
+                    )
+                    pre_params["attachment"] = attachments
+                else:
+                    pre_params["attachment"] = await asyncio.gather(*docs_uploading_tasks)
+
         if (
             self._auto_set_content_source
             and "content_source" not in pre_params
