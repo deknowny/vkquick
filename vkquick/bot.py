@@ -213,9 +213,12 @@ class Bot:
         extra_names: ty.Optional[ty.List[str]] = None,
         all_names: ty.Optional[ty.List[str]] = None,
     ) -> SignalHandler:
-        signal_handler = SignalHandler(  # noqa
-            handler, extra_names=extra_names, all_names=all_names
-        )
+        if isinstance(handler, SignalHandler):
+            signal_handler = handler
+        else:
+            signal_handler = SignalHandler(  # noqa
+                handler, extra_names=extra_names, all_names=all_names
+            )
         self._signal_handlers.append(signal_handler)
         return signal_handler
 

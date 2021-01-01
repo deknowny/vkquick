@@ -14,7 +14,7 @@ class SignalHandler:
         *,
         extra_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     @ty.overload
     def __init__(
@@ -24,7 +24,7 @@ class SignalHandler:
         *,
         all_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     def __init__(
         self,
@@ -43,16 +43,19 @@ class SignalHandler:
         if extra_names:
             self._names = list(extra_names)
         elif all_names:
-            self._names = extra_names
+            self._names = tuple(all_names)
         else:
             if handler is None:
-                raise ValueError("Should pass a handler or handled names")
-            self._names = [handler.__name__]
+                self._names = []
+            else:
+                self._names = [handler.__name__]
 
     def __call__(self, handler: sync_async_callable(..., ty.Any)) -> ty.Any:
         self._handler = handler
         if isinstance(self._names, list):
             self._names.append(handler.__name__)
+
+        return self
 
     def call(self, *args, **kwargs) -> ty.Any:
         return self._handler(*args, **kwargs)
@@ -74,7 +77,7 @@ class EventHandler(SignalHandler):
         *,
         extra_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     @ty.overload
     def __init__(
@@ -84,7 +87,7 @@ class EventHandler(SignalHandler):
         *,
         all_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     @ty.overload
     def __init__(
