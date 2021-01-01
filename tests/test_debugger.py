@@ -37,7 +37,8 @@ class TestDebugger:
         mocked_terminal_size = mocker.patch("os.get_terminal_size")
         mocked_terminal_size.return_value = mocked_terminal_size
         mocked_terminal_size.columns = 10
-        assert vq.ColoredDebugger.build_separator("+") == "+"*10
+        assert vq.ColoredDebugger.build_separator("+") == "+" * 10
+
     #
     # @pytest.mark.parametrize(
     #     "sizes,color,symbol",

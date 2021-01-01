@@ -143,15 +143,28 @@ def test_pretty_view(mocker: pytest_mock.MockerFixture):
     pygments.highlight = mocker.Mock()
     vq.pretty_view(vq.AttrDict({"a": 1}))
     pygments.highlight.assert_called_once_with(
-        json.dumps(vq.AttrDict({"a": 1}), ensure_ascii=False, indent=4, cls=vkquick.utils._CustomEncoder), mocker.ANY, mocker.ANY
+        json.dumps(
+            vq.AttrDict({"a": 1}),
+            ensure_ascii=False,
+            indent=4,
+            cls=vkquick.utils._CustomEncoder,
+        ),
+        mocker.ANY,
+        mocker.ANY,
     )
     pygments.highlight.reset_mock()
     json.JSONEncoder.default = mocker.Mock(return_value=1)
     vq.pretty_view({"a": 1})
     pygments.highlight.assert_called_once_with(
-        json.dumps({"a": 1}, ensure_ascii=False, indent=4, cls=vkquick.utils._CustomEncoder), mocker.ANY, mocker.ANY
+        json.dumps(
+            {"a": 1},
+            ensure_ascii=False,
+            indent=4,
+            cls=vkquick.utils._CustomEncoder,
+        ),
+        mocker.ANY,
+        mocker.ANY,
     )
-
 
 
 @pytest.mark.asyncio

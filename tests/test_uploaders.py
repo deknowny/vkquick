@@ -17,7 +17,8 @@ async def test_upload_photos_to_message(mocker: pytest_mock.MockerFixture):
     api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
     api._make_api_request = mocker.AsyncMock(
         side_effect=[
-            vq.AttrDict({"upload_url": "url"}), vq.AttrDict([{"photo": 1}, {"photo": 2}])
+            vq.AttrDict({"upload_url": "url"}),
+            vq.AttrDict([{"photo": 1}, {"photo": 2}]),
         ]
     )
     api.async_http_session = mocker.Mock(name="session")
@@ -28,11 +29,23 @@ async def test_upload_photos_to_message(mocker: pytest_mock.MockerFixture):
     response.read = mocker.AsyncMock(return_value='{"some": "data"}')
     api.async_http_session.post = mocker.Mock(return_value=response)
 
-    upload_data = await vq.upload_photos_to_message(b"123", "some/path.jpg", api=api)
+    upload_data = await vq.upload_photos_to_message(
+        b"123", "some/path.jpg", api=api
+    )
 
     fileds_calls = [
-        mocker.call("file1", b"123", content_type="multipart/form-data", filename=f"a.png"),
-        mocker.call("file2", b"456", content_type="multipart/form-data", filename=f"a.png")
+        mocker.call(
+            "file0",
+            b"123",
+            content_type="multipart/form-data",
+            filename=f"a.png",
+        ),
+        mocker.call(
+            "file1",
+            b"456",
+            content_type="multipart/form-data",
+            filename=f"a.png",
+        ),
     ]
 
     mocked_form_builed.add_field.assert_has_calls(fileds_calls)
@@ -45,18 +58,19 @@ async def test_upload_photos_to_message(mocker: pytest_mock.MockerFixture):
     api.async_http_session.post.assert_called_once()
 
     with pytest.raises(ValueError):
-        await vq.upload_photos_to_message(*["photo"]*11, api=api)
+        await vq.upload_photos_to_message(*["photo"] * 11, api=api)
+
 
 @pytest.mark.asyncio
 async def test_upload_photo_to_message(mocker: pytest_mock.MockerFixture):
     api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
     mocked_uploader = mocker.patch(
-        "vkquick.uploaders.upload_photos_to_message",
-        return_value=[0]
+        "vkquick.uploaders.upload_photos_to_message", return_value=[0]
     )
     res = await vq.upload_photo_to_message(b"123", api=api)
     mocked_uploader.assert_called_once_with(b"123", api=api, peer_id=0)
     assert res == 0
+
 
 @pytest.mark.asyncio
 async def test_upload_doc_to_message(mocker: pytest_mock.MockerFixture):
@@ -74,7 +88,8 @@ async def test_upload_doc_to_message(mocker: pytest_mock.MockerFixture):
     api.async_http_session.return_value = api.async_http_session
     api._make_api_request = mocker.AsyncMock(
         side_effect=[
-            vq.AttrDict({"upload_url": "url"}), vq.AttrDict({"doc": 1})
+            vq.AttrDict({"upload_url": "url"}),
+            vq.AttrDict({"doc": 1}),
         ]
     )
     response = mocker.Mock()
@@ -82,7 +97,9 @@ async def test_upload_doc_to_message(mocker: pytest_mock.MockerFixture):
     response.__aexit__ = mocker.AsyncMock(return_value=response)
     response.read = mocker.AsyncMock(return_value='{"some": "data"}')
     api.async_http_session.post = mocker.Mock(return_value=response)
-    doc = await vq.upload_doc_to_message(filepath="foo.txt", api=api, peer_id=0)
+    doc = await vq.upload_doc_to_message(
+        filepath="foo.txt", api=api, peer_id=0
+    )
     assert doc.fields == 1
     response.read.assert_called_once()
     response.__aenter__.assert_called_once()
@@ -91,4 +108,10 @@ async def test_upload_doc_to_message(mocker: pytest_mock.MockerFixture):
         await vq.upload_doc_to_message(api=api, peer_id=0)
 
     with pytest.raises(ValueError):
-        await vq.upload_doc_to_message(filepath="foo.txt", content="text", filename="a.txt", api=api, peer_id=0)
+        await vq.upload_doc_to_message(
+            filepath="foo.txt",
+            content="text",
+            filename="a.txt",
+            api=api,
+            peer_id=0,
+        )

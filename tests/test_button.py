@@ -2,9 +2,7 @@ import pytest
 import vkquick as vq
 
 
-
 class TestButton:
-
     def test_colors(self):
         assert vq.Button.text("a").primary().scheme["color"] == "primary"
         assert vq.Button.text("a").negative().scheme["color"] == "negative"
@@ -26,8 +24,16 @@ class TestButton:
 
     def test_every_type(self):
         assert vq.Button.text("a").scheme["action"]["type"] == "text"
-        assert vq.Button.open_link("a", link="b").scheme["action"]["type"] == "open_link"
+        assert (
+            vq.Button.open_link("a", link="b").scheme["action"]["type"]
+            == "open_link"
+        )
         assert vq.Button.location().scheme["action"]["type"] == "location"
         assert vq.Button.vkpay(hash_="a").scheme["action"]["type"] == "vkpay"
-        assert vq.Button.open_app("a", app_id=1, owner_id=1, hash_="a").scheme["action"]["type"] == "open_app"
+        assert (
+            vq.Button.open_app("a", app_id=1, owner_id=1, hash_="a").scheme[
+                "action"
+            ]["type"]
+            == "open_app"
+        )
         assert vq.Button.callback("a").scheme["action"]["type"] == "callback"

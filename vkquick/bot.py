@@ -229,9 +229,12 @@ class Bot:
         extra_types: ty.Optional[ty.List[str]] = None,
         all_types: ty.Optional[ty.List[str]] = None,
     ) -> EventHandler:
-        event_handler = EventHandler(  # noqa
-            handler, extra_types=extra_types, all_types=all_types
-        )
+        if isinstance(handler, SignalHandler):
+            event_handler = handler
+        else:
+            event_handler = EventHandler(  # noqa
+                handler, extra_types=extra_types, all_types=all_types
+            )
         self._event_handlers.append(event_handler)
         return event_handler
 

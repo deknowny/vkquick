@@ -7,7 +7,7 @@ from vkquick.base.wrapper import Wrapper
 class APISerializable(abc.ABC):
     @abc.abstractmethod
     def api_param_representation(self) -> str:
-        pass
+        pass  # pragma: no cover
 
 
 class UIBuilder(APISerializable):
