@@ -57,7 +57,7 @@ async def upload_doc_to_message(
     return_tags: ty.Optional[bool] = None,
     type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
 ) -> Document:
-    pass
+    pass  # pragma: no cover
 
 
 @ty.overload
@@ -71,7 +71,7 @@ async def upload_doc_to_message(
     return_tags: ty.Optional[bool] = None,
     type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
 ) -> Document:
-    pass
+    pass  # pragma: no cover
 
 
 async def upload_doc_to_message(
