@@ -421,7 +421,7 @@ class Context:
         **kwargs,
     ) -> ty.Any:
         if not self.msg.out:
-            raise Exception("Can't edit message if it isn't yours")
+            raise AssertionError("Can't edit message if it isn't yours")
         mock_message = SentMessage(
             message_id=self.msg.id,
             peer_id=self.msg.peer_id,
