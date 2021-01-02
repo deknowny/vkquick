@@ -96,21 +96,8 @@ class ColoredDebugger(Debugger):
         Выстраивает хедер сообщения: тип события и время,
         когда завершилась его обработка
         """
-        with self._api.synchronize():
-            if self._message.from_id > 0:
-                sender = self._api.fetch_user_via_id(self._message.from_id)
-                sender = self._api.users.get(
-                    allow_cache_=True, user_ids=self._message.from_id
-                )
-                sender = User(sender[0])
-                sender = format(sender, "<fn> <ln>")
-            else:
-                sender = self._api.groups.get_by_id(
-                    allow_cache_=True, group_id=abs(self._message.from_id)
-                )
-                sender = sender[0].name
         sender_info = self.sender_info_template.format(
-            sender_name=self.sender_name_color(sender),
+            sender_name=self.sender_name_color(self._sender_name),
             sender_command=self.sender_command_color(self._message.text),
         )
         header = self.event_header_template.format(

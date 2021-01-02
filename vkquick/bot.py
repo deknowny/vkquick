@@ -32,6 +32,7 @@ from vkquick.debuggers import ColoredDebugger
 from vkquick.command import Command
 from vkquick.base.filter import Filter
 from vkquick.context import Context
+from vkquick.wrappers.message import Message
 
 
 class Bot:
@@ -356,11 +357,28 @@ class Bot:
         а затем выводит сообщение, собранное дебаггером
         """
         if self._debug_filter(event):
-            debugger = self._debugger(self.api, event, handling_info)  # noqa
+            sender_name = await self._get_sender_name(event.msg)
+            debugger = self._debugger(
+                sender_name=sender_name,
+                message=event.msg,
+                schemes=handling_info
+            )
             debug_message = debugger.render()
             print(pretty_view(event.msg.fields))
             clear_console()
             print(debug_message)
+
+    async def _get_sender_name(self, message: Message):
+        if message.from_id > 0:
+            sender = await self.shared_box.api.fetch_user_via_id(message.from_id)
+            sender = format(sender, "<fn> <ln>")
+        else:
+            sender = await self.shared_box.api.groups.get_by_id(
+                allow_cache_=True, group_id=abs(message.from_id)
+            )
+            sender = sender[0].name
+
+        return sender
 
     async def _call_post_event_handling_signal(
         self, event: Event, handling_info: HandlingStatus,

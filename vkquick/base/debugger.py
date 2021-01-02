@@ -2,7 +2,7 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick import API
+from vkquick.wrappers.message import Message
 from vkquick.events_generators.event import Event
 from vkquick.base.handling_status import HandlingStatus
 
@@ -19,10 +19,10 @@ class Debugger(abc.ABC):
     """
 
     def __init__(
-        self, api: API, event: Event, schemes: ty.List[HandlingStatus]
+        self, sender_name: str, message: Message, schemes: ty.List[HandlingStatus]
     ) -> None:
-        self._api = api
-        self._message = event.msg
+        self._sender_name = sender_name
+        self._message = message
         self._schemes = schemes
 
     @abc.abstractmethod
