@@ -10,6 +10,7 @@ todo/
 site/
 dist/
 .coverage
+.coverage*
 
 # Tests data
 tests_old/
