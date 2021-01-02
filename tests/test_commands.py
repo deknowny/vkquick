@@ -14,7 +14,8 @@ def test_raises_init():
     com = vq.Command(run_in_thread=True)
     assert isinstance(com._pool, concurrent.futures.ThreadPoolExecutor)
 
-    async def foo(): ...
+    async def foo():
+        ...
 
     with pytest.raises(ValueError):
         com(foo)
@@ -57,7 +58,7 @@ class TestFields:
             arg: vq.Integer(),
             arg1: vq.Integer,
             arg2: int = vq.Integer,
-            arg3: int = vq.Integer()
+            arg3: int = vq.Integer(),
         ):
             ...
 
@@ -71,7 +72,7 @@ class TestFields:
             arg: vq.Integer(),
             arg1: vq.Integer,
             arg2: int = vq.Integer,
-            arg3: int = vq.Integer()
+            arg3: int = vq.Integer(),
         ):
             ...
 
@@ -118,10 +119,11 @@ class TestFields:
         assert com.filters == [com, any_filter]
 
     def test_human_style_args(self):
-        assert vq.Command(human_style_arguments_name={"a": "b"}).human_style_arguments_name == {"a": "b"}
+        assert vq.Command(
+            human_style_arguments_name={"a": "b"}
+        ).human_style_arguments_name == {"a": "b"}
 
     def test_invalid_argument_handlers_init(self):
-
         @vq.Command(on_invalid_argument={"arg1": "foo"})
         def com(arg1: vq.Integer, arg2: vq.Integer, arg3: vq.Integer):
             ...
@@ -134,9 +136,14 @@ class TestFields:
         def arg():
             return "foo"
 
-        assert com.invalid_argument_handlers == {"arg1": "foo", "arg2": arg2, "arg3": arg}
+        assert com.invalid_argument_handlers == {
+            "arg1": "foo",
+            "arg2": arg2,
+            "arg3": arg,
+        }
 
         with pytest.raises(KeyError):
+
             @com.on_invalid_argument
             def arg2(a, b):
                 return "foo"
@@ -152,26 +159,105 @@ class TestFields:
         def bar():
             ...
 
-        assert com.invalid_filter_handlers == {vq.ChatOnly: "foo", vq.DirectOnly: bar}
+        assert com.invalid_filter_handlers == {
+            vq.ChatOnly: "foo",
+            vq.DirectOnly: bar,
+        }
+
+        with pytest.raises(KeyError):
+
+            @com.on_invalid_filter(vq.DirectOnly)
+            def bar(a, b):
+                ...
+
 
 def test_resolve_text_cutter():
     with pytest.raises(TypeError):
+
         @vq.Command()
         def com(ctx, arg):
             ...
 
     with pytest.raises(TypeError):
+
         @vq.Command()
         def com(ctx, arg: vq.Context):
             ...
 
     with pytest.raises(TypeError):
+
         @vq.Command()
         def com(ctx, arg: int):
             ...
+
 
 def test_escaping():
     com = vq.Command(prefixes="?", names="?")
     assert com._command_routing_regex.pattern == "\?\?"
     com = vq.Command(prefixes="a?", names="a?", use_regex_escape=False)
     assert com._command_routing_regex.pattern == "a?a?"
+
+
+@pytest.mark.asyncio
+async def test_init_text_arguments():
+    @vq.Command()
+    def com(arg: vq.Integer, arg1: vq.Word):
+        ...
+
+    assert await com.init_text_arguments("123 abc", None) == (
+        True,
+        {"arg": 123, "arg1": "abc"},
+    )
+
+    @vq.Command()
+    def com(ctx: vq.Context, arg: vq.Integer, arg1: vq.Word):
+        ...
+
+    assert await com.init_text_arguments("123 abc", None) == (
+        True,
+        {"arg": 123, "arg1": "abc"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_failed_init_text_arguments(mocker: pytest_mock.MockerFixture):
+
+    arg1_type = vq.Word()
+    mocker.patch.object(arg1_type, "invalid_value")
+
+    @vq.Command()
+    def com(arg: vq.Integer, arg1: arg1_type, arg2: vq.Integer):
+        ...
+
+    def arg_handler():
+        ...
+
+    arg_handler = mocker.create_autospec(arg_handler)
+    arg_handler = com.on_invalid_argument("arg")(arg_handler)
+
+    ctx = mocker.Mock()
+    ctx.reply = mocker.AsyncMock()
+
+    assert await com.init_text_arguments("123 abc 123", None) == (
+        True,
+        {"arg": 123, "arg1": "abc", "arg2": 123},
+    )
+
+    assert await com.init_text_arguments("abc abc", ctx) == (
+        False,
+        {"arg": vq.UnmatchedArgument},
+    )
+    arg_handler.assert_called_once()
+
+    ctx.reply.reset_mock()
+
+    assert await com.init_text_arguments("123 abc abc", ctx) == (
+        False,
+        {"arg": 123, "arg1": "abc", "arg2": vq.UnmatchedArgument},
+    )
+    ctx.reply.assert_called_once()
+
+    assert await com.init_text_arguments("123 abc 123 123", ctx) == (
+        False,
+        {"arg": 123, "arg1": "abc", "arg2": 123},
+    )

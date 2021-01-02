@@ -32,15 +32,15 @@ class Union(TextCutter):
 
     async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         for type_ in self.available_type:
-            values = await sync_async_run(
-                type_.cut_part(arguments_string)
-            )
+            values = await sync_async_run(type_.cut_part(arguments_string))
             if values[0] is not UnmatchedArgument:
                 return values
         return UnmatchedArgument, arguments_string
 
     def usage_description(self) -> str:
-        description = "Значение должно подходить под одно из следующих описаний:\n"
+        description = (
+            "Значение должно подходить под одно из следующих описаний:\n"
+        )
         for ind, value in enumerate(self.available_type, 1):
             value_description = value.usage_description()
             description += f"{ind}) {value_description.rstrip()}\n"

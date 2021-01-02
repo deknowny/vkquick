@@ -28,7 +28,7 @@ from .utils import (
     sync_async_callable,
     download_file,
     get_user_registration_date,
-    pretty_view
+    pretty_view,
 )
 
 from .json_parsers import (

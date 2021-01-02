@@ -8,7 +8,12 @@ import pytest_mock
 import unittest.mock
 
 
-def test_event_handler(attach_events, make_message_new_event, make_bot, mocker: pytest_mock.MockerFixture):
+def test_event_handler(
+    attach_events,
+    make_message_new_event,
+    make_bot,
+    mocker: pytest_mock.MockerFixture,
+):
     os.environ["VKQUICK_RELEASE"] = "1"
     bot = make_bot()
     message_new = make_message_new_event()

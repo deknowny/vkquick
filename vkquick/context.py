@@ -519,15 +519,16 @@ class Context:
             if photos_uploading_tasks or docs_uploading_tasks:
                 if photos_uploading_tasks:
                     attachments = await asyncio.gather(
-                        *photos_uploading_tasks,
-                        *docs_uploading_tasks
+                        *photos_uploading_tasks, *docs_uploading_tasks
                     )
                     attachments = list(
                         itertools.chain.from_iterable(attachments)
                     )
                     pre_params["attachment"] = attachments
                 else:
-                    pre_params["attachment"] = await asyncio.gather(*docs_uploading_tasks)
+                    pre_params["attachment"] = await asyncio.gather(
+                        *docs_uploading_tasks
+                    )
 
         if (
             self._auto_set_content_source

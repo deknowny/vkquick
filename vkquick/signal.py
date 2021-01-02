@@ -130,8 +130,7 @@ class EventHandler(SignalHandler):
         self._pass_event = len(parameters) == 1
         if len(parameters) not in (0, 1):
             raise TypeError(
-                f"Event handler should"
-                f"take only 1 or 0 arguments"
+                f"Event handler should" f"take only 1 or 0 arguments"
             )
 
         return super().__call__(handler)

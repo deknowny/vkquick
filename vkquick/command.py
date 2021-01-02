@@ -519,6 +519,8 @@ class Command(Filter):
                 False,
                 f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`",
             )
+        if self._reaction_context_argument_name is not None:
+            arguments[self._reaction_context_argument_name] = context
         context.extra.reaction_arguments = arguments
         return Decision(True, "Команда полностью подходит")
 
@@ -530,13 +532,10 @@ class Command(Filter):
         Это работает каким-то чудом, просто поверьте
         """
         arguments = {}
-        if self._reaction_context_argument_name is not None:
-            arguments[self._reaction_context_argument_name] = context
-
         new_arguments_string = arguments_string.lstrip()
         for name, cutter in self._reaction_arguments:
-            parsed_value, new_arguments_string = await sync_async_run(
-                cutter.cut_part(new_arguments_string)
+            parsed_value, new_arguments_string = cutter.cut_part(
+                new_arguments_string
             )
             new_arguments_string = new_arguments_string.lstrip()
             arguments[name] = parsed_value
@@ -553,12 +552,8 @@ class Command(Filter):
                 else:
                     for position, arg in enumerate(self._reaction_arguments):
                         if arg[0] == name:
-                            await sync_async_run(
-                                cutter.invalid_value(
-                                    position,
-                                    not new_arguments_string,
-                                    context,
-                                )
+                            await cutter.invalid_value(
+                                position, not new_arguments_string, context,
                             )
                             break
                 return False, arguments

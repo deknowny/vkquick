@@ -34,22 +34,26 @@ def make_message_new_event():
                     "important": False,
                     "random_id": 0,
                     "attachments": [],
-                    "is_hidden": False
+                    "is_hidden": False,
                 },
                 "client_info": {
-                    "button_actions":
-                        ["text", "intent_subscribe", "intent_unsubscribe"],
+                    "button_actions": [
+                        "text",
+                        "intent_subscribe",
+                        "intent_unsubscribe",
+                    ],
                     "keyboard": True,
                     "inline_keyboard": False,
                     "carousel": False,
-                    "lang_id": 0
-                }
+                    "lang_id": 0,
+                },
             },
             "group_id": 192979547,
-            "event_id": "f6277d86eb8c3f1c580cf7991fe29979b8afe3d2"
+            "event_id": "f6277d86eb8c3f1c580cf7991fe29979b8afe3d2",
         }
         event = vq.Event(event_scheme)
         return event
+
     return wrapper
 
 
@@ -61,11 +65,14 @@ def attach_events():
 
         eg_mock = unittest.mock.Mock()
         puller = pull_new_events(events)
-        eg_mock.__aiter__ = unittest.mock.Mock(return_value=puller.__aiter__())
-        eg_mock.__anext__ = unittest.mock.AsyncMock(return_value=puller.__anext__)
+        eg_mock.__aiter__ = unittest.mock.Mock(
+            return_value=puller.__aiter__()
+        )
+        eg_mock.__anext__ = unittest.mock.AsyncMock(
+            return_value=puller.__anext__
+        )
         eg_mock.close_session = unittest.mock.AsyncMock()
         eg_mock.setup = unittest.mock.AsyncMock()
         bot.shared_box.events_generator = eg_mock
 
     return wrapper
-
