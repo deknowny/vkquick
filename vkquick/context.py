@@ -548,6 +548,7 @@ class Context:
                     "You already attached a keyboard "
                     "before via `attach_keyboard`"
                 )
+            pre_params["keyboard"] = self._attached_keyboard
         if self._attached_carousel is not None:
             if "template" in pre_params:
                 raise ValueError(

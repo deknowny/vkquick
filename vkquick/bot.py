@@ -173,6 +173,7 @@ class Bot:
         *,
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
+        argline: ty.Optional[str] = None,
         title: ty.Optional[str] = None,
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
@@ -189,6 +190,8 @@ class Bot:
         run_in_thread: bool = False,
         run_in_process: bool = False,
         use_regex_escape: bool = True,
+        any_text: bool = False,
+        payload_names: ty.Collection[str] = ()
     ) -> Command:
         if handler is None:
             command_params = locals().copy()
@@ -280,25 +283,52 @@ class Bot:
         await self._shared_box.events_generator.setup()
         async for events in self._shared_box.events_generator:
             for event in events:
-                if event.type in ("message_new", "message_reply"):
-                    asyncio.create_task(
-                        self.pass_event_trough_commands(event)
-                    )
-                elif event.type == 4:
-                    # TODO: optimize (#34)
-                    extended_message = await self._shared_box.api.messages.get_by_id(
-                        allow_cache_=True, message_ids=event[1]
-                    )
-                    extended_message = extended_message.items[0]
-                    event.set_message(extended_message)
-                    asyncio.create_task(
-                        self.pass_event_trough_commands(event)
-                    )
-                for event_handler in self._event_handlers:
-                    if event_handler.is_handling_name(event.type):
-                        asyncio.create_task(
-                            sync_async_run(event_handler.call(event))
-                        )
+                asyncio.create_task(self.route_event_purpose(event))
+
+    async def route_event_purpose(self, event: Event):
+        if event.type in ("message_new", "message_reply"):
+            if event.msg.payload is not None and "command" in event.msg.payload:
+                asyncio.create_task(
+                    self.run_command_via_payload(event)
+                )
+            else:
+                asyncio.create_task(
+                    self.pass_event_trough_commands(event)
+                )
+        elif event.type == 4:
+            asyncio.create_task(
+                self._extend_userlp_message_and_run_command(event)
+            )
+        for event_handler in self._event_handlers:
+            if event_handler.is_handling_name(event.type):
+                asyncio.create_task(
+                    sync_async_run(event_handler.call(event))
+                )
+
+    async def _extend_userlp_message_and_run_command(self, event: Event):
+        # TODO: optimize (#34)
+        extended_message = await self._shared_box.api.messages.get_by_id(
+            allow_cache_=True, message_ids=event[1]
+        )
+        extended_message = extended_message.items[0]
+        event.set_message(extended_message)
+        asyncio.create_task(
+            self.pass_event_trough_commands(event)
+        )
+
+    async def run_command_via_payload(self, event: Event):
+        for command in self._commands:
+            if event.msg.payload.command in command.payload_names:
+                context = Context(event=event, shared_box=self.shared_box)
+                if "args" in event.msg.payload:
+                    reaction_arguments = event.msg.payload.args
+                else:
+                    reaction_arguments = {}
+                if command.reaction_context_argument_name is not None:
+                    reaction_arguments[command.reaction_context_argument_name] = context
+
+                context.extra.reaction_arguments = reaction_arguments
+                asyncio.create_task(command.call_reaction(context=context))
 
     async def pass_event_trough_commands(self, event: Event) -> None:
         """

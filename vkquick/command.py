@@ -240,6 +240,7 @@ class Command(Filter):
         run_in_process: bool = False,
         use_regex_escape: bool = True,
         any_text: bool = False,
+        payload_names: ty.Collection[str] = ()
     ) -> None:
         self._description = description
         self._argline = argline
@@ -251,6 +252,7 @@ class Command(Filter):
         self._title = title
         self._human_style_arguments_name = human_style_arguments_name
         self._use_regex_escape = use_regex_escape
+        self._payload_names = tuple(payload_names)
 
         self._filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
@@ -282,6 +284,14 @@ class Command(Filter):
         self.prefixes = prefixes
         self.names = names
         self._build_routing_regex()
+
+    @property
+    def reaction_context_argument_name(self) -> ty.Optional[str]:
+        return self._reaction_context_argument_name
+
+    @property
+    def payload_names(self) -> ty.Tuple[str, ...]:
+        return self._payload_names
 
     @property
     def any_text(self) -> bool:
@@ -395,6 +405,8 @@ class Command(Filter):
             self._description = inspect.getdoc(reaction)
         if self._title is None:
             self._title = reaction.__name__
+        if not self._payload_names:
+            self._payload_names = (reaction.__name__,)
         if self._pool is not None and inspect.iscoroutinefunction(reaction):
             raise ValueError(
                 "Can't run a command in thread/process "
