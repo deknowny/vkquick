@@ -15,6 +15,7 @@ from vkquick.base.filter import Filter, Decision
 from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
 from vkquick.shared_box import SharedBox
+from vkquick.text_cutters.regex import Regex
 
 
 # TODO: payload
@@ -210,6 +211,7 @@ class Command(Filter):
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
         title: ty.Optional[str] = None,
+        argline: ty.Optional[str] = None,
         description: ty.Optional[str] = None,
         routing_command_re_flags: re.RegexFlag = re.IGNORECASE,
         on_invalid_argument: ty.Optional[
@@ -237,8 +239,10 @@ class Command(Filter):
         run_in_thread: bool = False,
         run_in_process: bool = False,
         use_regex_escape: bool = True,
+        any_text: bool = False,
     ) -> None:
         self._description = description
+        self._argline = argline
         self._names = None
         self._prefixes = None
         self._routing_command_re_flags = routing_command_re_flags
@@ -254,6 +258,11 @@ class Command(Filter):
 
         self._invalid_filter_handlers = on_invalid_filter or {}
         self._invalid_argument_handlers = on_invalid_argument or {}
+
+        if any_text and (prefixes or names):
+            raise ValueError("Can't use `any_text` with `prefixes` or `names`")
+
+        self._any_text = any_text
 
         if run_in_process and run_in_thread:
             raise ValueError(
@@ -275,14 +284,18 @@ class Command(Filter):
         self._build_routing_regex()
 
     @property
-    def reaction_arguments(self):
+    def any_text(self) -> bool:
+        return self._any_text
+
+    @property
+    def reaction_arguments(self) -> ty.List[ty.Tuple[str, ty.Any]]:
         """
         Текстовые аргументы, принимаемые командой
         """
         return self._reaction_arguments
 
     @property
-    def title(self):
+    def title(self) -> ty.Optional[str]:
         """
         Имя команды (максимально краткое описание того, что она делает)
         """
@@ -376,6 +389,8 @@ class Command(Filter):
     def __call__(self, reaction: sync_async_callable(..., ty.Optional[str])):
         self.reaction = reaction
         self._resolve_arguments()
+        if self._argline is not None:
+            self._spoof_args_from_argline()
         if self._description is None:
             self._description = inspect.getdoc(reaction)
         if self._title is None:
@@ -493,6 +508,9 @@ class Command(Filter):
             return real_handler
 
     async def make_decision(self, context: Context):
+        if self.any_text:
+            return Decision(True, "Команда полностью подходит")
+
         matched = self._command_routing_regex.match(context.msg.text)
         if matched:
             arguments_string = context.msg.text[matched.end() :]
@@ -537,7 +555,8 @@ class Command(Filter):
             parsed_value, new_arguments_string = cutter.cut_part(
                 new_arguments_string
             )
-            new_arguments_string = new_arguments_string.lstrip()
+            if not self._argline:
+                new_arguments_string = new_arguments_string.lstrip()
             arguments[name] = parsed_value
             # Значение от парсера некорректное или
             # Осталась часть, которую уже нечем парсить
@@ -557,6 +576,9 @@ class Command(Filter):
                             )
                             break
                 return False, arguments
+
+        if "__argline_regex_part" in arguments:
+            del arguments["__argline_regex_part"]
 
         if new_arguments_string:
             return False, arguments
@@ -582,6 +604,34 @@ class Command(Filter):
         result = await sync_async_run(result)
         if result is not None:
             await context.reply(message=result)
+
+    def _spoof_args_from_argline(self):
+        self._argline = self._argline.lstrip()
+        argtype_regex = r"(\{[a-z][a-z0-9]+?\})"
+        argline_parts = re.split(
+            argtype_regex, self._argline, flags=re.IGNORECASE
+        )
+        spoofed_reaction_arguments = []
+        real_reaction_arguments = dict(self._reaction_arguments)
+        for part in argline_parts:
+            if re.fullmatch(argtype_regex, part):
+                arg_name = part[1:-1]
+                if arg_name not in real_reaction_arguments:
+                    raise KeyError(
+                        f"Passed a linked argument `{arg_name}` in"
+                        f"argline, but there isn't such"
+                        f"in reaction signature"
+                    )
+                spoofed_reaction_arguments.append(
+                    (arg_name, real_reaction_arguments[arg_name])
+                )
+            else:
+                spoofed_reaction_arguments.append(
+                    ("__argline_regex_part", Regex(part))
+                )
+
+        self._reaction_arguments = spoofed_reaction_arguments
+
 
     def _resolve_arguments(self) -> None:
         """
