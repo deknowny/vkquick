@@ -191,7 +191,7 @@ class Bot:
         run_in_process: bool = False,
         use_regex_escape: bool = True,
         any_text: bool = False,
-        payload_names: ty.Collection[str] = ()
+        payload_names: ty.Collection[str] = (),
     ) -> Command:
         if handler is None:
             command_params = locals().copy()
@@ -287,23 +287,20 @@ class Bot:
 
     async def route_event_purpose(self, event: Event):
         if event.type in ("message_new", "message_reply"):
-            if event.msg.payload is not None and "command" in event.msg.payload:
-                asyncio.create_task(
-                    self.run_command_via_payload(event)
-                )
+            if (
+                event.msg.payload is not None
+                and "command" in event.msg.payload
+            ):
+                asyncio.create_task(self.run_command_via_payload(event))
             else:
-                asyncio.create_task(
-                    self.pass_event_trough_commands(event)
-                )
+                asyncio.create_task(self.pass_event_trough_commands(event))
         elif event.type == 4:
             asyncio.create_task(
                 self._extend_userlp_message_and_run_command(event)
             )
         for event_handler in self._event_handlers:
             if event_handler.is_handling_name(event.type):
-                asyncio.create_task(
-                    sync_async_run(event_handler.call(event))
-                )
+                asyncio.create_task(sync_async_run(event_handler.call(event)))
 
     async def _extend_userlp_message_and_run_command(self, event: Event):
         # TODO: optimize (#34)
@@ -312,9 +309,7 @@ class Bot:
         )
         extended_message = extended_message.items[0]
         event.set_message(extended_message)
-        asyncio.create_task(
-            self.pass_event_trough_commands(event)
-        )
+        asyncio.create_task(self.pass_event_trough_commands(event))
 
     async def run_command_via_payload(self, event: Event):
         for command in self._commands:
@@ -325,7 +320,9 @@ class Bot:
                 else:
                     reaction_arguments = {}
                 if command.reaction_context_argument_name is not None:
-                    reaction_arguments[command.reaction_context_argument_name] = context
+                    reaction_arguments[
+                        command.reaction_context_argument_name
+                    ] = context
 
                 context.extra.reaction_arguments = reaction_arguments
                 asyncio.create_task(command.call_reaction(context=context))
@@ -391,7 +388,7 @@ class Bot:
             debugger = self._debugger(
                 sender_name=sender_name,
                 message=event.msg,
-                schemes=handling_info
+                schemes=handling_info,
             )
             debug_message = debugger.render()
             print(pretty_view(event.msg.fields))
@@ -400,7 +397,9 @@ class Bot:
 
     async def _get_sender_name(self, message: Message):
         if message.from_id > 0:
-            sender = await self.shared_box.api.fetch_user_via_id(message.from_id)
+            sender = await self.shared_box.api.fetch_user_via_id(
+                message.from_id
+            )
             sender = format(sender, "<fn> <ln>")
         else:
             sender = await self.shared_box.api.groups.get_by_id(

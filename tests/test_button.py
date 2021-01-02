@@ -14,10 +14,10 @@ class TestButton:
         assert "payload" not in button.scheme
 
         button = vq.Button.text("a", payload={"foo": 123})
-        assert button.scheme["payload"] == {"foo": 123}
+        assert button.scheme["action"]["payload"] == '{"foo":123}'
 
         button = vq.Button.text("a", payload='{"foo":123}')
-        assert button.scheme["payload"] == '{"foo":123}'
+        assert button.scheme["action"]["payload"] == '{"foo":123}'
 
         with pytest.raises(TypeError):
             vq.Button.text("a", payload=1)

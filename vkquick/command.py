@@ -240,7 +240,7 @@ class Command(Filter):
         run_in_process: bool = False,
         use_regex_escape: bool = True,
         any_text: bool = False,
-        payload_names: ty.Collection[str] = ()
+        payload_names: ty.Collection[str] = (),
     ) -> None:
         self._description = description
         self._argline = argline
@@ -262,7 +262,9 @@ class Command(Filter):
         self._invalid_argument_handlers = on_invalid_argument or {}
 
         if any_text and (prefixes or names):
-            raise ValueError("Can't use `any_text` with `prefixes` or `names`")
+            raise ValueError(
+                "Can't use `any_text` with `prefixes` or `names`"
+            )
 
         self._any_text = any_text
 
@@ -396,7 +398,9 @@ class Command(Filter):
     def use_regex_escape(self):
         return self._use_regex_escape
 
-    def __call__(self, reaction: sync_async_callable(..., ty.Optional[str])):
+    def __call__(
+        self, reaction: sync_async_callable(..., ty.Optional[str])
+    ) -> Command:
         self.reaction = reaction
         self._resolve_arguments()
         if self._argline is not None:
@@ -520,35 +524,34 @@ class Command(Filter):
             return real_handler
 
     async def make_decision(self, context: Context):
-        if self.any_text:
-            return Decision(True, "Команда полностью подходит")
-
-        matched = self._command_routing_regex.match(context.msg.text)
-        if matched:
-            arguments_string = context.msg.text[matched.end() :]
-        else:
-            return Decision(
-                False,
-                f"Команда не подходит под шаблон `{self._command_routing_regex.pattern}`",
-            )
-
-        is_parsed, arguments = await self.init_text_arguments(
-            arguments_string, context
-        )
-
-        if not is_parsed:
-            if not arguments:
+        arguments = {}
+        if not self.any_text:
+            matched = self._command_routing_regex.match(context.msg.text)
+            if matched:
+                arguments_string = context.msg.text[matched.end() :]
+            else:
                 return Decision(
                     False,
-                    "Команде были переданы аргументы, которые не обозначены",
+                    f"Команда не подходит под шаблон `{self._command_routing_regex.pattern}`",
                 )
 
-            unparsed_argument_name, _ = arguments.popitem()
-
-            return Decision(
-                False,
-                f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`",
+            is_parsed, arguments = await self.init_text_arguments(
+                arguments_string, context
             )
+
+            if not is_parsed:
+                if not arguments:
+                    return Decision(
+                        False,
+                        "Команде были переданы аргументы, которые не обозначены",
+                    )
+
+                unparsed_argument_name, _ = arguments.popitem()
+
+                return Decision(
+                    False,
+                    f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`",
+                )
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
         context.extra.reaction_arguments = arguments
@@ -592,6 +595,7 @@ class Command(Filter):
         if "__argline_regex_part" in arguments:
             del arguments["__argline_regex_part"]
 
+        # Когда у команды нет аргументов, но было что-то передано
         if new_arguments_string:
             return False, arguments
         return True, arguments
@@ -615,7 +619,7 @@ class Command(Filter):
             result = self.reaction(**context.extra["reaction_arguments"])
         result = await sync_async_run(result)
         if result is not None:
-            await context.reply(message=result)
+            await context.reply(result)
 
     def _spoof_args_from_argline(self):
         self._argline = self._argline.lstrip()
@@ -643,7 +647,6 @@ class Command(Filter):
                 )
 
         self._reaction_arguments = spoofed_reaction_arguments
-
 
     def _resolve_arguments(self) -> None:
         """
@@ -747,7 +750,7 @@ class Command(Filter):
         )
 
     def __str__(self):
-        return f"<Command title={self.title}, prefixes={self.prefixes}, names={self.names}>"
+        return f"<Command title={self.title!r}, prefixes={self.prefixes}, names={self.names}>"
 
 
 def _call_with_optional_context(func, context: Context):
@@ -756,8 +759,6 @@ def _call_with_optional_context(func, context: Context):
         return func(context)
     elif len(parameters) == 0:
         return func()
-    else:
-        raise TypeError("Handler to invalid can take from 0 to 1 parameters.")
 
 
 async def _optional_call_with_autoreply(func, context: Context):

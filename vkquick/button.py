@@ -49,7 +49,9 @@ def _convert_payload(func):
     def wrapper(*args, **kwargs):
         if "payload" in kwargs:
             if isinstance(kwargs["payload"], dict):
-                kwargs["payload"] = json_parser_policy.dumps(kwargs["payload"])
+                kwargs["payload"] = json_parser_policy.dumps(
+                    kwargs["payload"]
+                )
             elif not isinstance(kwargs["payload"], str):
                 raise TypeError(
                     "Invalid type for payload. "
@@ -70,9 +72,7 @@ class Button:
         """
         Кнопка типа `text`
         """
-        return _ColoredButton(
-            label=label, type="text", payload=payload
-        )
+        return _ColoredButton(label=label, type="text", payload=payload)
 
     @classmethod
     @_convert_payload
@@ -108,9 +108,7 @@ class Button:
         """
         Кнопка типа `vkpay`
         """
-        return _UncoloredButton(
-            hash=hash_, type="vkpay", payload=payload
-        )
+        return _UncoloredButton(hash=hash_, type="vkpay", payload=payload)
 
     @classmethod
     @_convert_payload
@@ -143,6 +141,4 @@ class Button:
         """
         Кнопка типа `callback`
         """
-        return _ColoredButton(
-            label=label, type="callback", payload=payload
-        )
+        return _ColoredButton(label=label, type="callback", payload=payload)

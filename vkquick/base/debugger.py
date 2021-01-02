@@ -19,7 +19,10 @@ class Debugger(abc.ABC):
     """
 
     def __init__(
-        self, sender_name: str, message: Message, schemes: ty.List[HandlingStatus]
+        self,
+        sender_name: str,
+        message: Message,
+        schemes: ty.List[HandlingStatus],
     ) -> None:
         self._sender_name = sender_name
         self._message = message
