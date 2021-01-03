@@ -323,30 +323,6 @@ class Context:
         self._attached_keyboard = Keyboard(one_time=one_time, inline=inline)
         self._attached_keyboard.build(*buttons)
 
-    def fetch_photos(self) -> ty.List[Photo]:
-        """
-        Возвращает только фотографии из всего,
-        что есть во вложениях, оборачивая их в обертку
-        """
-        photos = [
-            Photo(attachment.photo)
-            for attachment in self.msg.attachments
-            if attachment.type == "photo"
-        ]
-        return photos
-
-    def fetch_docs(self):
-        """
-        Возвращает только вложения с типом документ из всего,
-        что есть во вложениях, оборачивая их в обертку
-        """
-        docs = [
-            Document(getattr(attachment, attachment.type))
-            for attachment in self.msg.attachments
-            if attachment.type == "doc"
-        ]
-        return docs
-
     def attach_photos(self, *photos: ty.Union[bytes, str]) -> None:
         """
         Позволяет добавить фотографию к следующему сообщению,

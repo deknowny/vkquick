@@ -4,6 +4,7 @@ import functools
 import json
 import typing as ty
 
+from vkquick.wrappers.attachment import Photo, Document
 from vkquick.utils import AttrDict
 from vkquick.base.wrapper import Wrapper
 
@@ -94,6 +95,30 @@ class Message(Wrapper):
     @property
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.expire_ttl if "expire_ttl" in self.fields else None
+
+    def fetch_photos(self) -> ty.List[Photo]:
+        """
+        Возвращает только фотографии из всего,
+        что есть во вложениях, оборачивая их в обертку
+        """
+        photos = [
+            Photo(attachment.photo)
+            for attachment in self.attachments
+            if attachment.type == "photo"
+        ]
+        return photos
+
+    def fetch_docs(self):
+        """
+        Возвращает только вложения с типом документ из всего,
+        что есть во вложениях, оборачивая их в обертку
+        """
+        docs = [
+            Document(getattr(attachment, attachment.type))
+            for attachment in self.attachments
+            if attachment.type == "doc"
+        ]
+        return docs
 
     # Shortcuts
     cmid = conversation_message_id
