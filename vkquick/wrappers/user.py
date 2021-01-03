@@ -14,8 +14,8 @@ class User(Wrapper):
         """
         Создает упоминание пользователя с `alias` либо с его именем
         """
-        updated_alias = format(self, alias)
-        if updated_alias:
+        if alias:
+            updated_alias = format(self, alias)
             mention = f"[id{self.id}|{updated_alias}]"
         else:
             mention = f"[id{self.id}|{self.fn} {self.ln}]"
