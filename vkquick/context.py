@@ -103,6 +103,10 @@ class Context:
         return self.event.msg
 
     @property
+    def sb(self) -> SharedBox:
+        return self.shared_box
+
+    @property
     def api(self) -> API:
         """
         Текущий инстанс API, который был передан
@@ -437,6 +441,32 @@ class Context:
             delete_for_all=delete_for_all,
             **kwargs,
         )
+
+    async def conquer_new_message(
+        self,
+        *,
+        same_chat: bool = True,
+        same_user: bool = True,
+        include_output_messages: bool = False,
+    ) -> Context:
+        handled_events = ["message_new", 4]
+        if include_output_messages:
+            handled_events.append("message_reply")
+        while True:
+            new_event = await self.sb.bot.fetch_new_event()
+
+            if (
+                new_event.type in handled_events
+                and (new_event.msg.from_id != self.msg.from_id or same_user)
+                and (new_event.msg.peer_id != self.msg.peer_id or same_chat)
+            ):
+                new_context = Context(
+                    shared_box=self.shared_box,
+                    event=new_event,
+                    filters_response=self.filters_response,
+                    extra=self.extra
+                )
+                return new_context
 
     def __str__(self) -> str:
         return (

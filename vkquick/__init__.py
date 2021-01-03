@@ -76,6 +76,7 @@ from .filters.required_attachments import RequiredAttachments
 
 from .wrappers.user import User
 from .wrappers.attachment import Document, Photo
+from .wrappers.message import Message
 
 from .uploaders import (
     upload_photo_to_message,

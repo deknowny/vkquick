@@ -33,7 +33,7 @@ class User(Wrapper):
     def id(self):
         return self.fields.id
 
-    def extra_fields_to_format(self):
+    def _extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln}
 
     # TODO: cache?
@@ -52,4 +52,3 @@ class User(Wrapper):
             format_value = self.mention(format_value)
             return format_value
         return format_value
-

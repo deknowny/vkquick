@@ -12,7 +12,7 @@ class Wrapper:
     def __format__(self, format_spec: str) -> str:
         format_spec = format_spec.replace(">", "}")
         format_spec = format_spec.replace("<", "{")
-        extra_fields = self.extra_fields_to_format()
+        extra_fields = self._extra_fields_to_format()
         format_fields = {**self.fields(), **extra_fields}
         inserted_values = SafeDict(format_fields)
         return format_spec.format_map(inserted_values)
@@ -21,7 +21,7 @@ class Wrapper:
     def fields(self):
         return self._fields
 
-    def extra_fields_to_format(self):
+    def _extra_fields_to_format(self):
         return {}
 
     def __repr__(self):

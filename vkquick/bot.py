@@ -296,13 +296,15 @@ class Bot:
                 asyncio.create_task(self.pass_event_trough_commands(event))
         elif event.type == 4:
             asyncio.create_task(
-                self._extend_userlp_message_and_run_command(event)
+                self._extend_userlp_message_and_run_commands(event)
             )
         for event_handler in self._event_handlers:
             if event_handler.is_handling_name(event.type):
                 asyncio.create_task(sync_async_run(event_handler.call(event)))
 
-    async def _extend_userlp_message_and_run_command(self, event: Event):
+        self._set_new_event(event)
+
+    async def _extend_userlp_message_and_run_commands(self, event: Event):
         # TODO: optimize (#34)
         extended_message = await self._shared_box.api.messages.get_by_id(
             allow_cache_=True, message_ids=event[1]

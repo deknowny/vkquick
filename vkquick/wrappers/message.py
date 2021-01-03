@@ -116,7 +116,7 @@ class Message(Wrapper):
         что есть во вложениях, оборачивая их в обертку
         """
         docs = [
-            Document(getattr(attachment, attachment.type))
+            Document(attachment.doc)
             for attachment in self.attachments
             if attachment.type == "doc"
         ]
