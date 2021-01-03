@@ -96,7 +96,8 @@ class Message(Wrapper):
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.expire_ttl if "expire_ttl" in self.fields else None
 
-    def fetch_photos(self) -> ty.List[Photo]:
+    @functools.cached_property
+    def photos(self) -> ty.List[Photo]:
         """
         Возвращает только фотографии из всего,
         что есть во вложениях, оборачивая их в обертку
@@ -108,7 +109,8 @@ class Message(Wrapper):
         ]
         return photos
 
-    def fetch_docs(self):
+    @functools.cached_property
+    def docs(self):
         """
         Возвращает только вложения с типом документ из всего,
         что есть во вложениях, оборачивая их в обертку
