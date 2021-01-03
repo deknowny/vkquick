@@ -2,17 +2,14 @@
 Управление событиями LongPoll
 """
 from __future__ import annotations
+
 import abc
 import typing as ty
 
 import aiohttp
 
 from vkquick.json_parsers import json_parser_policy
-import vkquick.base.json_parser
-import vkquick.json_parsers
-import vkquick.events_generators.event
-import vkquick.utils
-
+from vkquick.events_generators.event import Event
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API
@@ -22,72 +19,73 @@ class LongPollBase(abc.ABC):
     """
     Базовый интерфейс для всех типов LongPoll
     """
-
-    _lp_settings: ty.Optional[dict] = None
-    session: aiohttp.ClientSession
-    server_url: str
-    api: API
+    def __init__(self):
+        self._lp_requests_settings: ty.Optional[ty.Optional[dict]] = None
+        self._session: ty.Optional[aiohttp.ClientSession] = None
+        self._server_url: ty.Optional[str] = None
+        self._api: ty.Optional[API] = None
 
     def __aiter__(self) -> LongPollBase:
         """
         Итерация запускает процесс получения событий
         """
+        self._setup_called = False
         return self
 
     async def __anext__(
         self,
-    ) -> ty.List[vkquick.events_generators.event.Event]:
+    ) -> ty.List[Event]:
         """
         Отправляет запрос на LongPoll сервер и ждет событие.
         После оборачивает событие в специальную обертку, которая
         в некоторых случаях может сделать интерфейс
         пользовательского лонгпула аналогичным групповому
         """
-        async with self.session.get(
-            self.server_url, params=self._lp_settings
+        if not self._setup_called:
+            await self._setup()
+            self._setup_called = True
+        async with self._session.get(
+            self._server_url, params=self._lp_requests_settings
         ) as response:
             # TODO: X-Next-Ts header
-            response = vkquick.utils.AttrDict(
-                await response.json(loads=json_parser_policy.loads)
-            )
+            response = await response.json(loads=json_parser_policy.loads)
 
         if "failed" in response:
             await self._resolve_faileds(response)
             return []
         else:
-            self._lp_settings.update(ts=response.ts)
+            self._lp_requests_settings.update(ts=response["ts"])
             updates = [
-                vkquick.events_generators.event.Event(update())
-                for update in response.updates
+                Event(update) for update in response["updates"]
             ]
             return updates
 
     async def _resolve_faileds(
-        self, response: vkquick.events_generators.event.Event
+        self, response: Event
     ):
         """
         Обрабатывает LongPoll ошибки (faileds)
         """
-        if response.failed == 1:
-            self._lp_settings.update(ts=response.ts)
-        elif response.failed in (2, 3):
-            await self.setup()
+        if response["failed"] == 1:
+            self._lp_requests_settings.update(ts=response["ts"])
+        elif response["failed"] in (2, 3):
+            await self._setup()
         else:
             raise ValueError("Invalid longpoll version")
 
     async def close_session(self):
-        await self.session.close()
-        await self.api.close_session()
+        if self._session is not None:
+            await self._session.close()
+        await self._api.close_session()
 
-    @abc.abstractmethod
-    async def setup(self) -> None:
+    async def _setup(self) -> None:
         """
         Обновляет или достает информацию о LongPoll сервере
         и открывает соединение
         """
 
-    async def init_session(self):
-        self.session = aiohttp.ClientSession(
+    async def _init_session(self):
+        self._session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
@@ -127,32 +125,34 @@ class GroupLongPoll(LongPollBase):
         * `client`: HTTP клиент для отправки запросов
         * `json_parser`: Парсер JSON для новых событий
         """
-        self.api = api
+        super().__init__()
+        self._api = api
         if (
             group_id is None
-            and self.api.token_owner == vkquick.api.TokenOwner.USER
+            and self._api.token_owner == "user"
         ):
             raise ValueError(
-                "Can't use group longpoll with user token without `group_id`"
+                "Can't use `GroupLongPoll` with user token without `group_id`"
             )
         self.group_id = group_id
         self.wait = wait
 
-        self._server_path = self._params = self._lp_settings = None
-
-    async def setup(self) -> None:
-        if self.group_id is None:
-            groups = await self.api.groups.get_by_id()
-            group = groups[0]
-            self.group_id = group.id
-        new_lp_settings = await self.api.groups.getLongPollServer(
+    async def _setup(self) -> None:
+        await self._define_group_id()
+        new_lp_settings = await self._api.groups.getLongPollServer(
             group_id=self.group_id
         )
-        self.server_url = new_lp_settings().pop("server")
-        self._lp_settings = dict(
-            act="a_check", wait=self.wait, **new_lp_settings.mapping_
+        self._server_url = new_lp_settings().pop("server")
+        self._lp_requests_settings = dict(
+            act="a_check", wait=self.wait, **new_lp_settings()
         )
-        await self.init_session()
+        await self._init_session()
+
+    async def _define_group_id(self):
+        if self.group_id is None:
+            groups = await self._api.groups.get_by_id()
+            group = groups[0]
+            self.group_id = group.id
 
 
 class UserLongPoll(LongPollBase):
@@ -187,32 +187,23 @@ class UserLongPoll(LongPollBase):
         * `client`: HTTP клиент для отправки запросов
         * `json_parser`: парсер JSON для новых событий
         """
-        self.api = api
+        super().__init__()
+        self._api = api
         self.version = version
         self.wait = wait
         self.mode = mode
 
-        self.session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=False),
-            skip_auto_headers={"User-Agent"},
-            raise_for_status=True,
-            json_serialize=json_parser_policy.dumps,
-        )
-        self._server_path = (
-            self._params
-        ) = self._lp_settings = self._server_netloc = None
-
-    async def setup(self) -> None:
-        new_lp_settings = await self.api.messages.getLongPollServer(
+    async def _setup(self) -> None:
+        new_lp_settings = await self._api.messages.getLongPollServer(
             lp_version=self.version
         )
         server_url = new_lp_settings().pop("server")
-        self.server_url = f"https://{server_url}"
-        self._lp_settings = dict(
+        self._server_url = f"https://{server_url}"
+        self._lp_requests_settings = dict(
             act="a_check",
             wait=self.wait,
             mode=self.mode,
             version=self.version,
             **new_lp_settings(),
         )
-        await self.init_session()
+        await self._init_session()
