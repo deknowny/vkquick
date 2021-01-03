@@ -63,4 +63,4 @@ class TextCutter(abc.ABC):
 
     @staticmethod
     def usage_description() -> str:
-        return ""
+        return ""  # pragma: no cover

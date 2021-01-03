@@ -10,12 +10,15 @@ from vkquick.utils import get_user_registration_date
 
 
 class User(Wrapper):
-    def mention(self, alias: ty.Optional[str], /) -> str:
+    def mention(self, alias: ty.Optional[str] = None, /) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем
         """
         updated_alias = format(self, alias)
-        mention = f"[id{self.id}|{updated_alias or self.fn}]"
+        if updated_alias:
+            mention = f"[id{self.id}|{updated_alias}]"
+        else:
+            mention = f"[id{self.id}|{self.fn} {self.ln}]"
         return mention
 
     @property
@@ -41,3 +44,12 @@ class User(Wrapper):
 
     def __str__(self):
         return f"<User id={self.id}, fn={self.fn!r}, ln={self.ln!r}>"
+
+    def __format__(self, format_spec):
+        format_value = super().__format__(format_spec)
+        if format_spec.startswith("@"):
+            format_value = format_value[1:]
+            format_value = self.mention(format_value)
+            return format_value
+        return format_value
+
