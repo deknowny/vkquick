@@ -72,7 +72,7 @@ def attach_events():
             return_value=puller.__anext__
         )
         eg_mock.close_session = unittest.mock.AsyncMock()
-        eg_mock.setup = unittest.mock.AsyncMock()
+        eg_mock._setup = unittest.mock.AsyncMock()
         bot.shared_box.events_generator = eg_mock
 
     return wrapper

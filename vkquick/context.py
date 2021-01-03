@@ -464,7 +464,7 @@ class Context:
                     shared_box=self.shared_box,
                     event=new_event,
                     filters_response=self.filters_response,
-                    extra=self.extra
+                    extra=self.extra,
                 )
                 return new_context
 

@@ -63,7 +63,7 @@ from .base.wrapper import Wrapper
 from .base.synchronizable import Synchronizable, synchronizable_function
 from .base.json_parser import JSONParser
 from .base.serializable import APISerializable
-from .base.filter import Filter
+from .base.filter import Filter, Decision
 
 from .filters.action import Action
 from .filters.enable import Enable

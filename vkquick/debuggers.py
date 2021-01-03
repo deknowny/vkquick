@@ -38,6 +38,10 @@ def uncolored_text(text: str) -> str:
     return text
 
 
+def uncolored_bad(string: str):
+    return f"[-] {string}"
+
+
 class ColoredDebugger(Debugger):
     """
     Цветной дебаггер
@@ -59,6 +63,8 @@ class ColoredDebugger(Debugger):
     sender_name_color: Color = staticmethod(huepy.green)
     sender_command_color: Color = staticmethod(huepy.cyan)
 
+    exception_header_template_wrapper = staticmethod(huepy.bad)
+
     sender_info_template: str = "Новое сообщение от `{sender_name}` с текстом `{sender_command}`"
     event_header_template: str = "{sender_info}\n{separator}\n\n"
     event_header_separator_symbol: str = "="
@@ -66,9 +72,7 @@ class ColoredDebugger(Debugger):
     exception_separator_symbol: str = "!"
     handlers_separator: str = "\n{separator}\n"
     exceptions_template: str = "\n{separator}\n\n{exceptions}"
-    exception_header_template: str = huepy.bad(
-        "Реакция `{reaction_name}` при вызове выбросила исключение:\n\n"
-    )
+    exception_header_template: str = "Реакция `{reaction_name}` при вызове выбросила исключение:\n\n"
     event_handler_header_template: str = "[{reaction_name}] {taken_time}\n"
     event_handler_argument_taken_time_template: str = "({taken_time}s)"
     event_handler_header_taken_time_digits_format_spec: str = ".6f"
@@ -98,7 +102,7 @@ class ColoredDebugger(Debugger):
         """
         sender_info = self.sender_info_template.format(
             sender_name=self.sender_name_color(self._sender_name),
-            sender_command=self.sender_command_color(self._message.text),
+            sender_command=self.sender_command_color(self._message_text),
         )
         header = self.event_header_template.format(
             sender_info=sender_info,
@@ -164,6 +168,7 @@ class ColoredDebugger(Debugger):
         text = self.exception_header_template.format(
             reaction_name=reaction_name
         )
+        text = self.exception_header_template_wrapper(text)
         return text
 
     def build_event_handler_message(self, scheme: HandlingStatus,) -> str:
@@ -300,3 +305,5 @@ class UncoloredDebugger(ColoredDebugger):
     exception_separator_color: Color = staticmethod(uncolored_text)
     sender_name_color: Color = staticmethod(uncolored_text)
     sender_command_color: Color = staticmethod(uncolored_text)
+
+    exception_header_template_wrapper = staticmethod(uncolored_bad)

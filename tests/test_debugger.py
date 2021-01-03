@@ -7,6 +7,25 @@ import huepy
 
 import unittest.mock
 
+debugger_template = """
+Новое сообщение от `Tom` с текстом `foo 123`
+==============================
+
+[foo] (0.500000s)
+-> Command: passed
+    >> arg: 123
+
+------------------------------
+[bar] (0.100000s)
+-> Command: not passed
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+[-] Реакция `foo` при вызове выбросила исключение:
+
+Exception!
+""".strip()
+
 
 @pytest.mark.parametrize("input,output", [("123", "123"), ("abc", "abc")])
 def test_uncolered_text(input, output):
@@ -39,32 +58,32 @@ class TestDebugger:
         mocked_terminal_size.columns = 10
         assert vq.ColoredDebugger.build_separator("+") == "+" * 10
 
-    #
-    # @pytest.mark.parametrize(
-    #     "sizes,color,symbol",
-    #     [((40, ...), huepy.red, "="), ((50, ...), huepy.green, "?")],
-    # )
-    # def test_build_separator(
-    #     self, mocker: pytest_mock.MockerFixture, sizes, color, symbol
-    # ):
-    #     terminal_size = collections.namedtuple(
-    #         "TerminalSize", ["columns", "lines"]
-    #     )
-    #     terminal_size = terminal_size(*sizes)
-    #     mocked_get_terminal_size = mocker.patch(
-    #         "os.get_terminal_size", return_value=terminal_size
-    #     )
-    #     vq.Debugger.separator_color = color
-    #     separator = color(symbol * terminal_size.columns)
-    #     debugger_separator = vq.Debugger.build_separator(symbol, color)
-    #     mocked_get_terminal_size.assert_called()
-    #     assert debugger_separator == separator
-    #
-    # # @pytest.mark.parametrize("template,event_type,separator", [
-    # #     ("{event_type}{separator}", "type", "sep"),
-    # #     ("", "foo", "bar")
-    # # ])
-    # # def test_build_header(self, mocker: pytest_mock.MockerFixture, template, event_type, separator):
-    # #     debugger = vq.Debugger(vq.AttrDict({"type": event_type}), [])
-    # #     result = debugger.build_header()
-    # #     assert result == template.format(event_type=event_type, separator=separator)
+    def test_result(self, mocker):
+        size = mocker.patch("os.get_terminal_size")
+        size.return_value = size
+        size.columns = 30
+        debugger = vq.UncoloredDebugger(
+            sender_name="Tom",
+            message_text="foo 123",
+            schemes=[
+                vq.HandlingStatus(
+                    reaction_name="foo",
+                    all_filters_passed=True,
+                    taken_time=0.5,
+                    filters_response=[
+                        ("Command", vq.Decision(True, "passed"))
+                    ],
+                    passed_arguments={"arg": 123},
+                    exception_text="Exception!",
+                ),
+                vq.HandlingStatus(
+                    reaction_name="bar",
+                    all_filters_passed=False,
+                    taken_time=0.1,
+                    filters_response=[
+                        ("Command", vq.Decision(False, "not passed"))
+                    ],
+                ),
+            ],
+        )
+        assert debugger.render().strip() == debugger_template

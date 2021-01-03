@@ -4,6 +4,7 @@ import typing as ty
 
 from vkquick.base.serializable import UIBuilder
 from vkquick.button import InitializedButton
+from vkquick.wrappers.attachment import Photo
 
 
 class Element:
@@ -13,14 +14,16 @@ class Element:
         buttons: ty.List[InitializedButton],
         title: ty.Optional[str] = None,
         description: ty.Optional[str] = None,
-        photo_id: ty.Optional[int] = None
-    ):
+        photo_id: ty.Optional[ty.Union[str, Photo]] = None
+    ) -> None:
         self.scheme = dict(buttons=[but.scheme for but in buttons])
         if title is not None:
             self.scheme.update(title=title)
         if description is not None:
             self.scheme.update(description=description)
         if photo_id is not None:
+            if isinstance(photo_id, Photo):
+                photo_id = photo_id.api_param_representation()
             self.scheme.update(photo_id=photo_id)
 
     def open_link(self, link) -> Element:
@@ -37,7 +40,7 @@ class Carousel(UIBuilder):
         self._gen = gen
         self.scheme = {"type": "carousel", "elements": []}
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> Carousel:
         self.scheme["elements"] = [
             elem.scheme for elem in self._gen(*args, **kwargs)
         ]

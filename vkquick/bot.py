@@ -134,13 +134,20 @@ class Bot:
         return self._shared_box
 
     @classmethod
-    def init_via_token(cls, token: str) -> Bot:
+    def init_via_token(
+        cls,
+        token: str,
+        /,
+        *,
+        signal_handlers: ty.Optional[ty.Collection[SignalHandler]] = None,
+        commands: ty.Optional[ty.Collection[Command]] = None,
+        event_handlers: ty.Optional[ty.Collection[EventHandler]] = None,
+        debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
+        debugger: ty.Optional[ty.Type[Debugger]] = None,
+    ) -> Bot:
         """
         Создает все необходимое для запуска бота (current-объекты),
         используя только токен
-
-        Не забудьте передать все необходимые обработчики событий
-        и сигналов! Этот метод их не добавляет
         """
         api = API(token)
         if api.token_owner == TokenOwner.GROUP:
@@ -148,7 +155,15 @@ class Bot:
         else:
             lp = UserLongPoll(api)
 
-        return cls(api=api, events_generator=lp)
+        return cls(
+            api=api,
+            events_generator=lp,
+            signal_handlers=signal_handlers,
+            commands=commands,
+            event_handlers=event_handlers,
+            debugger=debugger,
+            debug_filter=debug_filter,
+        )
 
     @functools.cached_property
     def release(self) -> bool:
@@ -280,7 +295,6 @@ class Bot:
         на каждый `EventHandler` (или `Command`). Выбор метода
         зависит от флага релиза
         """
-        await self._shared_box.events_generator.setup()
         async for events in self._shared_box.events_generator:
             for event in events:
                 asyncio.create_task(self.route_event_purpose(event))
@@ -318,7 +332,7 @@ class Bot:
             if event.msg.payload.command in command.payload_names:
                 context = Context(event=event, shared_box=self.shared_box)
                 if "args" in event.msg.payload:
-                    reaction_arguments = event.msg.payload.args
+                    reaction_arguments = event.msg.payload.args()
                 else:
                     reaction_arguments = {}
                 if command.reaction_context_argument_name is not None:
@@ -340,14 +354,12 @@ class Bot:
             asyncio.create_task(command.handle_event(event, self._shared_box))
             for command in self.commands
         ]
-        try:
-            handling_info = await asyncio.gather(*tasks)
-        except Exception:
-            traceback.print_exc()
-        else:
-            if not self.release:
-                await self.show_debug_info(event, handling_info)
-            await self._call_post_event_handling_signal(event, handling_info)
+        handling_info = await asyncio.gather(*tasks)
+        if not self.release:
+            await self.show_debug_info(event, handling_info)
+        await sync_async_run(
+            self.call_signal("post_event_handling", event, handling_info)
+        )
 
     def _set_new_event(self, event: Event) -> None:
         """
@@ -389,7 +401,7 @@ class Bot:
             sender_name = await self._get_sender_name(event.msg)
             debugger = self._debugger(
                 sender_name=sender_name,
-                message=event.msg,
+                message_text=event.msg.text,
                 schemes=handling_info,
             )
             debug_message = debugger.render()
@@ -410,17 +422,6 @@ class Bot:
             sender = sender[0].name
 
         return sender
-
-    async def _call_post_event_handling_signal(
-        self, event: Event, handling_info: HandlingStatus,
-    ) -> None:
-        """
-        Вызывает зарезервированный сигнал `POST_EVENT_HANDLING`.
-        Вынесено в метод, чтобы избежать повторов
-        """
-        await sync_async_run(
-            self.call_signal("post_event_handling", event, handling_info)
-        )
 
     def call_signal(self, name: str, *args, **kwargs) -> ty.Any:
         for handler in self._signal_handlers:
