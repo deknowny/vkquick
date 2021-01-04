@@ -17,8 +17,6 @@ python -m pip install git+https://github.com/Rhinik/vkquick@1.0
 
 # Hello-бот
 
-Насколько VK Quick позволяет быть ленивым?
-
 ```python
 import vkquick as vq
 
