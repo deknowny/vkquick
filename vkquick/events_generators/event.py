@@ -65,7 +65,7 @@ class Event(AttrDict):
         return Message(self.object)
 
     # Здесь нельзя использовать property, т.к. помимо property дергается `__setattr__`
-    def set_message(self, message):
+    def set_message(self, message: AttrDict):
         object.__setattr__(self, "_message", message)
 
     def __eq__(self, other: Event) -> bool:
@@ -78,7 +78,7 @@ class Event(AttrDict):
         """
         Минималистичное отображение события
         """
-        return f"Event(type={self.type})"
+        return f"Event(type={self.type!r})"
 
     def __getattr__(self, item):
         field = super().__getattr__(item)

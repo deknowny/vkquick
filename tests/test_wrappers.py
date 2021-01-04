@@ -51,7 +51,7 @@ class TestMessage:
             "from_id": 1,
             "id": 1,
             "out": 1,
-            "peer_id": 1,
+            "peer_id": vq.peer(1),
             "text": "hi",
             "conversation_message_id": 1,
             "fwd_messages": [],
@@ -72,7 +72,7 @@ class TestMessage:
         assert (
             message.id
             == message.from_id
-            == message.peer_id
+            == message.peer_id - vq.peer()
             == message.cmid
             == message.random_id
             == 1
@@ -96,6 +96,7 @@ class TestMessage:
         assert message.geo == {}
         assert len(message.fwd_messages) == 0
         assert message.payload == {"a": 1}
+        assert message.chat_id == 1
 
         message = vq.Message({})
         assert (
@@ -105,71 +106,37 @@ class TestMessage:
             is None
         )
 
+        with pytest.raises(ValueError):
+            message = vq.Message({"peer_id": 1})
+            message.chat_id
+
 
 class TestPhoto:
     @pytest.mark.asyncio
     async def test_download(self, mocker):
         fields = {
-                "album_id": -3,
-                "date": 1609711476,
-                "id": 457248699,
-                "owner_id": 447532348,
-                "has_tags": False,
-                "access_key": "105b29bafd1831f3d3",
-                "sizes": [
-                    {
-                        "height": 42,
-                        "url": "size-s",
-                        "type": "s",
-                        "width": 75
-                    },
-                    {
-                        "height": 73,
-                        "url": "size-m",
-                        "type": "m",
-                        "width": 130
-                    },
-                    {
-                        "height": 338,
-                        "url": "size-x",
-                        "type": "x",
-                        "width": 604
-                    },
-                    {
-                        "height": 436,
-                        "url": "size-y",
-                        "type": "y",
-                        "width": 780
-                    },
-                    {
-                        "height": 87,
-                        "url": "size-o",
-                        "type": "o",
-                        "width": 130
-                    },
-                    {
-                        "height": 133,
-                        "url": "size-p",
-                        "type": "p",
-                        "width": 200
-                    },
-                    {
-                        "height": 213,
-                        "url": "size-q",
-                        "type": "q",
-                        "width": 320
-                    },
-                    {
-                        "height": 340,
-                        "url": "size-r",
-                        "type": "r",
-                        "width": 510
-                    }
-                ],
-                "text": ""
-            }
+            "album_id": -3,
+            "date": 1609711476,
+            "id": 457248699,
+            "owner_id": 447532348,
+            "has_tags": False,
+            "access_key": "105b29bafd1831f3d3",
+            "sizes": [
+                {"height": 42, "url": "size-s", "type": "s", "width": 75},
+                {"height": 73, "url": "size-m", "type": "m", "width": 130},
+                {"height": 338, "url": "size-x", "type": "x", "width": 604},
+                {"height": 436, "url": "size-y", "type": "y", "width": 780},
+                {"height": 87, "url": "size-o", "type": "o", "width": 130},
+                {"height": 133, "url": "size-p", "type": "p", "width": 200},
+                {"height": 213, "url": "size-q", "type": "q", "width": 320},
+                {"height": 340, "url": "size-r", "type": "r", "width": 510},
+            ],
+            "text": "",
+        }
         photo = vq.Photo(fields)
-        mocked_download = mocker.patch("vkquick.wrappers.attachment.download_file")
+        mocked_download = mocker.patch(
+            "vkquick.wrappers.attachment.download_file"
+        )
         await photo.download_max_size()
         await photo.download_min_size()
         await photo.download_with_size("q")
@@ -177,11 +144,9 @@ class TestPhoto:
         calls = [
             mocker.call("size-r"),
             mocker.call("size-s"),
-            mocker.call("size-q")
+            mocker.call("size-q"),
         ]
         mocked_download.assert_has_calls(calls)
 
         with pytest.raises(ValueError):
             await photo.download_with_size("aaa")
-
-

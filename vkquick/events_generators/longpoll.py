@@ -11,7 +11,7 @@ import aiohttp
 from vkquick.json_parsers import json_parser_policy
 from vkquick.events_generators.event import Event
 
-if ty.TYPE_CHECKING:
+if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
 
 
@@ -19,6 +19,7 @@ class LongPollBase(abc.ABC):
     """
     Базовый интерфейс для всех типов LongPoll
     """
+
     def __init__(self):
         self._lp_requests_settings: ty.Optional[ty.Optional[dict]] = None
         self._session: ty.Optional[aiohttp.ClientSession] = None
@@ -32,9 +33,7 @@ class LongPollBase(abc.ABC):
         self._setup_called = False
         return self
 
-    async def __anext__(
-        self,
-    ) -> ty.List[Event]:
+    async def __anext__(self,) -> ty.List[Event]:
         """
         Отправляет запрос на LongPoll сервер и ждет событие.
         После оборачивает событие в специальную обертку, которая
@@ -55,14 +54,10 @@ class LongPollBase(abc.ABC):
             return []
         else:
             self._lp_requests_settings.update(ts=response["ts"])
-            updates = [
-                Event(update) for update in response["updates"]
-            ]
+            updates = [Event(update) for update in response["updates"]]
             return updates
 
-    async def _resolve_faileds(
-        self, response: Event
-    ):
+    async def _resolve_faileds(self, response: Event):
         """
         Обрабатывает LongPoll ошибки (faileds)
         """
@@ -78,6 +73,7 @@ class LongPollBase(abc.ABC):
             await self._session.close()
         await self._api.close_session()
 
+    @abc.abstractmethod
     async def _setup(self) -> None:
         """
         Обновляет или достает информацию о LongPoll сервере
@@ -127,10 +123,7 @@ class GroupLongPoll(LongPollBase):
         """
         super().__init__()
         self._api = api
-        if (
-            group_id is None
-            and self._api.token_owner == "user"
-        ):
+        if group_id is None and self._api.token_owner == "user":
             raise ValueError(
                 "Can't use `GroupLongPoll` with user token without `group_id`"
             )

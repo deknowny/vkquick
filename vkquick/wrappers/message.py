@@ -22,7 +22,9 @@ class Message(Wrapper):
     def chat_id(self) -> int:
         chat_id = self.peer_id - peer()
         if chat_id < 0:
-            raise ValueError("Can't get `chat_id` if message wasn't sent in a chat")
+            raise ValueError(
+                "Can't get `chat_id` if message wasn't sent in a chat"
+            )
 
         return chat_id
 
