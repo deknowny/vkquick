@@ -12,7 +12,7 @@ python -m pip install vkquick
 
 ### До релиза 1.0:
 ```bash
-python -m pip install git+https://github.com/Rhinik/vkquick@1.0 --upgrade
+python -m pip install git+https://github.com/Rhinik/vkquick@1.0
 ```
 
 # Hello-бот
