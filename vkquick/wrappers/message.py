@@ -5,7 +5,7 @@ import json
 import typing as ty
 
 from vkquick.wrappers.attachment import Photo, Document
-from vkquick.utils import AttrDict
+from vkquick.utils import AttrDict, peer
 from vkquick.base.wrapper import Wrapper
 
 
@@ -17,6 +17,14 @@ class Message(Wrapper):
     @property
     def peer_id(self) -> int:
         return self.fields.peer_id
+
+    @functools.cached_property
+    def chat_id(self) -> int:
+        chat_id = self.peer_id - peer()
+        if chat_id < 0:
+            raise ValueError("Can't get `chat_id` if message wasn't sent in a chat")
+
+        return chat_id
 
     @property
     def conversation_message_id(self) -> int:

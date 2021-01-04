@@ -224,7 +224,7 @@ class API(Synchronizable):
     URL для API запросов. 
     """
 
-    token_owner: ty.Optional[TokenOwner] = None
+    token_owner: ty.Optional[str] = None
     """
     Владелец токена: пользователь/группа. если не передано,
     определяется автоматически через `users.get`. Внутри используется
