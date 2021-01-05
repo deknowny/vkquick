@@ -41,11 +41,13 @@ watchgod = { version = "^0.6", optional = true }
 orjson = { version = "^3.4.6", optional = true }
 ujson = { version = "^4.0.1", optional = true }
 
-
-[tool.poetry.dev-dependencies]
 # docs
 mkdocs-material = { version = "^5.4.0", optional = true }
 mkdocs = { version = "^1.1.2", optional = true }
+
+
+[tool.poetry.dev-dependencies]
+
 
 # tests
 pytest = { version = "^6.1.0", optional = true }
