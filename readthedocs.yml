@@ -11,5 +11,5 @@ mkdocs:
 python:
   version: 3.8
   install:
-    - requirements: docs-0.2/requirements.txt
+    - requirements: docs/requirements.txt
 
