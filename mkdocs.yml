@@ -8,7 +8,18 @@ remote_branch: "1.0"
 google_analytics: ["UA-172364682-1", "vkquick.readthedocs.io"]
 
 nav:
-    - Яблоки лежиали на столе: index.md
+    - Home: index.md
+    - Установка: installation.md
+    - Как создаются боты: how-bots-are-created.md
+    - Документация:
+        - Введение: docs/index.md
+    - Терминология: terminologies.md
+    - CLI: cli.md
+    - Устройство VK Quick: vkquick-struct.md
+    - Заметки по релизам: releases.md
+    - Контрибьютерам: contributing.md
+    - Документация к 0.2:
+
 
 
 theme:
