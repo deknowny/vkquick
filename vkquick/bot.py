@@ -310,7 +310,7 @@ class Bot:
                 asyncio.create_task(self.pass_event_trough_commands(event))
         elif event.type == 4:
             asyncio.create_task(
-                self._extend_userlp_message_and_run_commands(event)
+                self._run_commands_via_user_lp_message(event)
             )
         for event_handler in self._event_handlers:
             if event_handler.is_handling_name(event.type):
@@ -318,14 +318,16 @@ class Bot:
 
         self._set_new_event(event)
 
-    async def _extend_userlp_message_and_run_commands(self, event: Event):
-        # TODO: optimize (#34)
+    async def _run_commands_via_user_lp_message(self, event: Event):
+        await self.extend_userlp_message(event)
+        await self.pass_event_trough_commands(event)
+
+    async def extend_userlp_message(self, event: Event):
         extended_message = await self._shared_box.api.messages.get_by_id(
             allow_cache_=True, message_ids=event[1]
         )
         extended_message = extended_message.items[0]
         event.set_message(extended_message)
-        asyncio.create_task(self.pass_event_trough_commands(event))
 
     async def run_command_via_payload(self, event: Event):
         for command in self._commands:
@@ -367,6 +369,7 @@ class Bot:
         """
         for waiter in self._event_waiters:
             waiter.set_result(event)
+            self._event_waiters.remove(waiter)
 
     async def fetch_new_event(self) -> Event:
         """
@@ -386,7 +389,6 @@ class Bot:
         waiter = asyncio.Future()
         self._event_waiters.append(waiter)
         new_event = await waiter
-        self._event_waiters.remove(waiter)
         return new_event
 
     async def show_debug_info(

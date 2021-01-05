@@ -455,10 +455,15 @@ class Context:
         while True:
             new_event = await self.sb.bot.fetch_new_event()
 
+            if new_event.type not in handled_events:
+                continue
+
+            if not new_event.from_group:
+                await self.sb.bot.extend_userlp_message(new_event)
+
             if (
-                new_event.type in handled_events
-                and (new_event.msg.from_id != self.msg.from_id or same_user)
-                and (new_event.msg.peer_id != self.msg.peer_id or same_chat)
+                new_event.msg.from_id == self.msg.from_id or not same_user
+                and new_event.msg.peer_id == self.msg.peer_id or not same_chat
             ):
                 new_context = Context(
                     shared_box=self.shared_box,
