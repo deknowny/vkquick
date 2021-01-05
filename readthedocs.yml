@@ -7,9 +7,9 @@ version: 2
 mkdocs:
   configuration: mkdocs.yml
 
-# Install docs building dependencies
+# Install docs-0.2 building dependencies
 python:
   version: 3.8
   install:
-    - requirements: docs/requirements.txt
+    - requirements: docs-0.2/requirements.txt
 
