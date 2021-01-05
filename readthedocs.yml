@@ -11,8 +11,5 @@ mkdocs:
 python:
   version: 3.8
   install:
-    - method: pip
-      path: mkdocs
-    - method: pip
-      path: mkdocs-material
+    - requirements: docs/requirements.txt
 
