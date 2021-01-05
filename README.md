@@ -1,7 +1,7 @@
 # VK Quick
 [![Downloads](https://static.pepy.tech/personalized-badge/vkquick?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads)](https://pepy.tech/project/vkquick)
 
-> Хорошие инструменты порождают не только творения, но и идеи
+> _"Хорошие инструменты порождают не только творения, но и идеи"_
 
 Можно много говорить о VK Quick, но сразу перейдем к созданию бота ВКонтакте...
 

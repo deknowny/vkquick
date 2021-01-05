@@ -1,1 +1,60 @@
-site_name: My Docs
+site_name: VK Quick
+site_description: Async python framework for creating VK chat bots
+repo_name: vkquick
+repo_url: https://github.com/Rhinik/vkquick
+
+remote_branch: "1.0"
+
+google_analytics: ["UA-172364682-1", "vkquick.readthedocs.io"]
+
+nav:
+    - Яблоки лежиали на столе: index.md
+
+
+theme:
+    name: material
+    language: ru
+    font:
+        text: Ubuntu
+        code: Monaco
+    palette:
+        scheme: preference
+        accent: amber
+
+    logo: assets/logo.png
+    favicon: assets/logo.png
+
+    features:
+        - header.autohide
+
+
+markdown_extensions:
+    - toc:
+        permalink: true
+    - markdown.extensions.codehilite:
+        guess_lang: false
+    - admonition
+    - codehilite
+    - extra
+    - pymdownx.superfences:
+        custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format ''
+    - pymdownx.tabbed
+    - pymdownx.details
+    - pymdownx.tilde
+
+
+extra_css:
+    - css/termynal.css
+    - css/custom.css
+
+extra_javascript:
+    - js/termynal.js
+    - js/custom.js
+
+extra:
+    social:
+        - icon: fontawesome/brands/vk
+          link: https://vk.com/vkquick
