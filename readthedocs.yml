@@ -5,14 +5,14 @@ version: 2
 
 # Build documentation with MkDocs
 mkdocs:
-    configuration: mkdocs.yml
+  configuration: mkdocs.yml
 
 # Install docs building dependencies
 python:
-    version: 3.8
-    install:
-        - method: pip
-            path: mkdocs
-        - method: pip
-            path: mkdocs-material
+  version: 3.8
+  install:
+    - method: pip
+      path: mkdocs
+    - method: pip
+      path: mkdocs-material
 
