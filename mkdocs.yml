@@ -10,7 +10,7 @@ google_analytics: ["UA-172364682-1", "vkquick.readthedocs.io"]
 nav:
     - Home: index.md
     - Установка: installation.md
-    - Как создаются боты: how-bots-are-created.md
+    - Как работают боты: how-bots-work.md
     - Документация:
         - Введение: docs-0.2/index.md
     - Терминология: terminologies.md
