@@ -1,21 +1,18 @@
-# .readthedocs.yml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+# Details: https://docs.readthedocs.io/en/stable/config-file/v2.html
 
-# Required
+# Docs builder
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
-#sphinx:
-#  configuration: docs/conf.py
+# Build documentation with MkDocs
+mkdocs:
+    configuration: mkdocs.yml
 
-# Optionally build your docs in additional formats such as PDF
-
-# Optionally set the version of Python and requirements required to build your docs
+# Install docs building dependencies
 python:
-  version: 3.8
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - sphinx
+    version: 3.8
+    install:
+        - method: pip
+            path: mkdocs
+        - method: pip
+            path: mkdocs-material
+
