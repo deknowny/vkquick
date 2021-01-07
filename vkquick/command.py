@@ -532,6 +532,11 @@ class Command(Filter):
             matched = self._command_routing_regex.match(context.msg.text)
             if matched:
                 arguments_string = context.msg.text[matched.end() :]
+                if arguments_string.lstrip() == arguments_string and arguments_string and self._argline is None:
+                    return Decision(
+                        False,
+                        f"Команда не подходит под шаблон `{self._command_routing_regex.pattern}`",
+                    )
             else:
                 return Decision(
                     False,
@@ -587,7 +592,7 @@ class Command(Filter):
                     reaction = self._invalid_argument_handlers[name]
                     await _optional_call_with_autoreply(reaction, context)
                 else:
-                    for position, arg in enumerate(self._reaction_arguments):
+                    for position, arg in enumerate(self._reaction_arguments, 1):
                         if arg[0] == name:
                             await cutter.invalid_value(
                                 position, not new_arguments_string, context,
