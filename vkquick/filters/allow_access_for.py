@@ -19,14 +19,14 @@ class AllowAccessFor(Filter):
 
     def __init__(self, *ids, output: ty.Optional[bool] = None):
         self._allowed_ids = ids
-        self.output = output
+        self._output = output
 
         if not ids and output is None:
-            raise ValueError("Pass ids or `token_owner` flag in init")
+            raise ValueError("Pass ids or `output` flag in init")
 
     def make_decision(self, context: Context) -> Decision:
         if context.msg.from_id in self._allowed_ids or (
-            self.output is not None and context.msg.out
+            self._output is not None and context.msg.out
         ):
             return self.passed_decision
         return self.not_passed_decision

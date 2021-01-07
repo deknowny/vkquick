@@ -69,12 +69,12 @@ def test_allow_access_for(make_message_new_event):
     assert filter_.make_decision(ctx).passed
     event.msg._fields["from_id"] = 345
     assert not filter_.make_decision(ctx).passed
-    filter_ = vq.AllowAccessFor(token_owner=True)
+    filter_ = vq.AllowAccessFor(output=True)
     event.msg._fields["out"] = True
     assert filter_.make_decision(ctx).passed
     event.msg._fields["out"] = False
     assert not filter_.make_decision(ctx).passed
-    filter_ = vq.AllowAccessFor(123, token_owner=True)
+    filter_ = vq.AllowAccessFor(123, output=True)
     event.msg._fields["from_id"] = 123
     event.msg._fields["out"] = False
     assert filter_.make_decision(ctx).passed
@@ -87,3 +87,31 @@ def test_allow_access_for(make_message_new_event):
 
     with pytest.raises(ValueError):
         vq.AllowAccessFor()
+
+
+def test_retract_access_for(make_message_new_event):
+    event = make_message_new_event()
+    ctx = vq.Context(event=event, shared_box=None)
+    filter_ = vq.RetractAccessFor(123)
+    event.msg._fields["from_id"] = 123
+    assert not filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 345
+    assert filter_.make_decision(ctx).passed
+    filter_ = vq.RetractAccessFor(output=True)
+    event.msg._fields["out"] = True
+    assert not filter_.make_decision(ctx).passed
+    event.msg._fields["out"] = False
+    assert filter_.make_decision(ctx).passed
+    filter_ = vq.RetractAccessFor(123, output=True)
+    event.msg._fields["from_id"] = 123
+    event.msg._fields["out"] = False
+    assert not filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 456
+    event.msg._fields["out"] = False
+    assert filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 456
+    event.msg._fields["out"] = True
+    assert not filter_.make_decision(ctx).passed
+
+    with pytest.raises(ValueError):
+        vq.RetractAccessFor()
