@@ -71,7 +71,7 @@ class ColoredDebugger(Debugger):
     reactions_separator_symbol: str = "-"
     exception_separator_symbol: str = "!"
     handlers_separator: str = "\n{separator}\n"
-    exceptions_template: str = "\n{separator}\n\n{exceptions}"
+    exceptions_template: str = "\n{separator}\n{exceptions}"
     exception_header_template: str = "Реакция `{reaction_name}` при вызове выбросила исключение:\n\n"
     event_handler_header_template: str = "[{reaction_name}] {taken_time}\n"
     event_handler_argument_taken_time_template: str = "({taken_time}s)"

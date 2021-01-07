@@ -20,7 +20,6 @@ debugger_template = """
 -> Command: not passed
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 [-] Реакция `foo` при вызове выбросила исключение:
 
 Exception!

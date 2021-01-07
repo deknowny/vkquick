@@ -3,6 +3,9 @@ import typing as ty
 
 from vkquick.base.filter import Decision
 
+if ty.TYPE_CHECKING:  # pragma: no cover
+    from vkquick.context import Context
+
 
 @dataclasses.dataclass
 class HandlingStatus:
@@ -23,6 +26,11 @@ class HandlingStatus:
     taken_time: float
     """
     Время, затраченное на обработку реакции (включая фильтры и подготовку аргументов)
+    """
+
+    context: "Context"
+    """
+    Контекст, используемый командой. Сделано для удобного получения при использовании вейтеров
     """
 
     filters_response: ty.List[ty.Tuple[str, Decision]] = dataclasses.field(
@@ -49,3 +57,5 @@ class HandlingStatus:
     """
     Если реакция подняла исключение, то его текст отобразится
     """
+
+

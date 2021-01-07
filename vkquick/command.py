@@ -6,6 +6,7 @@ import re
 import time
 import inspect
 import concurrent.futures
+import traceback
 import typing as ty
 
 from vkquick.utils import AttrDict, sync_async_run, sync_async_callable
@@ -438,19 +439,27 @@ class Command(Filter):
                 all_filters_passed=False,
                 filters_response=filters_decision,
                 taken_time=taken_time,
+                context=context
             )
-
-        await self.call_reaction(context)
-
-        end_handling_stamp = time.monotonic()
-        taken_time = end_handling_stamp - start_handling_stamp
-        return HandlingStatus(
-            reaction_name=self.reaction.__name__,
-            all_filters_passed=True,
-            filters_response=filters_decision,
-            passed_arguments=context.extra.reaction_arguments(),
-            taken_time=taken_time,
-        )
+        exception_text = None
+        try:
+            await self.call_reaction(context)
+        except Exception:
+            exception_text = traceback.format_exc()
+            if context.shared_box.bot.release:
+                traceback.print_exc()
+        finally:
+            end_handling_stamp = time.monotonic()
+            taken_time = end_handling_stamp - start_handling_stamp
+            return HandlingStatus(
+                reaction_name=self.reaction.__name__,
+                all_filters_passed=True,
+                filters_response=filters_decision,
+                passed_arguments=context.extra.reaction_arguments(),
+                taken_time=taken_time,
+                context=context,
+                exception_text=exception_text
+            )
 
     async def run_through_filters(
         self, context: Context
