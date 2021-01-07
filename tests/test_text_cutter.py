@@ -116,11 +116,8 @@ text_arguments_data = [
 @pytest.mark.parametrize(
     "instance,arguments_string,output_value", text_arguments_data
 )
-@pytest.mark.asyncio
-async def test_cutting(instance, arguments_string, output_value):
-    got_value, _ = await vq.sync_async_run(
-        instance.cut_part(arguments_string)
-    )
+def test_cutting(instance, arguments_string, output_value):
+    got_value, _ = instance.cut_part(arguments_string)
     assert got_value == output_value
 
 
