@@ -419,10 +419,13 @@ class Command(Filter):
         return self
 
     async def handle_event(
-        self, event: Event, shared_box: SharedBox
+            self,
+            event: ty.Optional[Event] = None,
+            shared_box: ty.Optional[SharedBox] = None,
+            context: ty.Optional[Context] = None
     ) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
-        context = Context(shared_box=shared_box, event=event,)
+        context = context or Context(shared_box=shared_box, event=event,)
         (
             passed_every_filter,
             filters_decision,
