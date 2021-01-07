@@ -11,7 +11,7 @@ def test_base_filter_():
     filter__object2 = vq.Enable()
     filter__object1(command)
     filter__object2(command)
-    assert command.filter_s == [command, filter__object1, filter__object2]
+    assert command.filters == [command, filter__object1, filter__object2]
 
 
 def test_chat_only(make_message_new_event):
@@ -67,11 +67,23 @@ def test_allow_access_for(make_message_new_event):
     filter_ = vq.AllowAccessFor(123)
     event.msg._fields["from_id"] = 123
     assert filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 345
+    assert not filter_.make_decision(ctx).passed
     filter_ = vq.AllowAccessFor(token_owner=True)
     event.msg._fields["out"] = True
     assert filter_.make_decision(ctx).passed
     event.msg._fields["out"] = False
     assert not filter_.make_decision(ctx).passed
+    filter_ = vq.AllowAccessFor(123, token_owner=True)
+    event.msg._fields["from_id"] = 123
+    event.msg._fields["out"] = False
+    assert filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 456
+    event.msg._fields["out"] = False
+    assert not filter_.make_decision(ctx).passed
+    event.msg._fields["from_id"] = 456
+    event.msg._fields["out"] = True
+    assert filter_.make_decision(ctx).passed
 
     with pytest.raises(ValueError):
         vq.AllowAccessFor()

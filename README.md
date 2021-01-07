@@ -68,7 +68,7 @@ vq --help
 import vkquick as vq
 
 
-bot =  vq.Bot.init_via_token("your-token")
+bot = vq.Bot.init_via_token("your-token")
 
 
 @bot.add_command(names="hi")
