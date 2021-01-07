@@ -12,7 +12,7 @@ nav:
     - Установка: installation.md
     - Как работают боты: how-bots-work.md
     - Документация:
-        - Введение: docs-0.2/index.md
+        - Введение: docs/index.md
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
