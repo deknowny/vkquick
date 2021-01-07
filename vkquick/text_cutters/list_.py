@@ -5,7 +5,6 @@ import dataclasses
 import typing as ty
 
 from vkquick.base.text_cutter import UnmatchedArgument, TextCutter
-import vkquick.utils
 
 
 @dataclasses.dataclass
@@ -27,7 +26,7 @@ class List(TextCutter):
     Максимальная длина списка
     """
 
-    async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
+    def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         values = []
         remaining_string = arguments_string
 
@@ -36,9 +35,7 @@ class List(TextCutter):
             if remaining_string.startswith(","):
                 remaining_string = remaining_string[1:]
             remaining_string = remaining_string.lstrip()
-            chunk, remaining_string = await vkquick.utils.sync_async_run(
-                self.element.cut_part(remaining_string)
-            )
+            chunk, remaining_string = self.element.cut_part(remaining_string)
 
             if chunk is UnmatchedArgument:
                 if len(values) > self.min_length:

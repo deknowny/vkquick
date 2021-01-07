@@ -4,7 +4,6 @@ Optional аргумент
 import typing as ty
 
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-import vkquick.utils
 
 
 class Optional(TextCutter):
@@ -31,10 +30,8 @@ class Optional(TextCutter):
         self.default = default
         self.default_factory = default_factory
 
-    async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
-        chunk, remaining_string = await vkquick.utils.sync_async_run(
-            self.element.cut_part(arguments_string)
-        )
+    def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
+        chunk, remaining_string = self.element.cut_part(arguments_string)
         if chunk is UnmatchedArgument:
             if self.default_factory is None:
                 placeholder = self.default
