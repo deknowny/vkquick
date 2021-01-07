@@ -428,6 +428,24 @@ async def test_make_decision(
     passed, _ = await foo.make_decision(context=ctx)
     assert not passed
 
+    @vq.Command(names="a")
+    def foo(arg: vq.Word):
+        ...
+
+    event.msg._fields["text"] = "aa"
+
+    passed, _ = await foo.make_decision(context=ctx)
+    assert not passed
+
+    @vq.Command(names="a")
+    def foo(arg: vq.Word):
+        ...
+
+    event.msg._fields["text"] = "a a"
+
+    passed, _ = await foo.make_decision(context=ctx)
+    assert passed
+
 
 def test_str():
     @vq.Command(names="foo", prefixes="/")
