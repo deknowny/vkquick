@@ -5,7 +5,6 @@ import warnings
 import typing as ty
 
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-from vkquick.utils import sync_async_run
 
 
 class Union(TextCutter):
@@ -30,9 +29,9 @@ class Union(TextCutter):
                 UserWarning,
             )
 
-    async def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
+    def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         for type_ in self.available_type:
-            values = await sync_async_run(type_.cut_part(arguments_string))
+            values = type_.cut_part(arguments_string)
             if values[0] is not UnmatchedArgument:
                 return values
         return UnmatchedArgument, arguments_string
