@@ -34,8 +34,8 @@ aiohttp = "^3.7.2"
 cachetools = "^4.1.1"
 typer = "^0.3.2"
 
-# watchgod
-watchgod = { version = "^0.6", optional = true }
+# dev tools
+watchgod = "^0.6"
 
 # json-libs
 orjson = { version = "^3.4.6", optional = true }
@@ -43,29 +43,23 @@ ujson = { version = "^4.0.1", optional = true }
 
 [tool.poetry.dev-dependencies]
 # docs-0.2
-mkdocs-material = { version = "^5.4.0", optional = true }
-mkdocs = { version = "^1.1.2", optional = true }
+mkdocs-material = "^5.4.0"
+mkdocs = "^1.1.2"
+markdown-include = "^0.6.0"
 
 # tests
-pytest = { version = "^6.1.0", optional = true }
-pytest-cov = { version = "^2.10.1", optional = true }
-pytest-mock = { version = "^3.3.1", optional = true }
-pytest-asyncio = { version = "^0.14.0", optional = true }
+pytest = "^6.1.0"
+pytest-cov = "^2.10.1"
+pytest-mock = "^3.3.1"
+pytest-asyncio = "^0.14.0"
 
 # style
-black = { version = "^19.10b0", optional = true }
-pylint = { version = "^2.6.0", optional = true }
+black = "^19.10b0"
+pylint = "^2.6.0"
 
 
 [tool.poetry.extras]
-# user
-watchgod = ["watchgod"]
 json-libs = ["orjson", "ujson"]
-docs = ["mkdocs", "mkdocs-material"]
-
-# dev
-test = ["pytest", "pytest-cov", "pytest-mock", "pytest-asyncio"]
-style = ["black", "pylint"]
 
 
 [tool.poetry.urls]
@@ -77,5 +71,3 @@ vq = "vkquick.__main__:app"
 
 [tool.black]
 line-length = 78
-
-

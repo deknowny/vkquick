@@ -1,7 +1,7 @@
 site_name: VK Quick
 site_description: Async python framework for creating VK chat bots
 repo_name: vkquick
-repo_url: https://github.com/Rhinik/vkquick
+repo_url: https://github.com/Rhinik/vkquick/tree/1.0
 
 remote_branch: "1.0"
 
@@ -13,6 +13,7 @@ nav:
     - Как работают боты: how-bots-work.md
     - Документация:
         - Введение: docs/index.md
+        - Имена и префиксы: docs/names-and-prefixes.md
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
@@ -83,7 +84,9 @@ markdown_extensions:
     - pymdownx.tabbed
     - pymdownx.details
     - pymdownx.tilde
-
+    - pymdownx.inlinehilite
+    - markdown_include.include:
+        base_path: .
 
 extra_css:
     - css/termynal.css
