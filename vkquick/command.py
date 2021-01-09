@@ -537,7 +537,12 @@ class Command(Filter):
 
     async def make_decision(self, context: Context):
         arguments = {}
-        if not self.any_text:
+        passed_reason = "Команда полностью подходит"
+        if "payload" in context.msg.fields and "command" in context.msg.payload and context.msg.payload.command in self._payload_names:
+            if "args" in context.msg.payload:
+                arguments = context.msg.payload.args()
+            passed_reason = "Команда вызвана через payload"
+        elif not self.any_text:
             matched = self._command_routing_regex.match(context.msg.text)
             if matched:
                 arguments_string = context.msg.text[matched.end() :]
@@ -572,7 +577,7 @@ class Command(Filter):
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
         context.extra.reaction_arguments = arguments
-        return Decision(True, "Команда полностью подходит")
+        return Decision(True, passed_reason)
 
     async def init_text_arguments(
         self, arguments_string: str, context: Context

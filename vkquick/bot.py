@@ -309,13 +309,7 @@ class Bot:
 
     async def route_event_purpose(self, event: Event):
         if event.type in ("message_new", "message_reply"):
-            if (
-                event.msg.payload is not None
-                and "command" in event.msg.payload
-            ):
-                asyncio.create_task(self.run_command_via_payload(event))
-            else:
-                asyncio.create_task(self.pass_event_trough_commands(event))
+            asyncio.create_task(self.pass_event_trough_commands(event))
         elif event.type == 4:
             asyncio.create_task(
                 self._run_commands_via_user_lp_message(event)
@@ -334,22 +328,6 @@ class Bot:
         )
         extended_message = extended_message.items[0]
         event.set_message(extended_message)
-
-    async def run_command_via_payload(self, event: Event):
-        for command in self._commands:
-            if event.msg.payload.command in command.payload_names:
-                context = Context(event=event, shared_box=self.shared_box)
-                if "args" in event.msg.payload:
-                    reaction_arguments = event.msg.payload.args()
-                else:
-                    reaction_arguments = {}
-                if command.reaction_context_argument_name is not None:
-                    reaction_arguments[
-                        command.reaction_context_argument_name
-                    ] = context
-
-                context.extra.reaction_arguments = reaction_arguments
-                asyncio.create_task(command.call_reaction(context=context))
 
     async def pass_event_trough_commands(self, event: Event) -> None:
         """
