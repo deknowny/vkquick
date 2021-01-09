@@ -212,9 +212,14 @@ async def download_file(url: str) -> bytes:
     """
     Скачивание файлов по их прямой ссылке
     """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            return await response.read()
+    session = aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(ssl=False),
+        skip_auto_headers={"User-Agent"},
+        raise_for_status=True,
+        json_serialize=json_parser_policy.dumps,
+    )
+    async with session.get(url) as response:
+        return await response.read()
 
 
 _registration_date_regex = re.compile('ya:created dc:date="(?P<date>.*?)"')

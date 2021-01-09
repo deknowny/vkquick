@@ -74,6 +74,7 @@ class TestDebugger:
                     ],
                     passed_arguments={"arg": 123},
                     exception_text="Exception!",
+                    context=None
                 ),
                 vq.HandlingStatus(
                     reaction_name="bar",
@@ -82,6 +83,7 @@ class TestDebugger:
                     filters_response=[
                         ("Command", vq.Decision(False, "not passed"))
                     ],
+                    context=None
                 ),
             ],
         )

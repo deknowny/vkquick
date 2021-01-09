@@ -52,8 +52,9 @@ async def test_pass_event_trough_commands(
 
 
 async def _run_handling(bot, event):
+    bot._set_new_events([event])
     await bot.pass_event_trough_commands(event)
-    bot._set_new_event(event)
+
 
 
 @pytest.mark.asyncio
@@ -76,9 +77,11 @@ async def test_waiters(make_bot, make_message_new_event, mocker):
 
     @bot.add_command(names="a")
     async def foo(ctx):
-        new_ctx = await ctx.conquer_new_message(include_output_messages=True)
-        if new_ctx.msg.text == "b":
-            bot.shared_box.extra.command_called_completely = True
+        async for new_ctx in ctx.conquer_new_message(include_output_messages=True):
+            breakpoint()
+            if new_ctx.msg.text == "b":
+                bot.shared_box.extra.command_called_completely = True
+                break
 
     await asyncio.gather(
         _run_handling(bot, event1), _run_handling(bot, event2)

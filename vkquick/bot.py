@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 import asyncio
+import dataclasses
 import inspect
 import os
 import traceback
@@ -33,6 +34,12 @@ from vkquick.command import Command
 from vkquick.base.filter import Filter
 from vkquick.context import Context
 from vkquick.wrappers.message import Message
+
+
+@dataclasses.dataclass
+class _Waiter:
+    waiter: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    new_events: ty.List[Event] = dataclasses.field(default_factory=list)
 
 
 class Bot:
@@ -111,7 +118,7 @@ class Bot:
         self._debug_filter = debug_filter or self.default_debug_filter
         self._debugger = debugger or ColoredDebugger
 
-        self._event_waiters: ty.List[asyncio.Future] = []
+        self._event_waiters: ty.List[_Waiter] = []
 
         self._shared_box = SharedBox(
             api=api, events_generator=events_generator, bot=self
@@ -296,6 +303,7 @@ class Bot:
         зависит от флага релиза
         """
         async for events in self._shared_box.events_generator:
+            self._set_new_events(events)
             for event in events:
                 asyncio.create_task(self.route_event_purpose(event))
 
@@ -315,8 +323,6 @@ class Bot:
         for event_handler in self._event_handlers:
             if event_handler.is_handling_name(event.type):
                 asyncio.create_task(sync_async_run(event_handler.call(event)))
-
-        self._set_new_event(event)
 
     async def _run_commands_via_user_lp_message(self, event: Event):
         await self.extend_userlp_message(event)
@@ -363,33 +369,27 @@ class Bot:
             self.call_signal("post_event_handling", event, handling_info)
         )
 
-    def _set_new_event(self, event: Event) -> None:
+    def _set_new_events(self, events: ty.List[Event]) -> None:
         """
         Выдает всем вейтерам событие
         """
         for waiter in self._event_waiters:
-            waiter.set_result(event)
-            self._event_waiters.remove(waiter)
+            waiter.new_events.append(events)
+            waiter.waiter.set()
 
-    async def fetch_new_event(self) -> Event:
-        """
-        Аналог `asyncio.Event.wait()`. Используйте внутри своей реакции,
-        чтобы получить новое событие
-
-            import vkquick as vq
-
-
-            @vq.Command(names=["foo"])
-            def foo():
-                new_event = await vq.curs.bot.fetch_new_event()
-                ...
-
-        Так можно выстраивать цепочки общения с пользователем
-        """
-        waiter = asyncio.Future()
+    async def run_sublistening(self) -> ty.Generator[Event, None, None]:
+        waiter = _Waiter()
         self._event_waiters.append(waiter)
-        new_event = await waiter
-        return new_event
+        try:
+            while True:
+                await waiter.waiter.wait()
+                pack = waiter.new_events.pop(0)
+                for new_event in pack:
+                    yield new_event
+                waiter.waiter.clear()
+
+        finally:
+            self._event_waiters.remove(waiter)
 
     async def show_debug_info(
         self, event: Event, handling_info: ty.List[HandlingStatus],

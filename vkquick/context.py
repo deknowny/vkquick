@@ -442,19 +442,17 @@ class Context:
             **kwargs,
         )
 
-    async def conquer_new_message(
+    async def conquer_new_messages(
         self,
         *,
         same_chat: bool = True,
         same_user: bool = True,
         include_output_messages: bool = False,
-    ) -> Context:
+    ) -> ty.Generator[Context, None, None]:
         handled_events = ["message_new", 4]
         if include_output_messages:
             handled_events.append("message_reply")
-        while True:
-            new_event = await self.sb.bot.fetch_new_event()
-
+        async for new_event in self.sb.bot.run_sublistening():
             if new_event.type not in handled_events:
                 continue
 
@@ -471,7 +469,7 @@ class Context:
                     filters_response=self.filters_response,
                     extra=self.extra,
                 )
-                return new_context
+                yield new_context
 
     def __str__(self) -> str:
         return (
