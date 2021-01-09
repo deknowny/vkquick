@@ -242,6 +242,7 @@ class Command(Filter):
         use_regex_escape: bool = True,
         any_text: bool = False,
         payload_names: ty.Collection[str] = (),
+        crave_correct_arguments: bool = True
     ) -> None:
         self._description = description
         self._argline = argline
@@ -254,6 +255,7 @@ class Command(Filter):
         self._human_style_arguments_name = human_style_arguments_name
         self._use_regex_escape = use_regex_escape
         self._payload_names = tuple(payload_names)
+        self._crave_correct_arguments = crave_correct_arguments
 
         self._filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
@@ -608,10 +610,22 @@ class Command(Filter):
                 else:
                     for position, arg in enumerate(self._reaction_arguments, 1):
                         if arg[0] == name:
-                            await cutter.invalid_value(
-                                position, not new_arguments_string, context,
-                            )
-                            break
+                            if self._crave_correct_arguments:
+                                new_arg_value = await self._get_new_value_for_argument(
+                                    context, cutter
+                                )
+                                if new_arg_value is not UnmatchedArgument:
+                                    arguments[name] = new_arg_value
+                                    break
+                            else:
+                                warning = cutter.invalid_value_text(
+                                    position, not new_arguments_string, context,
+                                )
+                                await context.reply(warning)
+                                break
+
+                    if arguments[name] is not UnmatchedArgument:
+                        continue
                 return False, arguments
 
         if "__argline_regex_part" in arguments:
@@ -621,6 +635,48 @@ class Command(Filter):
         if new_arguments_string:
             return False, arguments
         return True, arguments
+
+    async def _get_new_value_for_argument(self, context: Context, cutter: TextCutter):
+        warning_message = (
+            "⚠ При вызове команды был пропущен "
+            "обязательный аргумент, но вы можете "
+            "передать его следующим сообщением. "
+            "Для отмены команды напишите `отмена`.\n"
+        )
+        warning_message += cutter.usage_description()
+
+        await context.reply(warning_message)
+
+        try:
+            new_arg_value = await asyncio.wait_for(
+                self._get_new_value_for_argument_process(context, cutter),
+                timeout=60.0
+            )
+            return new_arg_value
+        except asyncio.TimeoutError:
+            cancel_message = (
+                "⚠ К сожалению, аргумент не передан. "
+                "Вызов команды отменен"
+            )
+            await context.reply(cancel_message)
+            return UnmatchedArgument
+
+    async def _get_new_value_for_argument_process(self, context: Context, cutter: TextCutter):
+        async for new_ctx in context.conquer_new_messages():
+            if new_ctx.msg.text.lower() == "отмена":
+                return UnmatchedArgument
+            else:
+                parsed_value, _ = cutter.cut_part(
+                    new_ctx.msg.text
+                )
+                if parsed_value is not UnmatchedArgument:
+                    return parsed_value
+
+            warning_message = "И снова мимо!\n"
+            warning_message += cutter.usage_description()
+            await context.reply(warning_message)
+
+
 
     async def call_reaction(self, context: Context) -> None:
         """

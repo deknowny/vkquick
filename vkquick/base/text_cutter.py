@@ -39,9 +39,9 @@ class TextCutter(abc.ABC):
 
         return UnmatchedArgument, arguments_string
 
-    async def invalid_value(
+    def invalid_value_text(
         self, argument_position: int, seems_missing: bool, context: Context,
-    ) -> None:
+    ) -> str:
         """
         Дефолтный текст для некорректных аргументов
         """
@@ -55,11 +55,11 @@ class TextCutter(abc.ABC):
         if extra_info:
             extra_info = f"💡 {extra_info}"
         response = (
-            f"💥 Команда вызвана с некорректным "
+            f"⚠ Команда вызвана с некорректным "
             f"по значению аргументом №[id0|{argument_position}]."
-            f" {seems_missing_text}\n\n{extra_info} "
+            f" {seems_missing_text}\n{extra_info} "
         )
-        await context.reply(response, disable_mentions=True)
+        return response
 
     @staticmethod
     def usage_description() -> str:
