@@ -667,6 +667,8 @@ class Command(Filter):
     async def _get_new_value_for_argument_process(self, context: Context, cutter: TextCutter):
         async for new_ctx in context.conquer_new_messages():
             if new_ctx.msg.text.lower() == "отмена":
+                cancel_message = "Вызов команды отменён."
+                await context.reply(cancel_message)
                 return UnmatchedArgument
             else:
                 parsed_value, _ = cutter.cut_part(
