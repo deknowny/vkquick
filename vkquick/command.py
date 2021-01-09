@@ -643,7 +643,10 @@ class Command(Filter):
             "передать его следующим сообщением. "
             "Для отмены команды напишите `отмена`.\n"
         )
-        warning_message += cutter.usage_description()
+        extra_info = cutter.usage_description()
+        if extra_info:
+            extra_info = f"💡 {extra_info}"
+        warning_message += extra_info
 
         await context.reply(warning_message)
 
@@ -673,7 +676,10 @@ class Command(Filter):
                     return parsed_value
 
             warning_message = "И снова мимо!\n"
-            warning_message += cutter.usage_description()
+            extra_info = cutter.usage_description()
+            if extra_info:
+                extra_info = f"💡 {extra_info}"
+            warning_message += extra_info
             await context.reply(warning_message)
 
 
