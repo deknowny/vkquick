@@ -611,11 +611,11 @@ class Command(Filter):
                     for position, arg in enumerate(self._reaction_arguments, 1):
                         if arg[0] == name:
                             if self._crave_correct_arguments:
-                                new_arg_value = await self._get_new_value_for_argument(
-                                    context, cutter
+                                parsed_value, new_arguments_string = await self._get_new_value_for_argument(
+                                    context, cutter, position, not new_arguments_string
                                 )
-                                if new_arg_value is not UnmatchedArgument:
-                                    arguments[name] = new_arg_value
+                                if parsed_value is not UnmatchedArgument:
+                                    arguments[name] = parsed_value
                                     break
                             else:
                                 warning = cutter.invalid_value_text(
@@ -636,10 +636,15 @@ class Command(Filter):
             return False, arguments
         return True, arguments
 
-    async def _get_new_value_for_argument(self, context: Context, cutter: TextCutter):
+    async def _get_new_value_for_argument(self, context: Context, cutter: TextCutter, position: int, missed: bool):
+        seems_missed = ""
+        if missed:
+            seems_missed = (
+                " (вероятно, не передан)"
+            )
         warning_message = (
-            "⚠ При вызове команды был пропущен "
-            "обязательный аргумент, но вы можете "
+            "⚠ При вызове команды был некорректный "
+            f"аргумент №[id0|{position}]{seems_missed}, но вы можете "
             "передать его следующим сообщением. "
             "Для отмены команды напишите `отмена`.\n"
         )
@@ -670,12 +675,12 @@ class Command(Filter):
                 cancel_message = "Вызов команды отменён."
                 await context.reply(cancel_message)
                 return UnmatchedArgument
-            else:
-                parsed_value, _ = cutter.cut_part(
-                    new_ctx.msg.text
-                )
-                if parsed_value is not UnmatchedArgument:
-                    return parsed_value
+
+            cutter_response = cutter.cut_part(
+                new_ctx.msg.text
+            )
+            if cutter_response[0] is not UnmatchedArgument:
+                return cutter_response
 
             warning_message = "И снова мимо!\n"
             extra_info = cutter.usage_description()
