@@ -315,7 +315,7 @@ class Bot:
             await self.extend_userlp_message(event)
         except Exception as err:
             traceback.print_exc()
-            print(event)
+            print(repr(event))
             print("It's OK, bot is still working, but if you see it, report, please")
         else:
             await self.pass_event_trough_commands(event)
