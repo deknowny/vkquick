@@ -5,7 +5,7 @@ import aiohttp
 
 from vkquick.api import API
 from vkquick.json_parsers import json_parser_policy
-from vkquick.wrappers.attachment import Photo, Document
+from vkquick.wrappers.attachment import Document, Photo
 
 
 async def upload_photos_to_message(

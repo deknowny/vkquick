@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import functools
+import inspect
 import re
 import time
-import inspect
-import concurrent.futures
 import traceback
 import typing as ty
 
-from vkquick.utils import AttrDict, sync_async_run, sync_async_callable
-from vkquick.context import Context
+from vkquick.base.filter import Decision, Filter
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.base.filter import Filter, Decision
-from vkquick.events_generators.event import Event
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
+from vkquick.context import Context
+from vkquick.events_generators.event import Event
 from vkquick.shared_box import SharedBox
 from vkquick.text_cutters.regex import Regex
+from vkquick.utils import AttrDict, sync_async_callable, sync_async_run
 
 
 # TODO: payload
@@ -242,7 +242,7 @@ class Command(Filter):
         use_regex_escape: bool = True,
         any_text: bool = False,
         payload_names: ty.Collection[str] = (),
-        crave_correct_arguments: bool = True
+        crave_correct_arguments: bool = True,
     ) -> None:
         self._description = description
         self._argline = argline
@@ -422,10 +422,10 @@ class Command(Filter):
         return self
 
     async def handle_event(
-            self,
-            event: ty.Optional[Event] = None,
-            shared_box: ty.Optional[SharedBox] = None,
-            context: ty.Optional[Context] = None
+        self,
+        event: ty.Optional[Event] = None,
+        shared_box: ty.Optional[SharedBox] = None,
+        context: ty.Optional[Context] = None,
     ) -> HandlingStatus:
         start_handling_stamp = time.monotonic()
         context = context or Context(shared_box=shared_box, event=event,)
@@ -441,7 +441,7 @@ class Command(Filter):
                 all_filters_passed=False,
                 filters_response=filters_decision,
                 taken_time=taken_time,
-                context=context
+                context=context,
             )
         exception_text = None
         try:
@@ -460,7 +460,7 @@ class Command(Filter):
                 passed_arguments=context.extra.reaction_arguments(),
                 taken_time=taken_time,
                 context=context,
-                exception_text=exception_text
+                exception_text=exception_text,
             )
 
     async def run_through_filters(
@@ -540,7 +540,11 @@ class Command(Filter):
     async def make_decision(self, context: Context):
         arguments = {}
         passed_reason = "Команда полностью подходит"
-        if "payload" in context.msg.fields and "command" in context.msg.payload and context.msg.payload.command in self._payload_names:
+        if (
+            "payload" in context.msg.fields
+            and "command" in context.msg.payload
+            and context.msg.payload.command in self._payload_names
+        ):
             if "args" in context.msg.payload:
                 arguments = context.msg.payload.args()
             passed_reason = "Команда вызвана через payload"
@@ -548,7 +552,11 @@ class Command(Filter):
             matched = self._command_routing_regex.match(context.msg.text)
             if matched:
                 arguments_string = context.msg.text[matched.end() :]
-                if arguments_string.lstrip() == arguments_string and arguments_string and self._argline is None:
+                if (
+                    arguments_string.lstrip() == arguments_string
+                    and arguments_string
+                    and self._argline is None
+                ):
                     return Decision(
                         False,
                         f"Команда не подходит под шаблон `{self._command_routing_regex.pattern}`",
@@ -608,18 +616,28 @@ class Command(Filter):
                     reaction = self._invalid_argument_handlers[name]
                     await _optional_call_with_autoreply(reaction, context)
                 else:
-                    for position, arg in enumerate(self._reaction_arguments, 1):
+                    for position, arg in enumerate(
+                        self._reaction_arguments, 1
+                    ):
                         if arg[0] == name:
                             if self._crave_correct_arguments:
-                                parsed_value, new_arguments_string = await self._get_new_value_for_argument(
-                                    context, cutter, position, not new_arguments_string
+                                (
+                                    parsed_value,
+                                    new_arguments_string,
+                                ) = await self._get_new_value_for_argument(
+                                    context,
+                                    cutter,
+                                    position,
+                                    not new_arguments_string,
                                 )
                                 if parsed_value is not UnmatchedArgument:
                                     arguments[name] = parsed_value
                                     break
                             else:
                                 warning = cutter.invalid_value_text(
-                                    position, not new_arguments_string, context,
+                                    position,
+                                    not new_arguments_string,
+                                    context,
                                 )
                                 await context.reply(warning)
                                 break
@@ -636,14 +654,18 @@ class Command(Filter):
             return False, arguments
         return True, arguments
 
-    async def _get_new_value_for_argument(self, context: Context, cutter: TextCutter, position: int, missed: bool):
+    async def _get_new_value_for_argument(
+        self,
+        context: Context,
+        cutter: TextCutter,
+        position: int,
+        missed: bool,
+    ):
         seems_missed = ""
         if missed:
-            seems_missed = (
-                " (вероятно, не передан)"
-            )
+            seems_missed = " (вероятно, не передан)"
         warning_message = (
-            "⚠ При вызове команды был некорректный "
+            "⚠ При вызове команды был передан некорректный "
             f"аргумент №[id0|{position}]{seems_missed}, но вы можете "
             "передать его следующим сообщением. "
             "Для отмены команды напишите `отмена`.\n"
@@ -658,27 +680,26 @@ class Command(Filter):
         try:
             new_arg_value = await asyncio.wait_for(
                 self._get_new_value_for_argument_process(context, cutter),
-                timeout=60.0
+                timeout=60.0,
             )
             return new_arg_value
         except asyncio.TimeoutError:
             cancel_message = (
-                "⚠ К сожалению, аргумент не передан. "
-                "Вызов команды отменен"
+                "⚠ К сожалению, аргумент не передан. " "Вызов команды отменен"
             )
             await context.reply(cancel_message)
             return UnmatchedArgument, ""
 
-    async def _get_new_value_for_argument_process(self, context: Context, cutter: TextCutter):
+    async def _get_new_value_for_argument_process(
+        self, context: Context, cutter: TextCutter
+    ):
         async for new_ctx in context.conquer_new_messages():
             if new_ctx.msg.text.lower() == "отмена":
                 cancel_message = "Вызов команды отменён."
                 await context.reply(cancel_message)
                 return UnmatchedArgument, ""
 
-            cutter_response = cutter.cut_part(
-                new_ctx.msg.text
-            )
+            cutter_response = cutter.cut_part(new_ctx.msg.text)
             if cutter_response[0] is not UnmatchedArgument:
                 return cutter_response
 
@@ -688,8 +709,6 @@ class Command(Filter):
                 extra_info = f"💡 {extra_info}"
             warning_message += extra_info
             await context.reply(warning_message)
-
-
 
     async def call_reaction(self, context: Context) -> None:
         """

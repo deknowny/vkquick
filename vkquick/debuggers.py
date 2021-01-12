@@ -8,16 +8,15 @@
 аргументы были переданы в реакцию, и была ли реакция вызвана
 вообще
 """
-import os
 import functools
+import os
 import typing as ty
 
 import huepy
 
 from vkquick.base.debugger import Debugger
-from vkquick.wrappers.user import User
 from vkquick.base.handling_status import HandlingStatus
-
+from vkquick.wrappers.user import User
 
 Color = ty.Callable[[str], str]
 """

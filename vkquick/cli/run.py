@@ -3,7 +3,6 @@ import sys
 
 import typer
 
-
 run_typer = typer.Typer()
 
 

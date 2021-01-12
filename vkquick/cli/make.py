@@ -4,7 +4,6 @@ import typing as ty
 
 import typer
 
-
 make_typer = typer.Typer()
 
 

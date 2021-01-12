@@ -30,7 +30,7 @@ class TestVkApiError:
 
     @pytest.mark.parametrize("scheme", error_responses)
     def test_destruct_response(self, scheme):
-        exception = vq.VkApiError.destruct_response({"error": scheme.copy()})
+        exception = vq.VKAPIError.destruct_response({"error": scheme.copy()})
         assert exception.status_code == scheme["error_code"]
         assert exception.request_params == {
             item["key"]: item["value"] for item in scheme["request_params"]
@@ -42,7 +42,7 @@ class TestVkApiError:
         assert exception.extra_fileds == scheme
 
     def test_str(self):
-        inst = vq.VkApiError.destruct_response(
+        inst = vq.VKAPIError.destruct_response(
             {
                 "error": {
                     "error_code": 5,

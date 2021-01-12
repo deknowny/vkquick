@@ -1,7 +1,7 @@
 import abc
 
-from vkquick.json_parsers import json_parser_policy
 from vkquick.base.wrapper import Wrapper
+from vkquick.json_parsers import json_parser_policy
 
 
 class APISerializable(abc.ABC):

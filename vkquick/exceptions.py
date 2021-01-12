@@ -2,6 +2,7 @@
 Дополнительные исключения
 """
 from __future__ import annotations
+
 import dataclasses
 import typing as ty
 
@@ -18,8 +19,18 @@ class _ParamsScheme(ty.TypedDict):
     value: str  # Даже если в запросе было передано число, значение будет строкой
 
 
+class _APICodeExceptionChecker(type):
+
+    _handle_status_codes: ty.Tuple[int]
+
+    @classmethod
+    def __instancecheck__(self, instance):
+        breakpoint()
+        return instance._handle_status_codes in instance._handle_status_codes
+
+
 @dataclasses.dataclass
-class VkApiError(Exception):
+class VKAPIError(Exception, metaclass=_APICodeExceptionChecker):
     """
     Исключение, поднимаемое при некорректном вызове API запроса.
     Инициализируется через метод класса `destruct_response`
@@ -33,7 +44,7 @@ class VkApiError(Exception):
     extra_fileds: dict
 
     @classmethod
-    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VkApiError:
+    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VKAPIError:
         """
         Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
@@ -72,5 +83,14 @@ class VkApiError(Exception):
             extra_fileds=response["error"],
         )
 
+    def __class_getitem__(cls, *items: int):
+        cls._handle_status_codes = items
+        return cls
+
     def __str__(self):
         return self.pretty_exception_text
+
+
+class _APICodeExceptionRouter(Exception, metaclass=_APICodeExceptionChecker):
+
+    _handle_status_codes: ty.Tuple[int]

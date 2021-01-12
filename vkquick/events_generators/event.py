@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import functools
 import typing as ty
 
@@ -8,7 +9,6 @@ import pygments.token
 
 from vkquick.utils import AttrDict
 from vkquick.wrappers.message import Message
-
 
 pygments.formatters.terminal.TERMINAL_COLORS[
     pygments.token.string_to_tokentype("String")

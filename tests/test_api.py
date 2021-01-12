@@ -110,7 +110,7 @@ class TestAPI:
 
     def test_prepare_response_body(self, mocker: pytest_mock.MockerFixture):
         mocked_exception = mocker.patch.object(
-            vq.VkApiError, "destruct_response", return_value=Exception()
+            vq.VKAPIError, "destruct_response", return_value=Exception()
         )
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
         api._prepare_response_body({"response": 1})

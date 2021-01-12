@@ -3,36 +3,30 @@
 по запуску бота
 """
 from __future__ import annotations
+
 import asyncio
 import dataclasses
+import functools
 import inspect
 import os
-import traceback
-import functools
 import re
+import traceback
 import typing as ty
 
 from vkquick.api import API, TokenOwner
 from vkquick.base.debugger import Debugger
-from vkquick.base.handling_status import HandlingStatus
-from vkquick.events_generators.longpoll import (
-    GroupLongPoll,
-    UserLongPoll,
-    LongPollBase,
-)
-from vkquick.shared_box import SharedBox
-from vkquick.signal import SignalHandler, EventHandler
-from vkquick.events_generators.event import Event
-from vkquick.utils import (
-    sync_async_run,
-    clear_console,
-    pretty_view,
-    sync_async_callable,
-)
-from vkquick.debuggers import ColoredDebugger
-from vkquick.command import Command
 from vkquick.base.filter import Filter
+from vkquick.base.handling_status import HandlingStatus
+from vkquick.command import Command
 from vkquick.context import Context
+from vkquick.debuggers import ColoredDebugger
+from vkquick.events_generators.event import Event
+from vkquick.events_generators.longpoll import (GroupLongPoll, LongPollBase,
+                                                UserLongPoll)
+from vkquick.shared_box import SharedBox
+from vkquick.signal import EventHandler, SignalHandler
+from vkquick.utils import (clear_console, pretty_view, sync_async_callable,
+                           sync_async_run)
 from vkquick.wrappers.message import Message
 
 
@@ -311,16 +305,20 @@ class Bot:
         if event.type in ("message_new", "message_reply"):
             asyncio.create_task(self.pass_event_trough_commands(event))
         elif event.type == 4:
-            asyncio.create_task(
-                self._run_commands_via_user_lp_message(event)
-            )
+            asyncio.create_task(self._run_commands_via_user_lp_message(event))
         for event_handler in self._event_handlers:
             if event_handler.is_handling_name(event.type):
                 asyncio.create_task(sync_async_run(event_handler.call(event)))
 
     async def _run_commands_via_user_lp_message(self, event: Event):
-        await self.extend_userlp_message(event)
-        await self.pass_event_trough_commands(event)
+        try:
+            await self.extend_userlp_message(event)
+        except Exception as err:
+            traceback.print_exc()
+            print(event)
+            print("It's OK, bot is still working, but if you see it, report, please")
+        else:
+            await self.pass_event_trough_commands(event)
 
     async def extend_userlp_message(self, event: Event):
         extended_message = await self._shared_box.api.messages.get_by_id(

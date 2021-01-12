@@ -1,27 +1,26 @@
 from __future__ import annotations
+
 import asyncio
 import dataclasses
 import itertools
 import typing as ty
 
-from vkquick.wrappers.user import User
-from vkquick.wrappers.message import Message
-from vkquick.wrappers.attachment import Photo, Document
-from vkquick.base.serializable import Attachment
-from vkquick.events_generators.event import Event
-from vkquick.utils import AttrDict, random_id as random_id_
-from vkquick.base.handling_status import HandlingStatus
-from vkquick.shared_box import SharedBox
 from vkquick.api import API
-from vkquick.uploaders import (
-    upload_photos_to_message,
-    upload_photo_to_message,
-    upload_doc_to_message,
-)
-from vkquick.events_generators.longpoll import GroupLongPoll
-from vkquick.keyboard import Keyboard
+from vkquick.base.handling_status import HandlingStatus
+from vkquick.base.serializable import Attachment
 from vkquick.button import InitializedButton
 from vkquick.carousel import Carousel, Element
+from vkquick.events_generators.event import Event
+from vkquick.events_generators.longpoll import GroupLongPoll
+from vkquick.keyboard import Keyboard
+from vkquick.shared_box import SharedBox
+from vkquick.uploaders import (upload_doc_to_message, upload_photo_to_message,
+                               upload_photos_to_message)
+from vkquick.utils import AttrDict
+from vkquick.utils import random_id as random_id_
+from vkquick.wrappers.attachment import Document, Photo
+from vkquick.wrappers.message import Message
+from vkquick.wrappers.user import User
 
 
 @dataclasses.dataclass
@@ -460,8 +459,10 @@ class Context:
                 await self.sb.bot.extend_userlp_message(new_event)
 
             if (
-                new_event.msg.from_id == self.msg.from_id or not same_user
-                and new_event.msg.peer_id == self.msg.peer_id or not same_chat
+                new_event.msg.from_id == self.msg.from_id
+                or not same_user
+                and new_event.msg.peer_id == self.msg.peer_id
+                or not same_chat
             ):
                 new_context = Context(
                     shared_box=self.shared_box,

@@ -14,30 +14,28 @@ API ВКонтакте представляет собой набор
 Список методов с параметрами можно найти на https://vk.com/dev/methods
 """
 from __future__ import annotations
+
 import asyncio
 import dataclasses
-import functools
 import enum
+import functools
 import json
 import re
 import time
-import urllib.parse
 import typing as ty
+import urllib.parse
 
 import aiohttp
 import cachetools
 import requests
 
-from vkquick.json_parsers import json_parser_policy
-from vkquick.base.synchronizable import (
-    Synchronizable,
-    synchronizable_function,
-)
 from vkquick.base.serializable import APISerializable
-from vkquick.exceptions import VkApiError
+from vkquick.base.synchronizable import Synchronizable, synchronizable_function
+from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
+from vkquick.exceptions import VKAPIError
+from vkquick.json_parsers import json_parser_policy
 from vkquick.utils import AttrDict
 from vkquick.wrappers.user import User
-from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 
 
 class TokenOwner(str, enum.Enum):
@@ -377,7 +375,7 @@ class API(Synchronizable):
         и оборачивает в `self.response_factory`
         """
         if "error" in response:
-            raise VkApiError.destruct_response(response)
+            raise VKAPIError.destruct_response(response)
         return self.response_factory(response["response"])
 
     @staticmethod

@@ -8,7 +8,7 @@ VK Quick — это высокоуровневная надстройка над
 создание документации к боту в виде команд в боте или же полноценного сайта
 """
 from .api import API, TokenOwner
-from .exceptions import VkApiError
+from .exceptions import VKAPIError
 from .events_generators.event import Event
 from .debuggers import (
     ColoredDebugger,

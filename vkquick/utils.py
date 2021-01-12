@@ -3,13 +3,14 @@
 (я просто не знаю, куда это деть)
 """
 from __future__ import annotations
+
 import asyncio
 import datetime
-import re
-import json
-import random
-import os
 import functools
+import json
+import os
+import random
+import re
 import typing as ty
 
 import aiohttp
@@ -18,7 +19,6 @@ import pygments.formatters
 import pygments.lexers
 
 from vkquick.json_parsers import json_parser_policy
-
 
 T = ty.TypeVar("T")
 

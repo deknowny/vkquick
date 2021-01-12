@@ -2,9 +2,9 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.wrappers.message import Message
-from vkquick.events_generators.event import Event
 from vkquick.base.handling_status import HandlingStatus
+from vkquick.events_generators.event import Event
+from vkquick.wrappers.message import Message
 
 
 @dataclasses.dataclass

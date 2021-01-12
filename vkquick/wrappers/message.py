@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import datetime
 import functools
 import json
 import typing as ty
 
-from vkquick.wrappers.attachment import Photo, Document
-from vkquick.utils import AttrDict, peer
 from vkquick.base.wrapper import Wrapper
+from vkquick.utils import AttrDict, peer
+from vkquick.wrappers.attachment import Document, Photo
 
 
 class Message(Wrapper):

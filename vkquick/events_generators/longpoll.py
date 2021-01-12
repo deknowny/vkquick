@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import abc
+import asyncio
 import typing as ty
 
 import aiohttp
 
-from vkquick.json_parsers import json_parser_policy
 from vkquick.events_generators.event import Event
+from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
@@ -25,6 +26,7 @@ class LongPollBase(abc.ABC):
         self._session: ty.Optional[aiohttp.ClientSession] = None
         self._server_url: ty.Optional[str] = None
         self._api: ty.Optional[API] = None
+        self._baked_request = None
 
     def __aiter__(self) -> LongPollBase:
         """
@@ -43,10 +45,14 @@ class LongPollBase(abc.ABC):
         if not self._setup_called:
             await self._setup()
             self._setup_called = True
-        async with self._session.get(
-            self._server_url, params=self._lp_requests_settings
-        ) as response:
-            # TODO: X-Next-Ts header
+            self._update_baked_request()
+
+        response = await self._baked_request
+        async with response:
+            self._lp_requests_settings.update(
+                ts=response.headers["X-Next-Ts"]
+            )
+            self._update_baked_request()
             response = await response.json(loads=json_parser_policy.loads)
 
         if "failed" in response:
@@ -67,6 +73,12 @@ class LongPollBase(abc.ABC):
             await self._setup()
         else:
             raise ValueError("Invalid longpoll version")
+
+    def _update_baked_request(self) -> None:
+        self._baked_request = self._session.get(
+            self._server_url, params=self._lp_requests_settings
+        )
+        self._baked_request = asyncio.create_task(self._baked_request)
 
     async def close_session(self):
         if self._session is not None:

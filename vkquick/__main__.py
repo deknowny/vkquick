@@ -18,7 +18,6 @@ from vkquick.cli.create import create
 from vkquick.cli.make import make_typer
 from vkquick.cli.run import run_typer
 
-
 app = typer.Typer(name="VK Quick CLI")
 app.add_typer(make_typer, name="make")
 app.add_typer(run_typer, name="run")

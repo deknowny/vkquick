@@ -1,12 +1,12 @@
-import time
-import os
 import datetime
+import os
 import pathlib
+import time
 import typing as ty
 
 import typer
-import vkquick as vq
 
+import vkquick as vq
 
 LICENSE_TEXT = """
 Copyright (c) {year} {owner}
