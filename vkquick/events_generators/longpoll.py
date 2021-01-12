@@ -48,10 +48,10 @@ class LongPollBase(abc.ABC):
             self._update_baked_request()
 
         response = await self._baked_request
+        self._lp_requests_settings.update(
+            ts=response.headers["X-Next-Ts"]
+        )
         async with response:
-            self._lp_requests_settings.update(
-                ts=response.headers["X-Next-Ts"]
-            )
             self._update_baked_request()
             response = await response.json(loads=json_parser_policy.loads)
 
