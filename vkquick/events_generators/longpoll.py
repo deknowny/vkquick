@@ -42,18 +42,25 @@ class LongPollBase(abc.ABC):
         в некоторых случаях может сделать интерфейс
         пользовательского лонгпула аналогичным групповому
         """
-        if not self._setup_called:
+        if not self._setup_called or self._session.closed:
             await self._setup()
             self._setup_called = True
             self._update_baked_request()
 
         response = await self._baked_request
-        self._lp_requests_settings.update(
-            ts=response.headers["X-Next-Ts"]
-        )
         async with response:
-            self._update_baked_request()
-            response = await response.json(loads=json_parser_policy.loads)
+            if "X-Next-Ts" in response.headers:
+                self._lp_requests_settings.update(
+                    ts=response.headers["X-Next-Ts"]
+                )
+                self._update_baked_request()
+                response = await response.json(loads=json_parser_policy.loads)
+            else:
+                response = await response.json(loads=json_parser_policy.loads)
+                self._lp_requests_settings.update(
+                    ts=response["ts"]
+                )
+                self._update_baked_request()
 
         if "failed" in response:
             await self._resolve_faileds(response)
