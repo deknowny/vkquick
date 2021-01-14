@@ -57,18 +57,12 @@ class LongPollBase(abc.ABC):
                 response = await response.json(loads=json_parser_policy.loads)
             else:
                 response = await response.json(loads=json_parser_policy.loads)
-                self._lp_requests_settings.update(
-                    ts=response["ts"]
-                )
+                await self._resolve_faileds(response)
                 self._update_baked_request()
+                return []
 
-        if "failed" in response:
-            await self._resolve_faileds(response)
-            return []
-        else:
-            self._lp_requests_settings.update(ts=response["ts"])
-            updates = [Event(update) for update in response["updates"]]
-            return updates
+        updates = [Event(update) for update in response["updates"]]
+        return updates
 
     async def _resolve_faileds(self, response: Event):
         """
