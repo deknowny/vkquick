@@ -542,6 +542,7 @@ class Command(Filter):
         passed_reason = "Команда полностью подходит"
         if (
             "payload" in context.msg.fields
+            and isinstance(context.msg.payload, AttrDict)
             and "command" in context.msg.payload
             and context.msg.payload.command in self._payload_names
         ):
