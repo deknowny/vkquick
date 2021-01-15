@@ -17,6 +17,7 @@ from vkquick.events_generators.event import Event
 from vkquick.shared_box import SharedBox
 from vkquick.text_cutters.regex import Regex
 from vkquick.utils import AttrDict, sync_async_callable, sync_async_run
+from vkquick.exceptions import InvalidArgumentError
 
 
 # TODO: payload
@@ -236,6 +237,15 @@ class Command(Filter):
             ]
         ] = None,
         human_style_arguments_name: ty.Optional[ty.Dict[str, str]] = None,
+        args_callbacks: ty.Optional[
+            ty.Dict[
+                str,
+                ty.Union[
+                    sync_async_callable(...),
+                    ty.List[sync_async_callable(...)],
+                ],
+            ]
+        ] = None,
         extra: ty.Optional[dict] = None,
         run_in_thread: bool = False,
         run_in_process: bool = False,
@@ -256,6 +266,11 @@ class Command(Filter):
         self._use_regex_escape = use_regex_escape
         self._payload_names = tuple(payload_names)
         self._crave_correct_arguments = crave_correct_arguments
+        self._args_callbacks = args_callbacks or {}
+
+        for arg, callbacks in self._args_callbacks.items():
+            if not isinstance(callbacks, list):
+                self._args_callbacks[arg] = [callbacks]
 
         self._filters: ty.List[Filter] = [self]
         self._reaction_arguments: ty.List[ty.Tuple[str, ty.Any]] = []
@@ -504,8 +519,46 @@ class Command(Filter):
 
         return wrapper
 
+    def add_argument_callback(
+        self,
+        /,
+        name: ty.Union[
+            sync_async_callable([Context], ...),
+            str,
+            sync_async_callable([], ...),
+        ],
+    ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
+        """
+        Этим декоратором можно пометить обработчик, который будет
+        вызван после инициализации аргумента
+        """
+
+        def wrapper(handler):
+            callback_storage = self._args_callbacks.get(name)
+            if callback_storage is None:
+                self._args_callbacks[name] = [handler]
+            else:
+                self._args_callbacks[name].append(handler)
+            handler_parameters = inspect.signature(handler).parameters
+            length_parameters = len(handler_parameters)
+            if length_parameters != 2:
+                raise KeyError(
+                    f"Argument's callback should "
+                    f"have two arguments for context and passed value"
+                )
+            return handler
+
+        if isinstance(name, str):
+            return wrapper
+        else:
+            handler = name
+            name = name.__name__
+            real_handler = wrapper(handler)
+            return real_handler
+
     def on_invalid_argument(
         self,
+        /,
         name: ty.Union[
             sync_async_callable([Context], ...),
             str,
@@ -585,10 +638,47 @@ class Command(Filter):
                     False,
                     f"Не удалось выявить значение для аргумента `{unparsed_argument_name}`",
                 )
+
+            (
+                callbacks_passed,
+                invalid_arg_name,
+                callback_position,
+                callback_error_answer,
+            ) = await self.pass_through_callbacks(context, arguments)
+            if not callbacks_passed:
+                return Decision(
+                    False,
+                    f"Колбэк для аргумента `{invalid_arg_name}` "
+                    f"под номером `{callback_position}` "
+                    f"поднял исключение с текстом `{callback_error_answer}`",
+                )
+
         if self._reaction_context_argument_name is not None:
             arguments[self._reaction_context_argument_name] = context
         context.extra.reaction_arguments = arguments
         return Decision(True, passed_reason)
+
+    async def pass_through_callbacks(
+        self, context: Context, reaction_arguments: dict
+    ) -> ty.Tuple[bool, ty.Optional[str], ty.Optional[int], ty.Optional[str]]:
+        for argname, callbacks in self._args_callbacks.items():
+            for position, callback in enumerate(callbacks):
+                try:
+                    new_value = await sync_async_run(
+                        callback(
+                            context, reaction_arguments[argname]
+                        )
+                    )
+                    if new_value is not None:
+                        reaction_arguments[argname] = new_value
+                except InvalidArgumentError as err:
+                    if err.answer_text is not None:
+                        await context.reply(
+                            err.answer_text, **err.extra_message_settings
+                        )
+                    return False, argname, position, err.answer_text
+
+        return True, None, None, None
 
     async def init_text_arguments(
         self, arguments_string: str, context: Context

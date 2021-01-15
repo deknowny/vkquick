@@ -19,6 +19,12 @@ class _ParamsScheme(ty.TypedDict):
     value: str  # Даже если в запросе было передано число, значение будет строкой
 
 
+class InvalidArgumentError(Exception):
+    def __init__(self, answer_text=None, **extra_message_settings):
+        self.answer_text = answer_text
+        self.extra_message_settings = extra_message_settings
+
+
 class _APICodeExceptionChecker(type):
 
     _handle_status_codes: ty.Tuple[int]

@@ -21,12 +21,19 @@ from vkquick.command import Command
 from vkquick.context import Context
 from vkquick.debuggers import ColoredDebugger
 from vkquick.events_generators.event import Event
-from vkquick.events_generators.longpoll import (GroupLongPoll, LongPollBase,
-                                                UserLongPoll)
+from vkquick.events_generators.longpoll import (
+    GroupLongPoll,
+    LongPollBase,
+    UserLongPoll,
+)
 from vkquick.shared_box import SharedBox
 from vkquick.signal import EventHandler, SignalHandler
-from vkquick.utils import (clear_console, pretty_view, sync_async_callable,
-                           sync_async_run)
+from vkquick.utils import (
+    clear_console,
+    pretty_view,
+    sync_async_callable,
+    sync_async_run,
+)
 from vkquick.wrappers.message import Message
 
 
@@ -316,7 +323,9 @@ class Bot:
         except Exception as err:
             traceback.print_exc()
             print(repr(event))
-            print("It's OK, bot is still working, but if you see it, report, please")
+            print(
+                "It's OK, bot is still working, but if you see it, report, please"
+            )
         else:
             await self.pass_event_trough_commands(event)
 

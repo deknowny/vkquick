@@ -14,6 +14,7 @@ nav:
     - Документация:
         - Введение: docs/index.md
         - Имена и префиксы: docs/names-and-prefixes.md
+        - Команды с текстовыми аргументами: docs/text-arguments
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md

@@ -14,8 +14,11 @@ from vkquick.events_generators.event import Event
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.keyboard import Keyboard
 from vkquick.shared_box import SharedBox
-from vkquick.uploaders import (upload_doc_to_message, upload_photo_to_message,
-                               upload_photos_to_message)
+from vkquick.uploaders import (
+    upload_doc_to_message,
+    upload_photo_to_message,
+    upload_photos_to_message,
+)
 from vkquick.utils import AttrDict
 from vkquick.utils import random_id as random_id_
 from vkquick.wrappers.attachment import Document, Photo

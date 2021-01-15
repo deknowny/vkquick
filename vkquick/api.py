@@ -30,7 +30,10 @@ import cachetools
 import requests
 
 from vkquick.base.serializable import APISerializable
-from vkquick.base.synchronizable import Synchronizable, synchronizable_function
+from vkquick.base.synchronizable import (
+    Synchronizable,
+    synchronizable_function,
+)
 from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
