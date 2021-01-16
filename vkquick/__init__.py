@@ -55,8 +55,11 @@ from .text_cutters.optional import Optional
 from .text_cutters.regex import Regex
 
 from .base.text_values import TextBase
-from .base.text_cutter import TextCutter
-from .base.text_cutter import UnmatchedArgument
+from .base.text_cutter import (
+    TextCutter,
+    UnmatchedArgument,
+    AdvancedArgumentDescription,
+)
 from .base.debugger import Debugger
 from .base.handling_status import HandlingStatus
 from .base.wrapper import Wrapper

@@ -11,16 +11,22 @@ import typing as ty
 
 from vkquick.base.filter import Decision, Filter
 from vkquick.base.handling_status import HandlingStatus
-from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
+from vkquick.base.text_cutter import (
+    TextCutter,
+    UnmatchedArgument,
+    AdvancedArgumentDescription,
+)
 from vkquick.context import Context
 from vkquick.events_generators.event import Event
 from vkquick.shared_box import SharedBox
 from vkquick.text_cutters.regex import Regex
 from vkquick.utils import AttrDict, sync_async_callable, sync_async_run
 from vkquick.exceptions import InvalidArgumentError
+from vkquick.button import Button
+from vkquick.keyboard import Keyboard
 
 
-# TODO: payload
+
 class Command(Filter):
     """
     Команда -- продвинутая реакция на новое сообщение,
@@ -253,6 +259,8 @@ class Command(Filter):
         any_text: bool = False,
         payload_names: ty.Collection[str] = (),
         crave_correct_arguments: bool = True,
+        craving_timeout: float = 60.0,
+        allow_many_cravings: bool = False
     ) -> None:
         self._description = description
         self._argline = argline
@@ -267,6 +275,9 @@ class Command(Filter):
         self._payload_names = tuple(payload_names)
         self._crave_correct_arguments = crave_correct_arguments
         self._args_callbacks = args_callbacks or {}
+        self._craving_timeout = craving_timeout
+        self._allow_many_cravings = allow_many_cravings
+        self._craving_states: ty.List[Context] = []
 
         for arg, callbacks in self._args_callbacks.items():
             if not isinstance(callbacks, list):
@@ -442,41 +453,45 @@ class Command(Filter):
         shared_box: ty.Optional[SharedBox] = None,
         context: ty.Optional[Context] = None,
     ) -> HandlingStatus:
-        start_handling_stamp = time.monotonic()
-        context = context or Context(shared_box=shared_box, event=event,)
-        (
-            passed_every_filter,
-            filters_decision,
-        ) = await self.run_through_filters(context)
-        if not passed_every_filter:
-            end_handling_stamp = time.monotonic()
-            taken_time = end_handling_stamp - start_handling_stamp
-            return HandlingStatus(
-                reaction_name=self.reaction.__name__,
-                all_filters_passed=False,
-                filters_response=filters_decision,
-                taken_time=taken_time,
-                context=context,
-            )
-        exception_text = None
         try:
-            await self.call_reaction(context)
-        except Exception:
-            exception_text = traceback.format_exc()
-            if context.shared_box.bot.release:
-                traceback.print_exc()
+            start_handling_stamp = time.monotonic()
+            context = context or Context(shared_box=shared_box, event=event,)
+            (
+                passed_every_filter,
+                filters_decision,
+            ) = await self.run_through_filters(context)
+            if not passed_every_filter:
+                end_handling_stamp = time.monotonic()
+                taken_time = end_handling_stamp - start_handling_stamp
+                return HandlingStatus(
+                    reaction_name=self.reaction.__name__,
+                    all_filters_passed=False,
+                    filters_response=filters_decision,
+                    taken_time=taken_time,
+                    context=context,
+                )
+            exception_text = None
+            try:
+                await self.call_reaction(context)
+            except Exception:
+                exception_text = traceback.format_exc()
+                if context.shared_box.bot.release:
+                    traceback.print_exc()
+            finally:
+                end_handling_stamp = time.monotonic()
+                taken_time = end_handling_stamp - start_handling_stamp
+                return HandlingStatus(
+                    reaction_name=self.reaction.__name__,
+                    all_filters_passed=True,
+                    filters_response=filters_decision,
+                    passed_arguments=context.extra.reaction_arguments(),
+                    taken_time=taken_time,
+                    context=context,
+                    exception_text=exception_text,
+                )
         finally:
-            end_handling_stamp = time.monotonic()
-            taken_time = end_handling_stamp - start_handling_stamp
-            return HandlingStatus(
-                reaction_name=self.reaction.__name__,
-                all_filters_passed=True,
-                filters_response=filters_decision,
-                passed_arguments=context.extra.reaction_arguments(),
-                taken_time=taken_time,
-                context=context,
-                exception_text=exception_text,
-            )
+            if context in self._craving_states:
+                self._craving_states.remove(context)
 
     async def run_through_filters(
         self, context: Context
@@ -591,6 +606,7 @@ class Command(Filter):
             return real_handler
 
     async def make_decision(self, context: Context):
+
         arguments = {}
         passed_reason = "Команда полностью подходит"
         if (
@@ -605,6 +621,15 @@ class Command(Filter):
         elif not self.any_text:
             matched = self._command_routing_regex.match(context.msg.text)
             if matched:
+                if not self._allow_many_cravings and self._craving_states:
+                    for craving_ctx in self._craving_states:
+                        if craving_ctx.msg.peer_id == context.msg.peer_id and craving_ctx.msg.from_id == context.msg.from_id:
+                            warning_message = "⚠ Эту команду нельзя вызвать одновременно два раза. Завершите предыдущий вызов."
+                            await context.reply(warning_message)
+                            return Decision(
+                                False,
+                                f"Команда уже вызвана пользователем, ожидается завершение ее обработки",
+                            )
                 arguments_string = context.msg.text[matched.end() :]
                 if (
                     arguments_string.lstrip() == arguments_string
@@ -672,13 +697,62 @@ class Command(Filter):
                     if new_value is not None:
                         reaction_arguments[argname] = new_value
                 except InvalidArgumentError as err:
-                    if err.answer_text is not None:
+                    if self._crave_correct_arguments:
+                        callback_decision = await self._crave_value_for_callback(
+                            context, callback, argname, err, reaction_arguments
+                        )
+                        # Так и не выявлен аргумент. Иначе аргумент был получен
+                        if isinstance(callback_decision, tuple):
+                            return callback_decision
+                    elif err.answer_text is not None:
                         await context.reply(
                             err.answer_text, **err.extra_message_settings
                         )
-                    return False, argname, position, err.answer_text
+                        return False, argname, position, err.answer_text
 
         return True, None, None, None
+
+    async def _crave_value_for_callback(self, context, callback, argname, err, reaction_arguments):
+        cutter = None
+        position = None
+        for ind, arg in enumerate(self.reaction_arguments):
+            if arg[0] == argname:
+                cutter = arg[1]
+                position = ind
+        try:
+            return await asyncio.wait_for(self._crave_value_for_callback_with_timout(
+                context, callback, argname, err, reaction_arguments,
+                cutter, position
+            ), timeout=self._craving_timeout)
+        except asyncio.TimeoutError:
+            cancel_message = (
+                "⚠ К сожалению, аргумент не передан. " "Вызов команды отменен"
+            )
+            await context.reply(cancel_message)
+            return False, argname, position, err.answer_text
+
+    async def _crave_value_for_callback_with_timout(self, context, callback, argname, err, reaction_arguments, cutter, position):
+        while True:
+            parsed_value, _ = await self._get_new_value_for_argument(
+                context, cutter,
+                err.answer_text, position, False
+            )
+            if parsed_value is UnmatchedArgument:
+                return False, argname, position, err.answer_text
+            try:
+                new_value = await sync_async_run(
+                    callback(
+                        context, parsed_value
+                    )
+                )
+                if new_value is not None:
+                    reaction_arguments[argname] = new_value
+                else:
+                    reaction_arguments[argname] = parsed_value
+                break
+            except InvalidArgumentError as new_err:
+                err = new_err
+
 
     async def init_text_arguments(
         self, arguments_string: str, context: Context
@@ -689,52 +763,55 @@ class Command(Filter):
         """
         arguments = {}
         new_arguments_string = arguments_string.lstrip()
-        for name, cutter in self._reaction_arguments:
+        for position, argument in enumerate(self._reaction_arguments, 1):
+            arg_name, cutter = argument
             parsed_value, new_arguments_string = cutter.cut_part(
                 new_arguments_string
             )
             if not self._argline:
                 new_arguments_string = new_arguments_string.lstrip()
-            arguments[name] = parsed_value
+            arguments[arg_name] = parsed_value
             # Значение от парсера некорректное или
             # Осталась часть, которую уже нечем парсить
+
             if (
                 parsed_value is UnmatchedArgument
-                or len(arguments) == len(self._reaction_arguments)
-                and new_arguments_string
+                or (len(arguments) == len(self._reaction_arguments)
+                and new_arguments_string)
             ):
-                if name in self._invalid_argument_handlers:
-                    reaction = self._invalid_argument_handlers[name]
-                    await _optional_call_with_autoreply(reaction, context)
+                if arg_name in self._invalid_argument_handlers:
+                    reaction = self._invalid_argument_handlers[arg_name]
+                    if isinstance(reaction, AdvancedArgumentDescription):
+                        argument_usage_explanation = reaction.build_explanation(
+                            context, position, not new_arguments_string,
+                        )
+                    else:
+                        if isinstance(reaction, str):
+                            argument_usage_explanation = reaction
+                        else:
+                            argument_usage_explanation = await sync_async_run(
+                                _call_with_optional_context(reaction, context)
+                            )
                 else:
-                    for position, arg in enumerate(
-                        self._reaction_arguments, 1
-                    ):
-                        if arg[0] == name:
-                            if self._crave_correct_arguments:
-                                (
-                                    parsed_value,
-                                    new_arguments_string,
-                                ) = await self._get_new_value_for_argument(
-                                    context,
-                                    cutter,
-                                    position,
-                                    not new_arguments_string,
-                                )
-                                if parsed_value is not UnmatchedArgument:
-                                    arguments[name] = parsed_value
-                                    break
-                            else:
-                                warning = cutter.invalid_value_text(
-                                    position,
-                                    not new_arguments_string,
-                                    context,
-                                )
-                                await context.reply(warning)
-                                break
+                    argument_usage_explanation = cutter.usage_description()
+                if self._crave_correct_arguments:
+                    (
+                        parsed_value,
+                        new_arguments_string,
+                    ) = await self._get_new_value_for_argument(
+                        context,
+                        cutter,
+                        argument_usage_explanation,
+                        position,
+                        not new_arguments_string,
+                    )
+                    if parsed_value is not UnmatchedArgument:
+                        arguments[arg_name] = parsed_value
+                else:
+                    await context.reply(argument_usage_explanation)
 
-                    if arguments[name] is not UnmatchedArgument:
-                        continue
+                if arguments[arg_name] is not UnmatchedArgument:
+                    continue
                 return False, arguments
 
         if "__argline_regex_part" in arguments:
@@ -749,29 +826,36 @@ class Command(Filter):
         self,
         context: Context,
         cutter: TextCutter,
+        argument_usage_explanation: str,
         position: int,
         missed: bool,
     ):
+        self._craving_states.append(context)
+        decline_keyboard = Keyboard(inline=True).build(
+            Button.text(
+                "Отменить команду", payload={"action": "decline_call", "uid": context.event.event_id}
+            )
+        )
         seems_missed = ""
         if missed:
             seems_missed = " (вероятно, не передан)"
         warning_message = (
             "⚠ При вызове команды был передан некорректный "
-            f"аргумент №[id0|{position}]{seems_missed}, но вы можете "
-            "передать его следующим сообщением. "
-            "Для отмены команды напишите `отмена`.\n"
+            f"аргумент №[id0|{position}]{seems_missed}, но Вы можете "
+            "передать его следующим сообщением.\n"
         )
-        extra_info = cutter.usage_description()
-        if extra_info:
-            extra_info = f"💡 {extra_info}"
-        warning_message += extra_info
+        if not argument_usage_explanation.startswith("💡"):
+            argument_usage_explanation = f"💡 {argument_usage_explanation}"
+        warning_message += argument_usage_explanation
 
-        await context.reply(warning_message)
+        await context.reply(warning_message, keyboard=decline_keyboard)
 
         try:
             new_arg_value = await asyncio.wait_for(
-                self._get_new_value_for_argument_process(context, cutter),
-                timeout=60.0,
+                self._get_new_value_for_argument_process(
+                    context, cutter, decline_keyboard
+                ),
+                timeout=self._craving_timeout,
             )
             return new_arg_value
         except asyncio.TimeoutError:
@@ -782,10 +866,17 @@ class Command(Filter):
             return UnmatchedArgument, ""
 
     async def _get_new_value_for_argument_process(
-        self, context: Context, cutter: TextCutter
+        self, context: Context, cutter: TextCutter, decline_keyboard
     ):
         async for new_ctx in context.conquer_new_messages():
-            if new_ctx.msg.text.lower() == "отмена":
+            if (
+                isinstance(new_ctx.msg.payload, AttrDict)
+                and "action" in new_ctx.msg.payload
+                and new_ctx.msg.payload.action == "decline_call"
+
+            ):
+                if new_ctx.msg.payload.uid != context.event.event_id:
+                    continue
                 cancel_message = "Вызов команды отменён."
                 await context.reply(cancel_message)
                 return UnmatchedArgument, ""
@@ -799,7 +890,7 @@ class Command(Filter):
             if extra_info:
                 extra_info = f"💡 {extra_info}"
             warning_message += extra_info
-            await context.reply(warning_message)
+            await context.reply(warning_message, keyboard=decline_keyboard)
 
     async def call_reaction(self, context: Context) -> None:
         """
@@ -821,6 +912,7 @@ class Command(Filter):
         result = await sync_async_run(result)
         if result is not None:
             await context.reply(result)
+
 
     def _spoof_args_from_argline(self):
         self._argline = self._argline.lstrip()
@@ -971,3 +1063,5 @@ async def _optional_call_with_autoreply(func, context: Context):
         )
     if response is not None:
         await context.reply(response)
+
+

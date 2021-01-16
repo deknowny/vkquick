@@ -462,10 +462,9 @@ class Context:
                 await self.sb.bot.extend_userlp_message(new_event)
 
             if (
-                new_event.msg.from_id == self.msg.from_id
-                or not same_user
-                and new_event.msg.peer_id == self.msg.peer_id
-                or not same_chat
+                new_event.msg.from_id == self.msg.from_id or not same_user
+            ) and (
+                new_event.msg.peer_id == self.msg.peer_id or not same_chat
             ):
                 new_context = Context(
                     shared_box=self.shared_box,
