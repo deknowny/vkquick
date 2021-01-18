@@ -11,7 +11,7 @@ Python 3.8.2
 
 Если необходимая версия есть, можно переходить к установке:
 
-> До релиза 1.0: `python -m pip install git+https://github.com/Rhinik/vkquick@1.0`
+> До релиза 1.0: `python -m pip install git+https://github.com/deknowny/vkquick@1.0`
 
 === "PyPI"
     <div class="termy">
