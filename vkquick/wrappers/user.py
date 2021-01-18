@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import functools
 import typing as ty
 
 import aiohttp
@@ -18,7 +19,7 @@ class User(Wrapper):
             updated_alias = format(self, alias)
             mention = f"[id{self.id}|{updated_alias}]"
         else:
-            mention = f"[id{self.id}|{self.fn} {self.ln}]"
+            mention = f"[id{self.id}|{self.fullname}]"
         return mention
 
     @property
@@ -33,8 +34,12 @@ class User(Wrapper):
     def id(self):
         return self.fields.id
 
+    @functools.cached_property
+    def fullname(self):
+        return format(self, "<fn> <ln>")
+
     def _extra_fields_to_format(self):
-        return {"fn": self.fn, "ln": self.ln}
+        return {"fn": self.fn, "ln": self.ln, "fullname": self.fullname}
 
     # TODO: cache?
     async def get_registration_date(
