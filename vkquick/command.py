@@ -455,7 +455,11 @@ class Command(Filter):
     ) -> HandlingStatus:
         try:
             start_handling_stamp = time.monotonic()
-            context = context or Context(shared_box=shared_box, event=event,)
+            if context is not None:
+                context = context
+            else:
+                context = Context(shared_box=shared_box, event=event,)
+                context.exclude_content_source()
             (
                 passed_every_filter,
                 filters_decision,
