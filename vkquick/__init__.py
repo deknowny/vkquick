@@ -32,7 +32,7 @@ from .utils import (
 )
 
 from .json_parsers import (
-    JsonParser,
+    BuiltinJsonParser,
     UjsonParser,
     OrjsonParser,
     json_parser_policy,

@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover
     ujson = None
 
 
-class JsonParser(JSONParser):
+class BuiltinJsonParser(JSONParser):
     """
     JSON парсер, использующий стандартную библиотеку
     """
@@ -53,4 +53,9 @@ class UjsonParser(JSONParser):
 
 
 # Значение этой переменной используется везде
-json_parser_policy = JsonParser
+if orjson is not None:
+    json_parser_policy = OrjsonParser
+elif ujson is not None:
+    json_parser_policy = UjsonParser
+else:
+    json_parser_policy = BuiltinJsonParser
