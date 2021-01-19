@@ -36,7 +36,7 @@ class User(Wrapper):
 
     @functools.cached_property
     def fullname(self):
-        return format(self, "<fn> <ln>")
+        return f"{self.fn} {self.ln}"
 
     def _extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln, "fullname": self.fullname}

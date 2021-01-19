@@ -422,7 +422,7 @@ class API(Synchronizable):
         return response
 
     async def _send_async_api_request(self, path, params):
-        if self.async_http_session is None:
+        if self.async_http_session is None or self.async_http_session.closed:
             self.async_http_session = aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(ssl=False),
                 skip_auto_headers={"User-Agent"},
