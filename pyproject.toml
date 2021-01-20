@@ -5,7 +5,7 @@ build-backend = "poetry.masonry.api"
 [tool.poetry]
 name = "vkquick"
 version = "1.0.0b7"
-description = "Package for quick writing vk chat bots"
+description = "VK API Framework for chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
 documentation = "https://vkquick.github.io"
@@ -19,14 +19,15 @@ classifiers = [
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
     "Natural Language :: Russian",
-    "Topic :: Documentation",
-    "Topic :: Software Development :: Code Generators",
     "Typing :: Typed",
-    "Topic :: Utilities"
+    "Topic :: Utilities",
+    "Python :: 3.9",
+    "Python :: 3.8",
+    "Python :: 3.7"
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 pygments = "^2.6.1"
 huepy = "^1.2.1"
 requests = "^2.24.0"
