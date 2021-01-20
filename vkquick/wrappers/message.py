@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import datetime
-import functools
 import json
 import typing as ty
 
 from vkquick.base.wrapper import Wrapper
-from vkquick.utils import AttrDict, peer
+from vkquick.utils import AttrDict, peer, cached_property
 from vkquick.wrappers.attachment import Document, Photo
 
 
@@ -19,7 +18,7 @@ class Message(Wrapper):
     def peer_id(self) -> int:
         return self.fields.peer_id
 
-    @functools.cached_property
+    @cached_property
     def chat_id(self) -> int:
         chat_id = self.peer_id - peer()
         if chat_id < 0:
@@ -33,7 +32,7 @@ class Message(Wrapper):
     def conversation_message_id(self) -> int:
         return self.fields.conversation_message_id
 
-    @functools.cached_property
+    @cached_property
     def date(self) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(self.fields.date)
 
@@ -65,13 +64,13 @@ class Message(Wrapper):
     def out(self) -> bool:
         return bool(self.fields.out)
 
-    @functools.cached_property
+    @cached_property
     def keyboard(self) -> ty.Optional[AttrDict]:
         if "keyboard" in self.fields:
             return AttrDict(json.loads(self.fields.keyboard))
         return None
 
-    @functools.cached_property
+    @cached_property
     def fwd_messages(self) -> ty.List[Message]:
         return list(map(self.__class__, self.fields.fwd_messages))
 
@@ -79,13 +78,13 @@ class Message(Wrapper):
     def geo(self) -> ty.Optional[AttrDict]:
         return self.fields.geo if "geo" in self.fields else None
 
-    @functools.cached_property
+    @cached_property
     def payload(self) -> ty.Optional[AttrDict]:
         if "payload" in self.fields:
             return AttrDict(json.loads(self.fields.payload))
         return None
 
-    @functools.cached_property
+    @cached_property
     def reply_message(self) -> ty.Optional[Message]:
         if "reply_message" in self.fields:
             return self.__class__(self.fields.reply_message)
@@ -107,7 +106,7 @@ class Message(Wrapper):
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.expire_ttl if "expire_ttl" in self.fields else None
 
-    @functools.cached_property
+    @cached_property
     def photos(self) -> ty.List[Photo]:
         """
         Возвращает только фотографии из всего,
@@ -120,7 +119,7 @@ class Message(Wrapper):
         ]
         return photos
 
-    @functools.cached_property
+    @cached_property
     def docs(self):
         """
         Возвращает только вложения с типом документ из всего,

@@ -2,6 +2,7 @@ import pathlib
 import typing as ty
 
 import aiohttp
+import typing_extensions as tye
 
 from vkquick.api import API
 from vkquick.json_parsers import json_parser_policy
@@ -55,7 +56,9 @@ async def upload_doc_to_message(
     peer_id: int,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
+    type_: ty.Optional[
+        tye.Literal["doc", "audio_message", "graffiti"]
+    ] = None,
 ) -> Document:
     pass  # pragma: no cover
 
@@ -69,7 +72,9 @@ async def upload_doc_to_message(
     filename: ty.Optional[str] = None,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
+    type_: ty.Optional[
+        tye.Literal["doc", "audio_message", "graffiti"]
+    ] = None,
 ) -> Document:
     pass  # pragma: no cover
 
@@ -83,7 +88,9 @@ async def upload_doc_to_message(
     filepath: ty.Optional[str] = None,
     tags: ty.Optional[str] = None,
     return_tags: ty.Optional[bool] = None,
-    type_: ty.Optional[ty.Literal["doc", "audio_message", "graffiti"]] = None,
+    type_: ty.Optional[
+        tye.Literal["doc", "audio_message", "graffiti"]
+    ] = None,
 ) -> Document:
 
     if content is not None and filename is not None and filepath is not None:

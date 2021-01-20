@@ -19,7 +19,7 @@ from vkquick.uploaders import (
     upload_photo_to_message,
     upload_photos_to_message,
 )
-from vkquick.utils import AttrDict
+from vkquick.utils import AttrDict, mark_positional_only
 from vkquick.utils import random_id as random_id_
 from vkquick.wrappers.attachment import Document, Photo
 from vkquick.wrappers.message import Message
@@ -37,10 +37,10 @@ class SentMessage:
     conversation_message_id: int
     api: API
 
+    @mark_positional_only("message")
     async def edit(
         self,
         message: ty.Optional[str] = None,
-        /,
         *,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
@@ -124,10 +124,10 @@ class Context:
         """
         self._auto_set_content_source = False
 
+    @mark_positional_only("message")
     async def answer(
         self,
         message: ty.Optional[str] = None,
-        /,
         *,
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
@@ -157,10 +157,10 @@ class Context:
         params = {"peer_ids": self.msg.peer_id}
         return await self._send_message_via_local_kwargs(locals(), params)
 
+    @mark_positional_only("message")
     async def reply(
         self,
         message: ty.Optional[str] = None,
-        /,
         *,
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
@@ -198,10 +198,10 @@ class Context:
             }
         return await self._send_message_via_local_kwargs(locals(), params)
 
+    @mark_positional_only("message")
     async def forward(
         self,
         message: ty.Optional[str] = None,
-        /,
         *,
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
@@ -386,10 +386,10 @@ class Context:
             **baked_params, api=self.api, peer_id=self.msg.peer_id
         )
 
+    @mark_positional_only("message")
     async def edit(
         self,
         message: ty.Optional[str] = None,
-        /,
         *,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,

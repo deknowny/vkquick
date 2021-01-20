@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-import functools
 import inspect
 import os
 import re
@@ -33,6 +32,8 @@ from vkquick.utils import (
     pretty_view,
     sync_async_callable,
     sync_async_run,
+    mark_positional_only,
+    cached_property,
 )
 from vkquick.wrappers.message import Message
 
@@ -142,10 +143,10 @@ class Bot:
         return self._shared_box
 
     @classmethod
+    @mark_positional_only("token")
     def init_via_token(
         cls,
         token: str,
-        /,
         *,
         signal_handlers: ty.Optional[ty.Collection[SignalHandler]] = None,
         commands: ty.Optional[ty.Collection[Command]] = None,
@@ -173,7 +174,7 @@ class Bot:
             debug_filter=debug_filter,
         )
 
-    @functools.cached_property
+    @cached_property
     def release(self) -> bool:
         """
         Флаг, означающий, что бот запущен на продакшене.
@@ -187,12 +188,12 @@ class Bot:
         release = bool(release)
         return release
 
+    @mark_positional_only("handler")
     def add_command(
         self,
         handler: ty.Optional[
             sync_async_callable(..., ty.Optional[str])
         ] = None,
-        /,
         *,
         prefixes: ty.Iterable[str] = (),
         names: ty.Iterable[str] = (),
@@ -233,10 +234,10 @@ class Bot:
         self._commands.append(command)
         return command
 
+    @mark_positional_only("handler")
     def add_signal_handler(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         extra_names: ty.Optional[ty.List[str]] = None,
         all_names: ty.Optional[ty.List[str]] = None,
     ) -> SignalHandler:
@@ -249,10 +250,10 @@ class Bot:
         self._signal_handlers.append(signal_handler)
         return signal_handler
 
+    @mark_positional_only("handler")
     def add_event_handler(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         extra_types: ty.Optional[ty.List[str]] = None,
         all_types: ty.Optional[ty.List[str]] = None,
     ) -> EventHandler:

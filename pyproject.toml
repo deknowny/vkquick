@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 pygments = "^2.6.1"
 huepy = "^1.2.1"
 requests = "^2.24.0"
@@ -40,6 +40,9 @@ watchgod = "^0.6"
 # json-libs
 orjson = { version = "^3.4.6", optional = true }
 ujson = { version = "^4.0.1", optional = true }
+
+# compatibility
+typing-extensions = "^3.7.4"
 
 [tool.poetry.dev-dependencies]
 # docs-0.2

@@ -20,11 +20,15 @@ from vkquick.context import Context
 from vkquick.events_generators.event import Event
 from vkquick.shared_box import SharedBox
 from vkquick.text_cutters.regex import Regex
-from vkquick.utils import AttrDict, sync_async_callable, sync_async_run
+from vkquick.utils import (
+    AttrDict,
+    sync_async_callable,
+    sync_async_run,
+    mark_positional_only,
+)
 from vkquick.exceptions import InvalidArgumentError
 from vkquick.button import Button
 from vkquick.keyboard import Keyboard
-
 
 
 class Command(Filter):
@@ -260,7 +264,7 @@ class Command(Filter):
         payload_names: ty.Collection[str] = (),
         crave_correct_arguments: bool = True,
         craving_timeout: float = 60.0,
-        allow_many_cravings: bool = False
+        allow_many_cravings: bool = False,
     ) -> None:
         self._description = description
         self._argline = argline
@@ -516,8 +520,9 @@ class Command(Filter):
 
         return True, decisions
 
+    @mark_positional_only("filter_")
     def on_invalid_filter(
-        self, filter_: ty.Type[Filter], /
+        self, filter_: ty.Type[Filter],
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
         """
         Этим декоратором можно пометить обработчик, который будет
@@ -538,9 +543,9 @@ class Command(Filter):
 
         return wrapper
 
+    @mark_positional_only("name")
     def add_argument_callback(
         self,
-        /,
         name: ty.Union[
             sync_async_callable([Context], ...),
             str,
@@ -575,9 +580,9 @@ class Command(Filter):
             real_handler = wrapper(handler)
             return real_handler
 
+    @mark_positional_only("name")
     def on_invalid_argument(
         self,
-        /,
         name: ty.Union[
             sync_async_callable([Context], ...),
             str,
@@ -627,7 +632,10 @@ class Command(Filter):
             if matched:
                 if not self._allow_many_cravings and self._craving_states:
                     for craving_ctx in self._craving_states:
-                        if craving_ctx.msg.peer_id == context.msg.peer_id and craving_ctx.msg.from_id == context.msg.from_id:
+                        if (
+                            craving_ctx.msg.peer_id == context.msg.peer_id
+                            and craving_ctx.msg.from_id == context.msg.from_id
+                        ):
                             warning_message = "⚠ Эту команду нельзя вызвать одновременно два раза. Завершите предыдущий вызов."
                             await context.reply(warning_message)
                             return Decision(
@@ -694,16 +702,18 @@ class Command(Filter):
             for position, callback in enumerate(callbacks):
                 try:
                     new_value = await sync_async_run(
-                        callback(
-                            context, reaction_arguments[argname]
-                        )
+                        callback(context, reaction_arguments[argname])
                     )
                     if new_value is not None:
                         reaction_arguments[argname] = new_value
                 except InvalidArgumentError as err:
                     if self._crave_correct_arguments:
                         callback_decision = await self._crave_value_for_callback(
-                            context, callback, argname, err, reaction_arguments
+                            context,
+                            callback,
+                            argname,
+                            err,
+                            reaction_arguments,
                         )
                         # Так и не выявлен аргумент. Иначе аргумент был получен
                         if isinstance(callback_decision, tuple):
@@ -716,7 +726,9 @@ class Command(Filter):
 
         return True, None, None, None
 
-    async def _crave_value_for_callback(self, context, callback, argname, err, reaction_arguments):
+    async def _crave_value_for_callback(
+        self, context, callback, argname, err, reaction_arguments
+    ):
         cutter = None
         position = None
         for ind, arg in enumerate(self.reaction_arguments):
@@ -724,10 +736,18 @@ class Command(Filter):
                 cutter = arg[1]
                 position = ind
         try:
-            return await asyncio.wait_for(self._crave_value_for_callback_with_timout(
-                context, callback, argname, err, reaction_arguments,
-                cutter, position
-            ), timeout=self._craving_timeout)
+            return await asyncio.wait_for(
+                self._crave_value_for_callback_with_timout(
+                    context,
+                    callback,
+                    argname,
+                    err,
+                    reaction_arguments,
+                    cutter,
+                    position,
+                ),
+                timeout=self._craving_timeout,
+            )
         except asyncio.TimeoutError:
             cancel_message = (
                 "⚠ К сожалению, аргумент не передан. " "Вызов команды отменен"
@@ -735,19 +755,25 @@ class Command(Filter):
             await context.reply(cancel_message)
             return False, argname, position, err.answer_text
 
-    async def _crave_value_for_callback_with_timout(self, context, callback, argname, err, reaction_arguments, cutter, position):
+    async def _crave_value_for_callback_with_timout(
+        self,
+        context,
+        callback,
+        argname,
+        err,
+        reaction_arguments,
+        cutter,
+        position,
+    ):
         while True:
             parsed_value, _ = await self._get_new_value_for_argument(
-                context, cutter,
-                err.answer_text, position, False
+                context, cutter, err.answer_text, position, False
             )
             if parsed_value is UnmatchedArgument:
                 return False, argname, position, err.answer_text
             try:
                 new_value = await sync_async_run(
-                    callback(
-                        context, parsed_value
-                    )
+                    callback(context, parsed_value)
                 )
                 if new_value is not None:
                     reaction_arguments[argname] = new_value
@@ -756,7 +782,6 @@ class Command(Filter):
                 break
             except InvalidArgumentError as new_err:
                 err = new_err
-
 
     async def init_text_arguments(
         self, arguments_string: str, context: Context
@@ -778,10 +803,9 @@ class Command(Filter):
             # Значение от парсера некорректное или
             # Осталась часть, которую уже нечем парсить
 
-            if (
-                parsed_value is UnmatchedArgument
-                or (len(arguments) == len(self._reaction_arguments)
-                and new_arguments_string)
+            if parsed_value is UnmatchedArgument or (
+                len(arguments) == len(self._reaction_arguments)
+                and new_arguments_string
             ):
                 if arg_name in self._invalid_argument_handlers:
                     reaction = self._invalid_argument_handlers[arg_name]
@@ -837,7 +861,11 @@ class Command(Filter):
         self._craving_states.append(context)
         decline_keyboard = Keyboard(inline=True).build(
             Button.text(
-                "Отменить команду", payload={"action": "decline_call", "uid": context.event.event_id}
+                "Отменить команду",
+                payload={
+                    "action": "decline_call",
+                    "uid": context.event.event_id,
+                },
             )
         )
         seems_missed = ""
@@ -877,7 +905,6 @@ class Command(Filter):
                 isinstance(new_ctx.msg.payload, AttrDict)
                 and "action" in new_ctx.msg.payload
                 and new_ctx.msg.payload.action == "decline_call"
-
             ):
                 if new_ctx.msg.payload.uid != context.event.event_id:
                     continue
@@ -916,7 +943,6 @@ class Command(Filter):
         result = await sync_async_run(result)
         if result is not None:
             await context.reply(result)
-
 
     def _spoof_args_from_argline(self):
         self._argline = self._argline.lstrip()
@@ -1067,5 +1093,3 @@ async def _optional_call_with_autoreply(func, context: Context):
         )
     if response is not None:
         await context.reply(response)
-
-

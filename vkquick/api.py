@@ -18,7 +18,6 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import enum
-import functools
 import json
 import re
 import time
@@ -37,7 +36,7 @@ from vkquick.base.synchronizable import (
 from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
-from vkquick.utils import AttrDict
+from vkquick.utils import AttrDict, mark_positional_only
 from vkquick.wrappers.user import User
 
 
@@ -262,10 +261,10 @@ class API(Synchronizable):
             self._method_name = attribute
         return self
 
+    @mark_positional_only("use_autocomplete_params_")
     def __call__(
         self,
         use_autocomplete_params_: bool = False,
-        /,
         allow_cache_: bool = False,
         **request_params,
     ) -> ty.Union[str, int, API.default_factory]:
@@ -291,11 +290,11 @@ class API(Synchronizable):
             allow_cache=allow_cache_,
         )
 
+    @mark_positional_only("method_name", "request_params")
     def method(
         self,
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
-        /,
         *,
         allow_cache: bool = False,
     ) -> ty.Union[str, int, API.default_factory]:
@@ -320,8 +319,9 @@ class API(Synchronizable):
         )
 
     @staticmethod
+    @mark_positional_only("params")
     def _convert_params_for_api(
-        params: ty.Dict[str, ty.Any], /
+        params: ty.Dict[str, ty.Any]
     ) -> ty.Dict[str, ty.Any]:
         """
         Лучшее API в Интернете не может распарсить массивы,
@@ -533,10 +533,10 @@ class API(Synchronizable):
             await self.async_http_session.close()
 
     @synchronizable_function
+    @mark_positional_only("id_")
     async def fetch_user_via_id(
         self,
         id_: ty.Union[int, str],
-        /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
@@ -554,10 +554,10 @@ class API(Synchronizable):
         return User(user)
 
     @fetch_user_via_id.sync_edition
+    @mark_positional_only("id_")
     def fetch_user_via_id(
         self,
         id_: ty.Optional[ty.Union[int, str]] = None,
-        /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
@@ -575,10 +575,10 @@ class API(Synchronizable):
         return User(user)
 
     @synchronizable_function
+    @mark_positional_only("ids")
     async def fetch_users_via_ids(
         self,
         ids: ty.Iterable[int, str],
-        /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
@@ -596,10 +596,10 @@ class API(Synchronizable):
         return wrapped_users
 
     @fetch_users_via_ids.sync_edition
+    @mark_positional_only("ids")
     def fetch_users_via_ids(
         self,
         ids: ty.Iterable[int, str],
-        /,
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,

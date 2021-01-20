@@ -7,9 +7,10 @@ import dataclasses
 import typing as ty
 
 import huepy
+import typing_extensions as tye
 
 
-class _ParamsScheme(ty.TypedDict):
+class _ParamsScheme(tye.TypedDict):
     """
     Структура параметров, возвращаемых
     при некорректном обращении к API

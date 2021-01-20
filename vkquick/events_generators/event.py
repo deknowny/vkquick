@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import functools
 import typing as ty
 
 import pygments.formatters
 import pygments.formatters.terminal
 import pygments.token
 
-from vkquick.utils import AttrDict
+from vkquick.utils import AttrDict, cached_property
 from vkquick.wrappers.message import Message
 
 pygments.formatters.terminal.TERMINAL_COLORS[
@@ -34,19 +33,19 @@ class Event(AttrDict):
         super().__init__(value)
         object.__setattr__(self, "_message", None)
 
-    @functools.cached_property
+    @cached_property
     def from_group(self):
         if isinstance(self(), list):
             return False
         return True
 
-    @functools.cached_property
+    @cached_property
     def type(self) -> ty.Union[str, int]:
         if isinstance(self(), list):
             return self[0]
         return self["type"]
 
-    @functools.cached_property
+    @cached_property
     def event_id(self) -> ty.Union[str, int]:
         if isinstance(self(), list):
             return self[1]

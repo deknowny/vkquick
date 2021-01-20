@@ -2,6 +2,7 @@
 .DS_Store
 
 env/
+env3.7/
 __pycache__/
 vkquick.egg-info/
 todo/

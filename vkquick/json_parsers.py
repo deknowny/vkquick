@@ -45,7 +45,7 @@ class OrjsonParser(JSONParser):
 class UjsonParser(JSONParser):
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
-        return ujson.dumps(data)  # pragma: no cover
+        return ujson.dumps(data, ensure_ascii=False)  # pragma: no cover
 
     @staticmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:

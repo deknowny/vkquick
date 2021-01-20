@@ -31,7 +31,7 @@ class Filter(abc.ABC):
         Определяет, подходит ли событие по критериям фильтра
         """
 
-    def __call__(self, command: "Command") -> ty.Any:
+    def __call__(self, command: "Command"):
         """
         Вызывается в момент декорирования.
         Фильтры должны быть указаны над командой

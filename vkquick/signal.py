@@ -4,34 +4,34 @@ import inspect
 import typing as ty
 
 from vkquick.events_generators.event import Event
-from vkquick.utils import sync_async_callable
+from vkquick.utils import sync_async_callable, mark_positional_only
 
 
 class SignalHandler:
     @ty.overload
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         extra_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...  # pragma: no cover
 
     @ty.overload
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         all_names: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...  # pragma: no cover
 
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         extra_names: ty.Optional[ty.Collection[str]] = None,
         all_names: ty.Optional[ty.Collection[str]] = None,
@@ -71,39 +71,39 @@ class SignalHandler:
 
 class EventHandler(SignalHandler):
     @ty.overload
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         extra_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...  # pragma: no cover
 
     @ty.overload
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         all_types: ty.Optional[ty.Collection[str]] = None,
     ) -> None:
         ...  # pragma: no cover
 
     @ty.overload
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         handle_every_event: bool = False,
     ) -> None:
         ...  # pragma: no cover
 
+    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
-        /,
         *,
         extra_types: ty.Optional[ty.Collection[str]] = None,
         all_types: ty.Optional[ty.Collection[str]] = None,

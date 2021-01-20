@@ -7,16 +7,24 @@ import typing as ty
 from vkquick.base.text_cutter import TextCutter
 
 
+class _Mention(TextCutter):
+    def __init__(self, advanced: bool = True):
+        self._advanced = advanced
+
+
 # TODO: Links parsing (+ init: allows_links)
-class UserMention(TextCutter):
+class UserMention(_Mention):
     """
     Упоминание пользователя
     """
 
-    regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
+    simple_regex = re.compile(r"\[id(?P<id>\d+)\|.+?\]")
+    advanced_regex = re.compile(
+        r"(?:\[id(\d+)\|.+?\]|(?:id)?(\d+)|(?:https?://)?vk.com/(\d+))"
+    )
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
-        return self.cut_part_lite(
+        chunk, remain_string = self.cut_part_lite(
             self.regex, arguments_string, lambda x: int(x.group("id")),
         )
 
@@ -24,7 +32,7 @@ class UserMention(TextCutter):
         return "Аргумент является упоминанием пользователя."
 
 
-class GroupMention(TextCutter):
+class GroupMention(_Mention):
     """
     Упоминание пользователя
     """

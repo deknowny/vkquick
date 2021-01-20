@@ -3,10 +3,12 @@ from __future__ import annotations
 import typing as ty
 
 from vkquick.base.wrapper import Wrapper
+from vkquick.utils import mark_positional_only
 
 
 class Group(Wrapper):
-    def mention(self, alias: ty.Optional[str] = None, /) -> str:
+    @mark_positional_only("alias")
+    def mention(self, alias: ty.Optional[str] = None) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем
         """

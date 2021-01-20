@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import datetime
-import functools
 import typing as ty
 
 import aiohttp
 
 from vkquick.base.wrapper import Wrapper
-from vkquick.utils import get_user_registration_date
+from vkquick.utils import (
+    get_user_registration_date,
+    mark_positional_only,
+    cached_property,
+)
 
 
 class User(Wrapper):
-    def mention(self, alias: ty.Optional[str] = None, /) -> str:
+    @mark_positional_only("alias")
+    def mention(self, alias: ty.Optional[str] = None) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем
         """
@@ -34,7 +38,7 @@ class User(Wrapper):
     def id(self):
         return self.fields.id
 
-    @functools.cached_property
+    @cached_property
     def fullname(self):
         return f"{self.fn} {self.ln}"
 
