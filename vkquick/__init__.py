@@ -53,6 +53,7 @@ from .text_cutters.union import Union
 from .text_cutters.string_ import String
 from .text_cutters.optional import Optional
 from .text_cutters.regex import Regex
+from .text_cutters.float_ import Float
 
 from .base.text_values import TextBase
 from .base.text_cutter import (
