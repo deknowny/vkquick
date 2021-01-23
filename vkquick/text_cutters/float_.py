@@ -26,7 +26,7 @@ class Float(TextCutter):
 
     def cut_part(self, arguments_string: str) -> ty.Tuple[ty.Any, str]:
         value, parsed_string = self.cut_part_lite(
-            self.pattern, arguments_string, lambda x: int(x.group(0)),
+            self.pattern, arguments_string, lambda x: float(x.group(0)),
         )
         if (
             value is not UnmatchedArgument
