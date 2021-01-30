@@ -757,9 +757,9 @@ class Command(Filter):
 
     async def _crave_value_for_callback_with_timout(
         self,
-        context,
+        context: Context,
         callback,
-        argname,
+        argname: str,
         err,
         reaction_arguments,
         cutter,
@@ -859,15 +859,18 @@ class Command(Filter):
         missed: bool,
     ):
         self._craving_states.append(context)
-        decline_keyboard = Keyboard(inline=True).build(
-            Button.text(
-                "Отменить команду",
-                payload={
-                    "action": "decline_call",
-                    "uid": context.event.event_id,
-                },
+        if isinstance(context.shared_box.events_generator, GroupLongPoll):
+            decline_keyboard = Keyboard(inline=True).build(
+                Button.text(
+                    "Отменить команду",
+                    payload={
+                        "action": "decline_call",
+                        "uid": context.event.event_id,
+                    },
+                )
             )
-        )
+        else:
+            decline_keyboard = None
         seems_missed = ""
         if missed:
             seems_missed = " (вероятно, не передан)"
