@@ -10,12 +10,6 @@ VK Quick — это высокоуровневная надстройка над
 from .api import API, TokenOwner
 from .exceptions import VKAPIError, InvalidArgumentError
 from .events_generators.event import Event
-from .debuggers import (
-    ColoredDebugger,
-    UncoloredDebugger,
-    uncolored_text,
-    Color,
-)
 from .signal import SignalHandler, EventHandler
 
 from .utils import (

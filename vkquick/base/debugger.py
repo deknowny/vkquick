@@ -28,8 +28,17 @@ class Debugger(abc.ABC):
         self._message_text = message_text
         self._schemes = schemes
 
+
     @abc.abstractmethod
-    def render(self):
+    async def startup(self):
+        ...
+
+    @abc.abstractmethod
+    async def shutdown(self):
+        ...
+
+    @abc.abstractmethod
+    async def render(self):
         """
         Основной метод визуализации, выстраивающий
         сообщение для отображения в терминале

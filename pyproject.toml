@@ -73,8 +73,5 @@ json-libs = ["orjson", "ujson"]
 "VK group" = "https://vk.com/vkquick"
 "Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
 
-[tool.poetry.scripts]
-vq = "vkquick.__main__:app"
-
 [tool.black]
 line-length = 78

@@ -12,6 +12,8 @@ import re
 import traceback
 import typing as ty
 
+from loguru import logger
+
 from vkquick.api import API, TokenOwner
 from vkquick.base.debugger import Debugger
 from vkquick.base.filter import Filter
@@ -304,6 +306,8 @@ class Bot:
         на каждый `EventHandler` (или `Command`). Выбор метода
         зависит от флага релиза
         """
+        logger.add("vkquick.log")
+        logger.info("Run events listening")
         async for events in self._shared_box.events_generator:
             self._set_new_events(events)
             for event in events:

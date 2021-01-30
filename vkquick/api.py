@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import enum
+import os
 import json
 import re
 import time
@@ -232,6 +233,8 @@ class API(Synchronizable):
     """
 
     def __post_init__(self) -> None:
+        if self.token.startswith("$"):
+            self.token = os.getenv(self.token[1:])
         self.async_http_session = None
         self.sync_http_session = requests.Session()
         self.cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
