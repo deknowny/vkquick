@@ -97,4 +97,4 @@ from .carousel import Carousel, Element
 from .shared_box import SharedBox
 
 
-__version__ = "1.0.0b7"
+__version__ = "1.0.0b8"
