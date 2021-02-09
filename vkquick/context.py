@@ -13,7 +13,6 @@ from vkquick.carousel import Carousel, Element
 from vkquick.events_generators.event import Event
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.keyboard import Keyboard
-from vkquick.shared_box import SharedBox
 from vkquick.uploaders import (
     upload_doc_to_message,
     upload_photo_to_message,
@@ -24,6 +23,9 @@ from vkquick.utils import random_id as random_id_
 from vkquick.wrappers.attachment import Document, Photo
 from vkquick.wrappers.message import Message
 from vkquick.wrappers.user import User
+
+if ty.TYPE_CHECKING:
+    from vkquick.bot import Bot
 
 
 @dataclasses.dataclass
@@ -86,7 +88,7 @@ class SentMessage:
 @dataclasses.dataclass
 class Context:
 
-    shared_box: SharedBox
+    bot: Bot
     event: Event
     filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(
         default_factory=dict
@@ -105,16 +107,16 @@ class Context:
         return self.event.msg
 
     @property
-    def sb(self) -> SharedBox:
-        return self.shared_box
-
-    @property
     def api(self) -> API:
         """
         Текущий инстанс API, который был передан
         при инициализации бота
         """
-        return self.shared_box.api
+        return self.bot.api
+
+    @property
+    def events_generator(self):
+        return self.bot.events_generator
 
     def exclude_content_source(self) -> None:
         """
@@ -467,7 +469,7 @@ class Context:
                 new_event.msg.peer_id == self.msg.peer_id or not same_chat
             ):
                 new_context = Context(
-                    shared_box=self.shared_box,
+                    bot=self.bot,
                     event=new_event,
                     filters_response=self.filters_response,
                     extra=self.extra,
@@ -477,7 +479,7 @@ class Context:
     def __str__(self) -> str:
         return (
             f"{self.__class__.__name__}"
-            f"(event, filters_response, extra, shared_box)"
+            f"(event, filters_response, extra, bot)"
         )
 
     async def _send_message_via_local_kwargs(
@@ -545,7 +547,7 @@ class Context:
         if (
             self._auto_set_content_source
             and "content_source" not in pre_params
-            and isinstance(self.shared_box.events_generator, GroupLongPoll)
+            and isinstance(self.events_generator, GroupLongPoll)
         ):
             pre_params["content_source"] = {
                 "type": "message",

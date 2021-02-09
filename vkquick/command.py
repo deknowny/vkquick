@@ -18,7 +18,6 @@ from vkquick.base.text_cutter import (
 )
 from vkquick.context import Context
 from vkquick.events_generators.event import Event
-from vkquick.shared_box import SharedBox
 from vkquick.text_cutters.regex import Regex
 from vkquick.utils import (
     AttrDict,
@@ -29,6 +28,9 @@ from vkquick.utils import (
 from vkquick.exceptions import InvalidArgumentError
 from vkquick.button import Button
 from vkquick.keyboard import Keyboard
+
+if ty.TYPE_CHECKING:
+    from vkquick.bot import Bot
 
 
 class Command(Filter):
@@ -347,7 +349,7 @@ class Command(Filter):
     async def handle_event(
         self,
         event: ty.Optional[Event] = None,
-        shared_box: ty.Optional[SharedBox] = None,
+        bot: ty.Optional[Bot] = None,
         context: ty.Optional[Context] = None,
     ) -> HandlingStatus:
         try:

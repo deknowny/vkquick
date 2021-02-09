@@ -20,14 +20,12 @@ from vkquick.base.filter import Filter
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.command import Command
 from vkquick.context import Context
-from vkquick.debuggers import ColoredDebugger
 from vkquick.events_generators.event import Event
 from vkquick.events_generators.longpoll import (
     GroupLongPoll,
     LongPollBase,
     UserLongPoll,
 )
-from vkquick.shared_box import SharedBox
 from vkquick.signal import EventHandler, SignalHandler
 from vkquick.utils import (
     clear_console,
@@ -54,46 +52,6 @@ class Bot:
     обработка (если включен режим дебага). Помимо обычной обработки,
     можно получать новые события и обрабатывать в любой точке кода,
     т.е. `Bot` -- центр управления всем, что должно происходить в боте.
-
-    Пример бота, отвечающего `hello!` на сообщение с `hi`
-
-
-        import vkquick as vq
-
-
-        # Самая обычная команда, которая отвечает `hello!`
-        @vq.Command(names=["hi"])
-        def hi():
-            return "hello!"
-
-
-        bot = vq.Bot.init_via_token("your-token")
-        bot.commands.append(hi)
-        bot.run()
-
-
-    Это автоматически создаст все необходимые current-объекты (API, LongPoll).
-    Если вы хотите более детально настроить их, можете выставить их вручную:
-
-
-        import vkquick as vq
-
-
-        @vq.Command(names=["hi"])
-        def hi():
-            return "hello!"
-
-
-        # Можете дать свои параметры в эти объекты
-        vq.curs.api = vq.API("your-token")
-        vq.curs.lp = vq.GroupLongPoll()  # Или UserLongPoll
-
-        bot = vq.Bot(event_handlers=[hi])
-        bot.run()
-
-
-    Вместо добавления хендлеров в объект бота вручную, можно
-    использовать маркеры (пример есть в классе выше)
     """
 
     def __init__(
@@ -114,19 +72,17 @@ class Bot:
         для того, чтобы лишние события не засоряли дебаггер. Если вернулось `False`,
         информации в дебаггере не будет
         * `debugger`: Дебаггер, собирающий по событию и информации по обработке
-        события сообщение в терминал для наглядного отображения произошедшего
+        события сообщение  для наглядного отображения произошедшего
         """
         self._signal_handlers = signal_handlers or []
         self._commands = commands or []
         self._event_handlers = event_handlers or []
         self._debug_filter = debug_filter or self.default_debug_filter
-        self._debugger = debugger or ColoredDebugger
+        self._debugger = debugger
+        self._api = api
+        self._events_generator = events_generator
 
         self._event_waiters: ty.List[_Waiter] = []
-
-        self._shared_box = SharedBox(
-            api=api, events_generator=events_generator, bot=self
-        )
 
     @property
     def commands(self) -> ty.List[Command]:
@@ -134,15 +90,11 @@ class Bot:
 
     @property
     def api(self) -> API:
-        return self._shared_box.api
+        return self._api
 
     @property
     def events_generator(self) -> LongPollBase:
-        return self._shared_box.events_generator
-
-    @property
-    def shared_box(self) -> SharedBox:
-        return self._shared_box
+        return self._events_generator
 
     @classmethod
     @mark_positional_only("token")
@@ -289,13 +241,13 @@ class Bot:
         """
         try:
             await sync_async_run(
-                self._call_signal_with_optional_shared_box("startup")
+                self._call_signal_with_optional_bot("startup")
             )
             await self.listen_events()
         finally:
             # Сигнал для обозначения окончания работы бота
             await sync_async_run(
-                self._call_signal_with_optional_shared_box("shutdown")
+                self._call_signal_with_optional_bot("shutdown")
             )
             await self._shared_box.events_generator.close_session()
 
@@ -325,7 +277,7 @@ class Bot:
     async def _run_commands_via_user_lp_message(self, event: Event):
         try:
             await self.extend_userlp_message(event)
-        except Exception as err:
+        except Exception:
             traceback.print_exc()
             print(repr(event))
             print(
@@ -353,7 +305,7 @@ class Bot:
             for command in self.commands
         ]
         handling_info = await asyncio.gather(*tasks)
-        if not self.release:
+        if not self.release and self._debugger is not None:
             await self.show_debug_info(event, handling_info)
         await sync_async_run(
             self.call_signal("post_event_handling", event, handling_info)
@@ -420,12 +372,12 @@ class Bot:
             if handler.is_handling_name(name):
                 return handler.call(*args, **kwargs)
 
-    def _call_signal_with_optional_shared_box(self, name: str):
+    def _call_signal_with_optional_bot(self, name: str):
         for handler in self._signal_handlers:
             if handler.is_handling_name(name):
                 parameters = inspect.signature(handler.handler).parameters
                 if len(parameters) == 1:
-                    return handler.call(self.shared_box)
+                    return handler.call(self)
                 elif len(parameters) == 0:
                     return handler.call()
                 else:
