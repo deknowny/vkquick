@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import typing as ty
 
+
 from vkquick.events_generators.event import Event
 from vkquick.utils import sync_async_callable, mark_positional_only
 

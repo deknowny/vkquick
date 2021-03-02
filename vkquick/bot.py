@@ -64,6 +64,7 @@ class Bot:
         event_handlers: ty.Optional[ty.Collection[EventHandler]] = None,
         debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
         debugger: ty.Optional[ty.Type[Debugger]] = None,
+        log_path: str = "vkquick.log"
     ):
         """
         * `commands`: Список обрабатываемых команд
@@ -81,6 +82,7 @@ class Bot:
         self._debugger = debugger
         self._api = api
         self._events_generator = events_generator
+        self._log_path = log_path
 
         self._event_waiters: ty.List[_Waiter] = []
 
@@ -128,20 +130,6 @@ class Bot:
             debug_filter=debug_filter,
         )
 
-    @cached_property
-    def release(self) -> bool:
-        """
-        Флаг, означающий, что бот запущен на продакшене.
-        Используется в моментах, в которых можно сделать оптимизации.
-        Например, выключение дебаггера. Вы также можете строить
-        логику у себя, основываясь на этом флаге
-        """
-        release = os.getenv("VKQUICK_RELEASE")
-        if release is not None and release.isdigit():
-            release = int(release)
-        release = bool(release)
-        return release
-
     @mark_positional_only("handler")
     def add_command(
         self,
@@ -171,7 +159,9 @@ class Bot:
         any_text: bool = False,
         payload_names: ty.Collection[str] = (),
     ) -> Command:
-        if handler is None:
+        if handler is None or isinstance(handler, (set, list, str, tuple)):
+            if isinstance(handler, (set, list, str, tuple)):
+                names = handler
             command_params = locals().copy()
             del command_params["handler"]
             del command_params["self"]
@@ -228,6 +218,7 @@ class Bot:
         вызывает зарезервированный сигнал `SHUTDOWN`. С флагом релиза
         бот будет перезагружаться при любых ошибках, т.е. он не упадет.
         """
+        logger.add(self._log_path)
         try:
             asyncio.run(self.async_run())
         except KeyboardInterrupt:
@@ -241,15 +232,17 @@ class Bot:
         """
         try:
             await sync_async_run(
-                self._call_signal_with_optional_bot("startup")
+                self.call_signal("startup", self)
             )
+            logger.info("Run events listening")
             await self.listen_events()
         finally:
+            logger.info("End events listening")
             # Сигнал для обозначения окончания работы бота
             await sync_async_run(
-                self._call_signal_with_optional_bot("shutdown")
+                self.call_signal("shutdown", self)
             )
-            await self._shared_box.events_generator.close_session()
+            await self.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
         """
@@ -258,9 +251,8 @@ class Bot:
         на каждый `EventHandler` (или `Command`). Выбор метода
         зависит от флага релиза
         """
-        logger.add("vkquick.log")
-        logger.info("Run events listening")
-        async for events in self._shared_box.events_generator:
+
+        async for events in self.events_generator:
             self._set_new_events(events)
             for event in events:
                 asyncio.create_task(self.route_event_purpose(event))
@@ -301,12 +293,10 @@ class Bot:
         показывает только пойманные исключения
         """
         tasks = [
-            asyncio.create_task(command.handle_event(event, self._shared_box))
+            asyncio.create_task(command.handle_event(event, self))
             for command in self.commands
         ]
         handling_info = await asyncio.gather(*tasks)
-        if not self.release and self._debugger is not None:
-            await self.show_debug_info(event, handling_info)
         await sync_async_run(
             self.call_signal("post_event_handling", event, handling_info)
         )
@@ -370,21 +360,8 @@ class Bot:
     def call_signal(self, name: str, *args, **kwargs) -> ty.Any:
         for handler in self._signal_handlers:
             if handler.is_handling_name(name):
+                logger.debug(f"Call signal with name: `{name}`, args: {args}, kwargs: {kwargs}")
                 return handler.call(*args, **kwargs)
-
-    def _call_signal_with_optional_bot(self, name: str):
-        for handler in self._signal_handlers:
-            if handler.is_handling_name(name):
-                parameters = inspect.signature(handler.handler).parameters
-                if len(parameters) == 1:
-                    return handler.call(self)
-                elif len(parameters) == 0:
-                    return handler.call()
-                else:
-                    raise TypeError(
-                        f"Signal with name `{name}` should"
-                        f"take only 1 or 0 arguments"
-                    )
 
     def copy(self, new_token: str) -> Bot:
         api = API(new_token)
@@ -421,19 +398,6 @@ class Bot:
         в User LP
         """
         return event.type in ("message_new", "message_reply", 4)
-
-    @staticmethod
-    def show_debug_message_for_release(
-        _, handling_info: ty.List[HandlingStatus],
-    ) -> None:
-        """
-        Плейсхолдер для `show_debug_message` в момент
-        запуска с флагом релиза
-        """
-        for scheme in handling_info:
-            if scheme.exception_text:
-                print(scheme.exception_text)
-
 
 async def async_run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:
     os.environ["VKQUICK_RELEASE"] = "1"

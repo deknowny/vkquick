@@ -114,9 +114,9 @@ class Command(Filter):
 
     def __init__(
         self,
+        names: ty.Iterable[str] = (),
         *,
         prefixes: ty.Iterable[str] = (),
-        names: ty.Iterable[str] = (),
         title: ty.Optional[str] = None,
         argline: ty.Optional[str] = None,
         description: ty.Optional[str] = None,
@@ -357,7 +357,7 @@ class Command(Filter):
             if context is not None:
                 context = context
             else:
-                context = Context(shared_box=shared_box, event=event,)
+                context = Context(bot=bot, event=event,)
                 context.exclude_content_source()
             (
                 passed_every_filter,
