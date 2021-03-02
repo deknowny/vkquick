@@ -105,23 +105,6 @@ class LongPollBase(abc.ABC):
 class GroupLongPoll(LongPollBase):
     """
     LongPoll обработчик для событий в сообществе
-
-        import asyncio
-
-        import vkquick as vq
-
-
-        async def main():
-            vq.curs.api = vq.API("any-token")
-            lp = vq.GroupLongPoll()
-            await lp.setup()
-            async for events in lp:
-                for event in events:
-                    print(event)
-
-
-        asyncio.run(main())
-
     """
 
     def __init__(
