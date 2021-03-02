@@ -240,6 +240,7 @@ class Bot:
             await sync_async_run(self.call_signal("shutdown", self))
             await self.events_generator.close_session()
 
+    @logger.catch
     async def listen_events(self) -> ty.NoReturn:
         """
         Получает события с помощью одного из генераторов событий.
@@ -251,8 +252,10 @@ class Bot:
         async for events in self.events_generator:
             self._set_new_events(events)
             for event in events:
+                logger.debug(pretty_view(event.msg.fields))
                 asyncio.create_task(self.route_event_purpose(event))
 
+    @logger.catch
     async def route_event_purpose(self, event: Event):
         if event.type in ("message_new", "message_reply"):
             asyncio.create_task(self.pass_event_trough_commands(event))
@@ -262,6 +265,7 @@ class Bot:
             if event_handler.is_handling_name(event.type):
                 asyncio.create_task(sync_async_run(event_handler.call(event)))
 
+    @logger.catch
     async def _run_commands_via_user_lp_message(self, event: Event):
         try:
             await self.extend_userlp_message(event)
@@ -281,6 +285,7 @@ class Bot:
         extended_message = extended_message.items[0]
         event.set_message(extended_message)
 
+    @logger.catch
     async def pass_event_trough_commands(self, event: Event) -> None:
         """
         Конкурентно запускает процесс по обработке события
@@ -396,6 +401,9 @@ class Bot:
         в User LP
         """
         return event.type in ("message_new", "message_reply", 4)
+
+    def __repr__(self):
+        return f"<Bot `{self.api.token_owner.fullname}`>"
 
 
 async def async_run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:

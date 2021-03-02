@@ -9,6 +9,8 @@ import time
 import traceback
 import typing as ty
 
+from loguru import logger
+
 from vkquick.base.filter import Decision, Filter
 from vkquick.base.handling_status import HandlingStatus
 from vkquick.base.text_cutter import (
@@ -18,6 +20,7 @@ from vkquick.base.text_cutter import (
 )
 from vkquick.context import Context
 from vkquick.events_generators.event import Event
+from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.text_cutters.regex import Regex
 from vkquick.utils import (
     AttrDict,
@@ -329,7 +332,7 @@ class Command(Filter):
     def __call__(
         self, reaction: sync_async_callable(..., ty.Optional[str])
     ) -> Command:
-        self.reaction = reaction
+        self.reaction = logger.catch(reaction)
         self._resolve_arguments()
         if self._argline is not None:
             self._spoof_args_from_argline()
@@ -346,6 +349,7 @@ class Command(Filter):
             )
         return self
 
+    @logger.catch
     async def handle_event(
         self,
         event: ty.Optional[Event] = None,
@@ -373,13 +377,8 @@ class Command(Filter):
                     taken_time=taken_time,
                     context=context,
                 )
-            exception_text = None
             try:
                 await self.call_reaction(context)
-            except Exception:
-                exception_text = traceback.format_exc()
-                if context.shared_box.bot.release:
-                    traceback.print_exc()
             finally:
                 end_handling_stamp = time.monotonic()
                 taken_time = end_handling_stamp - start_handling_stamp
@@ -390,7 +389,6 @@ class Command(Filter):
                     passed_arguments=context.extra.reaction_arguments(),
                     taken_time=taken_time,
                     context=context,
-                    exception_text=exception_text,
                 )
         finally:
             if context in self._craving_states:
@@ -754,7 +752,7 @@ class Command(Filter):
         missed: bool,
     ):
         self._craving_states.append(context)
-        if isinstance(context.shared_box.events_generator, GroupLongPoll):
+        if isinstance(context.bot.events_generator, GroupLongPoll):
             decline_keyboard = Keyboard(inline=True).build(
                 Button.text(
                     "Отменить команду",

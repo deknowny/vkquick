@@ -21,7 +21,7 @@ class PageEntity(Wrapper):
     def fullname(self):
         return (
             self.fields.name
-            if "name" in self.fields.name
+            if "name" in self.fields
             else f"{self.fields.first_name} {self.fields.last_name}"
         )
 
