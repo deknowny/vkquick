@@ -14,7 +14,7 @@ import typing as ty
 
 from loguru import logger
 
-from vkquick.api import API, TokenOwner
+from vkquick.api import API
 from vkquick.base.debugger import Debugger
 from vkquick.base.filter import Filter
 from vkquick.base.handling_status import HandlingStatus
@@ -64,7 +64,7 @@ class Bot:
         event_handlers: ty.Optional[ty.Collection[EventHandler]] = None,
         debug_filter: ty.Optional[ty.Callable[[Event], bool]] = None,
         debugger: ty.Optional[ty.Type[Debugger]] = None,
-        log_path: str = "vkquick.log"
+        log_path: str = "vkquick.log",
     ):
         """
         * `commands`: Список обрабатываемых команд
@@ -115,7 +115,7 @@ class Bot:
         используя только токен
         """
         api = API(token)
-        if api.token_owner == TokenOwner.GROUP:
+        if api.token_owner.kind == "group":
             lp = GroupLongPoll(api)
         else:
             lp = UserLongPoll(api)
@@ -231,17 +231,13 @@ class Bot:
         с другой корутиной конкурентно
         """
         try:
-            await sync_async_run(
-                self.call_signal("startup", self)
-            )
+            await sync_async_run(self.call_signal("startup", self))
             logger.info("Run events listening")
             await self.listen_events()
         finally:
             logger.info("End events listening")
             # Сигнал для обозначения окончания работы бота
-            await sync_async_run(
-                self.call_signal("shutdown", self)
-            )
+            await sync_async_run(self.call_signal("shutdown", self))
             await self.events_generator.close_session()
 
     async def listen_events(self) -> ty.NoReturn:
@@ -360,7 +356,9 @@ class Bot:
     def call_signal(self, name: str, *args, **kwargs) -> ty.Any:
         for handler in self._signal_handlers:
             if handler.is_handling_name(name):
-                logger.debug(f"Call signal with name: `{name}`, args: {args}, kwargs: {kwargs}")
+                logger.debug(
+                    f"Call signal with name: `{name}`, args: {args}, kwargs: {kwargs}"
+                )
                 return handler.call(*args, **kwargs)
 
     def copy(self, new_token: str) -> Bot:
@@ -398,6 +396,7 @@ class Bot:
         в User LP
         """
         return event.type in ("message_new", "message_reply", 4)
+
 
 async def async_run_many_bots(bots: ty.List[Bot]) -> ty.NoReturn:
     os.environ["VKQUICK_RELEASE"] = "1"

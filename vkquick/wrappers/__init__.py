@@ -1,3 +1,3 @@
 from .attachment import Document, Photo
 from .message import Message
-from .user import User
+from .page_entity import User, Group, PageEntity

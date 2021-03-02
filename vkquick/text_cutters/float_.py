@@ -12,12 +12,7 @@ class Float(TextCutter):
     Дробное число
     """
 
-    def __init__(
-        self,
-        *,
-        min_: int = None,
-        max_: int = None,
-    ) -> None:
+    def __init__(self, *, min_: int = None, max_: int = None,) -> None:
         if isinstance(min_, int) and isinstance(max_, int) and min_ > max_:
             raise ValueError("max_ can't be less than min_")
         self.min_ = min_

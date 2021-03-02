@@ -22,7 +22,7 @@ from vkquick.utils import AttrDict, mark_positional_only
 from vkquick.utils import random_id as random_id_
 from vkquick.wrappers.attachment import Document, Photo
 from vkquick.wrappers.message import Message
-from vkquick.wrappers.user import User
+from vkquick.wrappers.page_entity import User
 
 if ty.TYPE_CHECKING:
     from vkquick.bot import Bot

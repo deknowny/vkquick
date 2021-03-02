@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import datetime
 import typing as ty
 
@@ -13,7 +12,45 @@ from vkquick.utils import (
 )
 
 
-class User(Wrapper):
+class PageEntity(Wrapper):
+    @property
+    def id(self):
+        return self.fields.id
+
+    @property
+    def fullname(self):
+        return (
+            self.fields.name
+            if "name" in self.fields.name
+            else f"{self.fields.first_name} {self.fields.last_name}"
+        )
+
+    @property
+    def kind(self):
+        raise AttributeError(
+            "Can't get a kind of entity for this object, "
+            "define it by yourself"
+        )
+
+class Group(PageEntity):
+    @mark_positional_only("alias")
+    def mention(self, alias: ty.Optional[str] = None) -> str:
+        """
+        Создает упоминание пользователя с `alias` либо с его именем
+        """
+        if alias:
+            updated_alias = format(self, alias)
+            mention = f"[id{self.id}|{updated_alias}]"
+        else:
+            mention = f"[id{self.id}|{self.fullname}]"
+        return mention
+
+    @property
+    def kind(self):
+        return "group"
+
+
+class User(PageEntity):
     @mark_positional_only("alias")
     def mention(self, alias: ty.Optional[str] = None) -> str:
         """
@@ -35,12 +72,8 @@ class User(Wrapper):
         return self.fields.last_name
 
     @property
-    def id(self):
-        return self.fields.id
-
-    @cached_property
-    def fullname(self):
-        return f"{self.fn} {self.ln}"
+    def kind(self):
+        return "user"
 
     def _extra_fields_to_format(self):
         return {"fn": self.fn, "ln": self.ln, "fullname": self.fullname}

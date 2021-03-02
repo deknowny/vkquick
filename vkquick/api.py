@@ -38,17 +38,9 @@ from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.utils import AttrDict, mark_positional_only
-from vkquick.wrappers.user import User
+from vkquick.wrappers.page_entity import User, Group, PageEntity
 
 
-class TokenOwner(str, enum.Enum):
-    """
-    Тип владельца токена. Используется
-    для определения задержки между API запросами
-    """
-
-    GROUP = "group"
-    USER = "user"
 
 
 @dataclasses.dataclass
@@ -225,13 +217,6 @@ class API(Synchronizable):
     URL для API запросов. 
     """
 
-    token_owner: ty.Optional[str] = None
-    """
-    Владелец токена: пользователь/группа. если не передано,
-    определяется автоматически через `users.get`. Внутри используется
-    для определения задержки между запросами
-    """
-
     def __post_init__(self) -> None:
         if self.token.startswith("$"):
             self.token = os.getenv(self.token[1:])
@@ -240,9 +225,8 @@ class API(Synchronizable):
         self.cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
         self._method_name = ""
         self._last_request_time = 0
-        self._delay = 0
-        self.token_owner = self.token_owner or self._define_token_owner()
-        self._delay = 1 / 3 if self.token_owner == TokenOwner.USER else 1 / 20
+        self._requests_delay = 0
+        self._token_owner = None
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -263,6 +247,11 @@ class API(Synchronizable):
         else:
             self._method_name = attribute
         return self
+
+    @property
+    def token_owner(self) -> PageEntity:
+        with self.synchronize():
+            return self._token_owner or self.define_owner_entity()
 
     @mark_positional_only("use_autocomplete_params_")
     def __call__(
@@ -410,6 +399,7 @@ class API(Synchronizable):
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
+        await self.define_owner_entity()
         if allow_cache:
             cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
@@ -452,6 +442,7 @@ class API(Synchronizable):
         `method_name` и параметрами метода `data`, преобразованными
         в query string
         """
+        self.define_owner_entity()
         if allow_cache:
             cache_hash = self._build_cache_hash(method_name, request_params)
             if cache_hash in self.cache_table:
@@ -500,15 +491,49 @@ class API(Synchronizable):
         """
         return re.sub(r"_(?P<let>[a-z])", cls._upper_zero_group, name)
 
-    def _define_token_owner(self) -> TokenOwner:
+    @synchronizable_function
+    async def define_owner_entity(self) -> PageEntity:
         """
         Определяет владельца токена: группу или пользователя.
         Например, для определения задержки между запросами
         """
-        with self.synchronize():
-            users = self.users.get()
+        if self._token_owner is None:
 
-        return TokenOwner.USER if users else TokenOwner.GROUP
+            owner = await self.users.get()
+            if owner:
+                self._token_owner = User(owner[0])
+                self._requests_delay = 1 / 3
+                return self._token_owner
+            else:
+                owner = await self.groups.get_by_id()
+                self._token_owner = Group(owner[0])
+                self._requests_delay = 1 / 20
+                return self._token_owner
+
+        else:
+            return self._token_owner
+
+    @define_owner_entity.sync_edition
+    def define_owner_entity(self) -> PageEntity:
+        """
+        Определяет владельца токена: группу или пользователя.
+        Например, для определения задержки между запросами
+        """
+        if self._token_owner is None:
+            self._token_owner = ...
+            owner = self.users.get()
+            if owner:
+                self._token_owner = User(owner[0])
+                self._requests_delay = 1 / 3
+                return self._token_owner
+            else:
+                owner = self.groups.get_by_id()
+                self._token_owner = Group(owner[0])
+                self._requests_delay = 1 / 20
+                return self._token_owner
+
+        else:
+            return self._token_owner
 
     def _get_waiting_time(self) -> float:
         """
@@ -520,8 +545,8 @@ class API(Synchronizable):
         """
         now = time.time()
         diff = now - self._last_request_time
-        if diff < self._delay:
-            wait_time = self._delay - diff
+        if diff < self._requests_delay:
+            wait_time = self._requests_delay - diff
             self._last_request_time += wait_time
             return wait_time
         else:

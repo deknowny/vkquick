@@ -28,7 +28,6 @@ class Debugger(abc.ABC):
         self._message_text = message_text
         self._schemes = schemes
 
-
     @abc.abstractmethod
     async def startup(self):
         ...
