@@ -28,6 +28,7 @@ import urllib.parse
 import aiohttp
 import cachetools
 import requests
+from loguru import logger
 
 from vkquick.base.serializable import APISerializable
 from vkquick.base.aiohttp_session_container import AiohttpSessionContainer
@@ -262,9 +263,16 @@ class API(AiohttpSessionContainer):
         response = await self._send_api_request(
             real_method_name, real_request_params
         )
+        logger_string = (
+            f"Called API method `{real_method_name}` "
+            f"with params `{real_request_params}`."
+            f" Response is `{response}`"
+        )
         if "error" in response:
+            logger.error(logger_string)
             raise VKAPIError.destruct_response(response)
         else:
+            logger.debug(logger_string)
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
