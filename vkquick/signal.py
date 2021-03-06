@@ -6,12 +6,11 @@ import typing as ty
 from loguru import logger
 
 from vkquick.events_generators.event import Event
-from vkquick.utils import sync_async_callable, mark_positional_only
+from vkquick.utils import sync_async_callable
 
 
 class SignalHandler:
     @ty.overload
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -21,7 +20,6 @@ class SignalHandler:
         ...  # pragma: no cover
 
     @ty.overload
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -30,7 +28,6 @@ class SignalHandler:
     ) -> None:
         ...  # pragma: no cover
 
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -73,7 +70,6 @@ class SignalHandler:
 
 class EventHandler(SignalHandler):
     @ty.overload
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -83,7 +79,6 @@ class EventHandler(SignalHandler):
         ...  # pragma: no cover
 
     @ty.overload
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -93,7 +88,6 @@ class EventHandler(SignalHandler):
         ...  # pragma: no cover
 
     @ty.overload
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -102,7 +96,6 @@ class EventHandler(SignalHandler):
     ) -> None:
         ...  # pragma: no cover
 
-    @mark_positional_only("handler")
     def __init__(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,

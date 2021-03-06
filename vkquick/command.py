@@ -23,10 +23,8 @@ from vkquick.events_generators.event import Event
 from vkquick.events_generators.longpoll import GroupLongPoll
 from vkquick.text_cutters.regex import Regex
 from vkquick.utils import (
-    AttrDict,
     sync_async_callable,
     sync_async_run,
-    mark_positional_only,
 )
 from vkquick.exceptions import InvalidArgumentError
 from vkquick.button import Button
@@ -413,7 +411,6 @@ class Command(Filter):
 
         return True, decisions
 
-    @mark_positional_only("filter_")
     def on_invalid_filter(
         self, filter_: ty.Type[Filter],
     ) -> ty.Callable[[sync_async_callable([Context], ...)], ...]:
@@ -436,7 +433,6 @@ class Command(Filter):
 
         return wrapper
 
-    @mark_positional_only("name")
     def add_argument_callback(
         self,
         name: ty.Union[
@@ -473,7 +469,6 @@ class Command(Filter):
             real_handler = wrapper(handler)
             return real_handler
 
-    @mark_positional_only("name")
     def on_invalid_argument(
         self,
         name: ty.Union[

@@ -18,7 +18,6 @@ from vkquick.uploaders import (
     upload_photo_to_message,
     upload_photos_to_message,
 )
-from vkquick.utils import AttrDict, mark_positional_only
 from vkquick.utils import random_id as random_id_
 from vkquick.wrappers.attachment import Document, Photo
 from vkquick.wrappers.message import Message
@@ -39,7 +38,6 @@ class SentMessage:
     conversation_message_id: int
     api: API
 
-    @mark_positional_only("message")
     async def edit(
         self,
         message: ty.Optional[str] = None,
@@ -93,7 +91,7 @@ class Context:
     filters_response: ty.Dict[str, HandlingStatus] = dataclasses.field(
         default_factory=dict
     )
-    extra: AttrDict = dataclasses.field(default_factory=AttrDict)
+    extra: None = dataclasses.field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self._attached_photos: ty.List[str, bytes] = []
@@ -126,7 +124,6 @@ class Context:
         """
         self._auto_set_content_source = False
 
-    @mark_positional_only("message")
     async def answer(
         self,
         message: ty.Optional[str] = None,
@@ -159,7 +156,6 @@ class Context:
         params = {"peer_ids": self.msg.peer_id}
         return await self._send_message_via_local_kwargs(locals(), params)
 
-    @mark_positional_only("message")
     async def reply(
         self,
         message: ty.Optional[str] = None,
@@ -200,7 +196,6 @@ class Context:
             }
         return await self._send_message_via_local_kwargs(locals(), params)
 
-    @mark_positional_only("message")
     async def forward(
         self,
         message: ty.Optional[str] = None,
@@ -388,7 +383,6 @@ class Context:
             **baked_params, api=self.api, peer_id=self.msg.peer_id
         )
 
-    @mark_positional_only("message")
     async def edit(
         self,
         message: ty.Optional[str] = None,

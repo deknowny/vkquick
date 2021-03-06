@@ -5,7 +5,7 @@ import json
 import typing as ty
 
 from vkquick.base.wrapper import Wrapper
-from vkquick.utils import AttrDict, peer, cached_property
+from vkquick.utils import peer, cached_property
 from vkquick.wrappers.attachment import Document, Photo
 
 

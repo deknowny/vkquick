@@ -124,11 +124,11 @@ class TestAPI:
         self, mocker: pytest_mock.MockerFixture
     ):
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
-        api._send_async_api_request = mocker.AsyncMock(
+        api._send_api_request = mocker.AsyncMock(
             return_value={"response": 1}
         )
         request = await api.users.get(foo=1)
-        api._send_async_api_request.assert_called_once_with(
+        api._send_api_request.assert_called_once_with(
             path="users.get",
             params={"access_token": api.token, "foo": "1", "v": api.version,},
         )
@@ -140,12 +140,12 @@ class TestAPI:
     ):
         api = vq.API("token", token_owner=vq.TokenOwner.GROUP)
         api._build_cache_hash = mocker.Mock(return_value="a")
-        api._send_async_api_request = mocker.AsyncMock(
+        api._send_api_request = mocker.AsyncMock(
             return_value={"response": 1}
         )
         request1 = await api.users.get(foo=1, allow_cache_=True)
         request2 = await api.users.get(foo=1, allow_cache_=True)
-        api._send_async_api_request.assert_called_once_with(
+        api._send_api_request.assert_called_once_with(
             path="users.get",
             params={"access_token": api.token, "foo": "1", "v": api.version,},
         )

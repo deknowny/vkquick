@@ -18,6 +18,12 @@ except ImportError:  # pragma: no cover
     ujson = None
 
 
+class AttrDict(dict):
+     __getattr__ = dict.__getitem__
+     __setattr__ = dict.__setitem__
+     __delattr__ = dict.__delitem__
+
+
 class BuiltinJsonParser(JSONParser):
     """
     JSON парсер, использующий стандартную библиотеку
@@ -29,7 +35,7 @@ class BuiltinJsonParser(JSONParser):
 
     @staticmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
-        return json.loads(string)
+        return json.loads(string, object_hook=AttrDict)
 
 
 class OrjsonParser(JSONParser):
@@ -49,7 +55,7 @@ class UjsonParser(JSONParser):
 
     @staticmethod
     def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
-        return ujson.loads(string)  # pragma: no cover
+        return ujson.loads(string, object_hook=AttrDict)  # pragma: no cover
 
 
 # Значение этой переменной используется везде

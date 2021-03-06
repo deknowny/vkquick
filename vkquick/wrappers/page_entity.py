@@ -7,7 +7,6 @@ import aiohttp
 from vkquick.base.wrapper import Wrapper
 from vkquick.utils import (
     get_user_registration_date,
-    mark_positional_only,
     cached_property,
 )
 
@@ -33,7 +32,6 @@ class PageEntity(Wrapper):
         )
 
 class Group(PageEntity):
-    @mark_positional_only("alias")
     def mention(self, alias: ty.Optional[str] = None) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем
@@ -51,7 +49,6 @@ class Group(PageEntity):
 
 
 class User(PageEntity):
-    @mark_positional_only("alias")
     def mention(self, alias: ty.Optional[str] = None) -> str:
         """
         Создает упоминание пользователя с `alias` либо с его именем

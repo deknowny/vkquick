@@ -11,7 +11,7 @@ Python 3.7.0
 
 Если необходимая версия есть, можно переходить к установке:
 
-> До релиза 1.0: `python -m pip install git+https://github.com/deknowny/vkquick@1.0`
+> До релиза 1.0: `python -m pip install -U https://github.com/deknowny/vkquick/archive/1.0.zip`
 
 === "PyPI"
     <div class="termy">
@@ -24,7 +24,7 @@ Python 3.7.0
 === "GitHub"
     <div class="termy">
     ```console
-    $ python -m pip install git+https://github.com/Rhinik/vkquick
+    $ python -m pip install -U https://github.com/deknowny/vkquick/archive/master.zip 
     ---> 100%
     ```
     </div>

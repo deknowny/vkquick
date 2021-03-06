@@ -32,7 +32,6 @@ from vkquick.utils import (
     pretty_view,
     sync_async_callable,
     sync_async_run,
-    mark_positional_only,
     cached_property,
 )
 from vkquick.wrappers.message import Message
@@ -99,7 +98,6 @@ class Bot:
         return self._events_generator
 
     @classmethod
-    @mark_positional_only("token")
     def init_via_token(
         cls,
         token: str,
@@ -130,7 +128,6 @@ class Bot:
             debug_filter=debug_filter,
         )
 
-    @mark_positional_only("handler")
     def add_command(
         self,
         handler: ty.Optional[
@@ -178,7 +175,6 @@ class Bot:
         self._commands.append(command)
         return command
 
-    @mark_positional_only("handler")
     def add_signal_handler(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,
@@ -194,7 +190,6 @@ class Bot:
         self._signal_handlers.append(signal_handler)
         return signal_handler
 
-    @mark_positional_only("handler")
     def add_event_handler(
         self,
         handler: ty.Optional[sync_async_callable(..., ty.Any)] = None,

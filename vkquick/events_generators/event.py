@@ -6,7 +6,7 @@ import pygments.formatters
 import pygments.formatters.terminal
 import pygments.token
 
-from vkquick.utils import AttrDict, cached_property
+from vkquick.utils import cached_property
 from vkquick.wrappers.message import Message
 
 pygments.formatters.terminal.TERMINAL_COLORS[
@@ -23,7 +23,7 @@ pygments.formatters.terminal.TERMINAL_COLORS[
 ] = ("cyan", "_")
 
 
-class Event(AttrDict):
+class Event:
     """
     Обертка для приходящего события в виде словаря.
     Позволяет обращаться к полям события как к атрибутам

@@ -4,7 +4,6 @@ Optional аргумент
 import typing as ty
 
 from vkquick.base.text_cutter import TextCutter, UnmatchedArgument
-from vkquick.utils import mark_positional_only
 
 
 class Optional(TextCutter):
@@ -13,7 +12,6 @@ class Optional(TextCutter):
     вернется он. Если нет -- значение по умолчанию
     """
 
-    @mark_positional_only("ids")
     def __init__(
         self,
         element: TextCutter,

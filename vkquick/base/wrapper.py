@@ -1,12 +1,10 @@
 import typing as ty
 
-from vkquick.utils import AttrDict, SafeDict
+from vkquick.utils import SafeDict
 
 
 class Wrapper:
-    def __init__(self, fields: ty.Union[dict, AttrDict]) -> None:
-        if isinstance(fields, dict):
-            fields = AttrDict(fields)
+    def __init__(self, fields: dict) -> None:
         self._fields = fields
 
     def __format__(self, format_spec: str) -> str:

@@ -13,7 +13,6 @@ from .events_generators.event import Event
 from .signal import SignalHandler, EventHandler
 
 from .utils import (
-    AttrDict,
     SafeDict,
     peer,
     random_id,
@@ -58,7 +57,6 @@ from .base.text_cutter import (
 from .base.debugger import Debugger
 from .base.handling_status import HandlingStatus
 from .base.wrapper import Wrapper
-from .base.synchronizable import Synchronizable, synchronizable_function
 from .base.json_parser import JSONParser
 from .base.serializable import APISerializable
 from .base.filter import Filter, Decision
