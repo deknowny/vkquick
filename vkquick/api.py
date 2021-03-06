@@ -30,217 +30,103 @@ import cachetools
 import requests
 
 from vkquick.base.serializable import APISerializable
-from vkquick.base.synchronizable import (
-    Synchronizable,
-    synchronizable_function,
-)
-from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll
+from vkquick.base.aiohttp_session_container import AiohttpSessionContainer
+from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll, LongPollBase
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
-from vkquick.utils import AttrDict, mark_positional_only
 from vkquick.wrappers.page_entity import User, Group, PageEntity
 
 
-
-
-@dataclasses.dataclass
-class API(Synchronizable):
+class API(AiohttpSessionContainer):
     """
-    Обертка для API запросов
+    Этот класс предоставляет возможности удобного вызова API методов
 
-    Допустим, вам нужно вызвать метод `messages.getConversationsById`
-    и передать параметры `peer_ids=2000000001`. Сделать это можно несколькими способами
-
-    > Вызов метода делается через `await`, т.е. внутри корутинных функций (`async def`)
-
-    1. Через `.method`
-
-
-        import vkquick as vq
-
-
-        api = vq.API("mytoken")
-        # Про синхронизаторы будет позже
-        with api.synchronize():
-            api.method("messages.getConversationsById", {"peer_ids": vq.peer(1)})
-
-
-    > `vq.peer` прибавит к числу 2_000_000_000
-
-    2. Через `__getattr__` с последующим `__call__`
-
-
-        import vkquick as vq
-
-
-        api = vq.API("mytoken")
-        with api.synchronize():
-            api.messages.getConversationsById(peer_ids=vq.peer(1))
-
-
-    VK Quick может преобразовать camelCase в snake_case:
-
-
-        import vkquick as vq
-
-
-        api = vq.API("mytoken")
-        with api.synchronize():
-            # Вызовет метод `messages.getConversationsById`
-            await api.messages.get_conversations_by_id(peer_ids=vq.peer(1))
-
-
-    По умолчанию запросы асинхронные и их можно await'ить или
-    создавать таски
-
-        import asyncio
-
-        import vkquick as vq
+        >>> import asyncio
+        >>>
+        >>> import vkquick as vq
+        >>>
+        >>>
+        >>> async def main():
+        >>>     api = vq.API("token")
+        >>>
+        >>>     # Вызов метода `users.get`
+        >>>     durov = await api.users.get(user_ids=1)
+        >>>     print(durov[0].first_name)  # Павел
+        >>>
+        >>>     # Альтернативный способ
+        >>>     durov = await api.method("users.get", {"user_ids": 1})
+        >>>     print(durov[0].first_name)  # Павел
+        >>>
+        >>>     # Кэширование
+        >>>     # 1. Запрос, который закэшируется
+        >>>     durov = await api.users.get(..., user_ids=1)
+        >>>     # 2. Запрос, который уже не будет вызван.
+        >>>     # Результат возьмется из кэша
+        >>>     durov = await api.users.get(..., user_ids=1)
+        >>>     print(durov[0].first_name)  # Павел
+        >>>
+        >>>     # Класс реализует некоторые API методы, добавляя к ним дополнительные обработки
+        >>>     # Например, `fetch_user_via_id` -- кэшированное получение пользователя по его ID/`screen_name`,
+        >>>     # который будет обернут в специальную обертку. Предпочтительнее, чем самостоятельный
+        >>>     # вызов `users.get`. Все возможности обертки описаны в ней самой
+        >>>     durov = await api.fetch_user_via_id(1)
+        >>>     print(durov.fn)  # Павел
+        >>>     print(f"Hi, {durov:<fn> <ln>}")  # Hi, Павел Дуров
+        >>>     print(f"Hi, {durov:@<fn> <ln>}")  # Hi, [id1|Павел Дуров]
+        >>>
+        >>>     # По окончанию нужно закрыть сессию запросов (желательно в блоке try/finally).
+        >>>     # Можно использовать асинхронный менеджер контекста
+        >>>     await api.close_session()
+        >>>
+        >>>
+        >>> asyncio.run(main())
 
 
-        api = vq.API("mytoken")
-        async def main():
-            response = await api.messages.get_conversations_by_id(
-                peer_ids=vq.peer(1)
-            )
-            print(response)
-
-        asyncio.run(main())
-
-    Автокомплит
-
-    Представим, что вы хотите передать `group_id`. Вы используете много методов,
-    где передаете один и тот же `group_id`. Чтобы не повторять себя жеб
-    можно сделать вот так:
-
-
-        import vkquick as vq
-
-
-        api = vq.API("mytoken", autocomplete_params={"group_id": 123})
-        with api.synchronize():
-            api.messages.get_conversations_by_id(
-                ...,  # Подстановка `Ellipsis` первым аргументом вызывает автокомплит
-                peer_ids=vq.peer(1)
-            )
-
-
-    Теперь метод вызвался с двумя параметрами: `group_id` и `peer_ids`
-
-    Фабрика ответов
-
-    По умолчанию, ответы оборачиваются в специальный класс `AttrDict`,
-    чтобы поля ответа можно было получить через точку
-
-
-        import vkquick as vq
-
-
-        api = vq.API("mytoken")
-        with api.synchronize():
-            convs = await api.messages.get_conversations_by_id(
-                peer_ids=vq.peer(1)
-            )
-
-            # Аналогично convs[0]["chat_settings"]["title"]
-            name = convs[0].chat_settings.title
-
-
-    Если вы хотите использовать свою обертку на словари, установите `response_factory`
-    при инициализации
-
-    Синхронизация
-
-    Бывают случаи, когда асинхронность лишь мешает. Этот класс
-    предоставляет функционал для синхронных запросов, определяя
-    интерфейс `Synchronizable`:
-
-        import vkquick as vq
-
-        api = vq.API("mytoken")
-        with api.synchronize():
-            users = api.users.get(user_ids=1)  # `await` не нужен
-        # Либо:
-        # with api.synchronize():
-        #     users = api.method("users.get", user_ids=1)
-        print(users)
-
-
-    Кэширование
-
-    Вы можете кэшировать некоторые запросы для ускорения.
-    Кэш производится по отправленным параметрам и вызванному методу.
-    Доступен как синхронному, так и асинхронному API
-
-    import vkquick as vq
-
-        api = vq.API("mytoken")
-        with api.synchronize():
-
-            # Обычный запрос
-            api.users.get(allow_cache=True, user_ids=1)
-
-            # Этот вызов будет гораздо быстрее, т.к.
-            # Данные достанутся из кэша
-            api.users.get(allow_cache=True, user_ids=1)
-
+    :param token: Токен пользователя/группы/сервисный для отправки API запросов.
+        Можно использовать имя переменной окружения,
+        если добавить в начало `"$"`, т.е. `"$ENV_VAR"`
+    :param version: Версия используемого API.
+    :param requests_url: URL для отправки запросов.
+    :param requests_session: Собственная `aiohttp` сессия.
     """
 
-    token: str
-    """
-    Access Token для API запросов
-    """
+    def __init__(
+        self,
+        token: str, *,
+        version: ty.Union[float, str] = "5.135",
+        requests_url: str = "https://api.vk.com/method/",
+        requests_session: ty.Optional[aiohttp.ClientSession] = None
+    ) -> None:
+        super().__init__(requests_session)
 
-    autocomplete_params: ty.Dict[str, ty.Any] = dataclasses.field(
-        default_factory=dict
-    )
-    """
-    При вызове API метода первым аргументом можно передать Ellipsis,
-    тогда в вызов подставятся поля из этого аргумента 
-    """
+        # Автоматическое получение токена из переменных окружения
+        if token.startswith("$"):
+            self._token = os.getenv(token[1:])
+        else:
+            self._token = token
 
-    version: ty.Union[float, str] = "5.133"
-    """
-    Версия API
-    """
+        self._version = version
+        self._requests_url = requests_url
+        self._cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
 
-    response_factory: ty.Callable[
-        [ty.Union[dict, list, str, int]], ty.Any
-    ] = dataclasses.field(default=AttrDict)
-    """
-    Обертка для ответов (по умолчанию -- `vkquick.utils.AttrMap`,
-    чтобы иметь возможность получать поля ответа через точку)
-    """
-
-    URL: str = "https://api.vk.com/method/"
-    """
-    URL для API запросов. 
-    """
-
-    def __post_init__(self) -> None:
-        if self.token.startswith("$"):
-            self.token = os.getenv(self.token[1:])
-        self.async_http_session = None
-        self.sync_http_session = requests.Session()
-        self.cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
         self._method_name = ""
-        self._last_request_time = 0
+        self._last_request_stamp = 0
         self._requests_delay = 0
         self._token_owner = None
+        self._stable_request_params = {
+            "access_token": self._token,
+            "v": self._version
+        }
 
     def __getattr__(self, attribute: str) -> API:
         """
-        Выстраивает имя метода путем переложения
-        имен API методов на "получение атрибутов".
+        Используя `__gettattr__`, класс предоставляет возможность
+        вызывать методы API, как будто обращаясь к атрибутам.
+        Пример есть в описании класса.
 
-        Например
-
-        ```python
-        await API(...).messages.send(...)
-        ```
-
-        Вызовет API метод `messages.send`. Также есть
-        поддержка конвертации snake_case в camelCase:
+        :param attribute: Имя/заголовок названия метода.
+        :return: Собственный инстанс класса для того,
+            чтобы была возможность продолжить выстроить имя метода через точку.
         """
         if self._method_name:
             self._method_name += f".{attribute}"
@@ -248,146 +134,92 @@ class API(Synchronizable):
             self._method_name = attribute
         return self
 
-    @property
-    def token_owner(self) -> PageEntity:
-        with self.synchronize():
-            return self._token_owner or self.define_owner_entity()
-
-    @mark_positional_only("use_autocomplete_params_")
-    def __call__(
+    async def __call__(
         self,
-        use_autocomplete_params_: bool = False,
-        allow_cache_: bool = False,
+        __allow_cache: bool = False,
         **request_params,
-    ) -> ty.Union[str, int, API.default_factory]:
+    ) -> ty.Union[str, int, dict]:
         """
-        Вызывает API запрос с именем метода, полученным через
-        `__getattr__`, и параметрами из `**request_params`
+        Выполняет необходимый API запрос с нужным методом и параметрами,
+        добавляя к ним токен и версию (может быть перекрыто).
 
-        В случае некорректного запроса поднимается ошибка
-        `vkquick.exceptions.VkApiError`
+        :param __allow_cache: Если `True` -- реузльтат запроса
+            с подобными параметрами и методом будет получен из кэш-таблицы,
+            если отсутсвует -- просто занесен в таблицу. Если `False` -- запрос
+            просто выполнится по сети.
+        :param request_params: Параметры, принимаемы методом, которые описаны в документации API.
+        :return: Пришедший от API ответ.
 
-        `allow_cache` разрешает кэшировать текущий запрос
-        и использовать значение из кэша, если такое есть
+        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
-        method_name = self._convert_name(self._method_name)
-        request_params = self._fill_request_params(request_params)
-        request_params = self._convert_params_for_api(request_params)
-        if use_autocomplete_params_:
-            request_params = {**self.autocomplete_params, **request_params}
+        method_name = self._method_name
         self._method_name = ""
-        return self._make_api_request(
+        return await self._make_api_request(
             method_name=method_name,
             request_params=request_params,
-            allow_cache=allow_cache_,
+            allow_cache=__allow_cache,
         )
 
-    @mark_positional_only("method_name", "request_params")
-    def method(
+    async def fetch_token_owner_entity(self) -> PageEntity:
+        """
+        Возвращает сущность владельца токена.
+
+        В зависимости от результата вызова метода `users.get`
+        определяет тип владельца токена (пользователь, группа, токен сервисный)
+        и задержку для запросов.
+
+        :return: Владельца токена под соотвествующей оберткой,
+            либо `Ellipsis` для сервисного токена.
+        """
+        if self._token_owner is None:
+            # Убираем `None`, чтобы запрос строкой ниже выполнился
+            self._token_owner = ...
+            owner = await self.users.get()
+
+            if owner:
+                self._token_owner = User(owner[0])
+                self._requests_delay = 1 / 3
+            else:
+                owner = await self.groups.get_by_id()
+                if not owner[0]:
+                    self._requests_delay = 1 / 3
+                else:
+                    self._token_owner = Group(owner[0])
+                    self._requests_delay = 1 / 20
+
+            return self._token_owner
+
+        else:
+            return self._token_owner
+
+    async def method(
         self,
-        method_name: str,
-        request_params: ty.Dict[str, ty.Any],
+        __method_name: str,
+        __request_params: ty.Dict[str, ty.Any],
         *,
         allow_cache: bool = False,
     ) -> ty.Union[str, int, API.default_factory]:
         """
-        Вызывает API запрос, передавая имя метода (`method_name`)
-        и его параметры (`request_params`).
-        Токен и версия API могут быть перекрыты значениями из `request_params`
+        Выполняет необходимый API запрос с нужным методом и параметрами.
 
-        В случае некорректного запроса поднимается ошибка
-        `vkquick.exceptions.VkApiError`
+        :param __allow_cache: Если `True` -- реузльтат запроса
+            с подобными параметрами и методом будет получен из кэш-таблицы,
+            если отсутсвует -- просто занесен в таблицу. Если `False` -- запрос
+            просто выполнится по сети.
+        :param __request_params: Параметры, принимаемы методом, которые описаны в документации API.
+        :return: Пришедший от API ответ.
 
-        `allow_cache` разрешает кэшировать текущий запрос
-        и использовать значение из кэша, если такое есть
+        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
-        method_name = self._convert_name(method_name)
-        request_params = self._fill_request_params(request_params)
+        method_name = self._convert_name(__method_name)
+        request_params = self._fill_request_params(__request_params)
         request_params = self._convert_params_for_api(request_params)
-        return self._make_api_request(
+        return await self._make_api_request(
             method_name=method_name,
             request_params=request_params,
             allow_cache=allow_cache,
         )
 
-    @staticmethod
-    @mark_positional_only("params")
-    def _convert_params_for_api(
-        params: ty.Dict[str, ty.Any]
-    ) -> ty.Dict[str, ty.Any]:
-        """
-        Лучшее API в Интернете не может распарсить массивы,
-        поэтому все перечисления нужно собирать в строку и разделять запятой
-
-        Для справки, вот так передается значение `{"foo": ["fizz", "bazz"]}`:
-
-        `?foo=fizz&foo=bazz`
-
-        Но приходится вот так (%2C - запятая по стандарту):
-
-        `?foo=fizz%2Cbazz %2C - запятая по стандарту
-
-        + со временем сюда добавились еще некоторые преобразования
-        """
-        # TODO: refactor
-        new_params = {}
-        for key, value in params.items():
-            if isinstance(value, (list, set, tuple)):
-                change_rule = lambda x: (
-                    x.api_param_representation()
-                    if isinstance(x, APISerializable)
-                    else str(x)
-                )
-                new_params[key] = ",".join(map(change_rule, value))
-
-            # Автодамп словарей
-            elif isinstance(value, dict):
-                new_params[key] = json.dumps(
-                    value, separators=(",", ":"), ensure_ascii=False
-                )
-
-            # Для aiohttp
-            elif isinstance(value, bool):
-                new_params[key] = int(value)
-
-            elif value is None:
-                continue
-
-            elif isinstance(value, APISerializable):
-                new_params[key] = value.api_param_representation()
-
-            else:
-                new_params[key] = str(value)
-
-        return new_params
-
-    def _prepare_response_body(
-        self, response: ty.Dict[str, ty.Any]
-    ) -> ty.Union[str, int, API.default_factory]:
-        """
-        Подготавливает ответ API в надлежащий вид:
-        парсит JSON, проверяет на наличие ошибок
-        и оборачивает в `self.response_factory`
-        """
-        if "error" in response:
-            raise VKAPIError.destruct_response(response)
-        return self.response_factory(response["response"])
-
-    @staticmethod
-    def _build_cache_hash(
-        method_name: str, data: ty.Dict[str, ty.Any]
-    ) -> str:
-        """
-        Создает хеш для кэш-таблицы, по которому можно
-        будет в последующем достать уже отправленный
-        когда-либо запрос
-        """
-        cache_hash = urllib.parse.urlencode(data)
-        cache_hash = f"{method_name}#{cache_hash}"
-        return cache_hash
-
-    # Need a decorator-factory?
-    @synchronizable_function
     async def _make_api_request(
         self,
         method_name: str,
@@ -395,257 +227,205 @@ class API(Synchronizable):
         allow_cache: bool,
     ) -> ty.Union[str, int, API.default_factory]:
         """
-        Отправляет API запрос асинхронно с именем API метода из
-        `method_name` и параметрами метода `data`, преобразованными
-        в query string
-        """
-        await self.define_owner_entity()
-        if allow_cache:
-            cache_hash = self._build_cache_hash(method_name, request_params)
-            if cache_hash in self.cache_table:
-                return self.cache_table[cache_hash]
+        Выполняет API запрос на определнный метод с заданными параметрами
 
-        await asyncio.sleep(self._get_waiting_time())
-        response = await self._send_async_api_request(
-            path=method_name, params=request_params
-        )
-        response = self._prepare_response_body(response)
+        :param method_name: Имя метода API
+        :param request_params: Параметры, переданные для метода
+        :param allow_cache: Использовать кэширование
+        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        """
+        # Конвертация параметров запроса под особенности API и имени метода
+        real_method_name = _convert_method_name(method_name)
+        real_request_params = _convert_params_for_api(request_params)
+        extra_request_params = self._stable_request_params.copy()
+        extra_request_params.update(real_request_params)
+        real_request_params = extra_request_params
+
+        # Определение владельца токена нужно
+        # для определения задержки между запросами
+        if self._token_owner is None:
+            await self.fetch_token_owner_entity()
+
+        # Кэширование запросов по их методу и переданным параметрам
+        # `cache_hash` -- ключ кэш-таблицы
         if allow_cache:
-            self.cache_table[cache_hash] = response
+            cache_hash = urllib.parse.urlencode(real_request_params)
+            cache_hash = f"{method_name}#{cache_hash}"
+            if cache_hash in self._cache_table:
+                return self._cache_table[cache_hash]
+
+        # Задержка между запросами необходима по правилам API
+        api_request_delay = self._get_waiting_time()
+        await asyncio.sleep(api_request_delay)
+
+        # Отправка запроса с последующей проверкой ответа
+        response = await self._send_api_request(
+            real_method_name, real_request_params
+        )
+        if "error" in response:
+            raise VKAPIError.destruct_response(response)
+        else:
+            response = response["response"]
+
+        # Если кэширование включено -- запрос добавится в таблицу
+        if allow_cache:
+            self._cache_table[cache_hash] = response
+
         return response
 
-    async def _send_async_api_request(self, path, params):
-        if self.async_http_session is None or self.async_http_session.closed:
-            self.async_http_session = aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(ssl=False),
-                skip_auto_headers={"User-Agent"},
-                raise_for_status=True,
-                json_serialize=json_parser_policy.dumps,
-            )
-        async with self.async_http_session.post(
-            f"{self.URL}{path}", data=params
+    async def _send_api_request(self, method_name: str, params: dict) -> dict:
+        async with self.requests_session.post(
+            self._requests_url + method_name, data=params
         ) as response:
             loaded_response = await response.json(
                 loads=json_parser_policy.loads
             )
             return loaded_response
 
-    @_make_api_request.sync_edition
-    def _make_api_request(
-        self,
-        method_name: str,
-        request_params: ty.Dict[str, ty.Any],
-        allow_cache: bool,
-    ) -> ty.Union[str, int, API.default_factory]:
-        """
-        Отправляет API запрос синхронно с именем API метода из
-        `method_name` и параметрами метода `data`, преобразованными
-        в query string
-        """
-        self.define_owner_entity()
-        if allow_cache:
-            cache_hash = self._build_cache_hash(method_name, request_params)
-            if cache_hash in self.cache_table:
-                return self.cache_table[cache_hash]
-
-        time.sleep(self._get_waiting_time())
-        response = self._send_sync_api_request(
-            path=method_name, params=request_params
-        )
-        response = self._prepare_response_body(response)
-        if allow_cache:
-            self.cache_table[cache_hash] = response
-        return response
-
-    def _send_sync_api_request(self, path, params):
-        response = self.sync_http_session.post(
-            f"{self.URL}{path}", data=params
-        )
-        json_response = json_parser_policy.loads(response.content)
-        return json_response
-
-    def _fill_request_params(self, params: ty.Dict[str, ty.Any]):
-        """
-        Добавляет к параметрам токен и версию API.
-        Дефолтный `access_token` и `v` могут быть перекрыты
-        """
-        return {
-            "access_token": self.token,
-            "v": self.version,
-            **params,
-        }
-
-    @staticmethod
-    def _upper_zero_group(match: ty.Match) -> str:
-        """
-        Поднимает все символы в верхний
-        регистр у captured-группы `let`. Используется
-        для конвертации snake_case в camelCase
-        """
-        return match.group("let").upper()
-
-    @classmethod
-    def _convert_name(cls, name: str) -> str:
-        """
-        Конвертирует snake_case в camelCase
-        """
-        return re.sub(r"_(?P<let>[a-z])", cls._upper_zero_group, name)
-
-    @synchronizable_function
-    async def define_owner_entity(self) -> PageEntity:
-        """
-        Определяет владельца токена: группу или пользователя.
-        Например, для определения задержки между запросами
-        """
-        if self._token_owner is None:
-
-            owner = await self.users.get()
-            if owner:
-                self._token_owner = User(owner[0])
-                self._requests_delay = 1 / 3
-                return self._token_owner
-            else:
-                owner = await self.groups.get_by_id()
-                self._token_owner = Group(owner[0])
-                self._requests_delay = 1 / 20
-                return self._token_owner
-
-        else:
-            return self._token_owner
-
-    @define_owner_entity.sync_edition
-    def define_owner_entity(self) -> PageEntity:
-        """
-        Определяет владельца токена: группу или пользователя.
-        Например, для определения задержки между запросами
-        """
-        if self._token_owner is None:
-            self._token_owner = ...
-            owner = self.users.get()
-            if owner:
-                self._token_owner = User(owner[0])
-                self._requests_delay = 1 / 3
-                return self._token_owner
-            else:
-                owner = self.groups.get_by_id()
-                self._token_owner = Group(owner[0])
-                self._requests_delay = 1 / 20
-                return self._token_owner
-
-        else:
-            return self._token_owner
-
     def _get_waiting_time(self) -> float:
         """
-        Ожидание после последнего API запроса
-        (длительность в зависимости от владельца токена:
-        1/20 для групп и 1/3  для пользователей).
-        Без этой задержки вк вернет ошибку о
-        слишком частом обращении к API
+        Рассчитывает обязательное время задержки после
+        последнего API запроса. Для групп -- 0.05s,
+        для пользователей/сервисных токенов -- 0.333s.
+
+        :return: Время, необходимое для ожидания.
         """
         now = time.time()
-        diff = now - self._last_request_time
+        diff = now - self._last_request_stamp
         if diff < self._requests_delay:
             wait_time = self._requests_delay - diff
-            self._last_request_time += wait_time
+            self._last_request_stamp += wait_time
             return wait_time
         else:
-            self._last_request_time = now
+            self._last_request_stamp = now
             return 0
 
-    async def close_session(self):
-        """
-        Закрывает соединение сессии
-        """
-        if self.async_http_session is not None:
-            await self.async_http_session.close()
-
-    @synchronizable_function
-    @mark_positional_only("id_")
     async def fetch_user_via_id(
         self,
-        id_: ty.Union[int, str],
+        __id: ty.Union[int, str],
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> User:
         """
-        Создает обертку над юзером через его ID или screen name
+        Выполняет `users.get` для необходимого пользователя.
+        Ответ оборачивает в спецаильную обертку пользователя.
+        Более предпочтительный метод, чем сырой вызов API метода.
+        Использует кэширование.
+
+        :param __id: ID/`screen_name` пользователя.
+        :param fields: Дополнительные поля в информации о пользователе.
+        :param name_case: Падеж, в котором нужно вернуть пользователя.
+        :return: Специальную обертку над пользователем,
+            о котором запрошена информация.
         """
         users = await self.users.get(
-            allow_cache_=True,
-            user_ids=id_,
+            ...,
+            user_ids=__id,
             fields=fields,
             name_case=name_case,
         )
         user = users[0]
         return User(user)
 
-    @fetch_user_via_id.sync_edition
-    @mark_positional_only("id_")
-    def fetch_user_via_id(
-        self,
-        id_: ty.Optional[ty.Union[int, str]] = None,
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> User:
-        """
-        Создает обертку над юзером через его ID или screen name
-        """
-        users = self.users.get(
-            allow_cache_=True,
-            user_ids=id_,
-            fields=fields,
-            name_case=name_case,
-        )
-        user = users[0]
-        return User(user)
-
-    @synchronizable_function
-    @mark_positional_only("ids")
     async def fetch_users_via_ids(
         self,
-        ids: ty.Iterable[int, str],
+        __ids: ty.Iterable[int, str],
         *,
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> ty.List[User]:
         """
-        Создает обертку над юзером через его ID или screen name
+        Выполняет `users.get` для необходимых пользователей.
+        Ответ оборачивает в спецаильную обертку каждого пользователя.
+        Более предпочтительный метод, чем сырой вызов API метода.
+
+        :param __id: ID/`screen_name` пользователя.
+        :param fields: Дополнительные поля в информации о пользователе.
+        :param name_case: Падеж, в котором нужно вернуть пользователя.
+        :return: Список со специальными обертками над пользователем,
+            о которых запрошена информация.
         """
         users = await self.users.get(
-            allow_cache_=True,
-            user_ids=tuple(ids),
+            ...,
+            user_ids=tuple(__ids),
             fields=fields,
             name_case=name_case,
         )
         wrapped_users = [User(user) for user in users]
         return wrapped_users
 
-    @fetch_users_via_ids.sync_edition
-    @mark_positional_only("ids")
-    def fetch_users_via_ids(
-        self,
-        ids: ty.Iterable[int, str],
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> ty.List[User]:
-        """
-        Создает обертку над юзером через его ID или screen name
-        """
-        users = self.users.get(
-            allow_cache_=True,
-            user_ids=tuple(ids),
-            fields=fields,
-            name_case=name_case,
-        )
-        wrapped_users = [User(user) for user in users]
-        return wrapped_users
 
-    def init_group_lp(self, **kwargs) -> GroupLongPoll:
-        return GroupLongPoll(self, **kwargs)
+def _convert_param_value(__value):
+    """
+    Конвертирует параметер API запроса в соотвествиями
+    с особенностями API и дополнительными удобствами
 
-    def init_user_lp(self, **kwargs) -> UserLongPoll:
-        return UserLongPoll(self, **kwargs)
+    :param __value: Текущее значение параметра
+    :return: Новое значение параметра
+    """
+    # Для всех перечислений функция вызывается рекурсивно.
+    # Массивы в запросе распознаются вк только если записать их как строку,
+    # перечисляя значения через запятую
+    if isinstance(__value, (list, set, tuple)):
+        updated_sequence = map(_convert_param_value, __value)
+        new_value = ",".join(updated_sequence)
+        return new_value
+
+    # Все словари, как списки, нужно сдампить в JSON
+    elif isinstance(__value, dict):
+        new_value = json_parser_policy.dumps(__value)
+        return new_value
+
+    # Особенности `aiohttp`
+    elif isinstance(__value, bool):
+        new_value = int(__value)
+        return new_value
+
+    # Если класс определяет протокол сериализации под параметр API,
+    # используется соотвествующий метод
+    elif isinstance(__value, APISerializable):
+        new_value = __value.api_param_representation()
+        return new_value
+
+    else:
+        new_value = str(__value)
+        return new_value
+
+
+def _convert_params_for_api(__params: dict):
+    """
+    Конвертирует словарь из параметров для метода API,
+    учитывая определенные особенности
+    :param __params: Параметры, передаваемые для вызова метода API
+    :return: Новые параметры, которые можно передать
+        в запрос и получить ожидаемый результат
+    """
+    updated_params = {
+        key: _convert_param_value(value)
+        for key, value in __params.items()
+        if value is not None
+    }
+    return updated_params
+
+
+def _upper_zero_group(__match: ty.Match) -> str:
+    """
+    Поднимает все символы в верхний
+    регистр у captured-группы `let`. Используется
+    для конвертации snake_case в camelCase.
+
+    :param __match: Регекс-группа, полученная в реультате `re.sub`
+    :return: Ту же букву из группы, но в верхнем регистре
+    """
+    return __match.group("let").upper()
+
+
+def _convert_method_name(__name: str) -> str:
+    """
+    Конвертирует snake_case в camelCase.
+
+    :param __name: Имя метода, который необходимо перевести в camelCase
+    :return: Новое имя метода в camelCase
+    """
+    return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, __name)
