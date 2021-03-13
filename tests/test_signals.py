@@ -1,6 +1,7 @@
 import pytest
 import pytest_mock
 import vkquick as vq
+import vkquick.resolvers.signal_handler
 
 
 def test_create_signal_via_bot(make_bot, mocker: pytest_mock.MockerFixture):
@@ -28,7 +29,7 @@ def test_create_signal_via_exist_signal_handler(
 
     signal = mocker.create_autospec(signal)
     signal.__name__ = "signal"
-    signal = vq.SignalHandler(signal)
+    signal = vkquick.resolvers.signal_handler.SignalHandler(signal)
     signal = bot.add_signal_handler(signal)
 
     bot.call_signal("signal")
@@ -60,7 +61,7 @@ def test_signal_extra_brackets(make_bot, mocker: pytest_mock.MockerFixture):
 
     signal = mocker.create_autospec(signal)
     signal.__name__ = "signal"
-    signal = vq.SignalHandler()(signal)
+    signal = vkquick.resolvers.signal_handler.SignalHandler()(signal)
     signal = bot.add_signal_handler(signal)
 
     bot.call_signal("signal")
@@ -79,7 +80,7 @@ def test_signal_with_param_extra_names(
 
     signal = mocker.create_autospec(signal)
     signal.__name__ = "signal"
-    signal = vq.SignalHandler(extra_names=["signal_extra_name"])(signal)
+    signal = vkquick.resolvers.signal_handler.SignalHandler(extra_names=["signal_extra_name"])(signal)
     signal = bot.add_signal_handler(signal)
 
     bot.call_signal("signal")
@@ -99,7 +100,7 @@ def test_signal_with_param_all_names(
 
     signal = mocker.create_autospec(signal)
     signal.__name__ = "signal"
-    signal = vq.SignalHandler(all_names=["signal_real_name"])(signal)
+    signal = vkquick.resolvers.signal_handler.SignalHandler(all_names=["signal_real_name"])(signal)
     signal = bot.add_signal_handler(signal)
 
     bot.call_signal("signal")
@@ -110,4 +111,4 @@ def test_signal_with_param_all_names(
 
 def test_raises_signal():
     with pytest.raises(ValueError):
-        vq.SignalHandler(extra_names=["a"], all_names=["b"])
+        vkquick.resolvers.signal_handler.SignalHandler(extra_names=["a"], all_names=["b"])

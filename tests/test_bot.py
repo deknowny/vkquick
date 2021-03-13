@@ -4,6 +4,7 @@ import os
 import pytest
 import pytest_mock
 import vkquick as vq
+import vkquick.resolvers.signal_handler
 
 
 @pytest.mark.asyncio
@@ -117,7 +118,7 @@ def test_make_many_copies(make_bot, mocker):
     bot.add_command(vq.Command())
     bot.add_command(vq.Command())
     bot.add_command(vq.Command())
-    bot.add_signal_handler(vq.SignalHandler())
+    bot.add_signal_handler(vkquick.resolvers.signal_handler.SignalHandler())
     bot._debugger = "123"
     tokens = ["token1", "token2"]
     bots = bot.make_many_copies(tokens)

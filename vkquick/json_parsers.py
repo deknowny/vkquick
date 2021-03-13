@@ -1,5 +1,5 @@
 """
-Имплементации `base/json_parser`
+Имплементации `bases/json_parser`
 """
 import json
 import typing as ty
@@ -19,9 +19,19 @@ except ImportError:  # pragma: no cover
 
 
 class AttrDict(dict):
-     __getattr__ = dict.__getitem__
-     __setattr__ = dict.__setitem__
-     __delattr__ = dict.__delitem__
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+    def __getattribute__(self, item):
+        if item == "__call__":
+            return object.__getattribute__(self, item)
+
+        return self[item]
+
+    def __call__(self) -> dict:
+        return dict(self)
 
 
 class BuiltinJsonParser(JSONParser):

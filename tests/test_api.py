@@ -90,7 +90,7 @@ class TestAPI:
             ({"foo": {"a": 1}}, {"foo": '{"a":1}'}),
             (
                 {"foo": vq.Keyboard().build()},
-                {"foo": vq.Keyboard().build().api_param_representation()},
+                {"foo": vq.Keyboard().build().represent_as_api_param()},
             ),
             ({"foo": True}, {"foo": 1}),
             ({"foo": None}, {}),

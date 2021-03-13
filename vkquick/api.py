@@ -1,18 +1,3 @@
-"""
-Управление API запросами
-
-API ВКонтакте представляет собой набор
-специальных "методов" для получения какой-либо информации.
-Например, чтобы получить имя пользователя, нужно вызвать метод `users.get`
-и передать в качестве параметра его ID.
-Вызов метода и передача параметров представляет собой лишь отправку HTTP запроса.
-Вызвать метод `some.method` и передать туда параметр `foo=1` означает составить
-запрос такого вида: `https://api.vk.com/method/some.method?foo=1`.
-Составлять такие запросы каждый раз достаточно неудобно, поэтому этот
-модуль предоставляет возможности более комфортного взаимодействия
-
-Список методов с параметрами можно найти на https://vk.com/dev/methods
-"""
 from __future__ import annotations
 
 import asyncio
@@ -22,66 +7,56 @@ import os
 import json
 import re
 import time
+import textwrap
 import typing as ty
 import urllib.parse
 
 import aiohttp
 import cachetools
-import requests
 from loguru import logger
 
 from vkquick.base.serializable import APISerializable
-from vkquick.base.aiohttp_session_container import AiohttpSessionContainer
-from vkquick.events_generators.longpoll import GroupLongPoll, UserLongPoll, LongPollBase
+from vkquick.base.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
-from vkquick.wrappers.page_entity import User, Group, PageEntity
+
+
+class TokenOwnerType(enum.Enum):
+    """
+    Тип владельца токена: пользователь/группа/сервисный токен
+    """
+    USER = enum.auto()
+    GROUP = enum.auto()
+    SERVICE = enum.auto()
+
+
+class TokenOwnerEntity:
+    """
+    Сущность владельца токена
+
+    :param entity_type: Тип владельца токена
+    :param scheme: Объект владельца токена (для сервисных токенов отсутсвует)
+    """
+    def __init__(self, *, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None):
+        self.entity_type = entity_type
+        self.scheme = scheme
+
+    def is_group(self) -> bool:
+        """
+        :return: Является ли сущность группой
+        """
+        return self.entity_type == TokenOwnerType.GROUP
+
+    def is_user(self) -> bool:
+        """
+        :return: Является ли сущность пользователем
+        """
+        return self.entity_type == TokenOwnerType.USER
 
 
 class API(AiohttpSessionContainer):
     """
     Этот класс предоставляет возможности удобного вызова API методов
-
-        >>> import asyncio
-        >>>
-        >>> import vkquick as vq
-        >>>
-        >>>
-        >>> async def main():
-        >>>     api = vq.API("token")
-        >>>
-        >>>     # Вызов метода `users.get`
-        >>>     durov = await api.users.get(user_ids=1)
-        >>>     print(durov[0].first_name)  # Павел
-        >>>
-        >>>     # Альтернативный способ
-        >>>     durov = await api.method("users.get", {"user_ids": 1})
-        >>>     print(durov[0].first_name)  # Павел
-        >>>
-        >>>     # Кэширование
-        >>>     # 1. Запрос, который закэшируется
-        >>>     durov = await api.users.get(..., user_ids=1)
-        >>>     # 2. Запрос, который уже не будет вызван.
-        >>>     # Результат возьмется из кэша
-        >>>     durov = await api.users.get(..., user_ids=1)
-        >>>     print(durov[0].first_name)  # Павел
-        >>>
-        >>>     # Класс реализует некоторые API методы, добавляя к ним дополнительные обработки
-        >>>     # Например, `fetch_user_via_id` -- кэшированное получение пользователя по его ID/`screen_name`,
-        >>>     # который будет обернут в специальную обертку. Предпочтительнее, чем самостоятельный
-        >>>     # вызов `users.get`. Все возможности обертки описаны в ней самой
-        >>>     durov = await api.fetch_user_via_id(1)
-        >>>     print(durov.fn)  # Павел
-        >>>     print(f"Hi, {durov:<fn> <ln>}")  # Hi, Павел Дуров
-        >>>     print(f"Hi, {durov:@<fn> <ln>}")  # Hi, [id1|Павел Дуров]
-        >>>
-        >>>     # По окончанию нужно закрыть сессию запросов (желательно в блоке try/finally).
-        >>>     # Можно использовать асинхронный менеджер контекста
-        >>>     await api.close_session()
-        >>>
-        >>>
-        >>> asyncio.run(main())
-
 
     :param token: Токен пользователя/группы/сервисный для отправки API запросов.
         Можно использовать имя переменной окружения,
@@ -93,12 +68,16 @@ class API(AiohttpSessionContainer):
 
     def __init__(
         self,
-        token: str, *,
+        token: str,
+        *,
         version: ty.Union[float, str] = "5.135",
         requests_url: str = "https://api.vk.com/method/",
-        requests_session: ty.Optional[aiohttp.ClientSession] = None
+        requests_session: ty.Optional[aiohttp.ClientSession] = None,
+        json_parser: ty.Optional[JSONParser] = None,
     ) -> None:
-        super().__init__(requests_session)
+        super().__init__(
+            requests_session=requests_session, json_parser=json_parser
+        )
 
         # Автоматическое получение токена из переменных окружения
         if token.startswith("$"):
@@ -116,7 +95,7 @@ class API(AiohttpSessionContainer):
         self._token_owner = None
         self._stable_request_params = {
             "access_token": self._token,
-            "v": self._version
+            "v": self._version,
         }
 
     def __getattr__(self, attribute: str) -> API:
@@ -136,9 +115,7 @@ class API(AiohttpSessionContainer):
         return self
 
     async def __call__(
-        self,
-        __allow_cache: bool = False,
-        **request_params,
+        self, __allow_cache: bool = False, **request_params,
     ) -> ty.Union[str, int, dict]:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами,
@@ -161,7 +138,7 @@ class API(AiohttpSessionContainer):
             allow_cache=__allow_cache,
         )
 
-    async def fetch_token_owner_entity(self) -> PageEntity:
+    async def fetch_token_owner_entity(self) -> TokenOwnerEntity:
         """
         Возвращает сущность владельца токена.
 
@@ -169,8 +146,7 @@ class API(AiohttpSessionContainer):
         определяет тип владельца токена (пользователь, группа, токен сервисный)
         и задержку для запросов.
 
-        :return: Владельца токена под соотвествующей оберткой,
-            либо `Ellipsis` для сервисного токена.
+        :return: Сущность владельца токена
         """
         if self._token_owner is None:
             # Убираем `None`, чтобы запрос строкой ниже выполнился
@@ -178,14 +154,15 @@ class API(AiohttpSessionContainer):
             owner = await self.users.get()
 
             if owner:
-                self._token_owner = User(owner[0])
+                self._token_owner = TokenOwnerEntity(TokenOwnerType.USER, owner[0])
                 self._requests_delay = 1 / 3
             else:
                 owner = await self.groups.get_by_id()
                 if not owner[0]:
                     self._requests_delay = 1 / 3
+                    self._token_owner = TokenOwnerEntity(TokenOwnerType.SERVICE, None)
                 else:
-                    self._token_owner = Group(owner[0])
+                    self._token_owner = TokenOwnerEntity(TokenOwnerType.GROUP, owner[0])
                     self._requests_delay = 1 / 20
 
             return self._token_owner
@@ -263,8 +240,11 @@ class API(AiohttpSessionContainer):
         response = await self._send_api_request(
             real_method_name, real_request_params
         )
+        real_request_params["access_token"] = textwrap.shorten(
+            real_request_params["access_token"], width=5, placeholder="..."
+        )
         logger_string = (
-            f"Called API method `{real_method_name}` "
+            f"Called API method <cyan>{real_method_name}</cyan>"
             f"with params `{real_request_params}`."
             f" Response is `{response}`"
         )
@@ -272,7 +252,7 @@ class API(AiohttpSessionContainer):
             logger.error(logger_string)
             raise VKAPIError.destruct_response(response)
         else:
-            logger.debug(logger_string)
+            logger.trace(logger_string)
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
@@ -285,9 +265,7 @@ class API(AiohttpSessionContainer):
         async with self.requests_session.post(
             self._requests_url + method_name, data=params
         ) as response:
-            loaded_response = await response.json(
-                loads=json_parser_policy.loads
-            )
+            loaded_response = await self._parse_json_body(response)
             return loaded_response
 
     def _get_waiting_time(self) -> float:
@@ -307,62 +285,6 @@ class API(AiohttpSessionContainer):
         else:
             self._last_request_stamp = now
             return 0
-
-    async def fetch_user_via_id(
-        self,
-        __id: ty.Union[int, str],
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> User:
-        """
-        Выполняет `users.get` для необходимого пользователя.
-        Ответ оборачивает в спецаильную обертку пользователя.
-        Более предпочтительный метод, чем сырой вызов API метода.
-        Использует кэширование.
-
-        :param __id: ID/`screen_name` пользователя.
-        :param fields: Дополнительные поля в информации о пользователе.
-        :param name_case: Падеж, в котором нужно вернуть пользователя.
-        :return: Специальную обертку над пользователем,
-            о котором запрошена информация.
-        """
-        users = await self.users.get(
-            ...,
-            user_ids=__id,
-            fields=fields,
-            name_case=name_case,
-        )
-        user = users[0]
-        return User(user)
-
-    async def fetch_users_via_ids(
-        self,
-        __ids: ty.Iterable[int, str],
-        *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> ty.List[User]:
-        """
-        Выполняет `users.get` для необходимых пользователей.
-        Ответ оборачивает в спецаильную обертку каждого пользователя.
-        Более предпочтительный метод, чем сырой вызов API метода.
-
-        :param __id: ID/`screen_name` пользователя.
-        :param fields: Дополнительные поля в информации о пользователе.
-        :param name_case: Падеж, в котором нужно вернуть пользователя.
-        :return: Список со специальными обертками над пользователем,
-            о которых запрошена информация.
-        """
-        users = await self.users.get(
-            ...,
-            user_ids=tuple(__ids),
-            fields=fields,
-            name_case=name_case,
-        )
-        wrapped_users = [User(user) for user in users]
-        return wrapped_users
-
 
 def _convert_param_value(__value):
     """
@@ -393,7 +315,8 @@ def _convert_param_value(__value):
     # Если класс определяет протокол сериализации под параметр API,
     # используется соотвествующий метод
     elif isinstance(__value, APISerializable):
-        new_value = __value.api_param_representation()
+        new_value = __value.represent_as_api_param()
+        new_value = _convert_param_value(new_value)
         return new_value
 
     else:

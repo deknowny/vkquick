@@ -83,7 +83,7 @@ async def call_example(bot: vq.Bot):
     """
     await bot.signals.resolve("example")
     # либо
-    await vq.signal("example")
+    await vq.handlers("example")
 ```
 
 Запускаем бота (`$ bot run --reload --debug`), переходим в лс и пишем `call_example`, после чего смотрим в консоль и видим, что появился вывод ```Called signal `example` ```, что говорит нам о том, что обработчк сигнала вызвался успешно

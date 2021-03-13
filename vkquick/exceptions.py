@@ -9,6 +9,17 @@ import typing as ty
 import huepy
 import typing_extensions as tye
 
+class FilterFailedError(Exception):
+    def __init__(self, reason: str, **kwargs):
+        self.reason = reason
+        self.kwargs = kwargs
+
+
+class InvalidArgumentError(Exception):
+    def __init__(self, answer_text=None, **extra_message_settings):
+        self.answer_text = answer_text
+        self.extra_message_settings = extra_message_settings
+
 
 class _ParamsScheme(tye.TypedDict):
     """
@@ -18,22 +29,6 @@ class _ParamsScheme(tye.TypedDict):
 
     key: str
     value: str  # Даже если в запросе было передано число, значение будет строкой
-
-
-class InvalidArgumentError(Exception):
-    def __init__(self, answer_text=None, **extra_message_settings):
-        self.answer_text = answer_text
-        self.extra_message_settings = extra_message_settings
-
-
-class _APICodeExceptionChecker(type):
-
-    _handle_status_codes: ty.Tuple[int]
-
-    @classmethod
-    def __instancecheck__(self, instance):
-        breakpoint()
-        return instance._handle_status_codes in instance._handle_status_codes
 
 
 @dataclasses.dataclass
@@ -90,14 +85,6 @@ class VKAPIError(Exception, metaclass=_APICodeExceptionChecker):
             extra_fileds=response["error"],
         )
 
-    def __class_getitem__(cls, *items: int):
-        cls._handle_status_codes = items
-        return cls
 
     def __str__(self):
         return self.pretty_exception_text
-
-
-class _APICodeExceptionRouter(Exception, metaclass=_APICodeExceptionChecker):
-
-    _handle_status_codes: ty.Tuple[int]
