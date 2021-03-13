@@ -19,13 +19,14 @@ from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
-from vkquick.json_parsers import json_parser_policy
+from vkquick.json_parsers import json_parser_policy, DictProxy
 
 
 class TokenOwnerType(enum.Enum):
     """
     Тип владельца токена: пользователь/группа/сервисный токен
     """
+
     USER = enum.auto()
     GROUP = enum.auto()
     SERVICE = enum.auto()
@@ -38,7 +39,12 @@ class TokenOwnerEntity:
     :param entity_type: Тип владельца токена
     :param scheme: Объект владельца токена (для сервисных токенов отсутсвует)
     """
-    def __init__(self, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None):
+
+    def __init__(
+        self,
+        entity_type: TokenOwnerType,
+        scheme: ty.Optional[DictProxy] = None,
+    ):
         self.entity_type = entity_type
         self.scheme = scheme
 
@@ -117,7 +123,7 @@ class API(SessionContainerMixin):
 
     async def __call__(
         self, __allow_cache: bool = False, **request_params,
-    ) -> ty.Union[str, int, dict]:
+    ) -> ty.Union[str, int, DictProxy]:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами,
         добавляя к ним токен и версию (может быть перекрыто).
@@ -155,15 +161,21 @@ class API(SessionContainerMixin):
             owner = await self.users.get()
 
             if owner:
-                self._token_owner = TokenOwnerEntity(TokenOwnerType.USER, owner[0])
+                self._token_owner = TokenOwnerEntity(
+                    TokenOwnerType.USER, owner[0]
+                )
                 self._requests_delay = 1 / 3
             else:
                 owner = await self.groups.get_by_id()
                 if not owner[0]:
                     self._requests_delay = 1 / 3
-                    self._token_owner = TokenOwnerEntity(TokenOwnerType.SERVICE, None)
+                    self._token_owner = TokenOwnerEntity(
+                        TokenOwnerType.SERVICE, None
+                    )
                 else:
-                    self._token_owner = TokenOwnerEntity(TokenOwnerType.GROUP, owner[0])
+                    self._token_owner = TokenOwnerEntity(
+                        TokenOwnerType.GROUP, owner[0]
+                    )
                     self._requests_delay = 1 / 20
 
             return self._token_owner
@@ -181,11 +193,13 @@ class API(SessionContainerMixin):
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
 
-        :param __allow_cache: Если `True` -- реузльтат запроса
-            с подобными параметрами и методом будет получен из кэш-таблицы,
-            если отсутсвует -- просто занесен в таблицу. Если `False` -- запрос
-            просто выполнится по сети.
+        :param __method_name: Имя вызываемого метода API
         :param __request_params: Параметры, принимаемы методом, которые описаны в документации API.
+        :param allow_cache: Если `True` -- реузультат запроса
+            с подобными параметрами и методом будет получен из кэш-таблицы,
+            если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
+            просто выполнится по сети.
+
         :return: Пришедший от API ответ.
 
         :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
@@ -204,7 +218,7 @@ class API(SessionContainerMixin):
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
         allow_cache: bool,
-    ) -> ty.Union[str, int, API.default_factory]:
+    ) -> ty.Union[str, int, DictProxy]:
         """
         Выполняет API запрос на определнный метод с заданными параметрами
 

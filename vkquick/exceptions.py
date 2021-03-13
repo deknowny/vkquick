@@ -9,6 +9,7 @@ import typing as ty
 import huepy
 import typing_extensions as tye
 
+
 class FilterFailedError(Exception):
     def __init__(self, reason: str, **kwargs):
         self.reason = reason
@@ -84,7 +85,6 @@ class VKAPIError(Exception):
             request_params=request_params,
             extra_fileds=response["error"],
         )
-
 
     def __str__(self):
         return self.pretty_exception_text

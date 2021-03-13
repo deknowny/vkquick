@@ -36,7 +36,9 @@ class DictProxy(dict):
         object.__setattr__(self, "__use_super_getattribute", False)
 
     def __getattribute__(self, item):
-        if item == "to_dict" or object.__getattribute__(self, "__use_super_getattribute"):
+        if item == "to_dict" or object.__getattribute__(
+            self, "__use_super_getattribute"
+        ):
             return object.__getattribute__(self, item)
 
         return route_to_proxy(self[item])

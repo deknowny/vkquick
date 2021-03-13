@@ -18,10 +18,8 @@ EventsCallback = sync_async_callable([Event])
 
 
 class EventsFactory(abc.ABC):
-
     def __init__(
-        self, *,
-        new_event_callbacks: ty.List[EventsCallback] = None,
+        self, *, new_event_callbacks: ty.List[EventsCallback] = None,
     ):
         self._new_event_callbacks = new_event_callbacks or []
 
@@ -63,19 +61,19 @@ class EventsFactory(abc.ABC):
         finally:
             self.remove_event_callback(callback)
 
-
     async def coro_run(self):
         async for events in self:
             pass
 
     def run(self):
-        asyncio.run(self.async_run())
+        asyncio.run(self.coro_run())
 
     async def _run_through_callbacks(self, updates: ty.List[Event]) -> None:
         callback_await_coros = []
         for update in updates:
             callback_coros = [
-                sync_async_run(func(update)) for func in self._new_event_callbacks
+                sync_async_run(func(update))
+                for func in self._new_event_callbacks
             ]
             wait_callback_coro = asyncio.wait(callback_coros)
             callback_await_coros.append(wait_callback_coro)
@@ -95,13 +93,15 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
     _baked_request = None
 
     def __init__(
-        self, *,
+        self,
+        *,
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
     ):
-        super().__init__(requests_session=requests_session, json_parser=json_parser)
-        self._new_event_callbacks = new_event_callbacks
+        super().__init__(
+            requests_session=requests_session, json_parser=json_parser
+        )
 
     @abc.abstractmethod
     async def _setup(self) -> None:
@@ -144,8 +144,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
                 return []
 
         updates = [
-            self._event_wrapper(update)
-            for update in response["updates"]
+            self._event_wrapper(update) for update in response["updates"]
         ]
         if updates and self._new_event_callbacks:
             asyncio.create_task(self._run_through_callbacks(updates))

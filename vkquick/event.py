@@ -1,5 +1,6 @@
 from vkquick.bases.event import Event
 
+
 class GroupEvent(Event):
     @property
     def type(self) -> str:

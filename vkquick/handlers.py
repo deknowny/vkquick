@@ -18,7 +18,8 @@ if ty.TYPE_CHECKING:
 class SignalHandler(EasyDecorator):
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable] = None, *,
+        __handler: ty.Optional[ty.Callable] = None,
+        *,
         name: ty.Optional[str] = None
     ):
         self._handler = __handler
@@ -31,13 +32,9 @@ class SignalHandler(EasyDecorator):
         return self._handler(*args, **kwargs)
 
 
-
 class EventHandlingContext:
     def __init__(
-        self, *,
-        bot: Bot,
-        event: Event,
-        extra: ty.Optional[DictProxy] = None
+        self, *, bot: Bot, event: Event, extra: ty.Optional[DictProxy] = None
     ):
         self.bot = bot
         self.event = event
@@ -53,7 +50,8 @@ class EventHandlingContext:
 class EventHandler(EasyDecorator):
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable] = None, *,
+        __handler: ty.Optional[ty.Callable] = None,
+        *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
         post_handling_callback: ty.Optional[
@@ -61,7 +59,9 @@ class EventHandler(EasyDecorator):
         ] = None
     ):
         self._handler = __handler
-        self._handling_event_types = handling_event_types or {__handler.__name__}
+        self._handling_event_types = handling_event_types or {
+            __handler.__name__
+        }
         self._filters = filters or []
         self._post_handling_callback = post_handling_callback
 
@@ -72,11 +72,11 @@ class EventHandler(EasyDecorator):
         self._filters.append(filter)
         return self
 
-    # @logger.catch
-    async def __call__(self, *, bot: Bot, event: Event) -> EventHandlingContext:
-        ehctx = EventHandlingContext(
-            bot=bot, event=event,
-        )
+    @logger.catch
+    async def __call__(
+        self, *, bot: Bot, event: Event
+    ) -> EventHandlingContext:
+        ehctx = EventHandlingContext(bot=bot, event=event,)
         if event.type not in self._handling_event_types:
             return ehctx
         await self.run_through_filters(ehctx)
@@ -89,14 +89,10 @@ class EventHandler(EasyDecorator):
     async def run_through_filters(self, ehctx: EventHandlingContext) -> None:
         for filter_ in self._filters:
             try:
-                await sync_async_run(
-                    filter_.make_decision(ehctx)
-                )
+                await sync_async_run(filter_.make_decision(ehctx))
             except FilterFailedError as error:
                 ehctx.filter_failed_exception = error
-                await sync_async_run(
-                    filter_.handle_exception(ehctx)
-                )
+                await sync_async_run(filter_.handle_exception(ehctx))
 
     async def call_handler(self, ehctx: EventHandlingContext) -> None:
         try:
@@ -105,3 +101,4 @@ class EventHandler(EasyDecorator):
             )
         except Exception as error:
             ehctx.raise_exception_in_handler = error
+            raise error

@@ -15,7 +15,6 @@ if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
 
 
-
 class GroupLongPoll(LongPollBase):
     """
     LongPoll обработчик для событий в сообществе
@@ -24,19 +23,20 @@ class GroupLongPoll(LongPollBase):
     _event_wrapper = GroupEvent
 
     def __init__(
-        self, api: API, *, group_id: ty.Optional[int] = None, wait: int = 25,
+        self,
+        api: API,
+        *,
+        group_id: ty.Optional[int] = None,
+        wait: int = 25,
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[JSONParser] = None
+        json_parser: ty.Optional[JSONParser] = None,
     ) -> None:
-        """
-        * `group_id`: Если вы хотите получать события из сообщества через
-        пользователя -- этот параметр обязателен. Иначе можно пропустить
-        * `wait`: время максимального ожидания от сервера LongPoll
-        * `client`: HTTP клиент для отправки запросов
-        * `json_parser`: Парсер JSON для новых событий
-        """
-        super().__init__(new_event_callbacks=new_event_callbacks, requests_session=requests_session, json_parser=json_parser)
+        super().__init__(
+            new_event_callbacks=new_event_callbacks,
+            requests_session=requests_session,
+            json_parser=json_parser,
+        )
         self._api = api
         self._group_id = group_id
         self._wait = wait
@@ -58,8 +58,7 @@ class GroupLongPoll(LongPollBase):
                 raise ValueError(
                     "Can't use `GroupLongPoll` with user token without `group_id`"
                 )
-            group = owner.scheme
-            self._group_id = group.id
+            self._group_id = owner.scheme.id
 
 
 class UserLongPoll(LongPollBase):
@@ -70,13 +69,6 @@ class UserLongPoll(LongPollBase):
     def __init__(
         self, api: API, version: int = 3, wait: int = 15, mode: int = 234
     ):
-        """
-        * `version`: Версия LongPoll
-        * `wait`: Время максимального ожидания от сервера LongPoll
-        * `mode`: Битовая макса для указания полей в событии
-        * `client`: HTTP клиент для отправки запросов
-        * `json_parser`: парсер JSON для новых событий
-        """
         super().__init__()
         self._api = api
         self.version = version

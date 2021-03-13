@@ -9,7 +9,8 @@ from vkquick.handlers import EventHandler, SignalHandler
 
 class Bot:
     def __init__(
-        self, *,
+        self,
+        *,
         api: API,
         events_factory: EventsFactory,
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
@@ -19,7 +20,6 @@ class Bot:
         self._events_factory = events_factory
         self._event_handlers = event_handlers or []
         self._signal_handlers = signal_handlers or []
-
 
     @property
     def api(self) -> API:
@@ -42,5 +42,7 @@ class Bot:
                 asyncio.create_task(self.pass_event_through_handlers(event))
 
     async def pass_event_through_handlers(self, event: Event):
-        handling_coros = [handler(bot=self, event=event) for handler in self._event_handlers]
+        handling_coros = [
+            handler(bot=self, event=event) for handler in self._event_handlers
+        ]
         await asyncio.gather(*handling_coros)

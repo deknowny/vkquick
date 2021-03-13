@@ -8,7 +8,6 @@ if ty.TYPE_CHECKING:
 
 
 class Filter(abc.ABC):
-
     @abc.abstractmethod
     def make_decision(self, context: EventHandlingContext):
         """

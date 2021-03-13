@@ -20,5 +20,3 @@ class APISerializableMixin(abc.ABC):
         :return: Любое значение, которое может быть передано
             при отправке API запроса.
         """
-
-
