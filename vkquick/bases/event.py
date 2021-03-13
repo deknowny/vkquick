@@ -3,8 +3,6 @@ from __future__ import annotations
 import abc
 import typing as ty
 
-from vkquick.attrdict import AttrDict
-
 
 class Event(abc.ABC):
 
@@ -12,12 +10,12 @@ class Event(abc.ABC):
         self._content = content
 
     @property
-    def content(self):
+    def content(self) -> ty.Union[dict, list]:
         return self._content
 
     @property
     @abc.abstractmethod
-    def type(self):
+    def type(self) -> ty.Union[int, str]:
         ...
 
 

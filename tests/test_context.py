@@ -88,7 +88,7 @@ async def test_answer(mocker: pytest_mock.MockerFixture):
     mocked_method = mocker.patch.object(
         api, "method", new_callable=mocker.AsyncMock, return_value=message
     )
-    lp.group_id = 1
+    lp._group_id = 1
     sb = vq.SharedBox(api=api, events_generator=lp, bot=None)
     mocked_context = mocker.patch("vkquick.Context.msg")
     mocked_context.peer_id = 1

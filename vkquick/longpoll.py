@@ -5,14 +5,15 @@ from __future__ import annotations
 
 import typing as ty
 
-from vkquick.bases.events_factories import LongPollBase
-from vkquick.bases.event import Event
+import aiohttp
+
+from vkquick.bases.events_factories import LongPollBase, EventsCallback
+from vkquick.event import GroupEvent
+from vkquick.bases.json_parser import JSONParser
 
 if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
 
-
-Callback = ty.Coroutine[[Event], None, None]
 
 
 class GroupLongPoll(LongPollBase):
@@ -20,8 +21,13 @@ class GroupLongPoll(LongPollBase):
     LongPoll обработчик для событий в сообществе
     """
 
+    _event_wrapper = GroupEvent
+
     def __init__(
-        self, api: API, *, group_id: ty.Optional[int] = None, wait: int = 25
+        self, api: API, *, group_id: ty.Optional[int] = None, wait: int = 25,
+        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
+        requests_session: ty.Optional[aiohttp.ClientSession] = None,
+        json_parser: ty.Optional[JSONParser] = None
     ) -> None:
         """
         * `group_id`: Если вы хотите получать события из сообщества через
@@ -30,31 +36,30 @@ class GroupLongPoll(LongPollBase):
         * `client`: HTTP клиент для отправки запросов
         * `json_parser`: Парсер JSON для новых событий
         """
-        super().__init__()
+        super().__init__(new_event_callbacks=new_event_callbacks, requests_session=requests_session, json_parser=json_parser)
         self._api = api
-        if group_id is None and self._api.token_owner == "user":
-            raise ValueError(
-                "Can't use `GroupLongPoll` with user token without `group_id`"
-            )
-        self.group_id = group_id
-        self.wait = wait
+        self._group_id = group_id
+        self._wait = wait
 
     async def _setup(self) -> None:
         await self._define_group_id()
         new_lp_settings = await self._api.groups.getLongPollServer(
-            group_id=self.group_id
+            group_id=self._group_id
         )
-        self._server_url = new_lp_settings().pop("server")
+        self._server_url = new_lp_settings.to_dict().pop("server")
         self._lp_requests_settings = dict(
-            act="a_check", wait=self.wait, **new_lp_settings()
+            act="a_check", wait=self._wait, **new_lp_settings
         )
-        await self._init_session()
 
     async def _define_group_id(self):
-        if self.group_id is None:
-            groups = await self._api.groups.get_by_id()
-            group = groups[0]
-            self.group_id = group.id
+        if self._group_id is None:
+            owner = await self._api.fetch_token_owner_entity()
+            if not owner.is_group():
+                raise ValueError(
+                    "Can't use `GroupLongPoll` with user token without `group_id`"
+                )
+            group = owner.scheme
+            self._group_id = group.id
 
 
 class UserLongPoll(LongPollBase):
@@ -91,4 +96,3 @@ class UserLongPoll(LongPollBase):
             version=self.version,
             **new_lp_settings(),
         )
-        await self._init_session()

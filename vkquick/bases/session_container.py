@@ -5,7 +5,6 @@ import typing as ty
 import aiohttp
 
 from vkquick.json_parsers import JSONParser, json_parser_policy
-from vkquick.utils import create_aiohttp_session
 
 
 class SessionContainerMixin:
@@ -46,9 +45,7 @@ class SessionContainerMixin:
         :return: Сессию `aiohttp`, которую можно использовать для запросов.
         """
         if self.__session is None:
-            self.__session = create_aiohttp_session(
-                json_serialize=json_parser_policy.dumps
-            )
+            self.__session = self._init_aiohttp_session()
 
         return self.__session
 
@@ -69,7 +66,8 @@ class SessionContainerMixin:
         Можно использовать асинхронный менеджер котекста
         вместо этого метода.
         """
-        await self.__session.close()
+        if self.__session is not None:
+            await self.__session.close()
 
     async def _parse_json_body(
         self, response: aiohttp.ClientResponse, **kwargs

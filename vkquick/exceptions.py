@@ -32,7 +32,7 @@ class _ParamsScheme(tye.TypedDict):
 
 
 @dataclasses.dataclass
-class VKAPIError(Exception, metaclass=_APICodeExceptionChecker):
+class VKAPIError(Exception):
     """
     Исключение, поднимаемое при некорректном вызове API запроса.
     Инициализируется через метод класса `destruct_response`
@@ -51,9 +51,9 @@ class VKAPIError(Exception, metaclass=_APICodeExceptionChecker):
         Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
         """
-        status_code = response["error"].pop("error_code")
-        description = response["error"].pop("error_msg")
-        request_params = response["error"].pop("request_params")
+        status_code = response["error"].to_dict().pop("error_code")
+        description = response["error"].to_dict().pop("error_msg")
+        request_params = response["error"].to_dict().pop("request_params")
         request_params = {
             item["key"]: item["value"] for item in request_params
         }

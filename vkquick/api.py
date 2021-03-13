@@ -15,8 +15,9 @@ import aiohttp
 import cachetools
 from loguru import logger
 
-from vkquick.base.serializable import APISerializable
-from vkquick.base.session_container import SessionContainerMixin
+from vkquick.bases.api_serializable import APISerializableMixin
+from vkquick.bases.json_parser import JSONParser
+from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
 
@@ -37,7 +38,7 @@ class TokenOwnerEntity:
     :param entity_type: Тип владельца токена
     :param scheme: Объект владельца токена (для сервисных токенов отсутсвует)
     """
-    def __init__(self, *, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None):
+    def __init__(self, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None):
         self.entity_type = entity_type
         self.scheme = scheme
 
@@ -54,7 +55,7 @@ class TokenOwnerEntity:
         return self.entity_type == TokenOwnerType.USER
 
 
-class API(AiohttpSessionContainer):
+class API(SessionContainerMixin):
     """
     Этот класс предоставляет возможности удобного вызова API методов
 
@@ -286,6 +287,7 @@ class API(AiohttpSessionContainer):
             self._last_request_stamp = now
             return 0
 
+
 def _convert_param_value(__value):
     """
     Конвертирует параметер API запроса в соотвествиями
@@ -314,7 +316,7 @@ def _convert_param_value(__value):
 
     # Если класс определяет протокол сериализации под параметр API,
     # используется соотвествующий метод
-    elif isinstance(__value, APISerializable):
+    elif isinstance(__value, APISerializableMixin):
         new_value = __value.represent_as_api_param()
         new_value = _convert_param_value(new_value)
         return new_value
