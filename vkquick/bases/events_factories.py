@@ -85,7 +85,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
     Базовый интерфейс для всех типов LongPoll
     """
 
-    _lp_requests_settings: ty.Optional[ty.Optional[dict]] = None
+    _requests_query_params: ty.Optional[ty.Optional[dict]] = None
     _server_url: ty.Optional[str] = None
     _api: ty.Optional[API] = None
     _event_wrapper: ty.Optional[ty.Type[Event]] = None
@@ -132,35 +132,40 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
             self._update_baked_request()
 
         while True:
-            response = await self._baked_request
-            async with response:
-                if "X-Next-Ts" in response.headers:
-                    self._lp_requests_settings.update(
-                        ts=response.headers["X-Next-Ts"]
-                    )
-                    self._update_baked_request()
-                    response = await self._parse_json_body(response)
-                else:
-                    response = await self._parse_json_body(response)
-                    await self._resolve_faileds(response)
-                    self._update_baked_request()
-                    return []
-
-            if not response["updates"]:
+            try:
+                response = await self._baked_request
+            except (aiohttp.ClientTimeout, aiohttp.ClientTimeout):
+                self._update_baked_request()
                 continue
-            updates = [
-                self._event_wrapper(update) for update in response["updates"]
-            ]
-            if self._new_event_callbacks:
-                asyncio.create_task(self._run_through_callbacks(updates))
-            return updates
+            else:
+                async with response:
+                    if "X-Next-Ts" in response.headers:
+                        self._requests_query_params.update(
+                            ts=response.headers["X-Next-Ts"]
+                        )
+                        self._update_baked_request()
+                        response = await self._parse_json_body(response)
+                    else:
+                        response = await self._parse_json_body(response)
+                        await self._resolve_faileds(response)
+                        self._update_baked_request()
+                        return []
+
+                if not response["updates"]:
+                    continue
+                updates = [
+                    self._event_wrapper(update) for update in response["updates"]
+                ]
+                if self._new_event_callbacks:
+                    asyncio.create_task(self._run_through_callbacks(updates))
+                return updates
 
     async def _resolve_faileds(self, response: dict):
         """
         Обрабатывает LongPoll ошибки (faileds)
         """
         if response["failed"] == 1:
-            self._lp_requests_settings.update(ts=response["ts"])
+            self._requests_query_params.update(ts=response["ts"])
         elif response["failed"] in (2, 3):
             await self._setup()
         else:
@@ -168,6 +173,6 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
 
     def _update_baked_request(self) -> None:
         self._baked_request = self.requests_session.get(
-            self._server_url, params=self._lp_requests_settings
+            self._server_url, params=self._requests_query_params
         )
         self._baked_request = asyncio.create_task(self._baked_request)
