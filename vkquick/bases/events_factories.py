@@ -10,7 +10,6 @@ from vkquick.api import API
 from vkquick.bases.json_parser import JSONParser
 from vkquick.event import Event
 from vkquick.bases.session_container import SessionContainerMixin
-from vkquick.json_parsers import DictProxy
 from vkquick.sync_async import sync_async_callable, sync_async_run
 
 
@@ -99,8 +98,11 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
     ):
-        super().__init__(
-            requests_session=requests_session, json_parser=json_parser
+        EventsFactory.__init__(
+            self, new_event_callbacks=new_event_callbacks
+        )
+        SessionContainerMixin.__init__(
+            self, requests_session=requests_session, json_parser=json_parser
         )
 
     @abc.abstractmethod
@@ -117,7 +119,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         self._setup_called = False
         return self
 
-    async def __anext__(self,) -> ty.List[Event]:
+    async def __anext__(self) -> ty.List[Event]:
         """
         Отправляет запрос на LongPoll сервер и ждет событие.
         После оборачивает событие в специальную обертку, которая
@@ -129,28 +131,31 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
             self._setup_called = True
             self._update_baked_request()
 
-        response = await self._baked_request
-        async with response:
-            if "X-Next-Ts" in response.headers:
-                self._lp_requests_settings.update(
-                    ts=response.headers["X-Next-Ts"]
-                )
-                self._update_baked_request()
-                response = await self._parse_json_body(response)
-            else:
-                response = await self._parse_json_body(response)
-                await self._resolve_faileds(response)
-                self._update_baked_request()
-                return []
+        while True:
+            response = await self._baked_request
+            async with response:
+                if "X-Next-Ts" in response.headers:
+                    self._lp_requests_settings.update(
+                        ts=response.headers["X-Next-Ts"]
+                    )
+                    self._update_baked_request()
+                    response = await self._parse_json_body(response)
+                else:
+                    response = await self._parse_json_body(response)
+                    await self._resolve_faileds(response)
+                    self._update_baked_request()
+                    return []
 
-        updates = [
-            self._event_wrapper(update) for update in response["updates"]
-        ]
-        if updates and self._new_event_callbacks:
-            asyncio.create_task(self._run_through_callbacks(updates))
-        return updates
+            if not response["updates"]:
+                continue
+            updates = [
+                self._event_wrapper(update) for update in response["updates"]
+            ]
+            if self._new_event_callbacks:
+                asyncio.create_task(self._run_through_callbacks(updates))
+            return updates
 
-    async def _resolve_faileds(self, response: DictProxy):
+    async def _resolve_faileds(self, response: dict):
         """
         Обрабатывает LongPoll ошибки (faileds)
         """

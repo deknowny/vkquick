@@ -45,7 +45,7 @@ class DictProxy(dict):
 
     def to_dict(self):
         object.__setattr__(self, "__use_super_getattribute", True)
-        return dict(self)
+        return self
 
 
 class ListProxy(list):

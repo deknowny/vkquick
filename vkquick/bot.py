@@ -1,10 +1,22 @@
+from __future__ import annotations
 import asyncio
+import dataclasses
 import typing as ty
 
 from vkquick.api import API
 from vkquick.bases.event import Event
 from vkquick.bases.events_factories import EventsFactory
-from vkquick.handlers import EventHandler, SignalHandler
+
+if ty.TYPE_CHECKING:
+    from vkquick.handlers import SignalHandler
+    from vkquick.event_handler.handler import EventHandler
+
+
+@dataclasses.dataclass
+class EventProcessingContext:
+    bot: Bot
+    event: Event
+    extra: dict = dataclasses.field(default_factory=dict)
 
 
 class Bot:
@@ -33,16 +45,26 @@ class Bot:
         asyncio.run(self.async_run())
 
     async def async_run(self) -> ty.NoReturn:
-        async with self._events_factory, self._api:
-            await self._listen_events()
+        try:
+            await self.call_signal("startup", self)
+            async with self._events_factory, self._api:
+                await self._listen_events()
+        finally:
+            await self.call_signal("shutdown", self)
 
     async def _listen_events(self) -> ty.NoReturn:
         async for events in self._events_factory:
             for event in events:
-                asyncio.create_task(self.pass_event_through_handlers(event))
+                epctx = EventProcessingContext(bot=self, event=event)
+                asyncio.create_task(self.pass_event_through_handlers(epctx))
 
-    async def pass_event_through_handlers(self, event: Event):
+    async def pass_event_through_handlers(self, epctx: EventProcessingContext):
         handling_coros = [
-            handler(bot=self, event=event) for handler in self._event_handlers
+            handler(epctx) for handler in self._event_handlers
         ]
         await asyncio.gather(*handling_coros)
+
+    def call_signal(self, __name: str, *args, **kwargs):
+        for signal_handler in self._signal_handlers:
+            if signal_handler.is_handling_name(__name):
+                return signal_handler(*args, **kwargs)

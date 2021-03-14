@@ -7,6 +7,8 @@ import pytest_mock
 
 import unittest.mock
 
+import vkquick.event_handler.handler
+
 
 def test_event_handler(
     attach_events,
@@ -33,7 +35,7 @@ def test_event_handler(
 
     wall_post_new = mocker.create_autospec(wall_post_new)
     wall_post_new.__name__ = "wall_post_new"
-    wall_post_new = vq.EventHandler(wall_post_new)
+    wall_post_new = vkquick.event_handler.handler.EventHandler(wall_post_new)
     wall_post_new = bot.add_event_handler(wall_post_new)
 
     bot.run()
@@ -44,7 +46,7 @@ def test_event_handler(
 
 def test_raises():
     with pytest.raises(ValueError):
-        vq.EventHandler(handle_every_event=True, extra_types="1")
+        vkquick.event_handler.handler.EventHandler(handle_every_event=True, extra_types="1")
 
     with pytest.raises(TypeError):
-        vq.EventHandler(lambda x, y: ...)
+        vkquick.event_handler.handler.EventHandler(lambda x, y: ...)

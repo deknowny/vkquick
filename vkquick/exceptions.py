@@ -9,17 +9,39 @@ import typing as ty
 import huepy
 import typing_extensions as tye
 
+if ty.TYPE_CHECKING:
+    from vkquick.bases.filter import Filter
+    from vkquick.event_handler.handler import EventHandler
+
+
+@dataclasses.dataclass
+class NotCompatibleFilterError(Exception):
+
+    filter: Filter
+    event_handler: EventHandler
+    uncovered_event_types: ty.Set[ty.Union[int, str]]
+
+    def __str__(self):
+        return (
+            f"Filter `{self.filter.__class__.__name__}` "
+            f"can't handle event types "
+            f"`{self.uncovered_event_types}` "
+            f"that can be handled by `{self.event_handler}`"
+        )
+
 
 class FilterFailedError(Exception):
-    def __init__(self, reason: str, **kwargs):
+    def __init__(self, filter: Filter, reason: str, **extra_payload_params):
+        self.filter = filter
         self.reason = reason
-        self.kwargs = kwargs
+        self.extra = extra_payload_params
 
-
-class InvalidArgumentError(Exception):
-    def __init__(self, answer_text=None, **extra_message_settings):
-        self.answer_text = answer_text
-        self.extra_message_settings = extra_message_settings
+    def __str__(self):
+        return (
+            f"Filter `{self.filter.__class__.__name__}` "
+            f"not passed because `{self.reason}`. "
+            f"Extra params: `{self.extra}`"
+        )
 
 
 class _ParamsScheme(tye.TypedDict):
