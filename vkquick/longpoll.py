@@ -8,7 +8,7 @@ import typing as ty
 import aiohttp
 
 from vkquick.bases.events_factories import LongPollBase, EventsCallback
-from vkquick.event import GroupEvent
+from vkquick.event import GroupEvent, UserEvent
 from vkquick.bases.json_parser import JSONParser
 
 if ty.TYPE_CHECKING:  # pragma: no cover
@@ -47,7 +47,7 @@ class GroupLongPoll(LongPollBase):
             group_id=self._group_id
         )
         self._server_url = new_lp_settings.to_dict().pop("server")
-        self._lp_requests_settings = dict(
+        self._requests_query_params = dict(
             act="a_check", wait=self._wait, **new_lp_settings
         )
 
@@ -66,25 +66,37 @@ class UserLongPoll(LongPollBase):
     LongPoll обработчик для событий пользователя
     """
 
+    _event_wrapper = UserEvent
+
     def __init__(
-        self, api: API, version: int = 3, wait: int = 15, mode: int = 234
+        self, api: API, *,
+        version: int = 3,
+        wait: int = 15,
+        mode: int = 234,
+        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
+        requests_session: ty.Optional[aiohttp.ClientSession] = None,
+        json_parser: ty.Optional[JSONParser] = None,
     ):
-        super().__init__()
+        super().__init__(
+            new_event_callbacks=new_event_callbacks,
+            requests_session=requests_session,
+            json_parser=json_parser,
+        )
         self._api = api
-        self.version = version
-        self.wait = wait
-        self.mode = mode
+        self._version = version
+        self._wait = wait
+        self._mode = mode
 
     async def _setup(self) -> None:
         new_lp_settings = await self._api.messages.getLongPollServer(
-            lp_version=self.version
+            lp_version=self._version
         )
-        server_url = new_lp_settings().pop("server")
+        server_url = new_lp_settings.to_dict().pop("server")
         self._server_url = f"https://{server_url}"
-        self._lp_requests_settings = dict(
+        self._requests_query_params = dict(
             act="a_check",
-            wait=self.wait,
-            mode=self.mode,
-            version=self.version,
-            **new_lp_settings(),
+            wait=self._wait,
+            mode=self._mode,
+            version=self._version,
+            **new_lp_settings,
         )
