@@ -21,13 +21,14 @@ class EventsFactory(abc.ABC):
         self, *, new_event_callbacks: ty.List[EventsCallback] = None,
     ):
         self._new_event_callbacks = new_event_callbacks or []
+        self._updates_queue = []
 
     @abc.abstractmethod
     def __aiter__(self) -> EventsFactory:
         ...
 
     @abc.abstractmethod
-    def __anext__(self) -> ty.List[Event]:
+    def __anext__(self) -> Event:
         ...
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
@@ -38,7 +39,7 @@ class EventsFactory(abc.ABC):
         self._new_event_callbacks.remove(func)
         return func
 
-    async def sublisten(self) -> Event:
+    async def sublisten(self) -> ty.AsyncGenerator[Event, None, None]:
 
         new_event_added = asyncio.Event()
         events_queue: ty.List[Event] = []
@@ -60,12 +61,12 @@ class EventsFactory(abc.ABC):
         finally:
             self.remove_event_callback(callback)
 
-    async def coro_run(self):
+    async def coroutine_run(self):
         async for events in self:
             pass
 
     def run(self):
-        asyncio.run(self.coro_run())
+        asyncio.run(self.coroutine_run())
 
     async def _run_through_callbacks(self, updates: ty.List[Event]) -> None:
         callback_await_coros = []
@@ -119,13 +120,16 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         self._setup_called = False
         return self
 
-    async def __anext__(self) -> ty.List[Event]:
+    async def __anext__(self) -> Event:
         """
         Отправляет запрос на LongPoll сервер и ждет событие.
         После оборачивает событие в специальную обертку, которая
         в некоторых случаях может сделать интерфейс
         пользовательского лонгпула аналогичным групповому
         """
+        if self._updates_queue:
+            return self._updates_queue.pop(0)
+
         if not self._setup_called:
             await self._setup()
             self._setup_called = True
@@ -158,7 +162,10 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
                 ]
                 if self._new_event_callbacks:
                     asyncio.create_task(self._run_through_callbacks(updates))
-                return updates
+
+                if len(updates) > 1:
+                    self._updates_queue.extend(updates[1:])
+                return updates[0]
 
     async def _resolve_faileds(self, response: dict):
         """

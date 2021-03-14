@@ -43,21 +43,20 @@ class Bot:
         return self._events_factory
 
     def run(self) -> ty.NoReturn:
-        asyncio.run(self.async_run())
+        asyncio.run(self.coroutine_run())
 
-    async def async_run(self) -> ty.NoReturn:
+    async def coroutine_run(self) -> ty.NoReturn:
         try:
             await sync_async_run(self.call_signal("startup", self))
             async with self._events_factory, self._api:
-                await self._listen_events()
+                await self.listen_events()
         finally:
             await sync_async_run(self.call_signal("shutdown", self))
 
-    async def _listen_events(self) -> ty.NoReturn:
-        async for events in self._events_factory:
-            for event in events:
-                epctx = EventProcessingContext(bot=self, event=event)
-                asyncio.create_task(self.pass_event_through_handlers(epctx))
+    async def listen_events(self) -> ty.NoReturn:
+        async for event in self._events_factory:
+            epctx = EventProcessingContext(bot=self, event=event)
+            asyncio.create_task(self.pass_event_through_handlers(epctx))
 
     async def pass_event_through_handlers(self, epctx: EventProcessingContext):
         handling_coros = [

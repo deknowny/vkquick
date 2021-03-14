@@ -21,6 +21,7 @@ from .event_handler.statuses import (
     FilterFailed,
     UnexpectedErrorOccurred
 )
+from .event_handler.context import EventHandlingContext
 
 from .bases.api_serializable import APISerializableMixin
 from .bases.easy_decorator import EasyDecorator
