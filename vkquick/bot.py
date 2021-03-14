@@ -6,9 +6,10 @@ import typing as ty
 from vkquick.api import API
 from vkquick.bases.event import Event
 from vkquick.bases.events_factories import EventsFactory
+from vkquick.sync_async import sync_async_run
 
 if ty.TYPE_CHECKING:
-    from vkquick.handlers import SignalHandler
+    from vkquick.signal_handler import SignalHandler
     from vkquick.event_handler.handler import EventHandler
 
 
@@ -46,11 +47,11 @@ class Bot:
 
     async def async_run(self) -> ty.NoReturn:
         try:
-            await self.call_signal("startup", self)
+            await sync_async_run(self.call_signal("startup", self))
             async with self._events_factory, self._api:
                 await self._listen_events()
         finally:
-            await self.call_signal("shutdown", self)
+            await sync_async_run(self.call_signal("shutdown", self))
 
     async def _listen_events(self) -> ty.NoReturn:
         async for events in self._events_factory:

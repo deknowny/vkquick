@@ -28,8 +28,8 @@ class EventHandler(EasyDecorator):
         *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
-        post_handling_callback: ty.Optional[
-            sync_async_callable([EventHandlingContext])
+        post_handling_callbacks: ty.Optional[
+            ty.List[sync_async_callable([EventHandlingContext])]
         ] = None,
         pass_ehctx_as_argument: bool = True
     ):
@@ -38,7 +38,7 @@ class EventHandler(EasyDecorator):
             __handler.__name__
         }
         self._filters = filters or []
-        self._post_handling_callback = post_handling_callback
+        self._post_handling_callbacks = post_handling_callbacks or []
         self._pass_ehctx_as_argument = pass_ehctx_as_argument
 
     def is_handling_event_type(self, event_type: ty.Union[str]) -> bool:
@@ -55,37 +55,21 @@ class EventHandler(EasyDecorator):
         self._filters.append(filter)
         return self
 
-    @logger.catch
     async def __call__(
         self, epctx: EventProcessingContext
     ) -> EventHandlingContext:
         ehctx = EventHandlingContext(epctx=epctx)
         try:
-            if epctx.event.type not in self._handling_event_types:
-                ehctx.handling_status = EventHandlingStatus.INCORRECT_EVENT_TYPE
-                ehctx.handling_payload = IncorrectEventType()
-                return ehctx
-
-            passed_all_filters = await self.run_through_filters(ehctx)
-            if not passed_all_filters:
-                return ehctx
-
-            await self.call_handler(ehctx)
-
+            await self._handle_event(ehctx)
         except Exception as error:
             ehctx.handling_status = EventHandlingStatus.UNEXPECTED_ERROR_OCCURRED
             ehctx.handling_payload = UnexpectedErrorOccurred(raised_error=error)
-            raise error
         finally:
             try:
-                if self._post_handling_callback is not None:
-                    await sync_async_run(
-                        self._post_handling_callback(ehctx)
-                    )
+                await self._call_post_handling_callbacks(ehctx)
             except Exception as error:
                 ehctx.handling_status = EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY
                 ehctx.handling_payload = ErrorRaisedByPostHandlingCallback(raised_error=error)
-                raise error
             finally:
                 return ehctx
 
@@ -101,24 +85,51 @@ class EventHandler(EasyDecorator):
 
         return True
 
+    @logger.catch(reraise=True)
+    async def _call_post_handling_callbacks(self, ehctx: EventHandlingContext) -> None:
+        # Step-by-step запуск реализован специально вместо конкурентного
+        for callback in self._post_handling_callbacks:
+            await sync_async_run(callback(ehctx))
+
+    @logger.catch(reraise=True)
+    async def _handle_event(self, ehctx: EventHandlingContext) -> None:
+        if ehctx.epctx.event.type not in self._handling_event_types:
+            ehctx.handling_status = EventHandlingStatus.INCORRECT_EVENT_TYPE
+            ehctx.handling_payload = IncorrectEventType()
+            return
+
+        passed_all_filters = await self.run_through_filters(ehctx)
+        if not passed_all_filters:
+            return
+
+        await self.call_handler(ehctx)
+
+    @logger.catch(reraise=True)
     async def call_handler(self, ehctx: EventHandlingContext) -> None:
         try:
             try:
                 if self._pass_ehctx_as_argument:
                     ehctx.handler_arguments["ehctx"] = ehctx
-                handler_call = self._handler(**ehctx.handler_arguments)
+                handler_call = self.__call_handler(ehctx)
             except TypeError as error:
                 # TypeError может быть вызван и по другим причинам,
                 # поэтому рекомендую использовать только корутины
                 ehctx.handling_status = EventHandlingStatus.INCORRECT_PREPARED_ARGUMENTS
                 ehctx.handling_payload = IncorrectPreparedArguments(raised_error=error)
-                raise error
+                return
             else:
-                returned_value = await sync_async_run(handler_call)
+                returned_value = await self.__await_handler(handler_call)
         except Exception as error:
             ehctx.handling_status = EventHandlingStatus.ERROR_RAISED_BY_HANDLER_CALL
             ehctx.handling_payload = ErrorRaisedByHandlerCall(raised_error=error)
-            raise error
         else:
             ehctx.handling_status = EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY
             ehctx.handling_payload = CalledHandlerSuccessfully(handler_returned_value=returned_value)
+
+    @logger.catch(reraise=True)
+    def __call_handler(self, ehctx: EventHandlingContext):
+        return self._handler(**ehctx.handler_arguments)
+
+    @logger.catch(reraise=True)
+    async def __await_handler(self, handler_call):
+        return await sync_async_run(handler_call)
