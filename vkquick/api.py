@@ -211,6 +211,17 @@ class API(SessionContainerMixin):
             allow_cache=allow_cache,
         )
 
+    async def execute(self, __code: str) -> ty.Any:
+        """
+        Исполняет API метод `execute` с переданным VKScript-кодом.
+
+        :param __code: VKScript код
+        :return: Пришедший ответ от API
+
+        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        """
+        return await self.method("execute", {"code": __code})
+
     async def _make_api_request(
         self,
         method_name: str,
