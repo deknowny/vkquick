@@ -23,5 +23,3 @@ class SignalHandler(EasyDecorator):
 
     def __call__(self, *args, **kwargs):
         return self._handler(*args, **kwargs)
-
-

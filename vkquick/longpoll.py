@@ -69,7 +69,9 @@ class UserLongPoll(LongPollBase):
     _event_wrapper = UserEvent
 
     def __init__(
-        self, api: API, *,
+        self,
+        api: API,
+        *,
         version: int = 3,
         wait: int = 15,
         mode: int = 234,

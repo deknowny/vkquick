@@ -99,9 +99,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
     ):
-        EventsFactory.__init__(
-            self, new_event_callbacks=new_event_callbacks
-        )
+        EventsFactory.__init__(self, new_event_callbacks=new_event_callbacks)
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser
         )
@@ -138,7 +136,11 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         while True:
             try:
                 response = await self._baked_request
-            except (aiohttp.ClientTimeout, aiohttp.ClientTimeout):
+            except (
+                aiohttp.ClientTimeout,
+                aiohttp.ClientTimeout,
+                asyncio.exceptions.CancelledError,
+            ):
                 self._update_baked_request()
                 continue
             else:
@@ -158,7 +160,8 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
                 if not response["updates"]:
                     continue
                 updates = [
-                    self._event_wrapper(update) for update in response["updates"]
+                    self._event_wrapper(update)
+                    for update in response["updates"]
                 ]
                 if self._new_event_callbacks:
                     asyncio.create_task(self._run_through_callbacks(updates))

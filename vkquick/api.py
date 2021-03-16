@@ -46,12 +46,14 @@ class TokenOwnerEntity:
         self.entity_type = entity_type
         self.scheme = scheme
 
+    @property
     def is_group(self) -> bool:
         """
         :return: Является ли сущность группой
         """
         return self.entity_type == TokenOwnerType.GROUP
 
+    @property
     def is_user(self) -> bool:
         """
         :return: Является ли сущность пользователем

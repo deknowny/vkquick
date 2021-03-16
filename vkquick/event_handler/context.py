@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import dataclasses
 import typing as ty
 
-from vkquick.bot import Bot, EventProcessingContext
-from vkquick.bases.event import Event
-from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
+if ty.TYPE_CHECKING:
+    from vkquick.bot import EventProcessingContext
+    from vkquick.event_handler.statuses import (
+        EventHandlingStatus,
+        StatusPayload,
+    )
 
 
 @dataclasses.dataclass
