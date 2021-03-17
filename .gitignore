@@ -26,3 +26,5 @@ poetry.lock
 docs/build/
 
 htmlcov/
+
+.mypy_cache/
