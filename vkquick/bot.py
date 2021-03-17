@@ -66,6 +66,10 @@ class Bot:
         return cls(api=api, **kwargs)
 
     @property
+    def api(self) -> API:
+        return self._api
+
+    @property
     def events_factory(self) -> EventsFactory:
         """
         Текущая фабрика событий, используемая для получения новых событий.
@@ -119,11 +123,15 @@ class Bot:
         """
         try:
             await self._setup_events_factory()
-            await sync_async_run(self._signals["startup"](self))
+            startup_signal = self._signals.get("startup")
+            if startup_signal is not None:
+                await sync_async_run(startup_signal(self))
             async with self._events_factory:
                 await self.run_listening_events()
         finally:
-            await sync_async_run(self._signals["shutdown"](self))
+            shutdown_signal = self._signals.get("shutdown")
+            if shutdown_signal is not None:
+                await sync_async_run(shutdown_signal(self))
 
     async def run_listening_events(self) -> ty.NoReturn:
         """

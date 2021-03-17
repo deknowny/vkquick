@@ -112,7 +112,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         while True:
             try:
                 response = await self._baked_request
-            except aiohttp.ClientTimeout:
+            except asyncio.TimeoutError:
                 self._update_baked_request()
                 continue
             else:

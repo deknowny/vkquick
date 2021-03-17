@@ -8,9 +8,16 @@ class Event(abc.ABC):
     def __init__(self, content: ty.Union[dict, list]):
         self._content = content
 
+
+
     @property
     def content(self) -> ty.Union[dict, list]:
         return self._content
+
+    @property
+    @abc.abstractmethod
+    def object(self) -> ty.Union[dict, list]:
+        ...
 
     @property
     @abc.abstractmethod

@@ -8,10 +8,15 @@ import textwrap
 import time
 import typing as ty
 import urllib.parse
+import json
 
 import aiohttp
 import cachetools
 from loguru import logger
+import pygments.formatters
+import pygments.formatters.terminal
+import pygments.token
+import pygments.lexers
 
 from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.session_container import SessionContainerMixin
@@ -20,6 +25,30 @@ from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
     from vkquick.bases.json_parser import JSONParser
+
+
+pygments.formatters.terminal.TERMINAL_COLORS[
+    pygments.token.string_to_tokentype("String")
+] = ("gray", "_")
+pygments.formatters.terminal.TERMINAL_COLORS[
+    pygments.token.string_to_tokentype("Token.Literal.Number")
+] = ("yellow", "_")
+pygments.formatters.terminal.TERMINAL_COLORS[
+    pygments.token.string_to_tokentype("Token.Keyword.Constant")
+] = ("red", "_")
+pygments.formatters.terminal.TERMINAL_COLORS[
+    pygments.token.string_to_tokentype("Token.Name.Tag")
+] = ("cyan", "_")
+
+
+def pretty_view(__mapping: dict) -> str:
+    dumped_mapping = json.dumps(__mapping, ensure_ascii=False, indent=4)
+    pretty_mapping = pygments.highlight(
+        dumped_mapping,
+        pygments.lexers.JsonLexer(),
+        pygments.formatters.TerminalFormatter(bg="light"),
+    )
+    return pretty_mapping
 
 
 class TokenOwnerType(enum.Enum):
@@ -41,7 +70,9 @@ class TokenOwnerEntity:
     """
 
     def __init__(
-        self, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None,
+        self,
+        entity_type: TokenOwnerType,
+        scheme: ty.Optional[dict] = None,
     ):
         self.entity_type = entity_type
         self.scheme = scheme
@@ -122,7 +153,9 @@ class API(SessionContainerMixin):
         return self
 
     async def __call__(
-        self, __allow_cache: bool = False, **request_params,
+        self,
+        __allow_cache: bool = False,
+        **request_params,
     ) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами,
@@ -204,12 +237,9 @@ class API(SessionContainerMixin):
 
         :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
-        method_name = self._convert_name(__method_name)
-        request_params = self._fill_request_params(__request_params)
-        request_params = self._convert_params_for_api(request_params)
         return await self._make_api_request(
-            method_name=method_name,
-            request_params=request_params,
+            method_name=__method_name,
+            request_params=__request_params,
             allow_cache=allow_cache,
         )
 

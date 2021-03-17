@@ -8,7 +8,7 @@ version = "1.0.0b9"
 description = "VK API Framework for chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
-documentation = "https://vkquick.github.io"
+documentation = "https://vkquick.rthd.io"
 authors = ["Kurbatov Yan <deknowny@gmail.com>"]
 readme = "README.md"
 keywords = [
@@ -45,8 +45,6 @@ ujson = { version = "^4.0.1", optional = true }
 
 # compatibility
 typing-extensions = "^3.7.4"
-trio = "^0.18.0"
-nest-asyncio = "^1.5.1"
 
 
 [tool.poetry.dev-dependencies]
@@ -77,7 +75,6 @@ json-libs = ["orjson", "ujson"]
 "Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
 
 [tool.black]
-exclude = ["env", "env3.7"]
 line-length = 78
 
 [tool.isort]

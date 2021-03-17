@@ -19,3 +19,7 @@ class UserEvent(Event):
     @property
     def type(self) -> int:
         return self._content[0]
+
+    @property
+    def object(self) -> list:
+        return self._content

@@ -5,7 +5,12 @@ import typing as ty
 
 if ty.TYPE_CHECKING:
     from vkquick.bot import EventProcessingContext
-    from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
+    from vkquick.api import API
+    from vkquick.event import Event
+    from vkquick.event_handler.statuses import (
+        EventHandlingStatus,
+        StatusPayload,
+    )
 
 
 @dataclasses.dataclass
@@ -15,3 +20,11 @@ class EventHandlingContext:
     handling_payload: ty.Optional[StatusPayload] = None
     handler_arguments: dict = dataclasses.field(default_factory=dict)
     extra: dict = dataclasses.field(default_factory=dict)
+
+    @property
+    def api(self) -> API:
+        return self.epctx.bot.api
+
+    @property
+    def event(self) -> Event:
+        return self.epctx.event

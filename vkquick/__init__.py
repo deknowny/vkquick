@@ -1,10 +1,14 @@
 import importlib.metadata
 
-from .api import API, TokenOwnerEntity, TokenOwnerType
+from .api import API, TokenOwnerEntity, TokenOwnerType, pretty_view
 from .bases.api_serializable import APISerializableMixin
 from .bases.easy_decorator import EasyDecorator
 from .bases.event import Event
-from .bases.events_factories import EventsCallback, EventsFactory, LongPollBase
+from .bases.events_factories import (
+    EventsCallback,
+    EventsFactory,
+    LongPollBase,
+)
 from .bases.filter import Filter
 from .bases.json_parser import JSONParser
 from .bases.session_container import SessionContainerMixin
@@ -23,7 +27,11 @@ from .event_handler.statuses import (
     StatusPayload,
     UnexpectedErrorOccurred,
 )
-from .exceptions import FilterFailedError, NotCompatibleFilterError, VKAPIError
+from .exceptions import (
+    FilterFailedError,
+    NotCompatibleFilterError,
+    VKAPIError,
+)
 from .json_parsers import (
     BuiltinJsonParser,
     OrjsonParser,

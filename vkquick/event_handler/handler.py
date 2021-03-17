@@ -103,7 +103,6 @@ class EventHandler(EasyDecorator):
     async def _call_post_handling_callbacks(
         self, ehctx: EventHandlingContext
     ) -> None:
-        # Step-by-step запуск реализован специально вместо конкурентного
         for callback in self._post_handling_callbacks:
             await sync_async_run(callback(ehctx))
 
