@@ -17,7 +17,7 @@ from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
-from vkquick.json_parsers import json_parser_policy, DictProxy
+from vkquick.json_parsers import json_parser_policy
 
 
 class TokenOwnerType(enum.Enum):
@@ -41,7 +41,7 @@ class TokenOwnerEntity:
     def __init__(
         self,
         entity_type: TokenOwnerType,
-        scheme: ty.Optional[DictProxy] = None,
+        scheme: ty.Optional[dict] = None,
     ):
         self.entity_type = entity_type
         self.scheme = scheme
@@ -123,7 +123,7 @@ class API(SessionContainerMixin):
 
     async def __call__(
         self, __allow_cache: bool = False, **request_params,
-    ) -> ty.Union[str, int, DictProxy]:
+    ) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами,
         добавляя к ним токен и версию (может быть перекрыто).
@@ -229,7 +229,7 @@ class API(SessionContainerMixin):
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
         allow_cache: bool,
-    ) -> ty.Union[str, int, DictProxy]:
+    ) -> ty.Any:
         """
         Выполняет API запрос на определнный метод с заданными параметрами
 

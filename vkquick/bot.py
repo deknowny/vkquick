@@ -4,8 +4,6 @@ import dataclasses
 import functools
 import typing as ty
 
-from loguru import logger
-
 from vkquick.api import API
 from vkquick.longpoll import UserLongPoll, GroupLongPoll
 from vkquick.bases.event import Event
@@ -14,7 +12,7 @@ from vkquick.bases.events_factories import EventsFactory
 from vkquick.event_handler.handler import EventHandler
 from vkquick.signal_handler import SignalHandler
 from vkquick.event_handler.context import EventHandlingContext
-from vkquick.sync_async import sync_async_run, sync_async_callable
+from vkquick.sync_async import sync_async_run, sync_async_callable, run_as_sync
 
 if ty.TYPE_CHECKING:
     from vkquick import Filter
@@ -66,7 +64,7 @@ class Bot:
     def via_token(cls, token: str, **kwargs):
 
         api = API(token)
-        owner = asyncio.run(api.fetch_token_owner_entity())
+        owner = run_as_sync(api.fetch_token_owner_entity())
         if owner.is_group:
             lp = GroupLongPoll(api)
         else:
@@ -106,7 +104,7 @@ class Bot:
             await sync_async_run(self.call_signal("shutdown", self))
 
     async def listen_events(self) -> ty.NoReturn:
-        async for event in self._events_factory:
+        async for event in self._events_factory.listen():
             epctx = EventProcessingContext(bot=self, event=event)
             asyncio.create_task(self._route_context(epctx))
 

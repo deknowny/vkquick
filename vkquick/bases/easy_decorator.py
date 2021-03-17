@@ -22,7 +22,7 @@ class EasyDecorator(abc.ABC):
         return self
 
 
-def easy_func_decorator(func: ty.Optional[ty.Callable]):
+def easy_func_decorator(func: ty.Callable):
     @functools.wraps(func)
     def wrapper_args(__handler: ty.Optional[ty.Callable] = None, **kwargs):
         if __handler is None:

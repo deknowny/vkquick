@@ -12,8 +12,6 @@ from .json_parsers import (
     BuiltinJsonParser,
     OrjsonParser,
     UjsonParser,
-    DictProxy,
-    ListProxy,
     json_parser_policy,
 )
 from .longpoll import UserLongPoll, GroupLongPoll

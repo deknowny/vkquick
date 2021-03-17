@@ -46,7 +46,7 @@ class GroupLongPoll(LongPollBase):
         new_lp_settings = await self._api.groups.getLongPollServer(
             group_id=self._group_id
         )
-        self._server_url = new_lp_settings.to_dict().pop("server")
+        self._server_url = new_lp_settings.pop("server")
         self._requests_query_params = dict(
             act="a_check", wait=self._wait, **new_lp_settings
         )
@@ -54,11 +54,11 @@ class GroupLongPoll(LongPollBase):
     async def _define_group_id(self):
         if self._group_id is None:
             owner = await self._api.fetch_token_owner_entity()
-            if not owner.is_group():
+            if not owner.is_group:
                 raise ValueError(
                     "Can't use `GroupLongPoll` with user token without `group_id`"
                 )
-            self._group_id = owner.scheme.id
+            self._group_id = owner.scheme["id"]
 
 
 class UserLongPoll(LongPollBase):
@@ -93,7 +93,7 @@ class UserLongPoll(LongPollBase):
         new_lp_settings = await self._api.messages.getLongPollServer(
             lp_version=self._version
         )
-        server_url = new_lp_settings.to_dict().pop("server")
+        server_url = new_lp_settings.pop("server")
         self._server_url = f"https://{server_url}"
         self._requests_query_params = dict(
             act="a_check",

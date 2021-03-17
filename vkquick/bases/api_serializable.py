@@ -1,7 +1,5 @@
 import abc
 
-from vkquick.json_parsers import json_parser_policy
-
 
 class APISerializableMixin(abc.ABC):
     """

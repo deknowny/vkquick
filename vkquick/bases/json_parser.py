@@ -29,6 +29,6 @@ class JSONParser(abc.ABC):
         """
         Метод, сериализующий JSON в строку
 
-        :param data: JSON-строка
+        :param string: JSON-строка
         :return: Словарь, который был объектом в строке
         """

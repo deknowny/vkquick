@@ -1,6 +1,8 @@
 import asyncio
 import typing as ty
 
+import trio
+
 
 T = ty.TypeVar("T")
 
@@ -39,3 +41,13 @@ async def sync_async_run(
     if asyncio.iscoroutine(__obj):
         return await __obj
     return __obj
+
+
+def run_as_sync(__coroutine: ty.Coroutine):
+    """
+    Вызывает асинхронную функцию синхронно
+
+    :param __coroutine: Корутина, которую нужно вызвать синхронно
+    :return: Результат вызова функции
+    """
+    return trio.run(__coroutine)

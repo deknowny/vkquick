@@ -45,6 +45,7 @@ ujson = { version = "^4.0.1", optional = true }
 
 # compatibility
 typing-extensions = "^3.7.4"
+trio = "^0.18.0"
 
 
 [tool.poetry.dev-dependencies]
@@ -63,6 +64,7 @@ pytest-asyncio = "^0.14.0"
 black = "^19.10b0"
 pylint = "^2.6.0"
 isort = "^5.7.0"
+mypy = "^0.812"
 
 
 [tool.poetry.extras]

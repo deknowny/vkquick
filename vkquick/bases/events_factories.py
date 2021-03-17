@@ -21,14 +21,10 @@ class EventsFactory(abc.ABC):
         self, *, new_event_callbacks: ty.List[EventsCallback] = None,
     ):
         self._new_event_callbacks = new_event_callbacks or []
-        self._updates_queue = []
+        self._updates_queue = asyncio.Queue()
 
     @abc.abstractmethod
-    def __aiter__(self) -> EventsFactory:
-        ...
-
-    @abc.abstractmethod
-    def __anext__(self) -> Event:
+    def listen(self) -> ty.AsyncGenerator[Event, None]:
         ...
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
@@ -39,46 +35,32 @@ class EventsFactory(abc.ABC):
         self._new_event_callbacks.remove(func)
         return func
 
-    async def sublisten(self) -> ty.AsyncGenerator[Event, None, None]:
+    async def sublisten(self) -> ty.AsyncGenerator[Event, None]:
 
-        new_event_added = asyncio.Event()
-        events_queue: ty.List[Event] = []
-
-        def callback(event: Event):
-            events_queue.append(event)
-            new_event_added.set()
+        events_queue = asyncio.Queue()
+        callback = events_queue.put_nowait
 
         try:
             self.add_event_callback(callback)
             while True:
-                if len(events_queue):
-                    event = events_queue.pop(0)
-                    yield event
-                else:
-                    await new_event_added.wait()
-                    new_event_added.clear()
+                yield await events_queue.get()
 
         finally:
             self.remove_event_callback(callback)
 
     async def coroutine_run(self):
-        async for events in self:
+        async for events in self.listen():
             pass
 
     def run(self):
         asyncio.run(self.coroutine_run())
 
-    async def _run_through_callbacks(self, updates: ty.List[Event]) -> None:
-        callback_await_coros = []
-        for update in updates:
-            callback_coros = [
-                sync_async_run(func(update))
-                for func in self._new_event_callbacks
-            ]
-            wait_callback_coro = asyncio.wait(callback_coros)
-            callback_await_coros.append(wait_callback_coro)
-
-        await asyncio.wait(callback_await_coros)
+    async def _run_through_callbacks(self, event: Event) -> None:
+        updates = [
+            sync_async_run(callback(event))
+            for callback in self._new_event_callbacks
+        ]
+        await asyncio.gather(*updates)
 
 
 class LongPollBase(SessionContainerMixin, EventsFactory):
@@ -111,36 +93,14 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         и открывает соединение
         """
 
-    def __aiter__(self) -> LongPollBase:
-        """
-        Итерация запускает процесс получения событий
-        """
-        self._setup_called = False
-        return self
-
-    async def __anext__(self) -> Event:
-        """
-        Отправляет запрос на LongPoll сервер и ждет событие.
-        После оборачивает событие в специальную обертку, которая
-        в некоторых случаях может сделать интерфейс
-        пользовательского лонгпула аналогичным групповому
-        """
-        if self._updates_queue:
-            return self._updates_queue.pop(0)
-
-        if not self._setup_called:
-            await self._setup()
-            self._setup_called = True
-            self._update_baked_request()
+    async def listen(self) -> ty.AsyncGenerator[Event, None]:
+        await self._setup()
+        self._update_baked_request()
 
         while True:
             try:
                 response = await self._baked_request
-            except (
-                aiohttp.ClientTimeout,
-                aiohttp.ClientTimeout,
-                asyncio.exceptions.CancelledError,
-            ):
+            except aiohttp.ClientTimeout:
                 self._update_baked_request()
                 continue
             else:
@@ -155,20 +115,17 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
                         response = await self._parse_json_body(response)
                         await self._resolve_faileds(response)
                         self._update_baked_request()
-                        return []
+                        continue
 
                 if not response["updates"]:
                     continue
-                updates = [
-                    self._event_wrapper(update)
-                    for update in response["updates"]
-                ]
-                if self._new_event_callbacks:
-                    asyncio.create_task(self._run_through_callbacks(updates))
 
-                if len(updates) > 1:
-                    self._updates_queue.extend(updates[1:])
-                return updates[0]
+                for update in response["updates"]:
+                    event = self._event_wrapper(update)
+                    asyncio.create_task(
+                        self._run_through_callbacks(event)
+                    )
+                    yield event
 
     async def _resolve_faileds(self, response: dict):
         """

@@ -10,7 +10,7 @@ if ty.TYPE_CHECKING:
 
 class Filter(abc.ABC):
 
-    __accepted_event_types__ = frozenset()
+    __accepted_event_types__: ty.FrozenSet[ty.Union[str, int]] = frozenset()
 
     @abc.abstractmethod
     def make_decision(self, context: EventHandlingContext):
