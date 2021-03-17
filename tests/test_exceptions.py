@@ -1,8 +1,9 @@
 """
 Test `exceptions.py` module
 """
-import vkquick as vq
 import pytest
+
+import vkquick as vq
 
 
 class TestVkApiError:

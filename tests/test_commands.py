@@ -1,8 +1,9 @@
 import concurrent.futures
 
-import vkquick as vq
 import pytest
 import pytest_mock
+
+import vkquick as vq
 
 
 def test_raises_init():

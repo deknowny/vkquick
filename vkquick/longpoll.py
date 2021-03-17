@@ -7,20 +7,18 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.bases.events_factories import LongPollBase, EventsCallback
+from vkquick.bases.events_factories import EventsCallback, LongPollBase
 from vkquick.event import GroupEvent, UserEvent
-from vkquick.bases.json_parser import JSONParser
 
 if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
+    from vkquick.bases.json_parser import JSONParser
 
 
 class GroupLongPoll(LongPollBase):
     """
     LongPoll обработчик для событий в сообществе
     """
-
-    _event_wrapper = GroupEvent
 
     def __init__(
         self,
@@ -33,6 +31,8 @@ class GroupLongPoll(LongPollBase):
         json_parser: ty.Optional[JSONParser] = None,
     ) -> None:
         super().__init__(
+            api=api,
+            event_wrapper=GroupEvent,
             new_event_callbacks=new_event_callbacks,
             requests_session=requests_session,
             json_parser=json_parser,
@@ -66,8 +66,6 @@ class UserLongPoll(LongPollBase):
     LongPoll обработчик для событий пользователя
     """
 
-    _event_wrapper = UserEvent
-
     def __init__(
         self,
         api: API,
@@ -80,6 +78,8 @@ class UserLongPoll(LongPollBase):
         json_parser: ty.Optional[JSONParser] = None,
     ):
         super().__init__(
+            api=api,
+            event_wrapper=UserEvent,
             new_event_callbacks=new_event_callbacks,
             requests_session=requests_session,
             json_parser=json_parser,

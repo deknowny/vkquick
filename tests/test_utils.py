@@ -3,9 +3,10 @@ import json
 import os
 import unittest.mock
 
+import pygments
 import pytest
 import pytest_mock
-import pygments
+
 import vkquick as vq
 import vkquick.utils
 

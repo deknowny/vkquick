@@ -4,9 +4,6 @@ import typing as ty
 
 from vkquick.bases.easy_decorator import EasyDecorator
 
-if ty.TYPE_CHECKING:
-    pass
-
 
 class SignalHandler(EasyDecorator):
     def __init__(
@@ -17,6 +14,10 @@ class SignalHandler(EasyDecorator):
     ):
         self._handler = __handler
         self._name = name or __handler.__name__
+
+    @property
+    def name(self):
+        return self._name
 
     def is_handling_name(self, name: str) -> bool:
         return self._name == name

@@ -2,13 +2,13 @@
 Test `api.py` module
 """
 import re
+import unittest.mock
 
 import aiohttp
 import pytest
 import pytest_mock
-import vkquick as vq
 
-import unittest.mock
+import vkquick as vq
 
 
 class TestAPI:

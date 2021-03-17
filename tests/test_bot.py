@@ -3,6 +3,7 @@ import os
 
 import pytest
 import pytest_mock
+
 import vkquick as vq
 import vkquick.resolvers.signal_handler
 

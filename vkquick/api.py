@@ -4,8 +4,8 @@ import asyncio
 import enum
 import os
 import re
-import time
 import textwrap
+import time
 import typing as ty
 import urllib.parse
 
@@ -14,10 +14,12 @@ import cachetools
 from loguru import logger
 
 from vkquick.bases.api_serializable import APISerializableMixin
-from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
+
+if ty.TYPE_CHECKING:
+    from vkquick.bases.json_parser import JSONParser
 
 
 class TokenOwnerType(enum.Enum):
@@ -39,9 +41,7 @@ class TokenOwnerEntity:
     """
 
     def __init__(
-        self,
-        entity_type: TokenOwnerType,
-        scheme: ty.Optional[dict] = None,
+        self, entity_type: TokenOwnerType, scheme: ty.Optional[dict] = None,
     ):
         self.entity_type = entity_type
         self.scheme = scheme

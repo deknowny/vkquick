@@ -16,3 +16,6 @@ class Event(abc.ABC):
     @abc.abstractmethod
     def type(self) -> ty.Union[int, str]:
         ...
+
+    def __str__(self):
+        return f"<vkquick.{self.__class__.__name__} type={self.type}>"

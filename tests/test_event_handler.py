@@ -1,12 +1,11 @@
 import asyncio
 import os
+import unittest.mock
 
-import vkquick as vq
 import pytest
 import pytest_mock
 
-import unittest.mock
-
+import vkquick as vq
 import vkquick.event_handler.handler
 
 

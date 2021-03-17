@@ -1,6 +1,7 @@
 import pytest
-import vkquick as vq
 import pytest_mock
+
+import vkquick as vq
 
 
 def test_group_fields(make_message_new_event):

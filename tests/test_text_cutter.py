@@ -1,8 +1,8 @@
 import re
 
 import pytest
-import vkquick as vq
 
+import vkquick as vq
 
 text_arguments_data = [
     (vq.Integer(), "123", 123),

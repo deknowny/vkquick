@@ -1,5 +1,6 @@
 import pytest
 import pytest_mock
+
 import vkquick as vq
 import vkquick.wrappers.user
 

@@ -1,11 +1,11 @@
 import collections
+import unittest.mock
 
-import vkquick as vq
+import huepy
 import pytest
 import pytest_mock
-import huepy
 
-import unittest.mock
+import vkquick as vq
 
 debugger_template = """
 Новое сообщение от `Tom` с текстом `foo 123`

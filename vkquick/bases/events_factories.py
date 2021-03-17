@@ -6,26 +6,35 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.api import API
 from vkquick.bases.json_parser import JSONParser
-from vkquick.event import Event
 from vkquick.bases.session_container import SessionContainerMixin
+from vkquick.event import Event
 from vkquick.sync_async import sync_async_callable, sync_async_run
 
+if ty.TYPE_CHECKING:
+    from vkquick.api import API
 
 EventsCallback = sync_async_callable([Event])
 
 
 class EventsFactory(abc.ABC):
     def __init__(
-        self, *, new_event_callbacks: ty.List[EventsCallback] = None,
+        self,
+        *,
+        api: API,
+        new_event_callbacks: ty.List[EventsCallback] = None,
     ):
+        self._api = api
         self._new_event_callbacks = new_event_callbacks or []
         self._updates_queue = asyncio.Queue()
 
     @abc.abstractmethod
     def listen(self) -> ty.AsyncGenerator[Event, None]:
         ...
+
+    @property
+    def api(self) -> API:
+        return self._api
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
         self._new_event_callbacks.append(func)
@@ -68,20 +77,23 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
     Базовый интерфейс для всех типов LongPoll
     """
 
-    _requests_query_params: ty.Optional[ty.Optional[dict]] = None
-    _server_url: ty.Optional[str] = None
-    _api: ty.Optional[API] = None
-    _event_wrapper: ty.Optional[ty.Type[Event]] = None
-    _baked_request = None
-
     def __init__(
         self,
         *,
+        api: API,
+        event_wrapper: ty.Type[Event],
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
     ):
-        EventsFactory.__init__(self, new_event_callbacks=new_event_callbacks)
+        self._event_wrapper = event_wrapper
+        self._baked_request: ty.Optional[asyncio.Task] = None
+        self._requests_query_params: ty.Optional[dict] = None
+        self._server_url: ty.Optional[str] = None
+
+        EventsFactory.__init__(
+            self, api=api, new_event_callbacks=new_event_callbacks
+        )
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser
         )
@@ -122,9 +134,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
 
                 for update in response["updates"]:
                     event = self._event_wrapper(update)
-                    asyncio.create_task(
-                        self._run_through_callbacks(event)
-                    )
+                    asyncio.create_task(self._run_through_callbacks(event))
                     yield event
 
     async def _resolve_faileds(self, response: dict):
@@ -143,3 +153,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
             self._server_url, params=self._requests_query_params
         )
         self._baked_request = asyncio.create_task(self._baked_request)
+
+    async def close_session(self) -> None:
+        await self._api.close_session()
+        await SessionContainerMixin.close_session(self)

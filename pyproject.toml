@@ -46,6 +46,7 @@ ujson = { version = "^4.0.1", optional = true }
 # compatibility
 typing-extensions = "^3.7.4"
 trio = "^0.18.0"
+nest-asyncio = "^1.5.1"
 
 
 [tool.poetry.dev-dependencies]
@@ -61,7 +62,7 @@ pytest-mock = "^3.3.1"
 pytest-asyncio = "^0.14.0"
 
 # style
-black = "^19.10b0"
+black = "^20.8b1"
 pylint = "^2.6.0"
 isort = "^5.7.0"
 mypy = "^0.812"
@@ -76,4 +77,9 @@ json-libs = ["orjson", "ujson"]
 "Help chat" = "https://vk.me/join/AJQ1dzLqwBeU7O0H_oJZYNjD"
 
 [tool.black]
+exclude = ["env", "env3.7"]
 line-length = 78
+
+[tool.isort]
+profile = "black"
+skip = ["env", "env3.7"]

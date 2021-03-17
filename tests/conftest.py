@@ -1,7 +1,8 @@
-import unittest.mock
 import typing as ty
+import unittest.mock
 
 import pytest
+
 import vkquick as vq
 
 

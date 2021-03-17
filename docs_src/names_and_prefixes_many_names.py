@@ -1,6 +1,5 @@
 import vkquick as vq
 
-
 bot = vq.Bot.init_via_token("token")
 
 

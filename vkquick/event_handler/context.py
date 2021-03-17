@@ -5,10 +5,7 @@ import typing as ty
 
 if ty.TYPE_CHECKING:
     from vkquick.bot import EventProcessingContext
-    from vkquick.event_handler.statuses import (
-        EventHandlingStatus,
-        StatusPayload,
-    )
+    from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
 
 
 @dataclasses.dataclass

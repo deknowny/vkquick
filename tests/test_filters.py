@@ -1,8 +1,9 @@
 """
 Test filter_s
 """
-import vkquick as vq
 import pytest
+
+import vkquick as vq
 
 
 def test_base_filter_():

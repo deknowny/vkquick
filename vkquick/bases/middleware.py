@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import abc
 import typing as ty
-
 
 if ty.TYPE_CHECKING:
     from vkquick.bot import EventProcessingContext
