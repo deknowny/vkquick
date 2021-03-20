@@ -1,3 +1,5 @@
+__НА ДАННЫЙ МОМЕНТ ПРОДУКТ ВЕРСИИ 1.0 В РАЗРАБОТКЕ, ВСЯ ИНФОРМАЦИЯ НИЖЕ ЕЩЕ НЕ АКТУАЛЬНА. ПОДДЕРЖКИ 0.2 БОЛЬШЕ НЕТ, НО ВЫ ВСЕ ЕЩЕ МОЖЕТЕ УСТАНОВИТЬ ЕЕ С PYPI, НАЙТИ ДОКУМЕНТАЦИЮ НА [https://vkquick.github.io](https://vkquick.github.io) И ИСХОДНЫЙ КОД В ВЕТКЕ 0.2__
+***
 # VK Quick
 [![Downloads](https://static.pepy.tech/personalized-badge/vkquick?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads)](https://pepy.tech/project/vkquick)
 
