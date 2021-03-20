@@ -2,17 +2,33 @@
 .DS_Store
 
 env/
+env3.7/
 __pycache__/
 vkquick.egg-info/
 todo/
 .pytest_cache/
+.idea/
 site/
 dist/
-.idea/
+.coverage
+.coverage*
 
 # Tests data
-tests/test_bot/config.toml
-tests/test_bot/.cache
+tests_old/
 
-examples/TodoBot/config.toml
-examples/TodoBot/src/db.sqlite3
+# Old
+examples/TodoBot/
+vkquick_old/
+vkquick_old2/
+
+poetry.lock
+
+docs/build/
+
+htmlcov/
+
+.mypy_cache/
+
+vk-api-schema/
+
+penv/

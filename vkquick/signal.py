@@ -1,48 +1,26 @@
-"""
-Обработчики сигналов (собственных событий)
-"""
-from asyncio import iscoroutinefunction as icf
-from dataclasses import dataclass
+from __future__ import annotations
 
-from vkquick import current
+import typing as ty
+
+from vkquick.bases.easy_decorator import EasyDecorator
 
 
-@dataclass
-class Signal:
-    """
-    Образец обработчика сигнала
-    """
+class SignalHandler(EasyDecorator):
+    def __init__(
+        self,
+        __handler: ty.Optional[ty.Callable] = None,
+        *,
+        name: ty.Optional[str] = None
+    ):
+        self._handler = __handler
+        self._name = name or __handler.__name__
 
-    name: str
+    @property
+    def name(self):
+        return self._name
 
-    def __call__(self, code):
-        self.code = code
+    def is_handling_name(self, name: str) -> bool:
+        return self._name == name
 
-        return self
-
-    async def run(self, *args, **kwargs):
-        if icf(self.code):
-            return await self.code(*args, **kwargs)
-        else:
-            return self.code(*args, **kwargs)
-
-
-class SignalsList(list):
-    """
-    Список обрабатываемых сигналов
-    """
-
-    async def resolve(self, name: str, /, *args, **kwargs):
-        """
-        Call a signal with name `name` and params *args and **kwargs
-        """
-        for signal in self:
-            if signal.name == name:
-                return await signal.run(*args, **kwargs)
-
-
-async def signal(name, *args, **kwargs):
-    """
-    Вызов сигнала с именем name и параметрами `*args` и `**kwargs`
-    """
-    return await current.bot.signals.resolve(name, *args, **kwargs)
+    def __call__(self, *args, **kwargs):
+        return self._handler(*args, **kwargs)

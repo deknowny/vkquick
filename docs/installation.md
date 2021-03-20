@@ -1,54 +1,61 @@
-## PyPI
-Вы можете установить `vkquick` с помощью `pip`
-<div class="termy">
-```console
-$ pip install vkquick
----> 100%
-```
-</div>
-
-## GitHub
-Либо же произвести установку через исходники на [GitHub](https://github.com/Rhinik/vkquick)
-
-=== "Linux, MacOS"
-    <div class="termy">
-    ```console
-    $ git clone https://github.com/Rhinik/vkquick
-    $ cd vkquick
-    $ python3 -m venv env
-    $ source env/bin/activate
-    $ pip3 install poetry
-    $ poetry install --no-dev
-    ```
-    </div>
-
-=== "Windows (cmd)"
-    <div class="termy">
-    ```console
-    $ git clone https://github.com/Rhinik/vkquick
-    $ cd vkquick
-    $ python -m venv env
-    $ env\Scripts\activate.bat
-    $ pip install poetry
-    $ poetry install --no-dev
-    ```
-    </div>
-
-## Check it
-После установки будет доступен как сам фреймворк, так и терминальный инструмент __bot__. Проверьте корректность установки
+Перед установкой необходимо удостовериться, что версия Python выше `3.7`:
 
 <div class="termy">
 ```console
-$ bot --help
-Usage: bot [OPTIONS] COMMAND [ARGS]...
-
-  Менеджер Ваших ботов
-...
-...
-...
-
-$ python
->>> import vkquick
->>>
+$ python -V
+Python 3.7.0
 ```
 </div>
+
+***
+
+Если необходимая версия есть, можно переходить к установке:
+
+> До релиза 1.0: `python -m pip install -U https://github.com/deknowny/vkquick/archive/1.0.zip`
+
+=== "PyPI"
+    <div class="termy">
+    ```console
+    $ python -m pip install vkquick
+    ---> 100%
+    ```
+    </div>
+
+=== "GitHub"
+    <div class="termy">
+    ```console
+    $ python -m pip install -U https://github.com/deknowny/vkquick/archive/master.zip 
+    ---> 100%
+    ```
+    </div>
+
+***
+
+Проверьте, чтобы VK Quick установился корректно:
+<div class="termy">
+```console
+$ python -m pip show vkquick
+Name: vkquick
+Version: ...
+...
+...
+```
+</div>
+
+***
+
+Вместе с фреймворком устанавливается `vq` — терминальная утилита (CLI), немного упрощающая создание ботов. Проверим и ее:
+
+<div class="termy">
+```console
+$ vq --help
+Usage: vq [OPTIONS] COMMAND [ARGS]...
+
+Options:
+...
+...
+```
+</div>
+
+!!! Tip
+    CLI всегда можно запустить через вызов пакета: `python -m vkquick --help`

@@ -1,9 +1,0 @@
-[api]
-token = "bfd6f1e4d0d8ad689a2a61df2e5571912886ea126ca85dc01c3289e5586c8576841a644391e268b17e8f7"
-group_id = 197162733
-owner = "group"
-version = 5.124
-
-
-[longpoll]
-wait = 25

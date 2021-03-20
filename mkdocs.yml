@@ -1,42 +1,56 @@
 site_name: VK Quick
-site_description: Async python package for creating VK chat bots
+site_description: Async python framework for creating VK chat bots
 repo_name: vkquick
-repo_url: https://github.com/Rhinik/vkquick
+repo_url: https://github.com/Rhinik/vkquick/tree/1.0
 
-remote_branch: master
+remote_branch: "1.0"
 
-google_analytics: ["UA-172364682-1", "vkquick.github.io"]
+google_analytics: ["UA-172364682-1", "vkquick.readthedocs.io"]
 
 nav:
     - Home: index.md
     - Установка: installation.md
-    - hello world бот: hello-world-bot.md
-    - Инструкция:
-        - Введение: possible/index.md
-        - Структура проекта: possible/project-struct.md
-        - Структура команды: possible/command-struct.md
-        - Реакции: possible/reaction.md
-        - Payload-типы: possible/payload-args.md
-        - Валидаторы: possible/validators.md
-        - Быстрые ответы: possible/quick-answers.md
-        - Current-объекты: possible/current-obj.md
-        - Сигналы: possible/signals.md
-        - bot: possible/bot.md
-        - Инструменты:
-            - Что это: possible/tools/index.md
-            - Клавиатуры: possible/tools/keyboards.md
-            - Кнопки: possible/tools/buttons.md
-            - Карусели: possible/tools/templates.md
-            - Элементы: possible/tools/elements.md
-            - Загрузка фотографий: possible/tools/photos.md
-            - Загрузка документов, гс, граффити: possible/tools/docs-vm-graffiti.md
-            - Пользователь: possible/tools/user.md
-    - Примеры:
-        - Делаем бота: examples/index.md
-        - Техническое задание: examples/tech-task.md
-        - Создание: examples/create.md
-    - Контрибьюторам: contributing.md
-    - Релизы: releases.md
+    - Как работают боты: how-bots-work.md
+    - Документация:
+        - Введение: docs/index.md
+        - Имена и префиксы: docs/names-and-prefixes.md
+        - Команды с текстовыми аргументами: docs/text-arguments
+    - Терминология: terminologies.md
+    - CLI: cli.md
+    - Устройство VK Quick: vkquick-struct.md
+    - Заметки по релизам: releases.md
+    - Контрибьютерам: contributing.md
+    - Документация к 0.2:
+        - Home: docs-0.2/index.md
+        - Установка: docs-0.2/installation.md
+        - hello world бот: docs-0.2/hello-world-bot.md
+        - Инструкция:
+            - Введение: docs-0.2/possible/index.md
+            - Структура проекта: docs-0.2/possible/project-struct.md
+            - Структура команды: docs-0.2/possible/command-struct.md
+            - Реакции: docs-0.2/possible/reaction.md
+            - Payload-типы: docs-0.2/possible/payload-args.md
+            - Валидаторы: docs-0.2/possible/validators.md
+            - Быстрые ответы: docs-0.2/possible/quick-answers.md
+            - Current-объекты: docs-0.2/possible/current-obj.md
+            - Сигналы: docs-0.2/possible/signals.md
+            - bot: docs-0.2/possible/bot.md
+            - Инструменты:
+                - Что это: docs-0.2/possible/tools/index.md
+                - Клавиатуры: docs-0.2/possible/tools/keyboards.md
+                - Кнопки: docs-0.2/possible/tools/buttons.md
+                - Карусели: docs-0.2/possible/tools/templates.md
+                - Элементы: docs-0.2/possible/tools/elements.md
+                - Загрузка фотографий: docs-0.2/possible/tools/photos.md
+                - Загрузка документов, гс, граффити: docs-0.2/possible/tools/docs-0.2-vm-graffiti.md
+                - Пользователь: docs-0.2/possible/tools/user.md
+            - Примеры:
+                - Делаем бота: docs-0.2/examples/index.md
+                - Техническое задание: docs-0.2/examples/tech-task.md
+                - Создание: docs-0.2/examples/create.md
+            - Контрибьюторам: docs-0.2/contributing.md
+            - Релизы: docs-0.2/releases.md
+
 
 theme:
     name: material
@@ -45,8 +59,15 @@ theme:
         text: Ubuntu
         code: Monaco
     palette:
-        primary: blue grey
-        accent: teal
+        scheme: preference
+        accent: amber
+
+    logo: assets/logo.png
+    favicon: assets/logo.png
+
+    features:
+        - header.autohide
+
 
 markdown_extensions:
     - toc:
@@ -64,10 +85,19 @@ markdown_extensions:
     - pymdownx.tabbed
     - pymdownx.details
     - pymdownx.tilde
+    - pymdownx.inlinehilite
+    - markdown_include.include:
+        base_path: .
 
 extra_css:
     - css/termynal.css
+    - css/custom.css
 
 extra_javascript:
     - js/termynal.js
     - js/custom.js
+
+extra:
+    social:
+        - icon: fontawesome/brands/vk
+          link: https://vk.com/vkquick

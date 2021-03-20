@@ -1,0 +1,15 @@
+# Details: https://docs.readthedocs.io/en/stable/config-file/v2.html
+
+# Docs builder
+version: 2
+
+# Build documentation with MkDocs
+mkdocs:
+  configuration: mkdocs.yml
+
+# Install docs-0.2 building dependencies
+python:
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
+

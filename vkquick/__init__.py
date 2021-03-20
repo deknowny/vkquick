@@ -1,21 +1,46 @@
-"""
-Help you create the best VK chat-bots ever.
+import importlib.metadata
 
-More info [here](https://vkquick.github.io)
-"""
+from .api import API, TokenOwnerEntity, TokenOwnerType, pretty_view
+from .bases.api_serializable import APISerializableMixin
+from .bases.easy_decorator import EasyDecorator
+from .bases.event import Event
+from .bases.events_factories import (
+    EventsCallback,
+    EventsFactory,
+    LongPollBase,
+)
+from .bases.filter import Filter
+from .bases.json_parser import JSONParser
+from .bases.session_container import SessionContainerMixin
+from .bot import Bot, EventProcessingContext
+from .event import GroupEvent, UserEvent
+from .event_handler.context import EventHandlingContext
+from .event_handler.handler import EventHandler
+from .event_handler.statuses import (
+    CalledHandlerSuccessfully,
+    ErrorRaisedByHandlerCall,
+    ErrorRaisedByPostHandlingCallback,
+    EventHandlingStatus,
+    FilterFailed,
+    IncorrectEventType,
+    IncorrectPreparedArguments,
+    StatusPayload,
+    UnexpectedErrorOccurred,
+)
+from .exceptions import (
+    FilterFailedError,
+    NotCompatibleFilterError,
+    VKAPIError,
+)
+from .json_parsers import (
+    BuiltinJsonParser,
+    OrjsonParser,
+    UjsonParser,
+    json_parser_policy,
+)
+from .longpoll import GroupLongPoll, UserLongPoll
+from .signal import SignalHandler
+from .sync_async import sync_async_callable, sync_async_run
 
-from . import current
-from .api import API
-from .bot import Bot
-from .exception import VkErr
-from .lp import LongPoll
-from .signal import Signal, SignalsList, signal
-from .reaction import Reaction, ReactionsList
-
-
-from .annotypes import *
-from .validators import *
-from .tools import *
-
-
-__version__ = "0.2.7"
+__version__ = importlib.metadata.version(__name__)
+del importlib.metadata
