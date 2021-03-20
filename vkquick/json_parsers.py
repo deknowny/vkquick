@@ -1,5 +1,5 @@
 """
-Имплементации `bases/json_parser`
+Имплементации разных JSON парсеров
 """
 import json
 import typing as ty
@@ -33,6 +33,9 @@ class BuiltinJsonParser(JSONParser):
 
 
 class OrjsonParser(JSONParser):
+    """
+    JSON парсер, использующий `orjson`
+    """
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
         return orjson.dumps(data)  # pragma: no cover
@@ -43,6 +46,9 @@ class OrjsonParser(JSONParser):
 
 
 class UjsonParser(JSONParser):
+    """
+    JSON парсер, использующий `ujson`
+    """
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
         return ujson.dumps(data, ensure_ascii=False)  # pragma: no cover
@@ -52,7 +58,7 @@ class UjsonParser(JSONParser):
         return ujson.loads(string)  # pragma: no cover
 
 
-# Значение этой переменной используется везде
+# `json_parser_policy` -- установленный JSON парсер, используемый по умолчанию
 if orjson is not None:
     json_parser_policy = OrjsonParser
 elif ujson is not None:

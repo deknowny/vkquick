@@ -9,11 +9,16 @@ if ty.TYPE_CHECKING:
 
 
 class Filter(abc.ABC):
+    """
 
-    __accepted_event_types__: ty.FrozenSet[ty.Union[str, int]] = frozenset()
+    :cvar __accepted_event_types__: Возможные типы событий, которые способен обработать фильтр.
+        `Ellipsis` если способен обработать все.
+    """
+
+    __accepted_event_types__: ty.Union[ty.FrozenSet[ty.Union[str, int]], ty.Type[...]] = frozenset()
 
     @abc.abstractmethod
-    def make_decision(self, context: EventHandlingContext):
+    def make_decision(self, ehctx: EventHandlingContext):
         """
         Определяет, подходит ли событие по критериям фильтра
         """

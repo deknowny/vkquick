@@ -14,16 +14,27 @@ if ty.TYPE_CHECKING:
     from vkquick.event_handler.handler import EventHandler
 
 
-class TextCutterFailed(Exception):
-    ...
-
-
 @dataclasses.dataclass
 class NotCompatibleFilterError(Exception):
+    """
+    Поднимается, если используемый фильтр не способен обработать событие,
+    которое может обработать обработчик событий
 
-    filter: Filter
-    event_handler: EventHandler
-    uncovered_event_types: ty.Set[ty.Union[int, str]]
+    :param filter: Объект фильтра,
+        который не может обработать одно из обрабатываемых
+        событий обработчика событий, куда он прикреплен
+    :param event_handler: Объект обработчика событий, куда был прикреплен фильтр
+    :uncovered_event_types: События, которые не может покрыть фильтр. Если `Ellipsis`
+    """
+    def __init__(
+        self, *,
+        filter: Filter,
+        event_handler: EventHandler,
+        uncovered_event_types: ty.Set[ty.Union[int, str]]
+    ):
+        self.filter = filter
+        self.event_handler = event_handler
+        self.uncovered_event_types = uncovered_event_types
 
     def __str__(self):
         return (

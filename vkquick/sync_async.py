@@ -40,14 +40,3 @@ async def sync_async_run(
     if asyncio.iscoroutine(__obj):
         return await __obj
     return __obj
-
-
-# def run_as_sync(__coroutine: ty.Coroutine) -> ty.Any:
-#     """
-#     Вызывает асинхронную функцию синхронно
-#
-#     :param __coroutine: Корутина, которую нужно вызвать синхронно
-#     :return: Результат вызова функции
-#     """
-#     loop = asyncio.get_event_loop()
-#     return loop.run_until_complete(__coroutine)

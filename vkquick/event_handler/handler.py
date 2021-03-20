@@ -48,15 +48,16 @@ class EventHandler(EasyDecorator):
         )
 
     def add_filter(self, filter: Filter) -> EventHandler:
-        uncovered_event_types = (
-            self._handling_event_types - filter.__accepted_event_types__
-        )
-        if self._handling_event_types - filter.__accepted_event_types__:
-            raise NotCompatibleFilterError(
-                filter=filter,
-                event_handler=self,
-                uncovered_event_types=uncovered_event_types,
+        if filter.__accepted_event_types__ is not ...:
+            uncovered_event_types = (
+                self._handling_event_types - filter.__accepted_event_types__
             )
+            if self._handling_event_types - filter.__accepted_event_types__:
+                raise NotCompatibleFilterError(
+                    filter=filter,
+                    event_handler=self,
+                    uncovered_event_types=uncovered_event_types,
+                )
         self._filters.append(filter)
         return self
 
