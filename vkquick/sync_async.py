@@ -17,12 +17,12 @@ def sync_async_callable(
     if args is not Ellipsis:
         return ty.Callable[
             [*args],
-            ty.Union[ty.Coroutine[returns, None, None], returns],
+            ty.Union[ty.Awaitable[returns], returns],
         ]
 
     return ty.Callable[
         ...,
-        ty.Union[ty.Coroutine[returns, None, None], returns],
+        ty.Union[ty.Awaitable[returns], returns],
     ]
 
 

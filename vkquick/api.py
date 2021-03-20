@@ -390,7 +390,7 @@ def _convert_params_for_api(__params: dict):
         в запрос и получить ожидаемый результат
     """
     updated_params = {
-        key: _convert_param_value(value)
+        (key[:-1] if key.endswith("_") else key): _convert_param_value(value)
         for key, value in __params.items()
         if value is not None
     }

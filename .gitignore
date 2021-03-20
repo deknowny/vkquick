@@ -28,3 +28,7 @@ docs/build/
 htmlcov/
 
 .mypy_cache/
+
+vk-api-schema/
+
+penv/

@@ -355,8 +355,8 @@ async def test_run_through_filters(
         ...
 
     event = make_message_new_event()
-    event.msg._fields["peer_id"] = 1
-    event.msg._fields["text"] = "a"
+    event.msg.__fields["peer_id"] = 1
+    event.msg.__fields["text"] = "a"
 
     ctx = vq.Context(event=event, shared_box=None)
     ctx.reply = mocker.AsyncMock()
@@ -366,7 +366,7 @@ async def test_run_through_filters(
     assert len(decisions) == 2
     ctx.reply.assert_called_once()
 
-    event.msg._fields["peer_id"] = vq.peer(1)
+    event.msg.__fields["peer_id"] = vq.peer(1)
 
     result, decisions = await foo.run_through_filters(ctx)
     assert result
@@ -376,7 +376,7 @@ async def test_run_through_filters(
 @pytest.mark.asyncio
 async def test_handle_event(make_message_new_event):
     event = make_message_new_event()
-    event.msg._fields["text"] = "a"
+    event.msg.__fields["text"] = "a"
 
     @vq.Command(names="a")
     def foo():
@@ -385,7 +385,7 @@ async def test_handle_event(make_message_new_event):
     response = await foo.handle_event(event, None)
     assert response.all_filters_passed
 
-    event.msg._fields["text"] = "b"
+    event.msg.__fields["text"] = "b"
 
     @vq.Command(names="a")
     def foo():
@@ -400,7 +400,7 @@ async def test_make_decision(
     make_message_new_event, mocker: pytest_mock.MockerFixture
 ):
     event = make_message_new_event()
-    event.msg._fields["text"] = "a"
+    event.msg.__fields["text"] = "a"
 
     @vq.Command(any_text=True)
     def foo(ctx):
@@ -424,7 +424,7 @@ async def test_make_decision(
     def foo():
         ...
 
-    event.msg._fields["text"] = "a a"
+    event.msg.__fields["text"] = "a a"
 
     passed, _ = await foo.make_decision(context=ctx)
     assert not passed
@@ -433,7 +433,7 @@ async def test_make_decision(
     def foo(arg: vq.Word):
         ...
 
-    event.msg._fields["text"] = "aa"
+    event.msg.__fields["text"] = "aa"
 
     passed, _ = await foo.make_decision(context=ctx)
     assert not passed
@@ -442,7 +442,7 @@ async def test_make_decision(
     def foo(arg: vq.Word):
         ...
 
-    event.msg._fields["text"] = "a a"
+    event.msg.__fields["text"] = "a a"
 
     passed, _ = await foo.make_decision(context=ctx)
     assert passed

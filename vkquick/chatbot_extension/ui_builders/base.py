@@ -1,0 +1,10 @@
+from vkquick.json_parsers import json_parser_policy
+from vkquick.bases.api_serializable import APISerializableMixin
+
+
+class UIBuilder(APISerializableMixin):
+
+    scheme: dict
+
+    def represent_as_api_param(self) -> str:
+        return json_parser_policy.dumps(self.scheme)

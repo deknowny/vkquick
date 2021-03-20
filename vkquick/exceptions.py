@@ -14,6 +14,10 @@ if ty.TYPE_CHECKING:
     from vkquick.event_handler.handler import EventHandler
 
 
+class TextCutterFailed(Exception):
+    ...
+
+
 @dataclasses.dataclass
 class NotCompatibleFilterError(Exception):
 

@@ -14,7 +14,7 @@ async def test_calling_command_via_payload(
 ):
     bot = make_bot()
     event = make_message_new_event()
-    event.msg._fields["payload"] = '{"command":"foo","args":{"arg":1}}'
+    event.msg.__fields["payload"] = '{"command":"foo","args":{"arg":1}}'
 
     def foo(ctx, arg: vq.Integer):
         ...
@@ -30,7 +30,7 @@ async def test_calling_command_via_payload(
     assert kwargs["context"].extra.reaction_arguments.arg == 1
     com.call_reaction.reset_mock()
 
-    event.msg._fields["payload"] = '{"command":"foo"}'
+    event.msg.__fields["payload"] = '{"command":"foo"}'
     await bot.run_command_via_payload(event)
     assert len(kwargs["context"].extra.reaction_arguments)
 
@@ -48,7 +48,7 @@ async def test_pass_event_trough_commands(
     def foo():
         ...
 
-    event.msg._fields["text"] = "foo"
+    event.msg.__fields["text"] = "foo"
     await bot.pass_event_trough_commands(event)
     mocked_shower.assert_called_once()
 
@@ -63,14 +63,14 @@ async def _run_handling(bot, event):
 async def test_waiters(make_bot, make_message_new_event, mocker):
     os.environ["VKQUICK_RELEASE"] = "0"
     event1 = make_message_new_event()
-    event1.msg._fields["peer_id"] = 1
-    event1.msg._fields["from_id"] = 1
-    event1.msg._fields["text"] = "a"
+    event1.msg.__fields["peer_id"] = 1
+    event1.msg.__fields["from_id"] = 1
+    event1.msg.__fields["text"] = "a"
 
     event2 = make_message_new_event()
-    event2.msg._fields["peer_id"] = 1
-    event2.msg._fields["from_id"] = 1
-    event2.msg._fields["text"] = "b"
+    event2.msg.__fields["peer_id"] = 1
+    event2.msg.__fields["from_id"] = 1
+    event2.msg.__fields["text"] = "b"
 
     bot = make_bot()
     bot.shared_box.extra.command_called_completely = False
