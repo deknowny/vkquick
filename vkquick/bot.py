@@ -12,7 +12,7 @@ from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.signal import SignalHandler
-from vkquick.sync_async import sync_async_callable, sync_async_run
+from vkquick.sync_async import sync_async_run
 
 if ty.TYPE_CHECKING:
     from vkquick import Filter
@@ -28,10 +28,15 @@ class EventProcessingContext:
 
     bot: Bot
     event: Event
-    event_handling_contexts: ty.List[
-        EventHandlingContext
-    ] = dataclasses.field(default_factory=list)
+    event_handling_contexts: ty.Dict[
+        EventHandler, EventHandlingContext
+    ] = dataclasses.field(default_factory=dict)
     extra: dict = dataclasses.field(default_factory=dict)
+
+    def make_ehctx_for(self, handler: EventHandler) -> EventHandlingContext:
+        ehctx = EventHandlingContext(self, handler)
+        self.event_handling_contexts[handler] = ehctx
+        return ehctx
 
 
 class Bot:
@@ -126,7 +131,7 @@ class Bot:
             startup_signal = self._signals.get("startup")
             if startup_signal is not None:
                 await sync_async_run(startup_signal(self))
-            async with self._events_factory:
+            async with self._events_factory, self._api:
                 await self.run_listening_events()
         finally:
             shutdown_signal = self._signals.get("shutdown")
@@ -179,11 +184,10 @@ class Bot:
 
         :param epctx: Контекст обработки события.
         """
-        handling_coros = []
-        for handler in self._event_handlers:
-            ehctx = EventHandlingContext(epctx=epctx)
-            epctx.event_handling_contexts.append(ehctx)
-            handling_coros.append(handler(ehctx=ehctx))
+        handling_coros = [
+            handler(epctx.make_ehctx_for(handler))
+            for handler in self._event_handlers
+        ]
         await asyncio.gather(*handling_coros)
 
     async def _call_forward_middlewares(
@@ -215,9 +219,6 @@ class Bot:
         *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
-        post_handling_callbacks: ty.Optional[
-            ty.List[sync_async_callable([EventHandlingContext])]
-        ] = None,
         pass_ehctx_as_argument: bool = True,
     ) -> EventHandler:
         """
@@ -233,7 +234,6 @@ class Bot:
             будет передана при создании обработчика
         :param handling_event_types: Множество типов обрабатываемых событий
         :param filters: Фильтры обработчика событий
-        :param post_handling_callbacks: Функция, вызываемая после вызова фильтров и реакции
         :param pass_ehctx_as_argument: Нужно ли передавать контекст в качестве аргумента
         :return: Объект обработчика событий
         """
@@ -242,7 +242,6 @@ class Bot:
                 __handler,
                 handling_event_types=handling_event_types,
                 filters=filters,
-                post_handling_callbacks=post_handling_callbacks,
                 pass_ehctx_as_argument=pass_ehctx_as_argument,
             )
 

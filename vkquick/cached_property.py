@@ -3,6 +3,7 @@ class cached_property:
     Дескриптор для создания разово исполняемых property.
     Скопировано с библиотеки `pyramid`.
     """
+
     def __init__(self, wrapped):
         self.wrapped = wrapped
         self.__doc__ = wrapped.__doc__

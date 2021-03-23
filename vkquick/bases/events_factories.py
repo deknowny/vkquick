@@ -9,12 +9,13 @@ import aiohttp
 from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.event import Event
-from vkquick.sync_async import sync_async_callable, sync_async_run
+from vkquick.sync_async import OptionalAwaitable, sync_async_run
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API
 
-EventsCallback = sync_async_callable([Event])
+
+EventsCallback = ty.Callable[[Event], OptionalAwaitable[None]]
 
 
 class EventsFactory(abc.ABC):

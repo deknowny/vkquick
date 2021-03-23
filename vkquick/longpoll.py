@@ -37,7 +37,6 @@ class GroupLongPoll(LongPollBase):
             requests_session=requests_session,
             json_parser=json_parser,
         )
-        self._api = api
         self._group_id = group_id
         self._wait = wait
 
@@ -76,7 +75,7 @@ class UserLongPoll(LongPollBase):
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
-    ):
+    ) -> None:
         super().__init__(
             api=api,
             event_wrapper=UserEvent,
@@ -84,7 +83,6 @@ class UserLongPoll(LongPollBase):
             requests_session=requests_session,
             json_parser=json_parser,
         )
-        self._api = api
         self._version = version
         self._wait = wait
         self._mode = mode

@@ -1,14 +1,13 @@
-import importlib.metadata
+try:
+    import importlib.metadata as metadata
+except ImportError:
+    import importlib as metadata
 
 from .api import API, TokenOwnerEntity, TokenOwnerType, pretty_view
 from .bases.api_serializable import APISerializableMixin
 from .bases.easy_decorator import EasyDecorator
 from .bases.event import Event
-from .bases.events_factories import (
-    EventsCallback,
-    EventsFactory,
-    LongPollBase,
-)
+from .bases.events_factories import EventsCallback, EventsFactory, LongPollBase
 from .bases.filter import Filter
 from .bases.json_parser import JSONParser
 from .bases.session_container import SessionContainerMixin
@@ -18,20 +17,13 @@ from .event_handler.context import EventHandlingContext
 from .event_handler.handler import EventHandler
 from .event_handler.statuses import (
     CalledHandlerSuccessfully,
-    ErrorRaisedByHandlerCall,
-    ErrorRaisedByPostHandlingCallback,
     EventHandlingStatus,
     FilterFailed,
     IncorrectEventType,
-    IncorrectPreparedArguments,
     StatusPayload,
     UnexpectedErrorOccurred,
 )
-from .exceptions import (
-    FilterFailedError,
-    NotCompatibleFilterError,
-    VKAPIError,
-)
+from .exceptions import FilterFailedError, NotCompatibleFilterError, VKAPIError
 from .json_parsers import (
     BuiltinJsonParser,
     OrjsonParser,
@@ -40,7 +32,7 @@ from .json_parsers import (
 )
 from .longpoll import GroupLongPoll, UserLongPoll
 from .signal import SignalHandler
-from .sync_async import sync_async_callable, sync_async_run
+from .sync_async import OptionalAwaitable, sync_async_run
 
-__version__ = importlib.metadata.version(__name__)
-del importlib.metadata
+
+__version__ = metadata.version(__name__)

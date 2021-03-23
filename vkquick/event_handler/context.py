@@ -4,18 +4,17 @@ import dataclasses
 import typing as ty
 
 if ty.TYPE_CHECKING:
-    from vkquick.bot import EventProcessingContext
     from vkquick.api import API
+    from vkquick.bot import EventProcessingContext
     from vkquick.event import Event
-    from vkquick.event_handler.statuses import (
-        EventHandlingStatus,
-        StatusPayload,
-    )
+    from vkquick.event_handler.handler import EventHandler
+    from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
 
 
 @dataclasses.dataclass
 class EventHandlingContext:
     epctx: EventProcessingContext
+    event_handler: EventHandler
     handling_status: ty.Optional[EventHandlingStatus] = None
     handling_payload: ty.Optional[StatusPayload] = None
     handler_arguments: dict = dataclasses.field(default_factory=dict)

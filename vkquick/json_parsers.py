@@ -36,6 +36,7 @@ class OrjsonParser(JSONParser):
     """
     JSON парсер, использующий `orjson`
     """
+
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
         return orjson.dumps(data)  # pragma: no cover
@@ -49,6 +50,7 @@ class UjsonParser(JSONParser):
     """
     JSON парсер, использующий `ujson`
     """
+
     @staticmethod
     def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
         return ujson.dumps(data, ensure_ascii=False)  # pragma: no cover
@@ -60,8 +62,8 @@ class UjsonParser(JSONParser):
 
 # `json_parser_policy` -- установленный JSON парсер, используемый по умолчанию
 if orjson is not None:
-    json_parser_policy = OrjsonParser
+    json_parser_policy: ty.Type[JSONParser] = OrjsonParser
 elif ujson is not None:
-    json_parser_policy = UjsonParser
+    json_parser_policy: ty.Type[JSONParser] = UjsonParser
 else:
-    json_parser_policy = BuiltinJsonParser
+    json_parser_policy: ty.Type[JSONParser] = BuiltinJsonParser

@@ -2,21 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import enum
+import json
 import os
 import re
 import textwrap
 import time
 import typing as ty
 import urllib.parse
-import json
 
 import aiohttp
 import cachetools
-from loguru import logger
 import pygments.formatters
 import pygments.formatters.terminal
-import pygments.token
 import pygments.lexers
+import pygments.token
 
 from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.session_container import SessionContainerMixin
@@ -299,16 +298,14 @@ class API(SessionContainerMixin):
         real_request_params["access_token"] = textwrap.shorten(
             real_request_params["access_token"], width=5, placeholder="..."
         )
-        logger_string = (
-            f"Called API method <cyan>{real_method_name}</cyan>"
-            f"with params `{real_request_params}`."
-            f" Response is `{response}`"
-        )
+        # logger_string = (
+        #     f"Called API method <cyan>{real_method_name}</cyan>"
+        #     f"with params `{real_request_params}`."
+        #     f" Response is `{response}`"
+        # )
         if "error" in response:
-            logger.error(logger_string)
             raise VKAPIError.destruct_response(response)
         else:
-            logger.trace(logger_string)
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу

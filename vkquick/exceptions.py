@@ -12,9 +12,28 @@ import typing_extensions as tye
 if ty.TYPE_CHECKING:
     from vkquick.bases.filter import Filter
     from vkquick.event_handler.handler import EventHandler
+    from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
 
 
-@dataclasses.dataclass
+class IncorrectPreparedArgumentsError(Exception):
+    def __init__(
+        self,
+        *,
+        expected_names: ty.FrozenSet[str],
+        actual_names: ty.FrozenSet[str],
+    ) -> None:
+        self.expected_names = expected_names
+        self.actual_names = actual_names
+
+
+class StopHandlingEvent(Exception):
+    def __init__(
+        self, *, status: EventHandlingStatus, payload: StatusPayload
+    ) -> None:
+        self.status = status
+        self.payload = payload
+
+
 class NotCompatibleFilterError(Exception):
     """
     Поднимается, если используемый фильтр не способен обработать событие,
@@ -26,11 +45,13 @@ class NotCompatibleFilterError(Exception):
     :param event_handler: Объект обработчика событий, куда был прикреплен фильтр
     :uncovered_event_types: События, которые не может покрыть фильтр. Если `Ellipsis`
     """
+
     def __init__(
-        self, *,
+        self,
+        *,
         filter: Filter,
         event_handler: EventHandler,
-        uncovered_event_types: ty.Set[ty.Union[int, str]]
+        uncovered_event_types: ty.Set[ty.Union[int, str]],
     ):
         self.filter = filter
         self.event_handler = event_handler
@@ -81,7 +102,7 @@ class VKAPIError(Exception):
     description: str
     status_code: int
     request_params: _ParamsScheme
-    extra_fileds: dict
+    extra_fields: dict
 
     @classmethod
     def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VKAPIError:
@@ -120,7 +141,7 @@ class VKAPIError(Exception):
             description=description,
             status_code=status_code,
             request_params=request_params,
-            extra_fileds=response["error"],
+            extra_fields=response["error"],
         )
 
     def __str__(self):
