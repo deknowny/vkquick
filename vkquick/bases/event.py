@@ -22,5 +22,5 @@ class Event(abc.ABC):
     def type(self) -> ty.Union[int, str]:
         ...
 
-    def __str__(self):
-        return f"<vkquick.{self.__class__.__name__} type={self.type}>"
+    def __repr__(self):
+        return f"<vkquick.{self.__class__.__name__} type={self.type!r}>"

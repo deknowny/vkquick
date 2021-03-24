@@ -3,22 +3,18 @@ from __future__ import annotations
 import inspect
 import typing as ty
 
+from loguru import logger
+
 from vkquick.bases.easy_decorator import EasyDecorator
 from vkquick.bases.filter import Filter
 from vkquick.event_handler.context import EventHandlingContext
-from vkquick.event_handler.statuses import (
-    CalledHandlerSuccessfully,
-    EventHandlingStatus,
-    FilterFailed,
-    IncorrectEventType,
-    UnexpectedErrorOccurred,
-)
-from vkquick.exceptions import (
-    FilterFailedError,
-    IncorrectPreparedArgumentsError,
-    NotCompatibleFilterError,
-    StopHandlingEvent,
-)
+from vkquick.event_handler.statuses import (CalledHandlerSuccessfully,
+                                            EventHandlingStatus, FilterFailed,
+                                            IncorrectEventType,
+                                            UnexpectedErrorOccurred)
+from vkquick.exceptions import (FilterFailedError,
+                                IncorrectPreparedArgumentsError,
+                                NotCompatibleFilterError, StopHandlingEvent)
 from vkquick.sync_async import sync_async_run
 
 
@@ -29,7 +25,7 @@ class EventHandler(EasyDecorator):
         *,
         handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
         filters: ty.List[Filter] = None,
-        pass_ehctx_as_argument: bool = True
+        pass_ehctx_as_argument: bool = True,
     ):
         self._handler = __handler
         self._handling_event_types = handling_event_types or {
@@ -61,6 +57,7 @@ class EventHandler(EasyDecorator):
         self._filters.append(filter)
         return self
 
+    @logger.catch
     async def __call__(self, ehctx: EventHandlingContext) -> None:
         try:
             await self._handle_event(ehctx)
@@ -126,3 +123,8 @@ class EventHandler(EasyDecorator):
                 expected_names=self._available_arguments_name,
                 actual_names=passed_arguments_name,
             )
+
+    def __repr__(self):
+        return (
+            f"<vkquick.EventHandler handler_name={self._handler.__name__!r}>"
+        )

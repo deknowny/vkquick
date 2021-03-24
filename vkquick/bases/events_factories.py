@@ -5,10 +5,12 @@ import asyncio
 import typing as ty
 
 import aiohttp
+from loguru import logger
 
 from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.event import Event
+from vkquick.pretty_view import pretty_view
 from vkquick.sync_async import OptionalAwaitable, sync_async_run
 
 if ty.TYPE_CHECKING:
@@ -27,10 +29,28 @@ class EventsFactory(abc.ABC):
     ):
         self._api = api
         self._new_event_callbacks = new_event_callbacks or []
-        self._updates_queue = asyncio.Queue()
+
+    async def listen(self) -> ty.AsyncGenerator[Event, None]:
+        gen = self._listen()
+        logger.info("Run polling (#{id:x})", id=id(gen))
+        try:
+            async for event in gen:
+                logger.info(
+                    "New event {event} (#{id:x}) from polling (#{id_polling:x})",
+                    event=event,
+                    id=id(event),
+                    id_polling=id(gen),
+                )
+                logger.debug(
+                    "Event content: {event_content}",
+                    event_content=event.content,
+                )
+                yield event
+        finally:
+            logger.info("End polling (#{id:x})", id=id(gen))
 
     @abc.abstractmethod
-    def listen(self) -> ty.AsyncGenerator[Event, None]:
+    def _listen(self) -> ty.AsyncGenerator[Event, None]:
         ...
 
     @property
@@ -38,6 +58,7 @@ class EventsFactory(abc.ABC):
         return self._api
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
+        logger.info("Add event callback {func}", func=func)
         self._new_event_callbacks.append(func)
         return func
 
@@ -46,8 +67,8 @@ class EventsFactory(abc.ABC):
         return func
 
     async def sublisten(self) -> ty.AsyncGenerator[Event, None]:
-
         events_queue = asyncio.Queue()
+        logger.info("Run events sublistening (#{id:x})", id=id(events_queue))
         callback = events_queue.put_nowait
 
         try:
@@ -56,10 +77,13 @@ class EventsFactory(abc.ABC):
                 yield await events_queue.get()
 
         finally:
+            logger.info(
+                "End events sublistening (#{id:x})", id=id(events_queue)
+            )
             self.remove_event_callback(callback)
 
     async def coroutine_run(self):
-        async for events in self.listen():
+        async for _ in self.listen():
             pass
 
     def run(self):
@@ -106,7 +130,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
         и открывает соединение
         """
 
-    async def listen(self) -> ty.AsyncGenerator[Event, None]:
+    async def _listen(self) -> ty.AsyncGenerator[Event, None]:
         await self._setup()
         self._update_baked_request()
 

@@ -4,6 +4,8 @@ import asyncio
 import dataclasses
 import typing as ty
 
+from loguru import logger
+
 from vkquick.api import API
 from vkquick.bases.easy_decorator import easy_method_decorator
 from vkquick.bases.event import Event
@@ -116,7 +118,10 @@ class Bot:
 
         :return: Запуск вечный, этот метод не возвращает никакое значение.
         """
-        asyncio.run(self.coroutine_run())
+        try:
+            asyncio.run(self.coroutine_run())
+        except KeyboardInterrupt:
+            pass
 
     async def coroutine_run(self) -> ty.NoReturn:
         """
@@ -189,6 +194,7 @@ class Bot:
             for handler in self._event_handlers
         ]
         await asyncio.gather(*handling_coros)
+        logger.debug("Handlers called. Context: {epctx}", epctx=epctx)
 
     async def _call_forward_middlewares(
         self, epctx: EventProcessingContext
@@ -263,3 +269,6 @@ class Bot:
     @easy_method_decorator
     def add_middleware(self, __handler: ty.Optional[Middleware] = None):
         self._middlewares.append(__handler)
+
+    def __repr__(self) -> str:
+        return f"<vkquick.Bot token={self._api.short_token(3)!r}>"

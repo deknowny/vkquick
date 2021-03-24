@@ -65,7 +65,18 @@ class CalledHandlerSuccessfully(StatusPayload, ty.NamedTuple):
     """
 
     handler_returned_value: ty.Any
+    """
+    Значение, которое вернул обработчик
+    """
 
 
 class UnexpectedErrorOccurred(StatusPayload, ty.NamedTuple):
+    """
+    Поднято неожидаемое исключение. Причиной может быть как
+    пользовательский код, так и код vkquick
+    """
+
     raised_error: Exception
+    """
+    Объект исключения
+    """

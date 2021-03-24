@@ -12,7 +12,8 @@ import typing_extensions as tye
 if ty.TYPE_CHECKING:
     from vkquick.bases.filter import Filter
     from vkquick.event_handler.handler import EventHandler
-    from vkquick.event_handler.statuses import EventHandlingStatus, StatusPayload
+    from vkquick.event_handler.statuses import (EventHandlingStatus,
+                                                StatusPayload)
 
 
 class IncorrectPreparedArgumentsError(Exception):

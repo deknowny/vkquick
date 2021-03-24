@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import enum
-import json
 import os
 import re
-import textwrap
 import time
 import typing as ty
 import urllib.parse
@@ -14,8 +12,8 @@ import aiohttp
 import cachetools
 import pygments.formatters
 import pygments.formatters.terminal
-import pygments.lexers
 import pygments.token
+from loguru import logger
 
 from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.session_container import SessionContainerMixin
@@ -24,30 +22,6 @@ from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
     from vkquick.bases.json_parser import JSONParser
-
-
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("String")
-] = ("gray", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Literal.Number")
-] = ("yellow", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Keyword.Constant")
-] = ("red", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Name.Tag")
-] = ("cyan", "_")
-
-
-def pretty_view(__mapping: dict) -> str:
-    dumped_mapping = json.dumps(__mapping, ensure_ascii=False, indent=4)
-    pretty_mapping = pygments.highlight(
-        dumped_mapping,
-        pygments.lexers.JsonLexer(),
-        pygments.formatters.TerminalFormatter(bg="light"),
-    )
-    return pretty_mapping
 
 
 class TokenOwnerType(enum.Enum):
@@ -135,6 +109,13 @@ class API(SessionContainerMixin):
             "v": self._version,
         }
 
+    @property
+    def token(self) -> str:
+        return self._token
+
+    def short_token(self, length: int) -> str:
+        return f"{self._token[:length]}..."
+
     def __getattr__(self, attribute: str) -> API:
         """
         Используя `__gettattr__`, класс предоставляет возможность
@@ -160,9 +141,9 @@ class API(SessionContainerMixin):
         Выполняет необходимый API запрос с нужным методом и параметрами,
         добавляя к ним токен и версию (может быть перекрыто).
 
-        :param __allow_cache: Если `True` -- реузльтат запроса
+        :param __allow_cache: Если `True` -- результат запроса
             с подобными параметрами и методом будет получен из кэш-таблицы,
-            если отсутсвует -- просто занесен в таблицу. Если `False` -- запрос
+            если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
             просто выполнится по сети.
         :param request_params: Параметры, принимаемы методом, которые описаны в документации API.
         :return: Пришедший от API ответ.
@@ -295,14 +276,13 @@ class API(SessionContainerMixin):
         response = await self._send_api_request(
             real_method_name, real_request_params
         )
-        real_request_params["access_token"] = textwrap.shorten(
-            real_request_params["access_token"], width=5, placeholder="..."
+        logger.info(
+            "Called method {method_name}({method_params})",
+            method_name=method_name,
+            method_params=request_params,
         )
-        # logger_string = (
-        #     f"Called API method <cyan>{real_method_name}</cyan>"
-        #     f"with params `{real_request_params}`."
-        #     f" Response is `{response}`"
-        # )
+        logger.debug("Response is: {response}", response=response)
+
         if "error" in response:
             raise VKAPIError.destruct_response(response)
         else:
