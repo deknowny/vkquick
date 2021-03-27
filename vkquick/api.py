@@ -10,9 +10,6 @@ import urllib.parse
 
 import aiohttp
 import cachetools
-import pygments.formatters
-import pygments.formatters.terminal
-import pygments.token
 from loguru import logger
 
 from vkquick.bases.api_serializable import APISerializableMixin
