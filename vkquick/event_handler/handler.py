@@ -8,13 +8,19 @@ from loguru import logger
 from vkquick.bases.easy_decorator import EasyDecorator
 from vkquick.bases.filter import Filter
 from vkquick.event_handler.context import EventHandlingContext
-from vkquick.event_handler.statuses import (CalledHandlerSuccessfully,
-                                            EventHandlingStatus, FilterFailed,
-                                            IncorrectEventType,
-                                            UnexpectedErrorOccurred)
-from vkquick.exceptions import (FilterFailedError,
-                                IncorrectPreparedArgumentsError,
-                                NotCompatibleFilterError, StopHandlingEvent)
+from vkquick.event_handler.statuses import (
+    CalledHandlerSuccessfully,
+    EventHandlingStatus,
+    FilterFailed,
+    IncorrectEventType,
+    UnexpectedErrorOccurred,
+)
+from vkquick.exceptions import (
+    FilterFailedError,
+    IncorrectPreparedArgumentsError,
+    NotCompatibleFilterError,
+    StopHandlingEvent,
+)
 from vkquick.sync_async import sync_async_run
 
 

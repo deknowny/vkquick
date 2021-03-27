@@ -77,3 +77,8 @@ json-libs = ["orjson", "ujson"]
 [tool.black]
 line-length = 78
 
+[tool.isort]
+profile = "wemake"
+src_paths = ["vkquick", "tests"]
+line_length = 78
+

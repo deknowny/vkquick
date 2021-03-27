@@ -33,3 +33,4 @@ vk-api-schema/
 
 penv/
 .tox/
+.benchmarks/
