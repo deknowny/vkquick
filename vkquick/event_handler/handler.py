@@ -54,8 +54,7 @@ class EventHandler(EasyDecorator):
 
         """
         return (
-            self._handling_event_types is ...
-            or event_type in self._handling_event_types
+            not self._handling_event_types or event_type in self._handling_event_types
         )
 
     def add_filter(self, filter: Filter) -> EventHandler:
