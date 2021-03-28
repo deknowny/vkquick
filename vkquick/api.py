@@ -32,7 +32,7 @@ class TokenOwnerType(enum.Enum):
 class TokenOwnerEntity:
     """
     Сущность владельца токена,
-    возвращаемая при вызове метода [`API.token_owner_entity`](vkquick.api.API.fetch_token_owner_entity)
+    возвращаемая при вызове метода [API.token_owner_entity](vkquick.api.API.fetch_token_owner_entity)
     """
 
     def __init__(
