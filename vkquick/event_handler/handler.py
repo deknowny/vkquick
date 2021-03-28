@@ -21,13 +21,13 @@ from vkquick.exceptions import (
     NotCompatibleFilterError,
     StopHandlingEvent,
 )
-from vkquick.sync_async import sync_async_run
 
 
 class EventHandler(EasyDecorator):
+    """ """
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable] = None,
+        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
         *,
         handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
         filters: ty.List[Filter] = None,
@@ -44,22 +44,39 @@ class EventHandler(EasyDecorator):
         )
 
     def is_handling_event_type(self, event_type: ty.Union[str]) -> bool:
+        """
+
+        Args:
+          event_type: ty.Union[str]:
+          event_type: ty.Union[str]: 
+
+        Returns:
+
+        """
         return (
             self._handling_event_types is ...
             or event_type in self._handling_event_types
         )
 
     def add_filter(self, filter: Filter) -> EventHandler:
-        if filter.__accepted_event_types__ is not ...:
-            uncovered_event_types = (
-                self._handling_event_types - filter.__accepted_event_types__
+        """
+
+        Args:
+          filter: Filter:
+          filter: Filter: 
+
+        Returns:
+
+        """
+        uncovered_event_types = (
+            self._handling_event_types - filter.__accepted_event_types__
+        )
+        if self._handling_event_types - filter.__accepted_event_types__:
+            raise NotCompatibleFilterError(
+                filter=filter,
+                event_handler=self,
+                uncovered_event_types=uncovered_event_types,
             )
-            if self._handling_event_types - filter.__accepted_event_types__:
-                raise NotCompatibleFilterError(
-                    filter=filter,
-                    event_handler=self,
-                    uncovered_event_types=uncovered_event_types,
-                )
         self._filters.append(filter)
         return self
 
@@ -82,13 +99,13 @@ class EventHandler(EasyDecorator):
     async def run_through_filters(self, ehctx: EventHandlingContext) -> None:
         for filter_ in self._filters:
             try:
-                await sync_async_run(filter_.make_decision(ehctx))
+                await filter_.make_decision(ehctx)
             except FilterFailedError as error:
                 ehctx.handling_status = EventHandlingStatus.FILTER_FAILED
                 ehctx.handling_payload = FilterFailed(
                     filter=filter_, raised_error=error
                 )
-                await sync_async_run(filter_.handle_exception(ehctx))
+                await filter_.handle_exception(ehctx)
                 raise StopHandlingEvent(
                     status=EventHandlingStatus.FILTER_FAILED,
                     payload=FilterFailed(filter=filter_, raised_error=error),
@@ -105,9 +122,9 @@ class EventHandler(EasyDecorator):
         self._processing_passed_arguments(ehctx)
         await self.call_handler(ehctx)
 
-    async def call_handler(self, ehctx: EventHandlingContext):
+    async def call_handler(self, ehctx: EventHandlingContext) -> None:
         baked_call = self._handler(**ehctx.handler_arguments)
-        returned_value = await sync_async_run(baked_call)
+        returned_value = await baked_call
         raise StopHandlingEvent(
             status=EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY,
             payload=CalledHandlerSuccessfully(
@@ -118,11 +135,29 @@ class EventHandler(EasyDecorator):
     def _processing_passed_arguments(
         self, ehctx: EventHandlingContext
     ) -> None:
+        """
+
+        Args:
+          ehctx: EventHandlingContext:
+          ehctx: EventHandlingContext: 
+
+        Returns:
+
+        """
         if self._pass_ehctx_as_argument:
             ehctx.handler_arguments["ehctx"] = ehctx
         self._check_passed_arguments(ehctx)
 
     def _check_passed_arguments(self, ehctx: EventHandlingContext) -> None:
+        """
+
+        Args:
+          ehctx: EventHandlingContext:
+          ehctx: EventHandlingContext: 
+
+        Returns:
+
+        """
         passed_arguments_name = frozenset(ehctx.handler_arguments.keys())
         if passed_arguments_name != self._available_arguments_name:
             raise IncorrectPreparedArgumentsError(

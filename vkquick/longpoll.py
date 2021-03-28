@@ -16,9 +16,7 @@ if ty.TYPE_CHECKING:  # pragma: no cover
 
 
 class GroupLongPoll(LongPollBase):
-    """
-    LongPoll обработчик для событий в сообществе
-    """
+    """LongPoll обработчик для событий в сообществе"""
 
     def __init__(
         self,
@@ -61,9 +59,7 @@ class GroupLongPoll(LongPollBase):
 
 
 class UserLongPoll(LongPollBase):
-    """
-    LongPoll обработчик для событий пользователя
-    """
+    """LongPoll обработчик для событий пользователя"""
 
     def __init__(
         self,

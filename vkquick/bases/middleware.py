@@ -8,10 +8,11 @@ if ty.TYPE_CHECKING:
 
 
 class Middleware(abc.ABC):
+    """ """
     @abc.abstractmethod
-    async def foreword(self, epctx: EventProcessingContext):
+    async def foreword(self, epctx: EventProcessingContext) -> None:
         ...
 
     @abc.abstractmethod
-    async def afterword(self, epctx: EventProcessingContext):
+    async def afterword(self, epctx: EventProcessingContext) -> None:
         ...

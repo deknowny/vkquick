@@ -19,6 +19,7 @@ if ty.TYPE_CHECKING:
 
 
 class IncorrectPreparedArgumentsError(Exception):
+    """ """
     def __init__(
         self,
         *,
@@ -30,6 +31,7 @@ class IncorrectPreparedArgumentsError(Exception):
 
 
 class StopHandlingEvent(Exception):
+    """ """
     def __init__(
         self, *, status: EventHandlingStatus, payload: StatusPayload
     ) -> None:
@@ -38,15 +40,18 @@ class StopHandlingEvent(Exception):
 
 
 class NotCompatibleFilterError(Exception):
-    """
-    Поднимается, если используемый фильтр не способен обработать событие,
+    """Поднимается, если используемый фильтр не способен обработать событие,
     которое может обработать обработчик событий
 
-    :param filter: Объект фильтра,
-        который не может обработать одно из обрабатываемых
-        событий обработчика событий, куда он прикреплен
-    :param event_handler: Объект обработчика событий, куда был прикреплен фильтр
+    Args:
+      filter: Объект фильтра,
+    который не может обработать одно из обрабатываемых
+    событий обработчика событий, куда он прикреплен
+      event_handler: Объект обработчика событий, куда был прикреплен фильтр
     :uncovered_event_types: События, которые не может покрыть фильтр. Если `Ellipsis`
+
+    Returns:
+
     """
 
     def __init__(
@@ -70,6 +75,7 @@ class NotCompatibleFilterError(Exception):
 
 
 class FilterFailedError(Exception):
+    """ """
     def __init__(self, filter: Filter, reason: str, **extra_payload_params):
         self.filter = filter
         self.reason = reason
@@ -84,9 +90,13 @@ class FilterFailedError(Exception):
 
 
 class _ParamsScheme(tye.TypedDict):
-    """
-    Структура параметров, возвращаемых
+    """Структура параметров, возвращаемых
     при некорректном обращении к API
+
+    Args:
+
+    Returns:
+
     """
 
     key: str
@@ -95,10 +105,14 @@ class _ParamsScheme(tye.TypedDict):
 
 @dataclasses.dataclass
 class VKAPIError(Exception):
-    """
-    Исключение, поднимаемое при некорректном вызове API запроса.
+    """Исключение, поднимаемое при некорректном вызове API запроса.
     Инициализируется через метод класса `destruct_response`
     для деструктуризации ответа от вк
+
+    Args:
+
+    Returns:
+
     """
 
     pretty_exception_text: str
@@ -109,9 +123,16 @@ class VKAPIError(Exception):
 
     @classmethod
     def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VKAPIError:
-        """
-        Разбирает ответ от вк про некорректный API запрос
+        """Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
+
+        Args:
+          response: ty.Dict[str:
+          ty.Any]: 
+          response: ty.Dict[str: 
+
+        Returns:
+
         """
         status_code = response["error"].pop("error_code")
         description = response["error"].pop("error_msg")

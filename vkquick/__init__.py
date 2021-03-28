@@ -42,6 +42,5 @@ from .json_parsers import (
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
-from .sync_async import OptionalAwaitable, sync_async_run
 
 __version__ = metadata.version(__name__)

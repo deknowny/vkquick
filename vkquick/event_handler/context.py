@@ -16,6 +16,7 @@ if ty.TYPE_CHECKING:
 
 @dataclasses.dataclass
 class EventHandlingContext:
+    """ """
     epctx: EventProcessingContext
     event_handler: EventHandler
     handling_status: ty.Optional[EventHandlingStatus] = None
@@ -25,8 +26,10 @@ class EventHandlingContext:
 
     @property
     def api(self) -> API:
+        """ """
         return self.epctx.bot.api
 
     @property
     def event(self) -> Event:
+        """ """
         return self.epctx.event

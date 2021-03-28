@@ -10,17 +10,16 @@ from loguru import logger
 from vkquick.bases.json_parser import JSONParser
 from vkquick.bases.session_container import SessionContainerMixin
 from vkquick.event import Event
-from vkquick.pretty_view import pretty_view
-from vkquick.sync_async import OptionalAwaitable, sync_async_run
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API
 
 
-EventsCallback = ty.Callable[[Event], OptionalAwaitable[None]]
+EventsCallback = ty.Callable[[Event], ty.Awaitable[None]]
 
 
 class EventsFactory(abc.ABC):
+    """ """
     def __init__(
         self,
         *,
@@ -51,25 +50,45 @@ class EventsFactory(abc.ABC):
 
     @abc.abstractmethod
     def _listen(self) -> ty.AsyncGenerator[Event, None]:
+        """ """
         ...
 
     @property
     def api(self) -> API:
+        """ """
         return self._api
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
+        """
+
+        Args:
+          func: EventsCallback:
+          func: EventsCallback: 
+
+        Returns:
+
+        """
         logger.info("Add event callback {func}", func=func)
         self._new_event_callbacks.append(func)
         return func
 
     def remove_event_callback(self, func: EventsCallback) -> EventsCallback:
+        """
+
+        Args:
+          func: EventsCallback:
+          func: EventsCallback: 
+
+        Returns:
+
+        """
         self._new_event_callbacks.remove(func)
         return func
 
     async def sublisten(self) -> ty.AsyncGenerator[Event, None]:
         events_queue = asyncio.Queue()
         logger.info("Run events sublistening (#{id:x})", id=id(events_queue))
-        callback = events_queue.put_nowait
+        callback = events_queue.put
 
         try:
             self.add_event_callback(callback)
@@ -87,20 +106,19 @@ class EventsFactory(abc.ABC):
             pass
 
     def run(self):
+        """ """
         asyncio.run(self.coroutine_run())
 
     async def _run_through_callbacks(self, event: Event) -> None:
         updates = [
-            sync_async_run(callback(event))
+            callback(event)
             for callback in self._new_event_callbacks
         ]
         await asyncio.gather(*updates)
 
 
 class LongPollBase(SessionContainerMixin, EventsFactory):
-    """
-    Базовый интерфейс для всех типов LongPoll
-    """
+    """Базовый интерфейс для всех типов LongPoll"""
 
     def __init__(
         self,
@@ -174,6 +192,7 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
             raise ValueError("Invalid longpoll version")
 
     def _update_baked_request(self) -> None:
+        """ """
         self._baked_request = self.requests_session.get(
             self._server_url, params=self._requests_query_params
         )

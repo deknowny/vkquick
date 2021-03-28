@@ -8,6 +8,7 @@ from vkquick.bases.easy_decorator import EasyDecorator
 
 
 class SignalHandler(EasyDecorator):
+    """ """
     def __init__(
         self,
         __handler: ty.Optional[ty.Callable] = None,
@@ -19,9 +20,19 @@ class SignalHandler(EasyDecorator):
 
     @property
     def name(self):
+        """ """
         return self._name
 
     def is_handling_name(self, name: str) -> bool:
+        """
+
+        Args:
+          name: str:
+          name: str: 
+
+        Returns:
+
+        """
         return self._name == name
 
     def __call__(self, *args, **kwargs):

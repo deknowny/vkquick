@@ -5,6 +5,14 @@ import pygments.lexers
 
 
 def pretty_view(__mapping: dict) -> str:
+    """
+
+    Args:
+      __mapping:
+
+    Returns:
+
+    """
     dumped_mapping = json.dumps(__mapping, ensure_ascii=False, indent=4)
     pretty_mapping = pygments.highlight(
         dumped_mapping,

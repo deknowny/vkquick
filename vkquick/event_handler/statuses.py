@@ -7,9 +7,7 @@ from vkquick.exceptions import FilterFailedError
 
 @enum.unique
 class EventHandlingStatus(enum.Enum):
-    """
-    Возможные статусы обработки
-    """
+    """Возможные статусы обработки"""
 
     INCORRECT_EVENT_TYPE = enum.auto()
     """
@@ -30,22 +28,22 @@ class EventHandlingStatus(enum.Enum):
 
 
 class StatusPayload:
-    """
-    "Контейнер" с дополнительной информацией на
+    """"Контейнер" с дополнительной информацией на
     каждый статус обработки
+
+    Args:
+
+    Returns:
+
     """
 
 
 class IncorrectEventType(StatusPayload, ty.NamedTuple):
-    """
-    Контейнер для `INCORRECT_EVENT_TYPE` статуса
-    """
+    """Контейнер для `INCORRECT_EVENT_TYPE` статуса"""
 
 
 class FilterFailed(StatusPayload, ty.NamedTuple):
-    """
-    Контейнер для `FILTER_FAILED` статуса
-    """
+    """Контейнер для `FILTER_FAILED` статуса"""
 
     filter: Filter
     """
@@ -60,9 +58,7 @@ class FilterFailed(StatusPayload, ty.NamedTuple):
 
 
 class CalledHandlerSuccessfully(StatusPayload, ty.NamedTuple):
-    """
-    Контейнер для `CALLED_HANDLER_SUCCESSFULLY` статуса
-    """
+    """Контейнер для `CALLED_HANDLER_SUCCESSFULLY` статуса"""
 
     handler_returned_value: ty.Any
     """
@@ -71,9 +67,13 @@ class CalledHandlerSuccessfully(StatusPayload, ty.NamedTuple):
 
 
 class UnexpectedErrorOccurred(StatusPayload, ty.NamedTuple):
-    """
-    Поднято неожидаемое исключение. Причиной может быть как
+    """Поднято неожидаемое исключение. Причиной может быть как
     пользовательский код, так и код vkquick
+
+    Args:
+
+    Returns:
+
     """
 
     raised_error: Exception

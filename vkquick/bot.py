@@ -14,7 +14,6 @@ from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.signal import SignalHandler
-from vkquick.sync_async import sync_async_run
 
 if ty.TYPE_CHECKING:
     from vkquick import Filter
@@ -23,9 +22,13 @@ if ty.TYPE_CHECKING:
 
 @dataclasses.dataclass
 class EventProcessingContext:
-    """
-    Контекстное хранилище, инициализируемое на
+    """Контекстное хранилище, инициализируемое на
     каждое новое событие.
+
+    Args:
+
+    Returns:
+
     """
 
     bot: Bot
@@ -36,12 +39,26 @@ class EventProcessingContext:
     extra: dict = dataclasses.field(default_factory=dict)
 
     def make_ehctx_for(self, handler: EventHandler) -> EventHandlingContext:
+        """
+
+        Args:
+          handler: EventHandler:
+          handler: EventHandler: 
+
+        Returns:
+
+        """
         ehctx = EventHandlingContext(self, handler)
         self.event_handling_contexts[handler] = ehctx
         return ehctx
 
 
 class Bot:
+    """
+    Сущность бота позволяет объединить в себе работу
+    обработчиков событий, сигналов и получение событий с
+    последующей обработкой
+    """
     def __init__(
         self,
         *,
@@ -50,12 +67,23 @@ class Bot:
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
         signals: ty.Optional[ty.Dict[str, SignalHandler]] = None,
         middlewares: ty.Optional[ty.List[Middleware]] = None,
-    ):
+    ) -> None:
+        """
+        Arguments:
+            api: Инстанс апи, подвязываемый к боту. Если фабрика
+                событий не передана, именно с помощью этого инстанса создастся
+                фабрика
+            events_factory: Фабрика новых событий
+            event_handlers: Обработчики событий, которые буду вызваны для обработки
+                нового события
+            signals: Возможные обработчики сигналов
+            middlewares: Мидлвары, вызываемые перед и после обработки
+        """
         self._api = api
         self._events_factory = events_factory
-        self._event_handlers = event_handlers or []
-        self._signals = signals or {}
-        self._middlewares = middlewares or []
+        self._event_handlers: ty.List[EventHandler] = event_handlers or []
+        self._signals: ty.Dict[str, SignalHandler] = signals or {}
+        self._middlewares: ty.List[Middleware] = middlewares or []
 
     @classmethod
     def via_token(cls, token: str, **kwargs) -> Bot:
@@ -64,59 +92,61 @@ class Bot:
         автоматически создавая необходимый инстанс API.
         Универсален как для для пользователей, так и групп
 
-        :param token: Токен пользователя/группы, от чьего лица будет работать бот
-        :param kwargs: Настройки, которые можно передать при инициализации бота обычным способом
+        Args:
+            token: Токен пользователя/группы, от чьего лица будет работать бот
+            kwargs: Настройки, которые можно передать при инициализации бота обычным способом
 
-        :return: Новый объекта бота, готовый к добавлению обработчиков и запуску
+        Returns:
+            Новый объекта бота, готовый к добавлению обработчиков и запуску
+
         """
         api = API(token)
         return cls(api=api, **kwargs)
 
     @property
     def api(self) -> API:
+        """
+        Используемый инстанс API
+        """
         return self._api
 
     @property
     def events_factory(self) -> EventsFactory:
-        """
-        Текущая фабрика событий, используемая для получения новых событий.
-        """
+        """Текущая фабрика событий, используемая для получения новых событий."""
         return self._events_factory
 
     @property
     def event_handlers(self) -> ty.List[EventHandler]:
-        """
-        Текущий список обработчиков событий.
-        """
+        """Текущий список обработчиков событий."""
         return self._event_handlers
 
     @property
     def signals(self) -> ty.Dict[str, SignalHandler]:
-        """
-        Текущий словарь обработчиков сигналов.
-        """
+        """Текущий словарь обработчиков сигналов."""
         return self._signals
 
     @property
     def middlewares(self) -> ty.List[Middleware]:
-        """
-        Текущий список используемых мидлваров.
-        """
+        """Текущий список используемых мидлваров."""
         return self._middlewares
 
     def run(self) -> ty.NoReturn:
-        """
-        Запускает работу бота, т.е. запускает логику
+        """Запускает работу бота, т.е. запускает логику
         по получению новых событий с последующей необходимой
         обработкой мидлварами, хендлерами сигналов и событий.
-
+        
         Перед началом запуска логики с получением событий, вызывается
         сигнал `startup`. После завершения работы вызовется сигнал `shutdown`.
         Каждый из сигналов принимает инстанс бота в качестве аргумента.
-
+        
         Бот работает асинхронно, не смотря на синхронный запуск.
-
+        
         :return: Запуск вечный, этот метод не возвращает никакое значение.
+
+        Args:
+
+        Returns:
+
         """
         try:
             asyncio.run(self.coroutine_run())
@@ -135,15 +165,15 @@ class Bot:
             await self._setup_events_factory()
             startup_signal = self._signals.get("startup")
             if startup_signal is not None:
-                await sync_async_run(startup_signal(self))
+                await startup_signal(self)
             async with self._events_factory, self._api:
-                await self.run_listening_events()
+                await self._run_listening_events()
         finally:
             shutdown_signal = self._signals.get("shutdown")
             if shutdown_signal is not None:
-                await sync_async_run(shutdown_signal(self))
+                await shutdown_signal(self)
 
-    async def run_listening_events(self) -> ty.NoReturn:
+    async def _run_listening_events(self) -> ty.NoReturn:
         """
         Метод, конкретно отвечающий за получение событий,
         инициализации соответствующего с ним контекста и запуска
@@ -205,7 +235,7 @@ class Bot:
         :param epctx: Контекст обработки события
         """
         for middleware in self._middlewares:
-            await sync_async_run(middleware.foreword(epctx))
+            await middleware.foreword(epctx)
 
     async def _call_afterword_middlewares(
         self, epctx: EventProcessingContext
@@ -216,7 +246,7 @@ class Bot:
         :param epctx: Контекст обработки события
         """
         for middleware in reversed(self._middlewares):
-            await sync_async_run(middleware.afterword(epctx))
+            await middleware.afterword(epctx)
 
     @easy_method_decorator
     def add_event_handler(
@@ -229,19 +259,21 @@ class Bot:
     ) -> EventHandler:
         """
         Добавляет обработчик события в бота.
-
+        
         Если `__handler` уже является инстансом `EventHandler`,
         то обработчик просто добавится в бота. Иначе будет создан
         новый объект обработчика с другими полями этого метода
         и уже он будет добавлен.
 
+        Arguments:
+            __handler: Обработчик события/функция, которая
+                будет передана при создании обработчика
+            handling_event_types: Множество типов обрабатываемых событий
+            filters: Фильтры обработчика событий
+            pass_ehctx_as_argument: Нужно ли передавать контекст в качестве аргумента
 
-        :param __handler: Обработчик события/функция, которая
-            будет передана при создании обработчика
-        :param handling_event_types: Множество типов обрабатываемых событий
-        :param filters: Фильтры обработчика событий
-        :param pass_ehctx_as_argument: Нужно ли передавать контекст в качестве аргумента
-        :return: Объект обработчика событий
+        Returns:
+            Объект обработчика событий
         """
         if not isinstance(__handler, EventHandler):
             __handler = EventHandler(
@@ -261,13 +293,29 @@ class Bot:
         *,
         name: ty.Optional[str] = None,
     ):
+        """
+        Добавляет обработчик сигнала для бота
+
+        Args:
+            __handler: Функция, которая должна обработать сигнал
+                или инстанс обработчика сигнала
+            name: Имя обрабатываемого сигнала
+
+        Returns:
+
+        """
         if not isinstance(__handler, SignalHandler):
             __handler = SignalHandler(__handler, name=name)
         self._signals[__handler.name] = __handler
         return __handler
 
-    @easy_method_decorator
-    def add_middleware(self, __handler: ty.Optional[Middleware] = None):
+    def add_middleware(self, __handler: Middleware) -> None:
+        """
+        Добавляет мидлвар в бота
+
+        Args:
+          __handler: Инстанс мидлвара
+        """
         self._middlewares.append(__handler)
 
     def __repr__(self) -> str:
