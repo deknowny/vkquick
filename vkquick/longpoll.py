@@ -16,9 +16,7 @@ if ty.TYPE_CHECKING:  # pragma: no cover
 
 
 class GroupLongPoll(LongPollBase):
-    """
-    LongPoll обработчик для событий в сообществе
-    """
+    """LongPoll обработчик для событий в сообществе"""
 
     def __init__(
         self,
@@ -37,7 +35,6 @@ class GroupLongPoll(LongPollBase):
             requests_session=requests_session,
             json_parser=json_parser,
         )
-        self._api = api
         self._group_id = group_id
         self._wait = wait
 
@@ -62,9 +59,7 @@ class GroupLongPoll(LongPollBase):
 
 
 class UserLongPoll(LongPollBase):
-    """
-    LongPoll обработчик для событий пользователя
-    """
+    """LongPoll обработчик для событий пользователя"""
 
     def __init__(
         self,
@@ -76,7 +71,7 @@ class UserLongPoll(LongPollBase):
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
-    ):
+    ) -> None:
         super().__init__(
             api=api,
             event_wrapper=UserEvent,
@@ -84,7 +79,6 @@ class UserLongPoll(LongPollBase):
             requests_session=requests_session,
             json_parser=json_parser,
         )
-        self._api = api
         self._version = version
         self._wait = wait
         self._mode = mode

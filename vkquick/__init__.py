@@ -1,6 +1,10 @@
-import importlib.metadata
+try:
+    # ^= 3.8
+    import importlib.metadata as metadata
+except ImportError:
+    import importlib as metadata
 
-from .api import API, TokenOwnerEntity, TokenOwnerType, pretty_view
+from .api import API, TokenOwnerEntity, TokenOwnerType
 from .bases.api_serializable import APISerializableMixin
 from .bases.easy_decorator import EasyDecorator
 from .bases.event import Event
@@ -18,12 +22,9 @@ from .event_handler.context import EventHandlingContext
 from .event_handler.handler import EventHandler
 from .event_handler.statuses import (
     CalledHandlerSuccessfully,
-    ErrorRaisedByHandlerCall,
-    ErrorRaisedByPostHandlingCallback,
     EventHandlingStatus,
     FilterFailed,
     IncorrectEventType,
-    IncorrectPreparedArguments,
     StatusPayload,
     UnexpectedErrorOccurred,
 )
@@ -39,8 +40,7 @@ from .json_parsers import (
     json_parser_policy,
 )
 from .longpoll import GroupLongPoll, UserLongPoll
+from .pretty_view import pretty_view
 from .signal import SignalHandler
-from .sync_async import sync_async_callable, sync_async_run
 
-__version__ = importlib.metadata.version(__name__)
-del importlib.metadata
+__version__ = metadata.version(__name__)

@@ -7,3 +7,12 @@
   --md-primary-fg-color:  hsla(var(--md-hue), 15%, 12%, 0.87);
   --md-primary-fg-color--light:  hsla(var(--md-hue), 75%, 90%, 0.62);
 }
+
+
+/* Indentation for mkdocstrings items. */
+div.doc-contents:not(.first) {
+  padding-left: 25px;
+  border-left: 2px solid hsla(var(--md-hue), 15%, 12%, 0.87);
+  margin-bottom: 80px;
+}
+

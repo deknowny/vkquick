@@ -1,103 +1,101 @@
+# Title of the site
 site_name: VK Quick
+
+# Description of the site
 site_description: Async python framework for creating VK chat bots
-repo_name: vkquick
+
+# URL for pages editing
 repo_url: https://github.com/Rhinik/vkquick/tree/1.0
 
+# Repository name
+repo_name: vkquick
+
+# Branch chosen when routing to repository
 remote_branch: "1.0"
 
+# Google analytics setup for activity monitoring
 google_analytics: ["UA-172364682-1", "vkquick.readthedocs.io"]
 
+# Site's content
 nav:
     - Home: index.md
     - Установка: installation.md
     - Как работают боты: how-bots-work.md
     - Документация:
-        - Введение: docs/index.md
-        - Имена и префиксы: docs/names-and-prefixes.md
-        - Команды с текстовыми аргументами: docs/text-arguments
+        - api.py: docs/api.md
+        - bot.py: docs/bot.md
+        - event.py: docs/event.md
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
     - Заметки по релизам: releases.md
     - Контрибьютерам: contributing.md
-    - Документация к 0.2:
-        - Home: docs-0.2/index.md
-        - Установка: docs-0.2/installation.md
-        - hello world бот: docs-0.2/hello-world-bot.md
-        - Инструкция:
-            - Введение: docs-0.2/possible/index.md
-            - Структура проекта: docs-0.2/possible/project-struct.md
-            - Структура команды: docs-0.2/possible/command-struct.md
-            - Реакции: docs-0.2/possible/reaction.md
-            - Payload-типы: docs-0.2/possible/payload-args.md
-            - Валидаторы: docs-0.2/possible/validators.md
-            - Быстрые ответы: docs-0.2/possible/quick-answers.md
-            - Current-объекты: docs-0.2/possible/current-obj.md
-            - Сигналы: docs-0.2/possible/signals.md
-            - bot: docs-0.2/possible/bot.md
-            - Инструменты:
-                - Что это: docs-0.2/possible/tools/index.md
-                - Клавиатуры: docs-0.2/possible/tools/keyboards.md
-                - Кнопки: docs-0.2/possible/tools/buttons.md
-                - Карусели: docs-0.2/possible/tools/templates.md
-                - Элементы: docs-0.2/possible/tools/elements.md
-                - Загрузка фотографий: docs-0.2/possible/tools/photos.md
-                - Загрузка документов, гс, граффити: docs-0.2/possible/tools/docs-0.2-vm-graffiti.md
-                - Пользователь: docs-0.2/possible/tools/user.md
-            - Примеры:
-                - Делаем бота: docs-0.2/examples/index.md
-                - Техническое задание: docs-0.2/examples/tech-task.md
-                - Создание: docs-0.2/examples/create.md
-            - Контрибьюторам: docs-0.2/contributing.md
-            - Релизы: docs-0.2/releases.md
 
 
+# Theme preference
 theme:
+    # Use `mkdocs-material`
     name: material
+
+    # Setup lang
     language: ru
+
+    # Used font on site
     font:
+        # For ordinary text
         text: Ubuntu
+        # For code pasts
         code: Monaco
+
+    # Material coloring
     palette:
+        # Use custom css-style. Check `css/custom.css`
         scheme: preference
+        # Color when place the cursor on links (some kind of orange)
         accent: amber
 
+    # Logo nearby title
     logo: assets/logo.png
+
     favicon: assets/logo.png
 
+    # Don't show target symbol nearby headers
     features:
         - header.autohide
 
 
 markdown_extensions:
+    - admonition
+    - pymdownx.emoji
+    - pymdownx.magiclink
+    - pymdownx.snippets:
+        check_paths: true
+    - pymdownx.superfences
+    - pymdownx.tabbed
+    - pymdownx.tasklist
     - toc:
         permalink: true
-    - markdown.extensions.codehilite:
-        guess_lang: false
-    - admonition
-    - codehilite
-    - extra
-    - pymdownx.superfences:
-        custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_div_format ''
-    - pymdownx.tabbed
-    - pymdownx.details
-    - pymdownx.tilde
-    - pymdownx.inlinehilite
-    - markdown_include.include:
-        base_path: .
 
+
+# Custom css files
 extra_css:
     - css/termynal.css
     - css/custom.css
 
+# Custom js files
 extra_javascript:
     - js/termynal.js
     - js/custom.js
 
+# Extra preferences
 extra:
     social:
+        # Add social icon at the footer
         - icon: fontawesome/brands/vk
           link: https://vk.com/vkquick
+
+plugins:
+    # Docs generator
+    - mkdocstrings:
+        watch:
+            - vkquick

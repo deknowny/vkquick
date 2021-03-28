@@ -1,9 +1,11 @@
 class SafeDict(dict):
+    """ """
     def __missing__(self, key):
         return "{" + key + "}"
 
 
 class Wrapper:
+    """ """
     def __init__(self, fields: dict) -> None:
         self.__fields = fields
 
@@ -17,9 +19,11 @@ class Wrapper:
 
     @property
     def fields(self) -> dict:
+        """ """
         return self.__fields
 
     def _extra_fields_to_format(self) -> dict:
+        """ """
         return {}
 
     def __repr__(self) -> str:

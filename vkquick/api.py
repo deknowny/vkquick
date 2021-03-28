@@ -4,19 +4,13 @@ import asyncio
 import enum
 import os
 import re
-import textwrap
 import time
 import typing as ty
 import urllib.parse
-import json
 
 import aiohttp
 import cachetools
 from loguru import logger
-import pygments.formatters
-import pygments.formatters.terminal
-import pygments.token
-import pygments.lexers
 
 from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.bases.session_container import SessionContainerMixin
@@ -27,34 +21,8 @@ if ty.TYPE_CHECKING:
     from vkquick.bases.json_parser import JSONParser
 
 
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("String")
-] = ("gray", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Literal.Number")
-] = ("yellow", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Keyword.Constant")
-] = ("red", "_")
-pygments.formatters.terminal.TERMINAL_COLORS[
-    pygments.token.string_to_tokentype("Token.Name.Tag")
-] = ("cyan", "_")
-
-
-def pretty_view(__mapping: dict) -> str:
-    dumped_mapping = json.dumps(__mapping, ensure_ascii=False, indent=4)
-    pretty_mapping = pygments.highlight(
-        dumped_mapping,
-        pygments.lexers.JsonLexer(),
-        pygments.formatters.TerminalFormatter(bg="light"),
-    )
-    return pretty_mapping
-
-
 class TokenOwnerType(enum.Enum):
-    """
-    Тип владельца токена: пользователь/группа/сервисный токен
-    """
+    """Тип владельца токена: пользователь/группа/сервисный токен"""
 
     USER = enum.auto()
     GROUP = enum.auto()
@@ -63,47 +31,42 @@ class TokenOwnerType(enum.Enum):
 
 class TokenOwnerEntity:
     """
-    Сущность владельца токена
-
-    :param entity_type: Тип владельца токена
-    :param scheme: Объект владельца токена (для сервисных токенов отсутсвует)
+    Сущность владельца токена,
+    возвращаемая при вызове метода [API.token_owner_entity](vkquick.api.API.fetch_token_owner_entity)
     """
 
     def __init__(
         self,
         entity_type: TokenOwnerType,
         scheme: ty.Optional[dict] = None,
-    ):
+    ) -> None:
+        """
+        Args:
+            entity_type: Тип владельца токена
+            scheme: Объект владельца токена (для сервисных токенов отсутсвует)
+        """
         self.entity_type = entity_type
         self.scheme = scheme
 
     @property
     def is_group(self) -> bool:
         """
-        :return: Является ли сущность группой
+        Является ли сущность группой
         """
         return self.entity_type == TokenOwnerType.GROUP
 
     @property
     def is_user(self) -> bool:
         """
-        :return: Является ли сущность пользователем
+        Является ли сущность пользователем
         """
         return self.entity_type == TokenOwnerType.USER
 
 
 class API(SessionContainerMixin):
     """
-    Этот класс предоставляет возможности удобного вызова API методов
-
-    :param token: Токен пользователя/группы/сервисный для отправки API запросов.
-        Можно использовать имя переменной окружения,
-        если добавить в начало `"$"`, т.е. `"$ENV_VAR"`
-    :param version: Версия используемого API.
-    :param requests_url: URL для отправки запросов.
-    :param requests_session: Собственная `aiohttp` сессия.
+    Api requests
     """
-
     def __init__(
         self,
         token: str,
@@ -113,6 +76,16 @@ class API(SessionContainerMixin):
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
     ) -> None:
+        """
+        Arguments:
+            token: Токен пользователя/группы/сервисный для отправки API запросов.
+                Можно использовать имя переменной окружения,
+                если добавить в начало `"$"`, т.е. `"$ENV_VAR"`
+            version: Версия используемого API.
+            requests_url: URL для отправки запросов.
+            requests_session: Собственная `aiohttp` сессия.
+            json_parser: Кастомный JSON парсер
+        """
         super().__init__(
             requests_session=requests_session, json_parser=json_parser
         )
@@ -136,14 +109,35 @@ class API(SessionContainerMixin):
             "v": self._version,
         }
 
+    @property
+    def token(self) -> str:
+        """
+        Токен
+        """
+        return self._token
+
+    def short_token(self, length: int) -> str:
+        """
+        ааа
+
+        Args:
+          length: Длина Ключа
+
+        Returns:
+            Обрезанный ключ
+        """
+        return f"{self._token[:length]}..."
+
     def __getattr__(self, attribute: str) -> API:
         """
         Используя `__gettattr__`, класс предоставляет возможность
         вызывать методы API, как будто обращаясь к атрибутам.
         Пример есть в описании класса.
 
-        :param attribute: Имя/заголовок названия метода.
-        :return: Собственный инстанс класса для того,
+        Arguments:
+            attribute: Имя/заголовок названия метода.
+        Returns:
+            Собственный инстанс класса для того,
             чтобы была возможность продолжить выстроить имя метода через точку.
         """
         if self._method_name:
@@ -161,14 +155,15 @@ class API(SessionContainerMixin):
         Выполняет необходимый API запрос с нужным методом и параметрами,
         добавляя к ним токен и версию (может быть перекрыто).
 
-        :param __allow_cache: Если `True` -- реузльтат запроса
-            с подобными параметрами и методом будет получен из кэш-таблицы,
-            если отсутсвует -- просто занесен в таблицу. Если `False` -- запрос
-            просто выполнится по сети.
-        :param request_params: Параметры, принимаемы методом, которые описаны в документации API.
-        :return: Пришедший от API ответ.
+        Arguments:
+            __allow_cache: Если `True` -- результат запроса
+                с подобными параметрами и методом будет получен из кэш-таблицы,
+                если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
+                просто выполнится по сети.
+            request_params: Параметры, принимаемы методом, которые описаны в документации API.
 
-        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        Returns:
+            Пришедший от API ответ.
         """
         method_name = self._method_name
         self._method_name = ""
@@ -222,7 +217,7 @@ class API(SessionContainerMixin):
         __request_params: ty.Dict[str, ty.Any],
         *,
         allow_cache: bool = False,
-    ) -> ty.Union[str, int, API.default_factory]:
+    ) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
 
@@ -247,10 +242,14 @@ class API(SessionContainerMixin):
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
-        :param __code: VKScript код
-        :return: Пришедший ответ от API
+        Arguments:
+            __code: VKScript код
 
-        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        Returns:
+            Пришедший ответ от API
+
+        Raises:
+            VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
         return await self.method("execute", {"code": __code})
 
@@ -266,6 +265,7 @@ class API(SessionContainerMixin):
         :param method_name: Имя метода API
         :param request_params: Параметры, переданные для метода
         :param allow_cache: Использовать кэширование
+
         :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
         # Конвертация параметров запроса под особенности API и имени метода
@@ -296,19 +296,16 @@ class API(SessionContainerMixin):
         response = await self._send_api_request(
             real_method_name, real_request_params
         )
-        real_request_params["access_token"] = textwrap.shorten(
-            real_request_params["access_token"], width=5, placeholder="..."
+        logger.info(
+            "Called method {method_name}({method_params})",
+            method_name=method_name,
+            method_params=request_params,
         )
-        logger_string = (
-            f"Called API method <cyan>{real_method_name}</cyan>"
-            f"with params `{real_request_params}`."
-            f" Response is `{response}`"
-        )
+        logger.debug("Response is: {response}", response=response)
+
         if "error" in response:
-            logger.error(logger_string)
             raise VKAPIError.destruct_response(response)
         else:
-            logger.trace(logger_string)
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
@@ -325,12 +322,16 @@ class API(SessionContainerMixin):
             return loaded_response
 
     def _get_waiting_time(self) -> float:
-        """
-        Рассчитывает обязательное время задержки после
+        """Рассчитывает обязательное время задержки после
         последнего API запроса. Для групп -- 0.05s,
         для пользователей/сервисных токенов -- 0.333s.
-
+        
         :return: Время, необходимое для ожидания.
+
+        Args:
+
+        Returns:
+
         """
         now = time.time()
         diff = now - self._last_request_stamp
@@ -344,12 +345,15 @@ class API(SessionContainerMixin):
 
 
 def _convert_param_value(__value):
-    """
-    Конвертирует параметер API запроса в соотвествиями
+    """Конвертирует параметер API запроса в соотвествиями
     с особенностями API и дополнительными удобствами
 
-    :param __value: Текущее значение параметра
-    :return: Новое значение параметра
+    Args:
+      __value: Текущее значение параметра
+
+    Returns:
+      : Новое значение параметра
+
     """
     # Для всех перечислений функция вызывается рекурсивно.
     # Массивы в запросе распознаются вк только если записать их как строку,
@@ -382,12 +386,34 @@ def _convert_param_value(__value):
 
 
 def _convert_params_for_api(__params: dict):
-    """
-    Конвертирует словарь из параметров для метода API,
+    """Конвертирует словарь из параметров для метода API,
     учитывая определенные особенности
-    :param __params: Параметры, передаваемые для вызова метода API
-    :return: Новые параметры, которые можно передать
-        в запрос и получить ожидаемый результат
+
+    Args:
+      __params: Параметры, передаваемые для вызова метода API
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict:
+      __params: dict: 
+
+    Returns:
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      : Новые параметры, которые можно передать
+      в запрос и получить ожидаемый результат
+
     """
     updated_params = {
         (key[:-1] if key.endswith("_") else key): _convert_param_value(value)
@@ -398,22 +424,48 @@ def _convert_params_for_api(__params: dict):
 
 
 def _upper_zero_group(__match: ty.Match) -> str:
-    """
-    Поднимает все символы в верхний
+    """Поднимает все символы в верхний
     регистр у captured-группы `let`. Используется
     для конвертации snake_case в camelCase.
 
-    :param __match: Регекс-группа, полученная в реультате `re.sub`
-    :return: Ту же букву из группы, но в верхнем регистре
+    Args:
+      __match: Регекс-группа, полученная в реультате `re.sub`
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match:
+      __match: ty.Match: 
+
+    Returns:
+      : Ту же букву из группы, но в верхнем регистре
+
     """
     return __match.group("let").upper()
 
 
 def _convert_method_name(__name: str) -> str:
-    """
-    Конвертирует snake_case в camelCase.
+    """Конвертирует snake_case в camelCase.
 
-    :param __name: Имя метода, который необходимо перевести в camelCase
-    :return: Новое имя метода в camelCase
+    Args:
+      __name: Имя метода, который необходимо перевести в camelCase
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str:
+      __name: str: 
+
+    Returns:
+      : Новое имя метода в camelCase
+
     """
     return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, __name)
