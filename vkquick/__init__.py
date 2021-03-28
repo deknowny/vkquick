@@ -16,6 +16,7 @@ from .bases.events_factories import (
 from .bases.filter import Filter
 from .bases.json_parser import JSONParser
 from .bases.session_container import SessionContainerMixin
+from .bases.middleware import Middleware
 from .bot import Bot, EventProcessingContext
 from .event import GroupEvent, UserEvent
 from .event_handler.context import EventHandlingContext
