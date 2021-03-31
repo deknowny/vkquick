@@ -1,5 +1,6 @@
 from vkquick.bases.middleware import Middleware
 from vkquick.bot import EventProcessingContext
+from vkquick.ext.chatbot.message_provider import MessageProvider
 
 
 class ExtendUserLPNewMessage(Middleware):
@@ -23,4 +24,6 @@ class ExtendUserLPNewMessage(Middleware):
 class MessageProviderInitializer(Middleware):
     async def foreword(self, epctx: EventProcessingContext) -> None:
         if epctx.event.type in ("message_new", 4):
-            ...
+            epctx.extra["message_provider"] = MessageProvider(epctx)
+        else:
+            epctx.extra["message_provider"] = None

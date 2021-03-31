@@ -1,11 +1,13 @@
 import inspect
 import re
+import warnings
 import typing as ty
 
 import vkquick as vq
 
-from vkquick.ext.chatbot.filters.command.context import CommandContext
+from vkquick.exceptions import ExpectedMiddlewareToBeUsed
 from vkquick.ext.chatbot.filters.command.text_cutters.base import TextCutter
+from vkquick.ext.chatbot.message_provider import MessageProvider
 from vkquick.ext.chatbot.filters.command.text_cutters.integer import Integer
 
 
@@ -33,7 +35,8 @@ class CommandFilter(vq.Filter):
 
         self._handler: ty.Optional[vq.EventHandler] = None
         self._text_arguments: ty.List[ty.Tuple[str, TextCutter]] = []
-        self._context_factory: ty.Optional[CommandContext] = None
+
+        self._message_provider_argument_name: ty.Optional[str] = None
         self._build_routing_regex()
 
     def __call__(self, event_handler: vq.EventHandler) -> vq.EventHandler:
@@ -42,15 +45,23 @@ class CommandFilter(vq.Filter):
         return super().__call__(event_handler)
 
     async def make_decision(self, ehctx: vq.EventHandlingContext) -> None:
-        msg = ehctx.epctx.extra.get("")
+        try:
+            mp = ehctx.epctx.extra[""]
+        except KeyError as err:
+            raise ExpectedMiddlewareToBeUsed("MessageProviderInitializer") from err
 
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters
         for name, argument in parameters.items():
             if inspect.isclass(argument.annotation) and issubclass(
-                argument.annotation, CommandContext
+                argument.annotation, MessageProvider
             ):
-                self._context_factory = argument.annotation
+                self._message_provider_argument_name = argument.name
+                if self._text_arguments:
+                    warnings.warn(
+                        "Use MessageProvider argument the first "
+                        "in the function (style recommendation)"
+                    )
             elif ...:
                 ...
 

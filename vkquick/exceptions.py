@@ -41,6 +41,15 @@ class StopHandlingEvent(Exception):
         self.payload = payload
 
 
+class ExpectedMiddlewareToBeUsed(Exception):
+    def __init__(self, middleware_name: str):
+        self._middleware_name = middleware_name
+
+    def __str__(self):
+        return  (f"Expected `{self._middleware_name}` middleware to be used."
+                "Add it to the bot instance")
+
+
 class NotCompatibleFilterError(Exception):
     """Поднимается, если используемый фильтр не способен обработать событие,
     которое может обработать обработчик событий

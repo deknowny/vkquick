@@ -2,6 +2,7 @@ import typing as ty
 
 from vkquick.bot import EventProcessingContext, Bot
 from vkquick.api import API
+from vkquick.exceptions import ExpectedMiddlewareToBeUsed
 from vkquick.ext.chatbot.lite_api import LiteAPI
 from vkquick.ext.chatbot.wrappers.message import Message
 from vkquick.ext.chatbot.wrappers.page_entities import PageEntity, User, Group
@@ -9,7 +10,10 @@ from vkquick.ext.chatbot.wrappers.page_entities import PageEntity, User, Group
 
 class MessageProvider:
     def __init__(self, epctx: EventProcessingContext) -> None:
-        self._msg: Message = Message(self._epctx.extra["cultivated_message"])
+        try:
+            self._msg: Message = Message(self._epctx.extra["cultivated_message"])
+        except KeyError as err:
+            raise ExpectedMiddlewareToBeUsed("ExtendUserLPNewMessage") from err
         self._lite_api: LiteAPI = LiteAPI(epctx.bot.api)
         self._epctx: EventProcessingContext = epctx
 
