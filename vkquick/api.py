@@ -67,6 +67,7 @@ class API(SessionContainerMixin):
     """
     Api requests
     """
+
     def __init__(
         self,
         token: str,
@@ -325,7 +326,7 @@ class API(SessionContainerMixin):
         """Рассчитывает обязательное время задержки после
         последнего API запроса. Для групп -- 0.05s,
         для пользователей/сервисных токенов -- 0.333s.
-        
+
         :return: Время, необходимое для ожидания.
 
         Args:
@@ -400,7 +401,7 @@ def _convert_params_for_api(__params: dict):
       __params: dict:
       __params: dict:
       __params: dict:
-      __params: dict: 
+      __params: dict:
 
     Returns:
       : Новые параметры, которые можно передать
@@ -439,7 +440,7 @@ def _upper_zero_group(__match: ty.Match) -> str:
       __match: ty.Match:
       __match: ty.Match:
       __match: ty.Match:
-      __match: ty.Match: 
+      __match: ty.Match:
 
     Returns:
       : Ту же букву из группы, но в верхнем регистре
@@ -462,7 +463,7 @@ def _convert_method_name(__name: str) -> str:
       __name: str:
       __name: str:
       __name: str:
-      __name: str: 
+      __name: str:
 
     Returns:
       : Новое имя метода в camelCase

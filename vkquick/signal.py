@@ -9,6 +9,7 @@ from vkquick.bases.easy_decorator import EasyDecorator
 
 class SignalHandler(EasyDecorator):
     """ """
+
     def __init__(
         self,
         __handler: ty.Optional[ty.Callable] = None,
@@ -28,7 +29,7 @@ class SignalHandler(EasyDecorator):
 
         Args:
           name: str:
-          name: str: 
+          name: str:
 
         Returns:
 

@@ -17,6 +17,7 @@ if ty.TYPE_CHECKING:
 @dataclasses.dataclass
 class EventHandlingContext:
     """ """
+
     epctx: EventProcessingContext
     event_handler: EventHandler
     handling_status: ty.Optional[EventHandlingStatus] = None

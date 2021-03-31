@@ -20,6 +20,7 @@ EventsCallback = ty.Callable[[Event], ty.Awaitable[None]]
 
 class EventsFactory(abc.ABC):
     """ """
+
     def __init__(
         self,
         *,
@@ -63,7 +64,7 @@ class EventsFactory(abc.ABC):
 
         Args:
           func: EventsCallback:
-          func: EventsCallback: 
+          func: EventsCallback:
 
         Returns:
 
@@ -77,7 +78,7 @@ class EventsFactory(abc.ABC):
 
         Args:
           func: EventsCallback:
-          func: EventsCallback: 
+          func: EventsCallback:
 
         Returns:
 
@@ -110,10 +111,7 @@ class EventsFactory(abc.ABC):
         asyncio.run(self.coroutine_run())
 
     async def _run_through_callbacks(self, event: Event) -> None:
-        updates = [
-            callback(event)
-            for callback in self._new_event_callbacks
-        ]
+        updates = [callback(event) for callback in self._new_event_callbacks]
         await asyncio.gather(*updates)
 
 

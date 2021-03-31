@@ -17,6 +17,7 @@ from .bases.filter import Filter
 from .bases.json_parser import JSONParser
 from .bases.session_container import SessionContainerMixin
 from .bases.middleware import Middleware
+from .bases.wrapper import Wrapper
 from .bot import Bot, EventProcessingContext
 from .event import GroupEvent, UserEvent
 from .event_handler.context import EventHandlingContext
@@ -43,5 +44,6 @@ from .json_parsers import (
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
+from .cached_property import cached_property
 
 __version__ = metadata.version(__name__)

@@ -20,6 +20,7 @@ if ty.TYPE_CHECKING:
 
 class IncorrectPreparedArgumentsError(Exception):
     """ """
+
     def __init__(
         self,
         *,
@@ -32,6 +33,7 @@ class IncorrectPreparedArgumentsError(Exception):
 
 class StopHandlingEvent(Exception):
     """ """
+
     def __init__(
         self, *, status: EventHandlingStatus, payload: StatusPayload
     ) -> None:
@@ -76,17 +78,10 @@ class NotCompatibleFilterError(Exception):
 
 class FilterFailedError(Exception):
     """ """
-    def __init__(self, filter: Filter, reason: str, **extra_payload_params):
-        self.filter = filter
+
+    def __init__(self, reason: str, extra_payload_params: dict):
         self.reason = reason
         self.extra = extra_payload_params
-
-    def __str__(self):
-        return (
-            f"Filter `{self.filter.__class__.__name__}` "
-            f"not passed because `{self.reason}`. "
-            f"Extra params: `{self.extra}`"
-        )
 
 
 class _ParamsScheme(tye.TypedDict):
@@ -128,8 +123,8 @@ class VKAPIError(Exception):
 
         Args:
           response: ty.Dict[str:
-          ty.Any]: 
-          response: ty.Dict[str: 
+          ty.Any]:
+          response: ty.Dict[str:
 
         Returns:
 
