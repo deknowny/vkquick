@@ -4,9 +4,9 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.bases.api_serializable import APISerializableMixin
 from vkquick.ext.chatbot.utils import download_file
+from vkquick.ext.chatbot.wrappers.base import Wrapper
 
 
 class Attachment(Wrapper, APISerializableMixin):
@@ -28,7 +28,9 @@ class Photo(Attachment):
     async def download_min_size(
         self, *, session: ty.Optional[aiohttp.ClientSession] = None
     ) -> bytes:
-        return await download_file(self.fields["sizes"][0]["url"], session=session)
+        return await download_file(
+            self.fields["sizes"][0]["url"], session=session
+        )
 
     async def download_with_size(
         self, size: str, *, session: ty.Optional[aiohttp.ClientSession] = None
@@ -41,7 +43,9 @@ class Photo(Attachment):
     async def download_max_size(
         self, *, session: ty.Optional[aiohttp.ClientSession] = None
     ) -> bytes:
-        return await download_file(self.fields["sizes"][-1]["url"], session=session)
+        return await download_file(
+            self.fields["sizes"][-1]["url"], session=session
+        )
 
 
 class Document(Attachment):

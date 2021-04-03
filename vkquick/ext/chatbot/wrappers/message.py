@@ -3,10 +3,10 @@ from __future__ import annotations
 import datetime
 import typing as ty
 
-from vkquick.ext.chatbot.wrappers.base import Wrapper
-from vkquick.ext.chatbot.utils import peer
 from vkquick.cached_property import cached_property
+from vkquick.ext.chatbot.utils import peer
 from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
+from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.json_parsers import json_parser_policy
 
 

@@ -1,14 +1,15 @@
 import inspect
 import re
-import warnings
 import typing as ty
+import warnings
 
-import vkquick as vq
-
+from vkquick.bases.filter import Filter
+from vkquick.event_handler.context import EventHandlingContext
+from vkquick.event_handler.handler import EventHandler
 from vkquick.exceptions import ExpectedMiddlewareToBeUsed
 from vkquick.ext.chatbot.filters.command.text_cutters.base import TextCutter
-from vkquick.ext.chatbot.message_provider import MessageProvider
 from vkquick.ext.chatbot.filters.command.text_cutters.integer import Integer
+from vkquick.ext.chatbot.providers.message import MessageProvider
 
 
 def _resolve_typing(parameter: inspect.Parameter):
@@ -16,53 +17,68 @@ def _resolve_typing(parameter: inspect.Parameter):
         return Integer()
 
 
-class CommandFilter(vq.Filter):
+class Command(Filter, EventHandler):
 
     __accepted_event_types__ = frozenset({"message_new", 4})
 
     def __init__(
         self,
+        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
         *,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
+        previous_filters: ty.Optional[ty.List[Filter]] = None,
     ) -> None:
         self._names = names
         self._prefixes = prefixes
         self._allow_regex = allow_regex
         self._routing_re_flags = routing_re_flags
 
-        self._handler: ty.Optional[vq.EventHandler] = None
         self._text_arguments: ty.List[ty.Tuple[str, TextCutter]] = []
-
         self._message_provider_argument_name: ty.Optional[str] = None
+        self._ehctx_argument_name: ty.Optional[str] = None
+
         self._build_routing_regex()
 
-    def __call__(self, event_handler: vq.EventHandler) -> vq.EventHandler:
+        if previous_filters is None:
+            previous_filters = [self]
+        else:
+            previous_filters.append(self)
+
+        EventHandler.__init__(
+            self,
+            __handler,
+            handling_event_types=self.__accepted_event_types__,
+            filters=previous_filters,
+        )
+
+    def __call__(self, event_handler: EventHandler) -> EventHandler:
         self._handler = event_handler.handler
         self._parse_handler_arguments()
         return super().__call__(event_handler)
 
-    async def make_decision(self, ehctx: vq.EventHandlingContext) -> None:
+    async def make_decision(self, ehctx: EventHandlingContext) -> None:
         try:
-            mp = ehctx.epctx.extra[""]
+            ehctx.epctx.extra["cultivated_message"]
         except KeyError as err:
-            raise ExpectedMiddlewareToBeUsed("MessageProviderInitializer") from err
+            raise ExpectedMiddlewareToBeUsed(
+                "MakeMessageProviderOnNewMessage"
+            ) from err
 
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters
         for name, argument in parameters.items():
-            if inspect.isclass(argument.annotation) and issubclass(
-                argument.annotation, MessageProvider
-            ):
+            if argument.annotation is MessageProvider:
                 self._message_provider_argument_name = argument.name
-                if self._text_arguments:
-                    warnings.warn(
-                        "Use MessageProvider argument the first "
-                        "in the function (style recommendation)"
-                    )
-            elif ...:
+                # if self._text_arguments:
+                #     warnings.warn(
+                #         "Use MessageProvider argument the first "
+                #         "in the function (style recommendation)"
+                #     )
+            elif argument.annotation is EventHandlingContext:
+                self._ehctx_argument_name = argument.name
                 ...
 
     def _build_routing_regex(self) -> None:

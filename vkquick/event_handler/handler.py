@@ -31,17 +31,12 @@ class EventHandler(EasyDecorator):
         *,
         handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
         filters: ty.List[Filter] = None,
-        pass_ehctx_as_argument: bool = True,
     ):
         self._handler = __handler
         self._handling_event_types = handling_event_types or {
             __handler.__name__
         }
         self._filters = filters or []
-        self._pass_ehctx_as_argument = pass_ehctx_as_argument
-        self._available_arguments_name = frozenset(
-            inspect.signature(self._handler).parameters.keys()
-        )
 
     @property
     def handler(self):
@@ -123,9 +118,11 @@ class EventHandler(EasyDecorator):
             )
 
         await self._run_through_filters(ehctx)
-        await self._call_handler(ehctx)
+        await self._prepare_handler_for_call(ehctx)
 
-    async def _call_handler(self, ehctx: EventHandlingContext) -> None:
+    async def _prepare_handler_for_call(
+        self, ehctx: EventHandlingContext
+    ) -> None:
         handler_args = self._init_handler_args(ehctx)
         handler_kwargs = self._init_handler_kwargs(ehctx)
         baked_call = self._handler(*handler_args, **handler_kwargs)

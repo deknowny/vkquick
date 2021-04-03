@@ -46,8 +46,10 @@ class ExpectedMiddlewareToBeUsed(Exception):
         self._middleware_name = middleware_name
 
     def __str__(self):
-        return  (f"Expected `{self._middleware_name}` middleware to be used."
-                "Add it to the bot instance")
+        return (
+            f"Expected `{self._middleware_name}` middleware to be used."
+            "Add it to the bot instance"
+        )
 
 
 class NotCompatibleFilterError(Exception):

@@ -6,12 +6,11 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.ext.chatbot.utils import get_user_registration_date
+from vkquick.ext.chatbot.wrappers.base import Wrapper
 
 
 class PageEntity(Wrapper, abc.ABC):
-
     @abc.abstractmethod
     @property
     def fullname(self) -> str:
@@ -26,7 +25,7 @@ class PageEntity(Wrapper, abc.ABC):
         ...
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self.fields["id"]
 
     def mention(self, alias: ty.Optional[str] = None) -> str:
@@ -43,7 +42,7 @@ class PageEntity(Wrapper, abc.ABC):
     def _extra_fields_to_format(self) -> dict:
         return {"fullname": self.fullname}
 
-    def __format__(self, format_spec):
+    def __format__(self, format_spec) -> str:
         format_value = super().__format__(format_spec)
         if format_spec.startswith("@"):
             format_value = format_value[1:]
@@ -65,7 +64,6 @@ class Group(PageEntity):
 
 
 class User(PageEntity):
-
     def is_group(self) -> bool:
         return False
 
