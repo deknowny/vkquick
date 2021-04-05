@@ -11,8 +11,8 @@ from vkquick.ext.chatbot.wrappers.base import Wrapper
 
 
 class PageEntity(Wrapper, abc.ABC):
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def fullname(self) -> str:
         ...
 

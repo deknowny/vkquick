@@ -3,21 +3,48 @@ import re
 import typing as ty
 import warnings
 
+from vkquick.exceptions import FilterFailedError
 from vkquick.bases.filter import Filter
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
-from vkquick.exceptions import ExpectedMiddlewareToBeUsed
-from vkquick.ext.chatbot.filters.command.text_cutters.base import TextCutter
-from vkquick.ext.chatbot.filters.command.text_cutters.integer import Integer
+from vkquick.ext.chatbot.exceptions import BadArgumentError
+from vkquick.ext.chatbot.filters.base import CommandFilter
+from vkquick.ext.chatbot.filters.command.statuses import (
+    CommandStatus,
+    NotRouted,
+    IncorrectArgument,
+    UnexpectedArgument,
+    MissedArgument
+)
+from vkquick.ext.chatbot.filters.command.text_cutters.base import TextCutter, CommandTextArgument, Argument
+from vkquick.ext.chatbot.filters.command.text_cutters.cutters import Integer
 from vkquick.ext.chatbot.providers.message import MessageProvider
+from vkquick.ext.chatbot.filters.command.context import CommandContext
+from vkquick.bases.easy_decorator import EasyDecorator
 
 
-def _resolve_typing(parameter: inspect.Parameter):
-    if typing_type is int:
+def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
+    arg_name = parameter.name
+    if parameter.default == parameter.empty:
+        arg_settings = Argument()
+    else:
+        arg_settings = parameter.default
+
+    arg_cutter = _resolve_cutter(parameter.annotation)
+
+    return CommandTextArgument(
+        argument_name=arg_name,
+        argument_settings=arg_settings,
+        cutter=arg_cutter
+    )
+
+
+def _resolve_cutter(argtype: ty.Any) -> TextCutter:
+    if argtype is int:
         return Integer()
 
 
-class Command(Filter, EventHandler):
+class Command(EventHandler, CommandFilter, EasyDecorator):
 
     __accepted_event_types__ = frozenset({"message_new", 4})
 
@@ -31,14 +58,14 @@ class Command(Filter, EventHandler):
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         previous_filters: ty.Optional[ty.List[Filter]] = None,
     ) -> None:
-        self._names = names
-        self._prefixes = prefixes
+        self._names = names or set()
+        self._prefixes = prefixes or set()
         self._allow_regex = allow_regex
         self._routing_re_flags = routing_re_flags
 
-        self._text_arguments: ty.List[ty.Tuple[str, TextCutter]] = []
+        self._text_arguments: ty.List[CommandTextArgument] = []
         self._message_provider_argument_name: ty.Optional[str] = None
-        self._ehctx_argument_name: ty.Optional[str] = None
+        self._ctx_argument_name: ty.Optional[str] = None
 
         self._build_routing_regex()
 
@@ -54,18 +81,60 @@ class Command(Filter, EventHandler):
             filters=previous_filters,
         )
 
-    def __call__(self, event_handler: EventHandler) -> EventHandler:
-        self._handler = event_handler.handler
         self._parse_handler_arguments()
-        return super().__call__(event_handler)
 
-    async def make_decision(self, ehctx: EventHandlingContext) -> None:
-        try:
-            ehctx.epctx.extra["cultivated_message"]
-        except KeyError as err:
-            raise ExpectedMiddlewareToBeUsed(
-                "MakeMessageProviderOnNewMessage"
-            ) from err
+    async def make_decision(self, ctx: CommandContext) -> None:
+        matched_routing = self._command_routing_regex.match(
+            ctx.mp.storage.text
+        )
+        if matched_routing is None:
+            raise FilterFailedError("Routing isn't matched", extra_payload_params={
+                "status": CommandStatus.NOT_ROUTED,
+                "payload:": NotRouted()
+            })
+        else:
+            ...
+
+    async def _parse_arguments(self, ctx: CommandContext) -> None:
+        remain_string = ctx.mp.storage.text.lstrip()
+        for argtype in self._text_arguments:
+
+            remain_string = remain_string.lstrip()
+
+            if not remain_string:
+                raise FilterFailedError("Missed an argument", extra_payload_params={
+                    "status": CommandStatus.MISSED_ARGUMENT,
+                    "payload:": MissedArgument(command_argument=argtype, remain_string=remain_string)
+                })
+
+            try:
+                parsing_response = argtype.cutter.cut_part(remain_string)
+            except BadArgumentError as err:
+                raise FilterFailedError("Missed an argument", extra_payload_params={
+                    "status": CommandStatus.INCORRECT_ARGUMENT,
+                    "payload:": IncorrectArgument(command_argument=argtype, remain_string=remain_string, parsing_error=err)
+                }) from err
+
+            else:
+                remain_string = parsing_response.new_arguments_string.lstrip()
+                argument_value = argtype.cutter.cast_to_type(ctx, parsing_response.parsed_part)
+
+        if remain_string:
+            raise FilterFailedError("Got unexpected argument", extra_payload_params={
+                "status": CommandStatus.UNEXPECTED_ARGUMENT,
+                "payload:": UnexpectedArgument(remain_string=remain_string)
+            })
+
+    async def _handle_event(self, ehctx: EventHandlingContext) -> None:
+        ctx = CommandContext(
+            epctx=ehctx.epctx,
+            event_handler=ehctx.event_handler,
+            handling_status=ehctx.handling_status,
+            handling_payload=ehctx.handling_payload,
+            handler_arguments=ehctx.handler_arguments,
+            extra=ehctx.extra
+        )
+        await EventHandler._handle_event(self, ehctx=ctx)
 
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters
@@ -77,9 +146,12 @@ class Command(Filter, EventHandler):
                 #         "Use MessageProvider argument the first "
                 #         "in the function (style recommendation)"
                 #     )
-            elif argument.annotation is EventHandlingContext:
-                self._ehctx_argument_name = argument.name
-                ...
+            elif argument.annotation is CommandContext:
+                self._ctx_argument_name = argument.name
+
+            else:
+                text_argument = _resolve_typing(argument)
+                self._text_arguments.append(text_argument)
 
     def _build_routing_regex(self) -> None:
         """

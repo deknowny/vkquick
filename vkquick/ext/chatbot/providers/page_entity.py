@@ -8,9 +8,11 @@ from vkquick.ext.chatbot.providers.base import Provider
 from vkquick.ext.chatbot.wrappers.page_entities import Group, PageEntity, User
 
 T = ty.TypeVar("T")
+CO_T = ty.TypeVar("CO_T", bound=PageEntity)
 
 
-class PageEntityProvider(Provider[PageEntity], abc.ABC):
+class PageEntityProvider(Provider[CO_T], abc.ABC):
+
     @classmethod
     @abc.abstractmethod
     async def fetch_one(
