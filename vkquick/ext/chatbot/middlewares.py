@@ -6,7 +6,7 @@ from vkquick.ext.chatbot.providers.message import MessageProvider
 class MakeMessageProviderOnNewMessage(Middleware):
     async def foreword(self, epctx: EventProcessingContext) -> None:
         if epctx.event.type == 4:
-            updated_message = epctx.bot.api.messages.get_by_id(
+            updated_message = await epctx.bot.api.messages.get_by_id(
                 ..., message_ids=epctx.event.content[1]
             )
             cultivated_message = updated_message["items"][0]
@@ -15,11 +15,15 @@ class MakeMessageProviderOnNewMessage(Middleware):
             )
         elif epctx.event.type == "message_new":
             if "message" in epctx.event.object:
-                epctx.extra["message_provider"] = MessageProvider.from_mapping(
+                epctx.extra[
+                    "message_provider"
+                ] = MessageProvider.from_mapping(
                     epctx.bot.api, epctx.event.object["message"]
                 )
             else:
-                epctx.extra["message_provider"] = MessageProvider.from_mapping(
+                epctx.extra[
+                    "message_provider"
+                ] = MessageProvider.from_mapping(
                     epctx.bot.api, epctx.event.object
                 )
         else:

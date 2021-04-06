@@ -16,13 +16,12 @@ class CommandTextArgument(ty.NamedTuple):
 
 class Argument:
     def __init__(
-        self, *,
+        self,
+        *,
         description: ty.Optional[str] = None,
         cast_to_type: bool = True,
         callbacks: ty.Optional[
-            ty.List[
-                ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]
-            ]
+            ty.List[ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]]
         ] = None
     ) -> None:
         self._description = description
@@ -42,9 +41,9 @@ class Argument:
         return self._cast_to_type
 
     @property
-    def callbacks(self) -> ty.List[
-        ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]
-    ]:
+    def callbacks(
+        self,
+    ) -> ty.List[ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]]:
         return self._callbacks
 
     @property
@@ -58,7 +57,6 @@ class CutterParsingResponse(ty.NamedTuple):
 
 
 class TextCutter(abc.ABC):
-
     def __init__(self, *, generic_types: ty.Optional[ty.List[type]] = None):
         self._generic_types = generic_types or []
 
@@ -78,15 +76,13 @@ class TextCutter(abc.ABC):
 
 
 def cut_part_via_regex(
-    regex: ty.Pattern,
-    arguments_string: str,
-    group: ty.Union[str, int] = 0
+    regex: ty.Pattern, arguments_string: str, group: ty.Union[str, int] = 0
 ) -> CutterParsingResponse:
     matched = regex.match(arguments_string)
     if matched:
         new_arguments_string = arguments_string[
             matched.end() :
-        ]  # black: ignore
+        ]
         return CutterParsingResponse(
             matched.group(group), new_arguments_string
         )

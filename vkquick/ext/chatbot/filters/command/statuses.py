@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import enum
 import typing as ty
 
-from vkquick.bases.filter import Filter
-from vkquick.exceptions import FilterFailedError
+
 from vkquick.event_handler.statuses import StatusPayload
-from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters.command.command import CommandTextArgument
+
+if ty.TYPE_CHECKING:
+    from vkquick.ext.chatbot.exceptions import BadArgumentError
+    from vkquick.ext.chatbot.filters.command.command import CommandTextArgument
 
 
 @enum.unique

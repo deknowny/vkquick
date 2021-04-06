@@ -25,6 +25,8 @@ from vkquick.exceptions import (
 class EventHandler(EasyDecorator):
     """ """
 
+    context_factory: ty.Type[EventHandlingContext] = EventHandlingContext
+
     def __init__(
         self,
         __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
@@ -104,7 +106,6 @@ class EventHandler(EasyDecorator):
                 ehctx.handling_payload = FilterFailed(
                     filter=filter_, raised_error=error
                 )
-                await filter_.handle_exception(ehctx)
                 raise StopHandlingEvent(
                     status=EventHandlingStatus.FILTER_FAILED,
                     payload=FilterFailed(filter=filter_, raised_error=error),
@@ -125,14 +126,18 @@ class EventHandler(EasyDecorator):
     ) -> None:
         handler_args = self._init_handler_args(ehctx)
         handler_kwargs = self._init_handler_kwargs(ehctx)
-        baked_call = self._handler(*handler_args, **handler_kwargs)
-        returned_value = await baked_call
+        returned_value = await self._call_handler(ehctx, handler_args, handler_kwargs)
         raise StopHandlingEvent(
             status=EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY,
             payload=CalledHandlerSuccessfully(
                 handler_returned_value=returned_value
             ),
         )
+
+    async def _call_handler(self, ehctx: EventHandlingContext, args, kwargs) -> ty.Any:
+        baked_call = self._handler(*args, **kwargs)
+        returned_value = await baked_call
+        return returned_value
 
     def _init_handler_kwargs(self, ehctx: EventHandlingContext) -> ty.Mapping:
         return {}

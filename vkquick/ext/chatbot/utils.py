@@ -1,10 +1,20 @@
 import datetime
+import random
 import re
 import typing as ty
 
 import aiohttp
 
 from vkquick import json_parser_policy
+
+
+
+def random_id(side: int = 2 ** 31 - 1) -> int:
+    """
+    Случайное число в диапазоне +-`side`.
+    Используется для API метода `messages.send`
+    """
+    return random.randint(-side, +side)
 
 
 def peer(chat_id: int = 0) -> int:

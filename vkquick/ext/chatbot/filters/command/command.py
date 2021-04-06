@@ -14,9 +14,13 @@ from vkquick.ext.chatbot.filters.command.statuses import (
     NotRouted,
     IncorrectArgument,
     UnexpectedArgument,
-    MissedArgument
+    MissedArgument,
 )
-from vkquick.ext.chatbot.filters.command.text_cutters.base import TextCutter, CommandTextArgument, Argument
+from vkquick.ext.chatbot.filters.command.text_cutters.base import (
+    TextCutter,
+    CommandTextArgument,
+    Argument,
+)
 from vkquick.ext.chatbot.filters.command.text_cutters.cutters import Integer
 from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.filters.command.context import CommandContext
@@ -35,7 +39,7 @@ def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     return CommandTextArgument(
         argument_name=arg_name,
         argument_settings=arg_settings,
-        cutter=arg_cutter
+        cutter=arg_cutter,
     )
 
 
@@ -45,6 +49,8 @@ def _resolve_cutter(argtype: ty.Any) -> TextCutter:
 
 
 class Command(EventHandler, CommandFilter, EasyDecorator):
+
+    context_factory = CommandContext
 
     __accepted_event_types__ = frozenset({"message_new", 4})
 
@@ -56,7 +62,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         prefixes: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        previous_filters: ty.Optional[ty.List[Filter]] = None,
+        previous_filters: ty.Optional[ty.List[CommandFilter]] = None,
     ) -> None:
         self._names = names or set()
         self._prefixes = prefixes or set()
@@ -83,58 +89,86 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
         self._parse_handler_arguments()
 
+    def _init_handler_kwargs(self, ctx: CommandContext) -> ty.Mapping:
+        function_arguments = ctx.extra["text_arguments"].copy()
+        if self._ctx_argument_name is not None:
+            function_arguments[self._ctx_argument_name] = ctx
+        if self._message_provider_argument_name is not None:
+            function_arguments[self._message_provider_argument_name] = ctx.mp
+
+        return function_arguments
+
+    def _init_handler_args(self, ehctx: EventHandlingContext) -> ty.Sequence:
+        return ()
+
+    async def _call_handler(self, ctx: CommandContext, args, kwargs) -> ty.Any:
+        func_response = await EventHandler._call_handler(self, ctx, args, kwargs)
+
     async def make_decision(self, ctx: CommandContext) -> None:
         matched_routing = self._command_routing_regex.match(
             ctx.mp.storage.text
         )
         if matched_routing is None:
-            raise FilterFailedError("Routing isn't matched", extra_payload_params={
-                "status": CommandStatus.NOT_ROUTED,
-                "payload:": NotRouted()
-            })
+            raise FilterFailedError(
+                "Routing isn't matched",
+                extra_payload_params={
+                    "status": CommandStatus.NOT_ROUTED,
+                    "payload:": NotRouted(),
+                },
+            )
         else:
-            ...
+            # Make text arguments
+            ctx.extra["text_arguments"] = {}
+            remain_string = ctx.mp.storage.text[matched_routing.end(): ]
+            await self._parse_arguments(ctx, remain_string=remain_string)
 
-    async def _parse_arguments(self, ctx: CommandContext) -> None:
-        remain_string = ctx.mp.storage.text.lstrip()
+    async def _parse_arguments(self, ctx: CommandContext, remain_string: str) -> None:
         for argtype in self._text_arguments:
-
             remain_string = remain_string.lstrip()
-
             if not remain_string:
-                raise FilterFailedError("Missed an argument", extra_payload_params={
-                    "status": CommandStatus.MISSED_ARGUMENT,
-                    "payload:": MissedArgument(command_argument=argtype, remain_string=remain_string)
-                })
+                raise FilterFailedError(
+                    "Missed an argument",
+                    extra_payload_params={
+                        "status": CommandStatus.MISSED_ARGUMENT,
+                        "payload:": MissedArgument(
+                            command_argument=argtype,
+                            remain_string=remain_string,
+                        ),
+                    },
+                )
 
             try:
                 parsing_response = argtype.cutter.cut_part(remain_string)
             except BadArgumentError as err:
-                raise FilterFailedError("Missed an argument", extra_payload_params={
-                    "status": CommandStatus.INCORRECT_ARGUMENT,
-                    "payload:": IncorrectArgument(command_argument=argtype, remain_string=remain_string, parsing_error=err)
-                }) from err
+                raise FilterFailedError(
+                    "Missed an argument",
+                    extra_payload_params={
+                        "status": CommandStatus.INCORRECT_ARGUMENT,
+                        "payload:": IncorrectArgument(
+                            command_argument=argtype,
+                            remain_string=remain_string,
+                            parsing_error=err,
+                        ),
+                    },
+                ) from err
 
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()
-                argument_value = argtype.cutter.cast_to_type(ctx, parsing_response.parsed_part)
+                argument_value = argtype.cutter.cast_to_type(
+                    ctx, parsing_response.parsed_part
+                )
+                ctx.extra["text_arguments"][argtype.argument_name] = argument_value
 
         if remain_string:
-            raise FilterFailedError("Got unexpected argument", extra_payload_params={
-                "status": CommandStatus.UNEXPECTED_ARGUMENT,
-                "payload:": UnexpectedArgument(remain_string=remain_string)
-            })
-
-    async def _handle_event(self, ehctx: EventHandlingContext) -> None:
-        ctx = CommandContext(
-            epctx=ehctx.epctx,
-            event_handler=ehctx.event_handler,
-            handling_status=ehctx.handling_status,
-            handling_payload=ehctx.handling_payload,
-            handler_arguments=ehctx.handler_arguments,
-            extra=ehctx.extra
-        )
-        await EventHandler._handle_event(self, ehctx=ctx)
+            raise FilterFailedError(
+                "Got unexpected argument",
+                extra_payload_params={
+                    "status": CommandStatus.UNEXPECTED_ARGUMENT,
+                    "payload:": UnexpectedArgument(
+                        remain_string=remain_string
+                    ),
+                },
+            )
 
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters

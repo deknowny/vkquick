@@ -48,7 +48,7 @@ class EventProcessingContext:
         Returns:
 
         """
-        ehctx = EventHandlingContext(self, handler)
+        ehctx = handler.context_factory(self, handler)
         self.event_handling_contexts[handler] = ehctx
         return ehctx
 
@@ -256,7 +256,6 @@ class Bot:
         *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
-        pass_ehctx_as_argument: bool = True,
     ) -> EventHandler:
         """
         Добавляет обработчик события в бота.
@@ -281,7 +280,6 @@ class Bot:
                 __handler,
                 handling_event_types=handling_event_types,
                 filters=filters,
-                pass_ehctx_as_argument=pass_ehctx_as_argument,
             )
 
         self._event_handlers.append(__handler)

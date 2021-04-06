@@ -12,7 +12,6 @@ CO_T = ty.TypeVar("CO_T", bound=PageEntity)
 
 
 class PageEntityProvider(Provider[CO_T], abc.ABC):
-
     @classmethod
     @abc.abstractmethod
     async def fetch_one(
