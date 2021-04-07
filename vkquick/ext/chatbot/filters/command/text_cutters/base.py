@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-import re
 import typing as ty
 
 from vkquick.ext.chatbot.filters.command.context import CommandContext
@@ -22,12 +21,18 @@ class Argument:
         cast_to_type: bool = True,
         callbacks: ty.Optional[
             ty.List[ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]]
-        ] = None
+        ] = None,
+        cutter: ty.Optional[TextCutter] = None,
+        default: ty.Optional = None,
+        default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None,
     ) -> None:
         self._description = description
         self._cast_to_type = cast_to_type
         self._callbacks = callbacks
         self._extra = {}
+        self._cutter = cutter
+        self._default = default
+        self._default_factory = default_factory
 
     def add_extra(self, **kwargs):
         self._extra = kwargs
@@ -50,18 +55,42 @@ class Argument:
     def extra(self) -> dict:
         return self._extra
 
+    @property
+    def cutter(self) -> TextCutter:
+        return self._cutter
+
+    @property
+    def default(self):
+        return self._default
+
+    @property
+    def default_factory(self):
+        return self._default_factory
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"description={self._description!r}, "
+            f"cast_to_type={self._cast_to_type!r}, "
+            f"callbacks={self._callbacks!r}, "
+            f"cutter={self._cutter!r}, "
+            f"extra={self._extra!r}"
+            ")"
+        )
+
 
 class CutterParsingResponse(ty.NamedTuple):
     parsed_part: str
     new_arguments_string: str
+    extra: dict
 
 
 class TextCutter(abc.ABC):
-    def __init__(self, *, generic_types: ty.Optional[ty.List[type]] = None):
+    def __init__(self, *, generic_types: ty.Optional[ty.List[TextCutter]] = None):
         self._generic_types = generic_types or []
 
     @property
-    def generic_types(self) -> ty.List[type]:
+    def generic_types(self) -> ty.List[TextCutter]:
         return self._generic_types
 
     @abc.abstractmethod
@@ -70,9 +99,12 @@ class TextCutter(abc.ABC):
 
     @abc.abstractmethod
     async def cast_to_type(
-        self, ctx: CommandContext, parsed_part: str
+        self, ctx: CommandContext, parsing_response: CutterParsingResponse
     ) -> ty.Any:
         ...
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
 
 
 def cut_part_via_regex(
@@ -84,7 +116,7 @@ def cut_part_via_regex(
             matched.end() :
         ]
         return CutterParsingResponse(
-            matched.group(group), new_arguments_string
+            matched.group(group), new_arguments_string, extra={"match_object": matched}
         )
 
     raise BadArgumentError("Regex didn't matched")

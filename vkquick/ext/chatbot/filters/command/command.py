@@ -1,5 +1,6 @@
 import inspect
 import re
+import types
 import typing as ty
 import warnings
 
@@ -21,7 +22,13 @@ from vkquick.ext.chatbot.filters.command.text_cutters.base import (
     CommandTextArgument,
     Argument,
 )
-from vkquick.ext.chatbot.filters.command.text_cutters.integer import Integer
+from vkquick.ext.chatbot.filters.command.text_cutters.cutters import (
+    IntegerCutter,
+    FloatCutter,
+    WordCutter,
+    StringCutter,
+    OptionalCutter
+)
 from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.filters.command.context import CommandContext
 from vkquick.bases.easy_decorator import EasyDecorator
@@ -29,12 +36,20 @@ from vkquick.bases.easy_decorator import EasyDecorator
 
 def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     arg_name = parameter.name
-    if parameter.default == parameter.empty:
-        arg_settings = Argument()
+    if not isinstance(parameter.default, Argument) and parameter.default != parameter.empty:
+        arg_settings = Argument(default=parameter.default)
+        arg_cutter = _resolve_cutter(arg_settings, parameter.annotation, parameter)
+        if not isinstance(arg_cutter, OptionalCutter):
+            arg_cutter = OptionalCutter(default=arg_settings.default, generic_types=[arg_cutter])
     else:
         arg_settings = parameter.default
+        if arg_settings == parameter.empty:
+            arg_settings = Argument()
+        if arg_settings.cutter is None:
+            arg_cutter = _resolve_cutter(arg_settings, parameter.annotation, parameter)
+        else:
+            arg_cutter = arg_settings.cutter
 
-    arg_cutter = _resolve_cutter(parameter.annotation)
 
     return CommandTextArgument(
         argument_name=arg_name,
@@ -43,9 +58,30 @@ def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     )
 
 
-def _resolve_cutter(argtype: ty.Any) -> TextCutter:
+def _resolve_cutter(argument_settings: Argument, argtype: ty.Any, parameter: inspect.Parameter) -> TextCutter:
     if argtype is int:
-        return Integer()
+        return IntegerCutter()
+    elif argtype is float:
+        return FloatCutter()
+    elif argtype is str:
+        if parameter.kind == parameter.KEYWORD_ONLY:
+            return StringCutter()
+        else:
+            return WordCutter()
+
+    # GenericAlias
+    elif "__origin__" in dir(argtype):
+        if argtype.__origin__ is ty.Union:
+            none_type = type(None)
+            if none_type in argtype.__args__:
+                return OptionalCutter(
+                    default=argument_settings.default,
+                    default_factory=argument_settings.default_factory,
+                    generic_types=[_resolve_cutter(argument_settings, argtype.__args__[0], parameter)]
+                )
+
+    else:
+        raise TypeError(f"Can't resolve cutter from parameter {parameter}")
 
 
 class Command(EventHandler, CommandFilter, EasyDecorator):
@@ -113,7 +149,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         if matched_routing is None:
             raise FilterFailedError(
                 "Routing isn't matched",
-                extra_payload_params={
+                extra={
                     "status": CommandStatus.NOT_ROUTED,
                     "payload:": NotRouted(),
                 },
@@ -127,24 +163,23 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     async def _parse_arguments(self, ctx: CommandContext, remain_string: str) -> None:
         for argtype in self._text_arguments:
             remain_string = remain_string.lstrip()
-            if not remain_string:
-                raise FilterFailedError(
-                    "Missed an argument",
-                    extra_payload_params={
-                        "status": CommandStatus.MISSED_ARGUMENT,
-                        "payload:": MissedArgument(
-                            command_argument=argtype,
-                            remain_string=remain_string,
-                        ),
-                    },
-                )
-
             try:
                 parsing_response = argtype.cutter.cut_part(remain_string)
             except BadArgumentError as err:
+                if not remain_string:
+                    raise FilterFailedError(
+                        "Missed an argument",
+                        extra={
+                            "status": CommandStatus.MISSED_ARGUMENT,
+                            "payload:": MissedArgument(
+                                command_argument=argtype,
+                                remain_string=remain_string,
+                            ),
+                        },
+                    )
                 raise FilterFailedError(
                     "Missed an argument",
-                    extra_payload_params={
+                    extra={
                         "status": CommandStatus.INCORRECT_ARGUMENT,
                         "payload:": IncorrectArgument(
                             command_argument=argtype,
@@ -156,15 +191,15 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()
-                argument_value = argtype.cutter.cast_to_type(
-                    ctx, parsing_response.parsed_part
+                argument_value = await argtype.cutter.cast_to_type(
+                    ctx, parsing_response
                 )
                 ctx.extra["text_arguments"][argtype.argument_name] = argument_value
 
         if remain_string:
             raise FilterFailedError(
                 "Got unexpected argument",
-                extra_payload_params={
+                extra={
                     "status": CommandStatus.UNEXPECTED_ARGUMENT,
                     "payload:": UnexpectedArgument(
                         remain_string=remain_string

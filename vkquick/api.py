@@ -48,14 +48,12 @@ class TokenOwnerEntity:
         self.entity_type = entity_type
         self.scheme = scheme
 
-    @property
     def is_group(self) -> bool:
         """
         Является ли сущность группой
         """
         return self.entity_type == TokenOwnerType.GROUP
 
-    @property
     def is_user(self) -> bool:
         """
         Является ли сущность пользователем
@@ -116,18 +114,6 @@ class API(SessionContainerMixin):
         Токен
         """
         return self._token
-
-    def short_token(self, length: int) -> str:
-        """
-        ааа
-
-        Args:
-          length: Длина Ключа
-
-        Returns:
-            Обрезанный ключ
-        """
-        return f"{self._token[:length]}..."
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -344,6 +330,17 @@ class API(SessionContainerMixin):
             self._last_request_stamp = now
             return 0
 
+    def __repr__(self):
+        owner = self._token_owner
+        if owner is None:
+            return f"<vkquick.{self.__class__.__name__}>"
+        else:
+            if owner.is_group():
+                owner_name = owner.scheme["name"]
+            else:
+                owner_name = f"{owner.scheme['first_name']} {owner.scheme['last_name']}"
+            return f"<vkquick.{self.__class__.__name__} owner={owner_name!r}>"
+
 
 def _convert_param_value(__value):
     """Конвертирует параметер API запроса в соотвествиями
@@ -387,33 +384,16 @@ def _convert_param_value(__value):
 
 
 def _convert_params_for_api(__params: dict):
-    """Конвертирует словарь из параметров для метода API,
+    """
+    Конвертирует словарь из параметров для метода API,
     учитывая определенные особенности
 
     Args:
       __params: Параметры, передаваемые для вызова метода API
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
 
     Returns:
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      в запрос и получить ожидаемый результат
+        Новые параметры, которые можно передать
+        в запрос и получить ожидаемый результат
 
     """
     updated_params = {

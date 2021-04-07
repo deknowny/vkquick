@@ -194,7 +194,7 @@ class Bot:
         """
         if self._events_factory is None:
             owner = await self._api.fetch_token_owner_entity()
-            if owner.is_group:
+            if owner.is_group():
                 self._events_factory = GroupLongPoll(self._api)
             else:
                 self._events_factory = UserLongPoll(self._api)

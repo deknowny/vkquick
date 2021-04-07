@@ -147,5 +147,5 @@ class EventHandler(EasyDecorator):
 
     def __repr__(self):
         return (
-            f"<vkquick.EventHandler handler_name={self._handler.__name__!r}>"
+            f"<vkquick.{self.__class__.__name__} handler_name={self._handler.__name__!r}>"
         )
