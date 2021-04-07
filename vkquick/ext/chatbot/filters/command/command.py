@@ -21,7 +21,7 @@ from vkquick.ext.chatbot.filters.command.text_cutters.base import (
     CommandTextArgument,
     Argument,
 )
-from vkquick.ext.chatbot.filters.command.text_cutters.cutters import Integer
+from vkquick.ext.chatbot.filters.command.text_cutters.integer import Integer
 from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.filters.command.context import CommandContext
 from vkquick.bases.easy_decorator import EasyDecorator
@@ -103,6 +103,8 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
     async def _call_handler(self, ctx: CommandContext, args, kwargs) -> ty.Any:
         func_response = await EventHandler._call_handler(self, ctx, args, kwargs)
+        if func_response is not None:
+            await ctx.mp.reply(func_response)
 
     async def make_decision(self, ctx: CommandContext) -> None:
         matched_routing = self._command_routing_regex.match(
