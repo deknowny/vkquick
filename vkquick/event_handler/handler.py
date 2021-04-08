@@ -126,7 +126,9 @@ class EventHandler(EasyDecorator):
     ) -> None:
         handler_args = self._init_handler_args(ehctx)
         handler_kwargs = self._init_handler_kwargs(ehctx)
-        returned_value = await self._call_handler(ehctx, handler_args, handler_kwargs)
+        returned_value = await self._call_handler(
+            ehctx, handler_args, handler_kwargs
+        )
         raise StopHandlingEvent(
             status=EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY,
             payload=CalledHandlerSuccessfully(
@@ -134,7 +136,9 @@ class EventHandler(EasyDecorator):
             ),
         )
 
-    async def _call_handler(self, ehctx: EventHandlingContext, args, kwargs) -> ty.Any:
+    async def _call_handler(
+        self, ehctx: EventHandlingContext, args, kwargs
+    ) -> ty.Any:
         baked_call = self._handler(*args, **kwargs)
         returned_value = await baked_call
         return returned_value
@@ -146,6 +150,4 @@ class EventHandler(EasyDecorator):
         return (ehctx,)
 
     def __repr__(self):
-        return (
-            f"<vkquick.{self.__class__.__name__} handler_name={self._handler.__name__!r}>"
-        )
+        return f"<vkquick.{self.__class__.__name__} handler_name={self._handler.__name__!r}>"

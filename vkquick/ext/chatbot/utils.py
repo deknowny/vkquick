@@ -8,7 +8,6 @@ import aiohttp
 from vkquick import json_parser_policy
 
 
-
 def random_id(side: int = 2 ** 31 - 1) -> int:
     """
     Случайное число в диапазоне +-`side`.

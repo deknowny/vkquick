@@ -95,9 +95,7 @@ class FilterFailedError(Exception):
         self.extra = extra
 
     def __repr__(self):
-        return (
-            f"""{self.__class__.__name__}("{self.reason}", extra={self.extra})"""
-        )
+        return f"""{self.__class__.__name__}("{self.reason}", extra={self.extra})"""
 
 
 class _ParamsScheme(tye.TypedDict):

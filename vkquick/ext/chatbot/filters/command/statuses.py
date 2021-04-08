@@ -8,7 +8,9 @@ from vkquick.event_handler.statuses import StatusPayload
 
 if ty.TYPE_CHECKING:
     from vkquick.ext.chatbot.exceptions import BadArgumentError
-    from vkquick.ext.chatbot.filters.command.command import CommandTextArgument
+    from vkquick.ext.chatbot.filters.command.command import (
+        CommandTextArgument,
+    )
 
 
 @enum.unique

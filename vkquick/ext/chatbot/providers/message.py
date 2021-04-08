@@ -21,8 +21,8 @@ def message_send_method(func) -> ty.Callable[..., ty.Awaitable]:
         kwargs.update(peer_ids=self.storage.peer_id)
         kwargs.update(
             random_id=random_id_()
-            if kwargs["random_id"] is None else
-            kwargs["random_id"]
+            if kwargs["random_id"] is None
+            else kwargs["random_id"]
         )
         if args:
             kwargs["message"] = args[0]
@@ -34,7 +34,6 @@ def message_send_method(func) -> ty.Callable[..., ty.Awaitable]:
 
 
 class MessageProvider(Provider[Message]):
-
     async def _send_message(self, params: dict):
         await self._api.method("messages.send", params)
 
@@ -80,7 +79,7 @@ class MessageProvider(Provider[Message]):
             subscribe_id=subscribe_id,
             content_source=content_source,
             peer_ids=self.storage.peer_id,
-            **kwargs
+            **kwargs,
         )
         if self.storage.id:
             params["reply_to"] = self.storage.id

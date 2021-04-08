@@ -14,7 +14,6 @@ from vkquick.ext.chatbot.middlewares import MakeMessageProviderOnNewMessage
 
 
 class ChatBot(Bot):
-
     def __init__(
         self,
         *,
@@ -31,11 +30,10 @@ class ChatBot(Bot):
             events_factory=events_factory,
             event_handlers=event_handlers,
             signals=signals,
-            middlewares=middlewares
+            middlewares=middlewares,
         )
         self._event_handlers.extend(commands or [])
         self._middlewares.append(MakeMessageProviderOnNewMessage())
-
 
     @easy_method_decorator
     def add_command(
@@ -55,7 +53,7 @@ class ChatBot(Bot):
                 prefixes=prefixes,
                 allow_regex=allow_regex,
                 routing_re_flags=routing_re_flags,
-                previous_filters=previous_filters
+                previous_filters=previous_filters,
             )
 
         self._event_handlers.append(__handler)
