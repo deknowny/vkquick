@@ -87,15 +87,11 @@ class NotCompatibleFilterError(Exception):
         )
 
 
+@dataclasses.dataclass
 class FilterFailedError(Exception):
     """ """
-
-    def __init__(self, reason: str, extra: dict):
-        self.reason = reason
-        self.extra = extra
-
-    def __repr__(self):
-        return f"""{self.__class__.__name__}("{self.reason}", extra={self.extra})"""
+    reason: ty.Optional[str] = None
+    extra: dict = dataclasses.field(default_factory=dict)
 
 
 class _ParamsScheme(tye.TypedDict):

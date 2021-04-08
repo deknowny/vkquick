@@ -114,7 +114,7 @@ def _resolve_cutter(
         else:
             return WordCutter()
 
-    # GenericAlias типы
+    # GenericAlias типы (не нашел способа иной проверки)
     elif "__origin__" in dir(argtype):
         if ty.get_origin(argtype) is ty.Union:
             none_type = type(None)
