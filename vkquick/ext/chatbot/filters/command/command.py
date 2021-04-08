@@ -5,7 +5,6 @@ import typing as ty
 import warnings
 
 from vkquick.exceptions import FilterFailedError
-from vkquick.bases.filter import Filter
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
 from vkquick.ext.chatbot.exceptions import BadArgumentError
@@ -27,7 +26,7 @@ from vkquick.ext.chatbot.filters.command.text_cutters.cutters import (
     FloatCutter,
     WordCutter,
     StringCutter,
-    OptionalCutter
+    OptionalCutter,
 )
 from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.filters.command.context import CommandContext
@@ -36,20 +35,28 @@ from vkquick.bases.easy_decorator import EasyDecorator
 
 def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     arg_name = parameter.name
-    if not isinstance(parameter.default, Argument) and parameter.default != parameter.empty:
+    if (
+        not isinstance(parameter.default, Argument)
+        and parameter.default != parameter.empty
+    ):
         arg_settings = Argument(default=parameter.default)
-        arg_cutter = _resolve_cutter(arg_settings, parameter.annotation, parameter)
+        arg_cutter = _resolve_cutter(
+            arg_settings, parameter.annotation, parameter
+        )
         if not isinstance(arg_cutter, OptionalCutter):
-            arg_cutter = OptionalCutter(default=arg_settings.default, generic_types=[arg_cutter])
+            arg_cutter = OptionalCutter(
+                default=arg_settings.default, generic_types=[arg_cutter]
+            )
     else:
         arg_settings = parameter.default
         if arg_settings == parameter.empty:
             arg_settings = Argument()
         if arg_settings.cutter is None:
-            arg_cutter = _resolve_cutter(arg_settings, parameter.annotation, parameter)
+            arg_cutter = _resolve_cutter(
+                arg_settings, parameter.annotation, parameter
+            )
         else:
             arg_cutter = arg_settings.cutter
-
 
     return CommandTextArgument(
         argument_name=arg_name,
@@ -58,7 +65,9 @@ def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     )
 
 
-def _resolve_cutter(argument_settings: Argument, argtype: ty.Any, parameter: inspect.Parameter) -> TextCutter:
+def _resolve_cutter(
+    argument_settings: Argument, argtype: ty.Any, parameter: inspect.Parameter
+) -> TextCutter:
     if argtype is int:
         return IntegerCutter()
     elif argtype is float:
@@ -77,7 +86,11 @@ def _resolve_cutter(argument_settings: Argument, argtype: ty.Any, parameter: ins
                 return OptionalCutter(
                     default=argument_settings.default,
                     default_factory=argument_settings.default_factory,
-                    generic_types=[_resolve_cutter(argument_settings, argtype.__args__[0], parameter)]
+                    generic_types=[
+                        _resolve_cutter(
+                            argument_settings, argtype.__args__[0], parameter
+                        )
+                    ],
                 )
 
     else:
@@ -137,8 +150,12 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     def _init_handler_args(self, ehctx: EventHandlingContext) -> ty.Sequence:
         return ()
 
-    async def _call_handler(self, ctx: CommandContext, args, kwargs) -> ty.Any:
-        func_response = await EventHandler._call_handler(self, ctx, args, kwargs)
+    async def _call_handler(
+        self, ctx: CommandContext, args, kwargs
+    ) -> ty.Any:
+        func_response = await EventHandler._call_handler(
+            self, ctx, args, kwargs
+        )
         if func_response is not None:
             await ctx.mp.reply(func_response)
 
@@ -157,14 +174,18 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         else:
             # Make text arguments
             ctx.extra["text_arguments"] = {}
-            remain_string = ctx.mp.storage.text[matched_routing.end(): ]
+            remain_string = ctx.mp.storage.text[matched_routing.end() :]
             await self._parse_arguments(ctx, remain_string=remain_string)
 
-    async def _parse_arguments(self, ctx: CommandContext, remain_string: str) -> None:
+    async def _parse_arguments(
+        self, ctx: CommandContext, remain_string: str
+    ) -> None:
         for argtype in self._text_arguments:
             remain_string = remain_string.lstrip()
             try:
-                parsing_response = argtype.cutter.cut_part(remain_string)
+                parsing_response = await argtype.cutter.cut_part(
+                    ctx, remain_string
+                )
             except BadArgumentError as err:
                 if not remain_string:
                     raise FilterFailedError(
@@ -191,10 +212,9 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()
-                argument_value = await argtype.cutter.cast_to_type(
-                    ctx, parsing_response
-                )
-                ctx.extra["text_arguments"][argtype.argument_name] = argument_value
+                ctx.extra["text_arguments"][
+                    argtype.argument_name
+                ] = parsing_response.parsed_part
 
         if remain_string:
             raise FilterFailedError(
@@ -210,16 +230,24 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters
         for name, argument in parameters.items():
-            if argument.annotation is MessageProvider:
-                self._message_provider_argument_name = argument.name
-                # if self._text_arguments:
-                #     warnings.warn(
-                #         "Use MessageProvider argument the first "
-                #         "in the function (style recommendation)"
-                #     )
-            elif argument.annotation is CommandContext:
+            if argument.annotation is CommandContext:
                 self._ctx_argument_name = argument.name
+                if (
+                    self._text_arguments
+                    or self._message_provider_argument_name is not None
+                ):
+                    warnings.warn(
+                        "Set `CommandContext` argument the first "
+                        "in the function (style recommendation)"
+                    )
 
+            elif argument.annotation is MessageProvider:
+                self._message_provider_argument_name = argument.name
+                if self._text_arguments:
+                    warnings.warn(
+                        "Set `MessageProvider` argument the first "
+                        "in the function (style recommendation)"
+                    )
             else:
                 text_argument = _resolve_typing(argument)
                 self._text_arguments.append(text_argument)
