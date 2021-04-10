@@ -4,7 +4,7 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.filters.command.context import CommandContext
+from vkquick.ext.chatbot.filters.command.context import Context
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 
 
@@ -19,7 +19,7 @@ class Argument:
     description: ty.Optional[str] = None
     cast_to_type: bool = True
     callbacks: ty.List[
-        ty.Callable[[CommandContext], ty.Awaitable[ty.Any]]
+        ty.Callable[[Context], ty.Awaitable[ty.Any]]
     ] = dataclasses.field(default_factory=list)
     cutter: ty.Optional[TextCutter] = None
     default: ty.Optional = None
@@ -35,23 +35,23 @@ class CutterParsingResponse:
 
 class TextCutter(abc.ABC):
     def __init__(
-        self, *, generic_types: ty.Optional[ty.List[TextCutter]] = None
+        self, *, typevars: ty.Optional[ty.List[TextCutter]] = None
     ):
-        self._generic_types = generic_types or []
+        self._typevars = typevars or []
 
     @property
-    def generic_types(self) -> ty.List[TextCutter]:
-        return self._generic_types
+    def typevars(self) -> ty.List[TextCutter]:
+        return self._typevars
 
     @abc.abstractmethod
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         ...
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}(generic_types={self._generic_types})"
+            f"{self.__class__.__name__}(generic_types={self._typevars})"
         )
 
 

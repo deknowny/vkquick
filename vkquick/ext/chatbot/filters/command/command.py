@@ -29,7 +29,7 @@ from vkquick.ext.chatbot.filters.command.text_cutters.cutters import (
     OptionalCutter,
 )
 from vkquick.ext.chatbot.providers.message import MessageProvider
-from vkquick.ext.chatbot.filters.command.context import CommandContext
+from vkquick.ext.chatbot.filters.command.context import Context
 from vkquick.bases.easy_decorator import EasyDecorator
 
 
@@ -138,7 +138,7 @@ def _resolve_cutter(
 
 class Command(EventHandler, CommandFilter, EasyDecorator):
 
-    context_factory = CommandContext
+    context_factory = Context
 
     __accepted_event_types__ = frozenset({"message_new", 4})
 
@@ -177,7 +177,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
         self._parse_handler_arguments()
 
-    def _init_handler_kwargs(self, ctx: CommandContext) -> ty.Mapping:
+    def _init_handler_kwargs(self, ctx: Context) -> ty.Mapping:
         function_arguments = ctx.extra["text_arguments"].copy()
         if self._ctx_argument_name is not None:
             function_arguments[self._ctx_argument_name] = ctx
@@ -190,7 +190,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         return ()
 
     async def _call_handler(
-        self, ctx: CommandContext, args, kwargs
+        self, ctx: Context, args, kwargs
     ) -> ty.Any:
         func_response = await EventHandler._call_handler(
             self, ctx, args, kwargs
@@ -198,7 +198,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         if func_response is not None:
             await ctx.mp.reply(func_response)
 
-    async def make_decision(self, ctx: CommandContext) -> None:
+    async def make_decision(self, ctx: Context) -> None:
         matched_routing = self._command_routing_regex.match(
             ctx.mp.storage.text
         )
@@ -217,7 +217,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
             await self._parse_arguments(ctx, remain_string=remain_string)
 
     async def _parse_arguments(
-        self, ctx: CommandContext, remain_string: str
+        self, ctx: Context, remain_string: str
     ) -> None:
         for argtype in self._text_arguments:
             remain_string = remain_string.lstrip()
@@ -269,7 +269,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     def _parse_handler_arguments(self):
         parameters = inspect.signature(self._handler).parameters
         for name, argument in parameters.items():
-            if argument.annotation is CommandContext:
+            if argument.annotation is Context:
                 self._ctx_argument_name = argument.name
                 if (
                     self._text_arguments

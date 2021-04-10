@@ -2,7 +2,7 @@ import re
 import typing as ty
 
 from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters.command.context import CommandContext
+from vkquick.ext.chatbot.filters.command.context import Context
 from vkquick.ext.chatbot.filters.command.text_cutters.base import (
     TextCutter,
     CutterParsingResponse,
@@ -15,7 +15,7 @@ class IntegerCutter(TextCutter):
     _pattern = re.compile(r"([+|-]?\d+)")
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=int
@@ -27,7 +27,7 @@ class FloatCutter(TextCutter):
     _pattern = re.compile(r"([+|-]?\d*(?:\.?\d+))")
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=float
@@ -39,7 +39,7 @@ class WordCutter(TextCutter):
     _pattern = re.compile(r"(\S+)")
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -49,7 +49,7 @@ class StringCutter(TextCutter):
     _pattern = re.compile(r"(.+)", flags=re.DOTALL)
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -58,7 +58,7 @@ class ParagraphCutter(TextCutter):
     _pattern = re.compile(r"(.+)")
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -76,10 +76,10 @@ class OptionalCutter(TextCutter):
         TextCutter.__init__(self, **kwargs)
 
     async def cut_part(
-        self, ctx: CommandContext, arguments_string: str
+        self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         try:
-            return await self.generic_types[0].cut_part(ctx, arguments_string)
+            return await self.typevars[0].cut_part(ctx, arguments_string)
         except BadArgumentError:
             if self._default_factory is not None:
                 return CutterParsingResponse(

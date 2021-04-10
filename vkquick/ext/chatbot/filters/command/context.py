@@ -4,7 +4,7 @@ from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.wrappers.message import Message
 
 
-class CommandContext(EventHandlingContext):
+class Context(EventHandlingContext):
     def __post_init__(self):
         try:
             self.epctx.extra["cultivated_message"]
