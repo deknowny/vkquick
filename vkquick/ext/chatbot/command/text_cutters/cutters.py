@@ -109,6 +109,27 @@ class UnionCutter(TextCutter):
         raise BadArgumentError("Regexes didn't matched")
 
 
+class GroupCutter(TextCutter):
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsed_parts = []
+        for typevar in self.typevars:
+            try:
+                parsed_value = await typevar.cut_part(ctx, arguments_string)
+            except BadArgumentError as err:
+                raise BadArgumentError("Regexes didn't matched") from err
+            else:
+                arguments_string = parsed_value.new_arguments_string
+                parsed_parts.append(parsed_value.parsed_part)
+                continue
+
+        return CutterParsingResponse(
+            parsed_part=tuple(parsed_parts),
+            new_arguments_string=arguments_string
+        )
+
+
 class _SequenceCutter(TextCutter):
 
     _factory: ty.Callable[[list], ty.Sequence]

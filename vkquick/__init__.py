@@ -32,7 +32,8 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UnionCutter,
     MutableSequenceCutter,
     ImmutableSequenceCutter,
-    UniqueSequenceCutter
+    UniqueSequenceCutter,
+    GroupCutter
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (

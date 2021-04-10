@@ -28,7 +28,7 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     StringCutter,
     WordCutter,
     UnionCutter,
-    MutableSequenceCutter,
+    MutableSequenceCutter, ImmutableSequenceCutter, GroupCutter, UniqueSequenceCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -125,6 +125,52 @@ def _resolve_cutter(
             arg_kind=arg_kind,
         )
         return MutableSequenceCutter(typevars=[typevar_cutter])
+    # Tuple sequence
+    elif (
+        arg_annotation.__class__ is ty._GenericAlias  # noqa
+        and ty.get_origin(arg_annotation) is tuple
+        and Ellipsis in ty.get_args(arg_annotation)
+    ):
+        typevar_cutter = _resolve_cutter(
+            arg_name=arg_name,
+            arg_annotation=ty.get_args(arg_annotation)[0],
+            arg_settings=arg_settings,
+            arg_kind=arg_kind,
+        )
+        return ImmutableSequenceCutter(typevars=[typevar_cutter])
+
+    # Tuple
+    elif (
+        arg_annotation.__class__ is ty._GenericAlias  # noqa
+        and ty.get_origin(arg_annotation) is tuple
+        and Ellipsis not in ty.get_args(arg_annotation)
+    ):
+
+        typevar_cutters = [
+            _resolve_cutter(
+                arg_name=arg_name,
+                arg_annotation=typevar,
+                arg_settings=arg_settings,
+                arg_kind=arg_kind,
+            )
+            for typevar in ty.get_args(arg_annotation)
+        ]
+
+        return GroupCutter(typevars=typevar_cutters)
+
+    # Set
+    elif (
+        arg_annotation.__class__ is ty._GenericAlias  # noqa
+        and ty.get_origin(arg_annotation) is set
+    ):
+        typevar_cutter = _resolve_cutter(
+            arg_name=arg_name,
+            arg_annotation=ty.get_args(arg_annotation)[0],
+            arg_settings=arg_settings,
+            arg_kind=arg_kind,
+        )
+        return UniqueSequenceCutter(typevars=[typevar_cutter])
+
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
 
