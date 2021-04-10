@@ -189,9 +189,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     def _init_handler_args(self, ehctx: EventHandlingContext) -> ty.Sequence:
         return ()
 
-    async def _call_handler(
-        self, ctx: Context, args, kwargs
-    ) -> ty.Any:
+    async def _call_handler(self, ctx: Context, args, kwargs) -> ty.Any:
         func_response = await EventHandler._call_handler(
             self, ctx, args, kwargs
         )

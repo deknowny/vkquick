@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-import functools
+import asyncio
 import typing as ty
+import dataclasses
 
+from vkquick import API
 from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.ext.chatbot.utils import random_id as random_id_
 from vkquick.ext.chatbot.providers.base import Provider
@@ -11,14 +13,101 @@ from vkquick.ext.chatbot.providers.page_entity import (
     PageEntityProvider,
     UserProvider,
 )
+from vkquick.ext.chatbot.providers.attachment import (
+    PhotoProvider,
+    DocumentProvider,
+)
+from vkquick.ext.chatbot.wrappers import Photo
 from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
 
-T = ty.TypeVar("T")
+T = ty.TypeVar("T", bound=TruncatedMessage)
+
+
+@dataclasses.dataclass
+class _LazyMessageResponseStorage:
+    mp: AnyMessageProvider
+    attached_photos: ty.List[ty.Union[bytes, str]] = dataclasses.field(
+        default_factory=list
+    )
+    downloaded_photos: ty.List[Photo] = dataclasses.field(
+        default_factory=list
+    )
+
+    async def fetch_new_fields(self) -> dict:
+        new_fields = {
+            "attachment": []  # Если пустой, то впоследствии удалится
+        }
+        # Attached photos
+        if len(self.attached_photos) > 10:
+            raise ValueError("Can't upload more than 10 photos")
+        elif len(self.attached_photos) > 5:
+            first_part = self.attached_photos[:6]
+            second_part = self.attached_photos[5:]
+            first_part_photos, second_part_photos = await asyncio.gather(
+                self.mp.upload_photos(*first_part),
+                self.mp.upload_photos(*second_part),
+            )
+            photos = [*first_part_photos, *second_part_photos]
+            new_fields["attachment"].extend(photo.storage for photo in photos)
+        elif len(self.attached_photos):
+            photos = await self.mp.upload_photos(*self.attached_photos)
+            new_fields["attachment"].extend(photo.storage for photo in photos)
+
+        # Downloaded photos
+        if len(self.downloaded_photos):
+            new_fields["attachment"].extend(self.downloaded_photos)
+
+        # Если нет вложений, то удаляем поле с вложениями
+        if not new_fields["attachment"]:
+            del new_fields["attachment"]
+
+        return new_fields
 
 
 class AnyMessageProvider(Provider[T]):
-    async def _send_message(self, params: dict) -> dict:
-        return await self._api.method("messages.send", params)
+    def __init__(self, *args, **kwargs):
+        Provider.__init__(self, *args, **kwargs)
+        self._response_storage = _LazyMessageResponseStorage(mp=self)
+
+    async def _send_message(self, params: dict) -> TruncatedMessageProvider:
+        new_fields = await self._response_storage.fetch_new_fields()
+        params.update(new_fields)
+        sent_message = await self._api.method("messages.send", params)
+        return TruncatedMessageProvider.from_mapping(
+            api=self._api, storage=sent_message[0]
+        )
+
+    def attach_photos(self, *photos: ty.Union[bytes, str, Photo, PhotoProvider]) -> None:
+        for photo in photos:
+            if isinstance(photo, (str, bytes)):
+                self._response_storage.attached_photos.append(photo)
+            elif isinstance(photo, Photo):
+                self._response_storage.downloaded_photos.append(photo)
+            elif isinstance(photo, PhotoProvider):
+                self._response_storage.downloaded_photos.append(photo.storage)
+
+    def attach_photo(self, photo: ty.Union[bytes, str, Photo, PhotoProvider]) -> None:
+        self.attach_photos(photo)
+
+    async def upload_photos(
+        self, *photos: ty.Union[bytes, str], attach_to_response: bool = False
+    ) -> ty.List[PhotoProvider]:
+        photos = await PhotoProvider.upload_many_to_message(
+            *photos, api=self._api, peer_id=self.storage.peer_id
+        )
+        if attach_to_response:
+            self._response_storage.downloaded_photos.extend(
+                photo.storage for photo in photos
+            )
+        return photos
+
+    async def upload_photo(
+        self, photo: ty.Union[bytes, str], attach_to_response: bool = False
+    ) -> PhotoProvider:
+        photos = await self.upload_photos(
+            photo, attach_to_response=attach_to_response
+        )
+        return photos[0]
 
     # Если использовать декоратор, чтобы получить все эти параметры как `kwargs`,
     # то по непонятным причинам pycharm распознает этот метод не как callable-объект.
@@ -74,8 +163,7 @@ class AnyMessageProvider(Provider[T]):
                 ],
                 "peer_id": self.storage.peer_id,
             }
-        sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
+        return await self._send_message(params)
 
     async def answer(
         self,
@@ -118,8 +206,7 @@ class AnyMessageProvider(Provider[T]):
             peer_ids=self.storage.peer_id,
             **kwargs,
         )
-        sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
+        return await self._send_message(params)
 
     async def forward(
         self,
@@ -171,8 +258,7 @@ class AnyMessageProvider(Provider[T]):
                 ],
                 "peer_id": self.storage.peer_id,
             }
-        sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
+        return await self._send_message(params)
 
 
 class TruncatedMessageProvider(AnyMessageProvider[TruncatedMessage]):
@@ -180,15 +266,19 @@ class TruncatedMessageProvider(AnyMessageProvider[TruncatedMessage]):
         if self.storage["message_id"] == 0:
             message = await self._api.messages.get_by_conversation_message_id(
                 peer_id=self.storage.peer_id,
-                conversation_message_ids=self.storage.conversation_message_id
+                conversation_message_ids=self.storage.conversation_message_id,
             )
-            return MessageProvider.from_mapping(api=self._api, storage=message["items"][0])
+            return MessageProvider.from_mapping(
+                api=self._api, storage=message["items"][0]
+            )
 
         else:
             message = await self._api.messages.get_by_id(
                 message_ids=self.storage["message_id"]
             )
-            return MessageProvider.from_mapping(api=self._api, storage=message["items"][0])
+            return MessageProvider.from_mapping(
+                api=self._api, storage=message["items"][0]
+            )
 
 
 class MessageProvider(AnyMessageProvider[Message]):
@@ -208,7 +298,9 @@ class MessageProvider(AnyMessageProvider[Message]):
                 "Message was sent by a group. Can't fetch user provider"
             )
         else:
-            return await UserProvider.fetch_one(self._api, self._storage.from_id)
+            return await UserProvider.fetch_one(
+                self._api, self._storage.from_id
+            )
 
     async def fetch_group_sender(self) -> GroupProvider:
         if self._storage.from_id > 0:
@@ -216,4 +308,6 @@ class MessageProvider(AnyMessageProvider[Message]):
                 "Message was sent by a user. Can't fetch group provider"
             )
         else:
-            return await GroupProvider.fetch_one(self._api, self._storage.from_id)
+            return await GroupProvider.fetch_one(
+                self._api, self._storage.from_id
+            )

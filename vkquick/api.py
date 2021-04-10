@@ -305,7 +305,7 @@ class API(SessionContainerMixin):
         async with self.requests_session.post(
             self._requests_url + method_name, data=params
         ) as response:
-            loaded_response = await self._parse_json_body(response)
+            loaded_response = await self.parse_json_body(response)
             return loaded_response
 
     def _get_waiting_time(self) -> float:

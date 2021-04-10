@@ -34,9 +34,7 @@ class CutterParsingResponse:
 
 
 class TextCutter(abc.ABC):
-    def __init__(
-        self, *, typevars: ty.Optional[ty.List[TextCutter]] = None
-    ):
+    def __init__(self, *, typevars: ty.Optional[ty.List[TextCutter]] = None):
         self._typevars = typevars or []
 
     @property
@@ -50,9 +48,7 @@ class TextCutter(abc.ABC):
         ...
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(generic_types={self._typevars})"
-        )
+        return f"{self.__class__.__name__}(generic_types={self._typevars})"
 
 
 def cut_part_via_regex(

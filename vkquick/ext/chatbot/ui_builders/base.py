@@ -8,6 +8,3 @@ class UIBuilder(APISerializableMixin):
 
     def represent_as_api_param(self) -> str:
         return json_parser_policy.dumps(self.scheme)
-
-
-

@@ -163,9 +163,9 @@ class LongPollBase(SessionContainerMixin, EventsFactory):
                             ts=response.headers["X-Next-Ts"]
                         )
                         self._update_baked_request()
-                        response = await self._parse_json_body(response)
+                        response = await self.parse_json_body(response)
                     else:
-                        response = await self._parse_json_body(response)
+                        response = await self.parse_json_body(response)
                         await self._resolve_faileds(response)
                         self._update_baked_request()
                         continue

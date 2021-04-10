@@ -69,7 +69,7 @@ class SessionContainerMixin:
         if self.__session is not None:
             await self.__session.close()
 
-    async def _parse_json_body(
+    async def parse_json_body(
         self, response: aiohttp.ClientResponse, **kwargs
     ) -> dict:
         """

@@ -7,9 +7,11 @@ from vkquick.ext.chatbot.ui_builders.button import InitializedButton
 
 
 class Keyboard(UIBuilder):
-
     def __init__(
-        self, *buttons: ty.Union[InitializedButton, type(Ellipsis)], one_time: bool = True, inline: bool = False
+        self,
+        *buttons: ty.Union[InitializedButton, type(Ellipsis)],
+        one_time: bool = True,
+        inline: bool = False
     ) -> None:
         self.scheme = {"inline": inline, "buttons": [[]]}
         if not inline:

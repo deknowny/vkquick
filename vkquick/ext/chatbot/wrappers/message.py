@@ -11,7 +11,6 @@ from vkquick.json_parsers import json_parser_policy
 
 
 class TruncatedMessage(Wrapper):
-
     @property
     def id(self) -> int:
         return self.fields["message_id"]
@@ -31,7 +30,6 @@ class TruncatedMessage(Wrapper):
 
 
 class Message(TruncatedMessage):
-
     @property
     def id(self) -> int:
         return self.fields["id"]

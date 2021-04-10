@@ -88,7 +88,10 @@ class Button:
         Кнопка типа `open_link`
         """
         return _UncoloredButton(
-            label=label, link=link, type="open_link", payload=payload,
+            label=label,
+            link=link,
+            type="open_link",
+            payload=payload,
         )
 
     @classmethod
