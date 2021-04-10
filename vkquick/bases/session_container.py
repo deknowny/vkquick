@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ssl
 import typing as ty
 
 import aiohttp
@@ -13,7 +14,7 @@ class SessionContainerMixin:
     Поскольку инициализации сессии может происходить только уже с запущеным циклом
     событий, это может вызывать некоторые проблемы при попытке создать
     сессию внутри `__init__`.
-    
+
     Кроме хранения сессию, к которой внутри вашего класса можно
     обратится через `requests_session`, этот класс позволяет передавать
     кастомные сессии `aiohttp` и JSON-парсеры. Используйте соотвествующие аргументы
@@ -68,7 +69,7 @@ class SessionContainerMixin:
         if self.__session is not None:
             await self.__session.close()
 
-    async def _parse_json_body(
+    async def parse_json_body(
         self, response: aiohttp.ClientResponse, **kwargs
     ) -> dict:
         """
@@ -95,7 +96,7 @@ class SessionContainerMixin:
             Новую `aiohttp`-сессию
         """
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=False),
+            connector=aiohttp.TCPConnector(ssl_context=ssl.SSLContext()),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
             json_serialize=self.__json_parser.dumps,

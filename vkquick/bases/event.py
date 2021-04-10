@@ -6,6 +6,7 @@ import typing as ty
 
 class Event(abc.ABC):
     """ """
+
     def __init__(self, content: ty.Union[dict, list]):
         self._content = content
 

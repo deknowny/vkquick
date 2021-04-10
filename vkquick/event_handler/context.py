@@ -17,11 +17,11 @@ if ty.TYPE_CHECKING:
 @dataclasses.dataclass
 class EventHandlingContext:
     """ """
+
     epctx: EventProcessingContext
     event_handler: EventHandler
     handling_status: ty.Optional[EventHandlingStatus] = None
     handling_payload: ty.Optional[StatusPayload] = None
-    handler_arguments: dict = dataclasses.field(default_factory=dict)
     extra: dict = dataclasses.field(default_factory=dict)
 
     @property

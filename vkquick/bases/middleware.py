@@ -13,6 +13,7 @@ class Middleware:
     события обработчиками событий и после того,
     как все обработчики события были вызваны
     """
+
     async def foreword(self, epctx: EventProcessingContext) -> None:
         """
         Вызывается перед тем, как начать обработку

@@ -43,19 +43,17 @@ class TokenOwnerEntity:
         """
         Args:
             entity_type: Тип владельца токена
-            scheme: Объект владельца токена (для сервисных токенов отсутсвует)
+            scheme: Объект владельца токена (для сервисных токенов отсутствует)
         """
         self.entity_type = entity_type
         self.scheme = scheme
 
-    @property
     def is_group(self) -> bool:
         """
         Является ли сущность группой
         """
         return self.entity_type == TokenOwnerType.GROUP
 
-    @property
     def is_user(self) -> bool:
         """
         Является ли сущность пользователем
@@ -67,6 +65,7 @@ class API(SessionContainerMixin):
     """
     Api requests
     """
+
     def __init__(
         self,
         token: str,
@@ -115,18 +114,6 @@ class API(SessionContainerMixin):
         Токен
         """
         return self._token
-
-    def short_token(self, length: int) -> str:
-        """
-        ааа
-
-        Args:
-          length: Длина Ключа
-
-        Returns:
-            Обрезанный ключ
-        """
-        return f"{self._token[:length]}..."
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -318,14 +305,14 @@ class API(SessionContainerMixin):
         async with self.requests_session.post(
             self._requests_url + method_name, data=params
         ) as response:
-            loaded_response = await self._parse_json_body(response)
+            loaded_response = await self.parse_json_body(response)
             return loaded_response
 
     def _get_waiting_time(self) -> float:
         """Рассчитывает обязательное время задержки после
         последнего API запроса. Для групп -- 0.05s,
         для пользователей/сервисных токенов -- 0.333s.
-        
+
         :return: Время, необходимое для ожидания.
 
         Args:
@@ -342,6 +329,17 @@ class API(SessionContainerMixin):
         else:
             self._last_request_stamp = now
             return 0
+
+    def __repr__(self):
+        owner = self._token_owner
+        if owner is None:
+            return f"<vkquick.{self.__class__.__name__}>"
+        else:
+            if owner.is_group():
+                owner_name = owner.scheme["name"]
+            else:
+                owner_name = f"{owner.scheme['first_name']} {owner.scheme['last_name']}"
+            return f"<vkquick.{self.__class__.__name__} owner={owner_name!r}>"
 
 
 def _convert_param_value(__value):
@@ -386,33 +384,16 @@ def _convert_param_value(__value):
 
 
 def _convert_params_for_api(__params: dict):
-    """Конвертирует словарь из параметров для метода API,
+    """
+    Конвертирует словарь из параметров для метода API,
     учитывая определенные особенности
 
     Args:
       __params: Параметры, передаваемые для вызова метода API
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict:
-      __params: dict: 
 
     Returns:
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      : Новые параметры, которые можно передать
-      в запрос и получить ожидаемый результат
+        Новые параметры, которые можно передать
+        в запрос и получить ожидаемый результат
 
     """
     updated_params = {
@@ -439,7 +420,7 @@ def _upper_zero_group(__match: ty.Match) -> str:
       __match: ty.Match:
       __match: ty.Match:
       __match: ty.Match:
-      __match: ty.Match: 
+      __match: ty.Match:
 
     Returns:
       : Ту же букву из группы, но в верхнем регистре
@@ -462,7 +443,7 @@ def _convert_method_name(__name: str) -> str:
       __name: str:
       __name: str:
       __name: str:
-      __name: str: 
+      __name: str:
 
     Returns:
       : Новое имя метода в camelCase

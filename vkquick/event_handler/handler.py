@@ -17,7 +17,6 @@ from vkquick.event_handler.statuses import (
 )
 from vkquick.exceptions import (
     FilterFailedError,
-    IncorrectPreparedArgumentsError,
     NotCompatibleFilterError,
     StopHandlingEvent,
 )
@@ -25,36 +24,39 @@ from vkquick.exceptions import (
 
 class EventHandler(EasyDecorator):
     """ """
+
+    context_factory: ty.Type[EventHandlingContext] = EventHandlingContext
+
     def __init__(
         self,
         __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
         *,
         handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
         filters: ty.List[Filter] = None,
-        pass_ehctx_as_argument: bool = True,
     ):
         self._handler = __handler
         self._handling_event_types = handling_event_types or {
             __handler.__name__
         }
         self._filters = filters or []
-        self._pass_ehctx_as_argument = pass_ehctx_as_argument
-        self._available_arguments_name = frozenset(
-            inspect.signature(self._handler).parameters.keys()
-        )
+
+    @property
+    def handler(self):
+        return self._handler
 
     def is_handling_event_type(self, event_type: ty.Union[str]) -> bool:
         """
 
         Args:
           event_type: ty.Union[str]:
-          event_type: ty.Union[str]: 
+          event_type: ty.Union[str]:
 
         Returns:
 
         """
         return (
-            not self._handling_event_types or event_type in self._handling_event_types
+            not self._handling_event_types
+            or event_type in self._handling_event_types
         )
 
     def add_filter(self, filter: Filter) -> EventHandler:
@@ -62,7 +64,7 @@ class EventHandler(EasyDecorator):
 
         Args:
           filter: Filter:
-          filter: Filter: 
+          filter: Filter:
 
         Returns:
 
@@ -95,7 +97,7 @@ class EventHandler(EasyDecorator):
             )
             raise error
 
-    async def run_through_filters(self, ehctx: EventHandlingContext) -> None:
+    async def _run_through_filters(self, ehctx: EventHandlingContext) -> None:
         for filter_ in self._filters:
             try:
                 await filter_.make_decision(ehctx)
@@ -104,7 +106,6 @@ class EventHandler(EasyDecorator):
                 ehctx.handling_payload = FilterFailed(
                     filter=filter_, raised_error=error
                 )
-                await filter_.handle_exception(ehctx)
                 raise StopHandlingEvent(
                     status=EventHandlingStatus.FILTER_FAILED,
                     payload=FilterFailed(filter=filter_, raised_error=error),
@@ -117,13 +118,17 @@ class EventHandler(EasyDecorator):
                 payload=IncorrectEventType(),
             )
 
-        await self.run_through_filters(ehctx)
-        self._processing_passed_arguments(ehctx)
-        await self.call_handler(ehctx)
+        await self._run_through_filters(ehctx)
+        await self._prepare_handler_for_call(ehctx)
 
-    async def call_handler(self, ehctx: EventHandlingContext) -> None:
-        baked_call = self._handler(**ehctx.handler_arguments)
-        returned_value = await baked_call
+    async def _prepare_handler_for_call(
+        self, ehctx: EventHandlingContext
+    ) -> None:
+        handler_args = self._init_handler_args(ehctx)
+        handler_kwargs = self._init_handler_kwargs(ehctx)
+        returned_value = await self._call_handler(
+            ehctx, handler_args, handler_kwargs
+        )
         raise StopHandlingEvent(
             status=EventHandlingStatus.CALLED_HANDLER_SUCCESSFULLY,
             payload=CalledHandlerSuccessfully(
@@ -131,40 +136,18 @@ class EventHandler(EasyDecorator):
             ),
         )
 
-    def _processing_passed_arguments(
-        self, ehctx: EventHandlingContext
-    ) -> None:
-        """
+    async def _call_handler(
+        self, ehctx: EventHandlingContext, args, kwargs
+    ) -> ty.Any:
+        baked_call = self._handler(*args, **kwargs)
+        returned_value = await baked_call
+        return returned_value
 
-        Args:
-          ehctx: EventHandlingContext:
-          ehctx: EventHandlingContext: 
+    def _init_handler_kwargs(self, ehctx: EventHandlingContext) -> ty.Mapping:
+        return {}
 
-        Returns:
-
-        """
-        if self._pass_ehctx_as_argument:
-            ehctx.handler_arguments["ehctx"] = ehctx
-        self._check_passed_arguments(ehctx)
-
-    def _check_passed_arguments(self, ehctx: EventHandlingContext) -> None:
-        """
-
-        Args:
-          ehctx: EventHandlingContext:
-          ehctx: EventHandlingContext: 
-
-        Returns:
-
-        """
-        passed_arguments_name = frozenset(ehctx.handler_arguments.keys())
-        if passed_arguments_name != self._available_arguments_name:
-            raise IncorrectPreparedArgumentsError(
-                expected_names=self._available_arguments_name,
-                actual_names=passed_arguments_name,
-            )
+    def _init_handler_args(self, ehctx: EventHandlingContext) -> ty.Sequence:
+        return (ehctx,)
 
     def __repr__(self):
-        return (
-            f"<vkquick.EventHandler handler_name={self._handler.__name__!r}>"
-        )
+        return f"<vkquick.{self.__class__.__name__} handler_name={self._handler.__name__!r}>"

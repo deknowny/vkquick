@@ -43,12 +43,12 @@ class EventProcessingContext:
 
         Args:
           handler: EventHandler:
-          handler: EventHandler: 
+          handler: EventHandler:
 
         Returns:
 
         """
-        ehctx = EventHandlingContext(self, handler)
+        ehctx = handler.context_factory(self, handler)
         self.event_handling_contexts[handler] = ehctx
         return ehctx
 
@@ -59,6 +59,7 @@ class Bot:
     обработчиков событий, сигналов и получение событий с
     последующей обработкой
     """
+
     def __init__(
         self,
         *,
@@ -134,13 +135,13 @@ class Bot:
         """Запускает работу бота, т.е. запускает логику
         по получению новых событий с последующей необходимой
         обработкой мидлварами, хендлерами сигналов и событий.
-        
+
         Перед началом запуска логики с получением событий, вызывается
         сигнал `startup`. После завершения работы вызовется сигнал `shutdown`.
         Каждый из сигналов принимает инстанс бота в качестве аргумента.
-        
+
         Бот работает асинхронно, не смотря на синхронный запуск.
-        
+
         :return: Запуск вечный, этот метод не возвращает никакое значение.
 
         Args:
@@ -193,7 +194,7 @@ class Bot:
         """
         if self._events_factory is None:
             owner = await self._api.fetch_token_owner_entity()
-            if owner.is_group:
+            if owner.is_group():
                 self._events_factory = GroupLongPoll(self._api)
             else:
                 self._events_factory = UserLongPoll(self._api)
@@ -255,11 +256,10 @@ class Bot:
         *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
-        pass_ehctx_as_argument: bool = True,
     ) -> EventHandler:
         """
         Добавляет обработчик события в бота.
-        
+
         Если `__handler` уже является инстансом `EventHandler`,
         то обработчик просто добавится в бота. Иначе будет создан
         новый объект обработчика с другими полями этого метода
@@ -280,7 +280,6 @@ class Bot:
                 __handler,
                 handling_event_types=handling_event_types,
                 filters=filters,
-                pass_ehctx_as_argument=pass_ehctx_as_argument,
             )
 
         self._event_handlers.append(__handler)
@@ -319,4 +318,4 @@ class Bot:
         self._middlewares.append(__handler)
 
     def __repr__(self) -> str:
-        return f"<vkquick.Bot token={self._api.short_token(3)!r}>"
+        return f'<vkquick.Bot token="{self._api.token[:5]}...">'

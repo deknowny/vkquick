@@ -5,6 +5,7 @@ class GroupEvent(Event):
     """
     Обертка над событием в группе
     """
+
     @property
     def type(self) -> str:
         """
@@ -31,6 +32,7 @@ class UserEvent(Event):
     """
     Обертка над событием у пользователя
     """
+
     @property
     def type(self) -> int:
         """

@@ -27,8 +27,8 @@ class BuiltinJsonParser(JSONParser):
 
         Args:
           data: ty.Dict[str:
-          ty.Any]: 
-          data: ty.Dict[str: 
+          ty.Any]:
+          data: ty.Dict[str:
 
         Returns:
 
@@ -41,8 +41,8 @@ class BuiltinJsonParser(JSONParser):
 
         Args:
           string: ty.Union[str:
-          bytes]: 
-          string: ty.Union[str: 
+          bytes]:
+          string: ty.Union[str:
 
         Returns:
 
@@ -59,8 +59,8 @@ class OrjsonParser(JSONParser):
 
         Args:
           data: ty.Dict[str:
-          ty.Any]: 
-          data: ty.Dict[str: 
+          ty.Any]:
+          data: ty.Dict[str:
 
         Returns:
 
@@ -73,8 +73,8 @@ class OrjsonParser(JSONParser):
 
         Args:
           string: ty.Union[str:
-          bytes]: 
-          string: ty.Union[str: 
+          bytes]:
+          string: ty.Union[str:
 
         Returns:
 
@@ -91,8 +91,8 @@ class UjsonParser(JSONParser):
 
         Args:
           data: ty.Dict[str:
-          ty.Any]: 
-          data: ty.Dict[str: 
+          ty.Any]:
+          data: ty.Dict[str:
 
         Returns:
 
@@ -105,8 +105,8 @@ class UjsonParser(JSONParser):
 
         Args:
           string: ty.Union[str:
-          bytes]: 
-          string: ty.Union[str: 
+          bytes]:
+          string: ty.Union[str:
 
         Returns:
 

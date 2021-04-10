@@ -20,6 +20,7 @@ if ty.TYPE_CHECKING:
 
 class IncorrectPreparedArgumentsError(Exception):
     """ """
+
     def __init__(
         self,
         *,
@@ -32,11 +33,23 @@ class IncorrectPreparedArgumentsError(Exception):
 
 class StopHandlingEvent(Exception):
     """ """
+
     def __init__(
         self, *, status: EventHandlingStatus, payload: StatusPayload
     ) -> None:
         self.status = status
         self.payload = payload
+
+
+class ExpectedMiddlewareToBeUsed(Exception):
+    def __init__(self, middleware_name: str):
+        self._middleware_name = middleware_name
+
+    def __str__(self):
+        return (
+            f"Expected `{self._middleware_name}` middleware to be used."
+            "Add it to the bot instance"
+        )
 
 
 class NotCompatibleFilterError(Exception):
@@ -74,19 +87,12 @@ class NotCompatibleFilterError(Exception):
         )
 
 
+@dataclasses.dataclass
 class FilterFailedError(Exception):
     """ """
-    def __init__(self, filter: Filter, reason: str, **extra_payload_params):
-        self.filter = filter
-        self.reason = reason
-        self.extra = extra_payload_params
 
-    def __str__(self):
-        return (
-            f"Filter `{self.filter.__class__.__name__}` "
-            f"not passed because `{self.reason}`. "
-            f"Extra params: `{self.extra}`"
-        )
+    reason: ty.Optional[str] = None
+    extra: dict = dataclasses.field(default_factory=dict)
 
 
 class _ParamsScheme(tye.TypedDict):
@@ -128,8 +134,8 @@ class VKAPIError(Exception):
 
         Args:
           response: ty.Dict[str:
-          ty.Any]: 
-          response: ty.Dict[str: 
+          ty.Any]:
+          response: ty.Dict[str:
 
         Returns:
 
