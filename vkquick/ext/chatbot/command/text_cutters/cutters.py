@@ -92,3 +92,18 @@ class OptionalCutter(TextCutter):
                     parsed_part=self._default,
                     new_arguments_string=arguments_string,
                 )
+
+
+class UnionCutter(TextCutter):
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        for typevar in self.typevars:
+            try:
+                parsed_value = await typevar.cut_part(ctx, arguments_string)
+            except BadArgumentError:
+                continue
+            else:
+                return parsed_value
+
+        raise BadArgumentError("Regexes didn't matched")

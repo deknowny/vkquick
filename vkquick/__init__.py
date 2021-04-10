@@ -29,6 +29,7 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     ParagraphCutter,
     StringCutter,
     WordCutter,
+    UnionCutter
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (
@@ -110,6 +111,8 @@ from .json_parsers import (
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
+
+import typing
 
 
 __version__ = metadata.version(__name__)
