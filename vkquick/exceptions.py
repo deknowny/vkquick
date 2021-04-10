@@ -90,6 +90,7 @@ class NotCompatibleFilterError(Exception):
 @dataclasses.dataclass
 class FilterFailedError(Exception):
     """ """
+
     reason: ty.Optional[str] = None
     extra: dict = dataclasses.field(default_factory=dict)
 

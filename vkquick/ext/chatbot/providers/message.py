@@ -10,12 +10,14 @@ from vkquick.ext.chatbot.providers.page_entity import (
     PageEntityProvider,
     UserProvider,
 )
-from vkquick.ext.chatbot.wrappers.message import Message
+from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
+
+T = ty.TypeVar("T")
 
 
-class MessageProvider(Provider[Message]):
-    async def _send_message(self, params: dict):
-        await self._api.method("messages.send", params)
+class AnyMessageProvider(Provider[T]):
+    async def _send_message(self, params: dict) -> dict:
+        return await self._api.method("messages.send", params)
 
     # Если использовать декоратор, чтобы получить все эти параметры как `kwargs`,
     # то по непонятным причинам pycharm распознает этот метод не как callable-объект.
@@ -40,7 +42,7 @@ class MessageProvider(Provider[Message]):
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> TruncatedMessageProvider:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -71,7 +73,8 @@ class MessageProvider(Provider[Message]):
                 ],
                 "peer_id": self.storage.peer_id,
             }
-        return await self._send_message(params)
+        sent_message = await self._send_message(params)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
 
     async def answer(
         self,
@@ -93,7 +96,7 @@ class MessageProvider(Provider[Message]):
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> TruncatedMessageProvider:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -114,7 +117,8 @@ class MessageProvider(Provider[Message]):
             peer_ids=self.storage.peer_id,
             **kwargs,
         )
-        return await self._send_message(params)
+        sent_message = await self._send_message(params)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
 
     async def forward(
         self,
@@ -136,7 +140,7 @@ class MessageProvider(Provider[Message]):
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ):
+    ) -> TruncatedMessageProvider:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -166,8 +170,15 @@ class MessageProvider(Provider[Message]):
                 ],
                 "peer_id": self.storage.peer_id,
             }
-        return await self._send_message(params)
+        sent_message = await self._send_message(params)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
 
+
+class TruncatedMessageProvider(AnyMessageProvider[TruncatedMessage]):
+    ...
+
+
+class MessageProvider(AnyMessageProvider[Message]):
     async def fetch_any_sender(self) -> PageEntityProvider:
         if self._storage.from_id > 0:
             return await UserProvider.fetch_one(

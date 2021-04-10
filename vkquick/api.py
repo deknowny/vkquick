@@ -43,7 +43,7 @@ class TokenOwnerEntity:
         """
         Args:
             entity_type: Тип владельца токена
-            scheme: Объект владельца токена (для сервисных токенов отсутсвует)
+            scheme: Объект владельца токена (для сервисных токенов отсутствует)
         """
         self.entity_type = entity_type
         self.scheme = scheme

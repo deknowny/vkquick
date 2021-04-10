@@ -10,7 +10,7 @@ from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.json_parsers import json_parser_policy
 
 
-class Message(Wrapper):
+class TruncatedMessage(Wrapper):
     @property
     def id(self) -> int:
         return self.fields["id"]
@@ -19,6 +19,17 @@ class Message(Wrapper):
     def peer_id(self) -> int:
         return self.fields["peer_id"]
 
+    @property
+    def conversation_message_id(self) -> int:
+        return self.fields["conversation_message_id"]
+
+    # Shortcuts
+    @property
+    def cmid(self) -> int:
+        return self.conversation_message_id
+
+
+class Message(TruncatedMessage):
     @cached_property
     def chat_id(self) -> int:
         chat_id = self.peer_id - peer()
@@ -28,10 +39,6 @@ class Message(Wrapper):
             )
 
         return chat_id
-
-    @property
-    def conversation_message_id(self) -> int:
-        return self.fields["conversation_message_id"]
 
     @cached_property
     def date(self) -> datetime.datetime:
@@ -132,8 +139,3 @@ class Message(Wrapper):
             if attachment["type"] == "doc"
         ]
         return docs
-
-    # Shortcuts
-    @property
-    def cmid(self) -> int:
-        return self.conversation_message_id
