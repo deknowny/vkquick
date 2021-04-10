@@ -1,5 +1,14 @@
-from vkquick.ext.chatbot.filters.base import CommandFilter, Context
+import abc
+
+from vkquick.bases.filter import Filter
+from vkquick.ext.chatbot.command.context import Context
 from vkquick.exceptions import FilterFailedError
+
+
+class CommandFilter(Filter):
+    @abc.abstractmethod
+    def make_decision(self, ctx: Context) -> None:
+        ...
 
 
 class IgnoreBotsMessagesFilter(CommandFilter):

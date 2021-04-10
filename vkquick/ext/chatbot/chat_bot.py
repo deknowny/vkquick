@@ -8,8 +8,8 @@ from vkquick.bases.middleware import Middleware
 from vkquick.bot import Bot
 from vkquick.bases.easy_decorator import easy_method_decorator
 from vkquick.event_handler.handler import EventHandler
-from vkquick.ext.chatbot.filters.base import CommandFilter
-from vkquick.ext.chatbot.filters.command.command import Command
+from vkquick.ext.chatbot.filters import CommandFilter
+from vkquick.ext.chatbot.command.command import Command
 from vkquick.ext.chatbot.middlewares import MakeMessageProviderOnNewMessage
 
 
