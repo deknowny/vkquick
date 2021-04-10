@@ -26,7 +26,9 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     IntegerCutter,
     OptionalCutter,
     StringCutter,
-    WordCutter, UnionCutter,
+    WordCutter,
+    UnionCutter,
+    MutableSequenceCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -109,9 +111,20 @@ def _resolve_cutter(
             )
             for typevar in ty.get_args(arg_annotation)
         ]
-        return UnionCutter(
-            typevars=typevar_cutters
+        return UnionCutter(typevars=typevar_cutters)
+
+    # List
+    elif (
+        arg_annotation.__class__ is ty._GenericAlias  # noqa
+        and ty.get_origin(arg_annotation) is list
+    ):
+        typevar_cutter = _resolve_cutter(
+            arg_name=arg_name,
+            arg_annotation=ty.get_args(arg_annotation)[0],
+            arg_settings=arg_settings,
+            arg_kind=arg_kind,
         )
+        return MutableSequenceCutter(typevars=[typevar_cutter])
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
 

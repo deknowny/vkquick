@@ -29,7 +29,10 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     ParagraphCutter,
     StringCutter,
     WordCutter,
-    UnionCutter
+    UnionCutter,
+    MutableSequenceCutter,
+    ImmutableSequenceCutter,
+    UniqueSequenceCutter
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (
