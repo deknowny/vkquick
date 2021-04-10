@@ -4,9 +4,7 @@ import asyncio
 import dataclasses
 import typing as ty
 
-from vkquick import API
 from vkquick.ext.chatbot.providers.attachment import (
-    DocumentProvider,
     PhotoProvider,
 )
 from vkquick.ext.chatbot.providers.base import Provider

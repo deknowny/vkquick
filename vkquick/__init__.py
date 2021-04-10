@@ -111,4 +111,5 @@ from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
 
+
 __version__ = metadata.version(__name__)
