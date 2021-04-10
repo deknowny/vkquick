@@ -1,8 +1,8 @@
 import abc
 
 from vkquick.bases.filter import Filter
-from vkquick.ext.chatbot.command.context import Context
 from vkquick.exceptions import FilterFailedError
+from vkquick.ext.chatbot.command.context import Context
 
 
 class CommandFilter(Filter):

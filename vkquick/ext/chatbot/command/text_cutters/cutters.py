@@ -1,13 +1,13 @@
 import re
 import typing as ty
 
-from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.text_cutters.base import (
-    TextCutter,
     CutterParsingResponse,
+    TextCutter,
     cut_part_via_regex,
 )
+from vkquick.ext.chatbot.exceptions import BadArgumentError
 
 
 class IntegerCutter(TextCutter):

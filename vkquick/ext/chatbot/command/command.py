@@ -4,136 +4,99 @@ import types
 import typing as ty
 import warnings
 
-from vkquick.exceptions import FilterFailedError
+from vkquick.bases.easy_decorator import EasyDecorator
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
-from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters import CommandFilter
+from vkquick.exceptions import FilterFailedError
+from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.statuses import (
     CommandStatus,
-    NotRouted,
     IncorrectArgument,
-    UnexpectedArgument,
     MissedArgument,
+    NotRouted,
+    UnexpectedArgument,
 )
 from vkquick.ext.chatbot.command.text_cutters.base import (
-    TextCutter,
-    CommandTextArgument,
     Argument,
+    CommandTextArgument,
+    TextCutter,
 )
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
-    IntegerCutter,
     FloatCutter,
-    WordCutter,
-    StringCutter,
+    IntegerCutter,
     OptionalCutter,
+    StringCutter,
+    WordCutter,
 )
+from vkquick.ext.chatbot.exceptions import BadArgumentError
+from vkquick.ext.chatbot.filters import CommandFilter
 from vkquick.ext.chatbot.providers.message import MessageProvider
-from vkquick.ext.chatbot.command.context import Context
-from vkquick.bases.easy_decorator import EasyDecorator
 
 
 def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
-    arg_name = parameter.name
-
-    # Если в значение по умолчанию передано что-то, и это не Argument (например, число),
-    # то тогда нужно сделать объект Argument и создать OptionalCutter со значение по умолчанию,
-    # которое было установлено в аргументе функции
-    #
-    # def foo(arg: ty.Optional[int] = None)
-    # def foo(arg: int = 5)
-    if (
-        not isinstance(parameter.default, Argument)
-        and parameter.default != parameter.empty
-    ):
-        arg_settings = Argument(default=parameter.default)
-        arg_cutter = _resolve_cutter(
-            arg_settings, parameter.annotation, parameter
-        )
-        # Если задано значение по умолчанию,
-        # нужно использовать OptionalCutter
-        #
-        # def foo(arg: int = 5)
-        if not isinstance(arg_cutter, OptionalCutter):
-            arg_cutter = OptionalCutter(
-                default=arg_settings.default, generic_types=[arg_cutter]
-            )
-
-    else:
+    if isinstance(parameter.default, Argument):
         arg_settings = parameter.default
-        # Если нет ничего в значении по умолчанию у аргумента,
-        # Нужно все равно создать экземпляр Argument
-        #
-        # def foo(arg: int)
-        if arg_settings == parameter.empty:
-            arg_settings = Argument()
+    elif parameter.default != parameter.empty:
+        arg_settings = Argument(default=parameter.default)
+    else:
+        arg_settings = Argument()
 
-        # Если экземпляр Argument все же был передан,
-        # то возможно, пользовать передал свой кастомный каттер
-        # (пока что не придумано кейсов для этого случая, возможно такой функционал урежется)
-        #
-        # def foo(arg: int = Argument(cutter=IntegerCutter()))
-        if arg_settings.cutter is None:
-            arg_cutter = _resolve_cutter(
-                arg_settings, parameter.annotation, parameter
-            )
-            # Если был передан объект Argument со значением по умолчанию,
-            # то нужно сделать OptionalCutter
-            #
-            # def foo(arg: int = Argument(default=10))
-            if (
-                arg_settings.default is not None
-                or arg_settings.default_factory is not None
-                and not isinstance(arg_cutter, OptionalCutter)
-            ):
-                arg_cutter = OptionalCutter(
-                    default=arg_settings.default,
-                    default_factory=arg_settings.default_factory,
-                    generic_types=[arg_cutter],
-                )
-        else:
-            arg_cutter = arg_settings.cutter
+    if (
+        arg_settings.default is not None
+        or arg_settings.default_factory is not None
+        and not isinstance(parameter.annotation, OptionalCutter)
+    ):
+        arg_annotation = ty.Optional[parameter.annotation]
+    else:
+        arg_annotation = parameter.annotation
 
+    cutter = _resolve_cutter(
+        arg_name=parameter.name,
+        arg_annotation=arg_annotation,
+        arg_settings=arg_settings,
+        arg_kind=parameter.kind,
+    )
     return CommandTextArgument(
-        argument_name=arg_name,
+        argument_name=parameter.name,
         argument_settings=arg_settings,
-        cutter=arg_cutter,
+        cutter=cutter,
     )
 
 
 def _resolve_cutter(
-    argument_settings: Argument, argtype: ty.Any, parameter: inspect.Parameter
+    *, arg_name: str, arg_annotation: ty.Any, arg_settings: Argument, arg_kind
 ) -> TextCutter:
-    if argtype is int:
+
+    if arg_annotation is int:
         return IntegerCutter()
-    elif argtype is float:
+    elif arg_annotation is float:
         return FloatCutter()
-    elif argtype is str:
-        if parameter.kind == parameter.KEYWORD_ONLY:
+    elif arg_annotation is str:
+        if arg_kind == inspect.Parameter.KEYWORD_ONLY:
             return StringCutter()
         else:
             return WordCutter()
 
-    # GenericAlias типы (не нашел способа иной проверки)
-    elif "__origin__" in dir(argtype):
-        if ty.get_origin(argtype) is ty.Union:
-            none_type = type(None)
-            # Optional
-            if none_type in ty.get_args(argtype):
-                return OptionalCutter(
-                    default=argument_settings.default,
-                    default_factory=argument_settings.default_factory,
-                    generic_types=[
-                        _resolve_cutter(
-                            argument_settings,
-                            ty.get_args(argtype)[0],
-                            parameter,
-                        )
-                    ],
+    # Optional
+    elif (
+        arg_annotation.__class__ is ty._GenericAlias  # noqa
+        and ty.get_origin(arg_annotation) is ty.Union
+        and type(None) in ty.get_args(arg_annotation)
+    ):
+        return OptionalCutter(
+            default=arg_settings.default,
+            default_factory=arg_settings.default_factory,
+            typevars=[
+                _resolve_cutter(
+                    arg_name=arg_name,
+                    arg_annotation=ty.get_args(arg_annotation)[0],
+                    arg_settings=arg_settings,
+                    arg_kind=arg_kind,
                 )
-
+            ],
+        )
     else:
-        raise TypeError(f"Can't resolve cutter from parameter {parameter}")
+        raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
 
 
 class Command(EventHandler, CommandFilter, EasyDecorator):

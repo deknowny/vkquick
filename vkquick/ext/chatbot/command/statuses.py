@@ -3,7 +3,6 @@ from __future__ import annotations
 import enum
 import typing as ty
 
-
 from vkquick.event_handler.statuses import StatusPayload
 
 if ty.TYPE_CHECKING:

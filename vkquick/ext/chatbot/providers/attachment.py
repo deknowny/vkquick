@@ -7,9 +7,9 @@ import aiohttp
 import typing_extensions as tye
 
 from vkquick import API
-from vkquick.ext.chatbot.utils import download_file
 from vkquick.ext.chatbot.providers.base import Provider
-from vkquick.ext.chatbot.wrappers.attachment import Photo, Document
+from vkquick.ext.chatbot.utils import download_file
+from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
 
 
 class PhotoProvider(Provider[Photo]):

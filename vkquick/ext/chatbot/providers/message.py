@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import asyncio
-import typing as ty
 import dataclasses
+import typing as ty
 
 from vkquick import API
-from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
-from vkquick.ext.chatbot.utils import random_id as random_id_
+from vkquick.ext.chatbot.providers.attachment import (
+    DocumentProvider,
+    PhotoProvider,
+)
 from vkquick.ext.chatbot.providers.base import Provider
 from vkquick.ext.chatbot.providers.page_entity import (
     GroupProvider,
     PageEntityProvider,
     UserProvider,
 )
-from vkquick.ext.chatbot.providers.attachment import (
-    PhotoProvider,
-    DocumentProvider,
-)
+from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
+from vkquick.ext.chatbot.utils import random_id as random_id_
 from vkquick.ext.chatbot.wrappers import Photo
 from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
 
@@ -77,7 +77,9 @@ class AnyMessageProvider(Provider[T]):
             api=self._api, storage=sent_message[0]
         )
 
-    def attach_photos(self, *photos: ty.Union[bytes, str, Photo, PhotoProvider]) -> None:
+    def attach_photos(
+        self, *photos: ty.Union[bytes, str, Photo, PhotoProvider]
+    ) -> None:
         for photo in photos:
             if isinstance(photo, (str, bytes)):
                 self._response_storage.attached_photos.append(photo)
@@ -86,7 +88,9 @@ class AnyMessageProvider(Provider[T]):
             elif isinstance(photo, PhotoProvider):
                 self._response_storage.downloaded_photos.append(photo.storage)
 
-    def attach_photo(self, photo: ty.Union[bytes, str, Photo, PhotoProvider]) -> None:
+    def attach_photo(
+        self, photo: ty.Union[bytes, str, Photo, PhotoProvider]
+    ) -> None:
         self.attach_photos(photo)
 
     async def upload_photos(
