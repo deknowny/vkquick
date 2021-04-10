@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ssl
 import typing as ty
 
 import aiohttp
@@ -95,7 +96,7 @@ class SessionContainerMixin:
             Новую `aiohttp`-сессию
         """
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=False),
+            connector=aiohttp.TCPConnector(ssl_context=ssl.SSLContext()),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
             json_serialize=self.__json_parser.dumps,
