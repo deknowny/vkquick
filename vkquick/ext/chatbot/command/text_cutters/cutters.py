@@ -2,8 +2,8 @@ import re
 import typing as ty
 
 from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters.command.context import Context
-from vkquick.ext.chatbot.filters.command.text_cutters.base import (
+from vkquick.ext.chatbot.command.context import Context
+from vkquick.ext.chatbot.command.text_cutters.base import (
     TextCutter,
     CutterParsingResponse,
     cut_part_via_regex,

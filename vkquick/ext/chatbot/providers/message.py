@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import typing as ty
 
+from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.ext.chatbot.utils import random_id as random_id_
 from vkquick.ext.chatbot.providers.base import Provider
 from vkquick.ext.chatbot.providers.page_entity import (
@@ -32,7 +33,7 @@ class AnyMessageProvider(Provider[T]):
         attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str]] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: bool = True,
@@ -74,7 +75,7 @@ class AnyMessageProvider(Provider[T]):
                 "peer_id": self.storage.peer_id,
             }
         sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
 
     async def answer(
         self,
@@ -86,7 +87,7 @@ class AnyMessageProvider(Provider[T]):
         attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str]] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: bool = True,
@@ -118,7 +119,7 @@ class AnyMessageProvider(Provider[T]):
             **kwargs,
         )
         sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
 
     async def forward(
         self,
@@ -130,7 +131,7 @@ class AnyMessageProvider(Provider[T]):
         attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str]] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: bool = True,
@@ -171,11 +172,23 @@ class AnyMessageProvider(Provider[T]):
                 "peer_id": self.storage.peer_id,
             }
         sent_message = await self._send_message(params)
-        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message)
+        return TruncatedMessageProvider.from_mapping(api=self._api, storage=sent_message[0])
 
 
 class TruncatedMessageProvider(AnyMessageProvider[TruncatedMessage]):
-    ...
+    async def extend(self) -> MessageProvider:
+        if self.storage["message_id"] == 0:
+            message = await self._api.messages.get_by_conversation_message_id(
+                peer_id=self.storage.peer_id,
+                conversation_message_ids=self.storage.conversation_message_id
+            )
+            return MessageProvider.from_mapping(api=self._api, storage=message["items"][0])
+
+        else:
+            message = await self._api.messages.get_by_id(
+                message_ids=self.storage["message_id"]
+            )
+            return MessageProvider.from_mapping(api=self._api, storage=message["items"][0])
 
 
 class MessageProvider(AnyMessageProvider[Message]):
@@ -195,7 +208,7 @@ class MessageProvider(AnyMessageProvider[Message]):
                 "Message was sent by a group. Can't fetch user provider"
             )
         else:
-            return await self._api.fetch_user(self._storage.from_id)
+            return await UserProvider.fetch_one(self._api, self._storage.from_id)
 
     async def fetch_group_sender(self) -> GroupProvider:
         if self._storage.from_id > 0:
@@ -203,4 +216,4 @@ class MessageProvider(AnyMessageProvider[Message]):
                 "Message was sent by a user. Can't fetch group provider"
             )
         else:
-            return await self._api.fetch_group(self._storage.from_id)
+            return await GroupProvider.fetch_one(self._api, self._storage.from_id)

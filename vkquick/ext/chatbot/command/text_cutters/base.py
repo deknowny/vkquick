@@ -4,7 +4,7 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.filters.command.context import Context
+from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 
 

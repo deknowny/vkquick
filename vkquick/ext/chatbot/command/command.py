@@ -8,20 +8,20 @@ from vkquick.exceptions import FilterFailedError
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
 from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters.base import CommandFilter
-from vkquick.ext.chatbot.filters.command.statuses import (
+from vkquick.ext.chatbot.filters import CommandFilter
+from vkquick.ext.chatbot.command.statuses import (
     CommandStatus,
     NotRouted,
     IncorrectArgument,
     UnexpectedArgument,
     MissedArgument,
 )
-from vkquick.ext.chatbot.filters.command.text_cutters.base import (
+from vkquick.ext.chatbot.command.text_cutters.base import (
     TextCutter,
     CommandTextArgument,
     Argument,
 )
-from vkquick.ext.chatbot.filters.command.text_cutters.cutters import (
+from vkquick.ext.chatbot.command.text_cutters.cutters import (
     IntegerCutter,
     FloatCutter,
     WordCutter,
@@ -29,7 +29,7 @@ from vkquick.ext.chatbot.filters.command.text_cutters.cutters import (
     OptionalCutter,
 )
 from vkquick.ext.chatbot.providers.message import MessageProvider
-from vkquick.ext.chatbot.filters.command.context import Context
+from vkquick.ext.chatbot.command.context import Context
 from vkquick.bases.easy_decorator import EasyDecorator
 
 

@@ -318,4 +318,4 @@ class Bot:
         self._middlewares.append(__handler)
 
     def __repr__(self) -> str:
-        return f"<vkquick.Bot token={self._api.short_token(3)!r}>"
+        return f'<vkquick.Bot token="{self._api.token[:5]}...">'

@@ -17,7 +17,6 @@ from .bases.filter import Filter
 from .bases.json_parser import JSONParser
 from .bases.middleware import Middleware
 from .bases.session_container import SessionContainerMixin
-from .bases.wrapper import Wrapper
 from .bot import Bot, EventProcessingContext
 from .cached_property import cached_property
 from .event import GroupEvent, UserEvent
