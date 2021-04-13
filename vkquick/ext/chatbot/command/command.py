@@ -1,8 +1,9 @@
 import inspect
 import re
-import types
 import typing as ty
 import warnings
+
+import typing_extensions as tye
 
 from vkquick.bases.easy_decorator import EasyDecorator
 from vkquick.event_handler.context import EventHandlingContext
@@ -31,7 +32,8 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     StringCutter,
     UnionCutter,
     UniqueMutableSequenceCutter,
-    WordCutter, UniqueImmutableSequenceCutter,
+    WordCutter,
+    UniqueImmutableSequenceCutter, LiteralCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -168,6 +170,12 @@ def _resolve_cutter(
             arg_kind=arg_kind,
         )
         return UniqueImmutableSequenceCutter(typevars=[typevar_cutter])
+
+    # Literal
+    elif ty.get_origin(arg_annotation) is tye.Literal:
+        return LiteralCutter(
+            container_values=ty.get_args(arg_annotation)
+        )
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")

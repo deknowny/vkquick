@@ -177,3 +177,19 @@ class UniqueMutableSequenceCutter(_SequenceCutter):
 class UniqueImmutableSequenceCutter(_SequenceCutter):
 
     _factory = frozenset
+
+
+class LiteralCutter(TextCutter):
+    def __init__(self, container_values: ty.Tuple[str, ...], *args, **kwargs):
+        self._container_values = list(map(re.compile, container_values))
+        TextCutter.__init__(self, *args, **kwargs)
+
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        for typevar in self._container_values:
+            try:
+                return cut_part_via_regex(re.compile(typevar), arguments_string)
+            except BadArgumentError:
+                continue
+        raise BadArgumentError("Regex didn't matched")

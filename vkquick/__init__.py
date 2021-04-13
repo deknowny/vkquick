@@ -34,7 +34,9 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     ParagraphCutter,
     StringCutter,
     UnionCutter,
-    UniqueSequenceCutter,
+    UniqueMutableSequenceCutter,
+    UniqueImmutableSequenceCutter,
+    LiteralCutter,
     WordCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
