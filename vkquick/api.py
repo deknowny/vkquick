@@ -22,11 +22,12 @@ if ty.TYPE_CHECKING:
 
 
 class TokenOwnerType(enum.Enum):
-    """Тип владельца токена: пользователь/группа/сервисный токен"""
+    """
+    Тип владельца токена: пользователь/группа
+    """
 
     USER = enum.auto()
     GROUP = enum.auto()
-    SERVICE = enum.auto()
 
 
 class TokenOwnerEntity:
@@ -111,7 +112,7 @@ class API(SessionContainerMixin):
     @property
     def token(self) -> str:
         """
-        Токен
+        Токен, используемые для API запросов
         """
         return self._token
 
@@ -182,16 +183,10 @@ class API(SessionContainerMixin):
                 self._requests_delay = 1 / 3
             else:
                 owner = await self.groups.get_by_id()
-                if not owner[0]:
-                    self._requests_delay = 1 / 3
-                    self._token_owner = TokenOwnerEntity(
-                        TokenOwnerType.SERVICE, None
-                    )
-                else:
-                    self._token_owner = TokenOwnerEntity(
-                        TokenOwnerType.GROUP, owner[0]
-                    )
-                    self._requests_delay = 1 / 20
+                self._token_owner = TokenOwnerEntity(
+                    TokenOwnerType.GROUP, owner[0]
+                )
+                self._requests_delay = 1 / 20
 
             return self._token_owner
 
@@ -309,16 +304,13 @@ class API(SessionContainerMixin):
             return loaded_response
 
     def _get_waiting_time(self) -> float:
-        """Рассчитывает обязательное время задержки после
+        """
+        Рассчитывает обязательное время задержки после
         последнего API запроса. Для групп -- 0.05s,
-        для пользователей/сервисных токенов -- 0.333s.
-
-        :return: Время, необходимое для ожидания.
-
-        Args:
+        для пользователей/сервисных токенов -- 0.333s
 
         Returns:
-
+            Время, необходимое для ожидания.
         """
         now = time.time()
         diff = now - self._last_request_stamp
@@ -343,14 +335,15 @@ class API(SessionContainerMixin):
 
 
 def _convert_param_value(__value):
-    """Конвертирует параметер API запроса в соотвествиями
+    """
+    Конвертирует параметер API запроса в соотвествиями
     с особенностями API и дополнительными удобствами
 
     Args:
-      __value: Текущее значение параметра
+        __value: Текущее значение параметра
 
     Returns:
-      : Новое значение параметра
+        Новое значение параметра
 
     """
     # Для всех перечислений функция вызывается рекурсивно.
@@ -389,7 +382,7 @@ def _convert_params_for_api(__params: dict):
     учитывая определенные особенности
 
     Args:
-      __params: Параметры, передаваемые для вызова метода API
+        __params: Параметры, передаваемые для вызова метода API
 
     Returns:
         Новые параметры, которые можно передать
@@ -405,48 +398,30 @@ def _convert_params_for_api(__params: dict):
 
 
 def _upper_zero_group(__match: ty.Match) -> str:
-    """Поднимает все символы в верхний
+    """
+    Поднимает все символы в верхний
     регистр у captured-группы `let`. Используется
     для конвертации snake_case в camelCase.
 
-    Args:
+    Arguments:
       __match: Регекс-группа, полученная в реультате `re.sub`
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
-      __match: ty.Match:
 
     Returns:
-      : Ту же букву из группы, но в верхнем регистре
+        Ту же букву из группы, но в верхнем регистре
 
     """
     return __match.group("let").upper()
 
 
 def _convert_method_name(__name: str) -> str:
-    """Конвертирует snake_case в camelCase.
+    """
+    Конвертирует snake_case в camelCase.
 
     Args:
       __name: Имя метода, который необходимо перевести в camelCase
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
-      __name: str:
 
     Returns:
-      : Новое имя метода в camelCase
+        Новое имя метода в camelCase
 
     """
     return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, __name)
