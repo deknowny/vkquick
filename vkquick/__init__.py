@@ -38,6 +38,11 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UniqueImmutableSequenceCutter,
     LiteralCutter,
     WordCutter,
+    UserMention,
+    UserMentionCutter,
+    RawUserMentionCutter,
+    RawUserMention,
+    mention_regex
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (

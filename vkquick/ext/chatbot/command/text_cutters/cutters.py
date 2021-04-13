@@ -1,6 +1,8 @@
+import dataclasses
 import re
 import typing as ty
 
+from vkquick.ext.chatbot.providers.page_entity import UserProvider
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.text_cutters.base import (
     CutterParsingResponse,
@@ -8,6 +10,9 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
     cut_part_via_regex,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
+
+
+T = ty.TypeVar("T")
 
 
 class IntegerCutter(TextCutter):
@@ -193,3 +198,48 @@ class LiteralCutter(TextCutter):
             except BadArgumentError:
                 continue
         raise BadArgumentError("Regex didn't matched")
+
+
+mention_regex = re.compile(r"\[id(?P<id>\d+)\|(?P<alias>.+?)]")
+
+
+@dataclasses.dataclass
+class UserMention:
+    alias: str
+    user: UserProvider
+
+
+class UserMentionCutter(TextCutter):
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = cut_part_via_regex(mention_regex, arguments_string)
+        match_object: ty.Match = parsing_response.extra["match_object"]
+        user_object = await UserProvider.fetch_one(ctx.api, int(match_object.group("id")))
+        parsed_part = UserMention(
+            alias=match_object.group("alias"),
+            user=user_object
+        )
+        parsing_response.parsed_part = parsed_part
+        return parsing_response
+
+
+@dataclasses.dataclass
+class RawUserMention:
+    alias: str
+    id: int
+
+
+class RawUserMentionCutter(TextCutter):
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = cut_part_via_regex(mention_regex, arguments_string)
+        match_object: ty.Match = parsing_response.extra["match_object"]
+        user_id = int(match_object.group("id"))
+        parsed_part = RawUserMention(
+            alias=match_object.group("alias"),
+            id=user_id
+        )
+        parsing_response.parsed_part = parsed_part
+        return parsing_response

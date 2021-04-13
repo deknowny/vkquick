@@ -33,7 +33,7 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UnionCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
-    UniqueImmutableSequenceCutter, LiteralCutter,
+    UniqueImmutableSequenceCutter, LiteralCutter, UserMention, UserMentionCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -83,6 +83,9 @@ def _resolve_cutter(
             return StringCutter()
         else:
             return WordCutter()
+
+    elif arg_annotation is UserMention:
+        return UserMentionCutter()
 
     # Optional
     elif ty.get_origin(arg_annotation) is ty.Union and type(
