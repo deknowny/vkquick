@@ -31,7 +31,7 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     StringCutter,
     UnionCutter,
     UniqueMutableSequenceCutter,
-    WordCutter,
+    WordCutter, UniqueImmutableSequenceCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -158,6 +158,16 @@ def _resolve_cutter(
             arg_kind=arg_kind,
         )
         return UniqueMutableSequenceCutter(typevars=[typevar_cutter])
+
+    # FrozenSet
+    elif ty.get_origin(arg_annotation) is frozenset:
+        typevar_cutter = _resolve_cutter(
+            arg_name=arg_name,
+            arg_annotation=ty.get_args(arg_annotation)[0],
+            arg_settings=arg_settings,
+            arg_kind=arg_kind,
+        )
+        return UniqueImmutableSequenceCutter(typevars=[typevar_cutter])
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")

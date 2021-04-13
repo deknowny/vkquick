@@ -172,3 +172,8 @@ class ImmutableSequenceCutter(_SequenceCutter):
 class UniqueMutableSequenceCutter(_SequenceCutter):
 
     _factory = set
+
+
+class UniqueImmutableSequenceCutter(_SequenceCutter):
+
+    _factory = frozenset
