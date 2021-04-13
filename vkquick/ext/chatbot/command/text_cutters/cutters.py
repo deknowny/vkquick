@@ -126,7 +126,7 @@ class GroupCutter(TextCutter):
 
         return CutterParsingResponse(
             parsed_part=tuple(parsed_parts),
-            new_arguments_string=arguments_string
+            new_arguments_string=arguments_string,
         )
 
 
@@ -169,6 +169,6 @@ class ImmutableSequenceCutter(_SequenceCutter):
     _factory = tuple
 
 
-class UniqueSequenceCutter(_SequenceCutter):
+class UniqueMutableSequenceCutter(_SequenceCutter):
 
     _factory = set

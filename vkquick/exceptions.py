@@ -26,6 +26,7 @@ class StopEventProcessing(Exception):
     поднято, ни один из обработчиков событий не вызовется,
     но при этом `afterword` методы вызовутся
     """
+
     reason: ty.Optional[str] = None
     extra: dict = dataclasses.field(default_factory=dict)
 
@@ -45,6 +46,7 @@ class StopHandlingEvent(Exception):
         payload: Поле с дополнительной информацией
             о статусе обработки
     """
+
     status: EventHandlingStatus
     payload: StatusPayload
 
@@ -58,6 +60,7 @@ class ExpectedMiddlewareToBeUsed(Exception):
     Arguments:
         middleware_name: Имя мидлвара, который необходимо добавить
     """
+
     middleware_name: str
 
     def __str__(self):

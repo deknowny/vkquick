@@ -12,9 +12,9 @@ from vkquick.bases.event import Event
 from vkquick.bases.events_factories import EventsFactory
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
+from vkquick.exceptions import StopEventProcessing
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.signal import SignalHandler
-from vkquick.exceptions import StopEventProcessing
 
 if ty.TYPE_CHECKING:
     from vkquick import Filter
@@ -61,7 +61,7 @@ class EventProcessingContext:
             для обработчика события
         """
         ehctx = handler.context_factory(
-            epctx=self, event_handler=handler # noqa
+            epctx=self, event_handler=handler  # noqa
         )
         self.event_handling_contexts[handler] = ehctx
         return ehctx
@@ -81,7 +81,9 @@ class Bot:
         events_factory: ty.Optional[EventsFactory] = None,
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
         signals: ty.Optional[ty.Dict[str, SignalHandler]] = None,
-        middlewares: ty.Optional[ty.List[ty.Union[Middleware, ty.Type[Middleware]]]] = None,
+        middlewares: ty.Optional[
+            ty.List[ty.Union[Middleware, ty.Type[Middleware]]]
+        ] = None,
     ) -> None:
         """
         Arguments:

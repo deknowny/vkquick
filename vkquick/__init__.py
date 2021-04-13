@@ -5,6 +5,8 @@ except ImportError:
     import importlib as metadata
 
 # Chatbot
+import typing
+
 from vkquick.ext.chatbot.chat_bot import ChatBot
 from vkquick.ext.chatbot.command.command import Command
 from vkquick.ext.chatbot.command.context import Context
@@ -24,16 +26,16 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
 )
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
     FloatCutter,
+    GroupCutter,
+    ImmutableSequenceCutter,
     IntegerCutter,
+    MutableSequenceCutter,
     OptionalCutter,
     ParagraphCutter,
     StringCutter,
-    WordCutter,
     UnionCutter,
-    MutableSequenceCutter,
-    ImmutableSequenceCutter,
     UniqueSequenceCutter,
-    GroupCutter
+    WordCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (
@@ -115,8 +117,5 @@ from .json_parsers import (
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
-
-import typing
-
 
 __version__ = metadata.version(__name__)
