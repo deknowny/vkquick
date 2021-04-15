@@ -10,7 +10,7 @@ from vkquick.ext.chatbot.utils import get_user_registration_date
 from vkquick.ext.chatbot.wrappers.base import Wrapper
 
 
-class PageEntity(Wrapper, abc.ABC):
+class Page(Wrapper, abc.ABC):
     @property
     @abc.abstractmethod
     def fullname(self) -> str:
@@ -51,7 +51,7 @@ class PageEntity(Wrapper, abc.ABC):
         return format_value
 
 
-class Group(PageEntity):
+class Group(Page):
     @property
     def fullname(self) -> str:
         return self.fields["name"]
@@ -63,7 +63,7 @@ class Group(PageEntity):
         return False
 
 
-class User(PageEntity):
+class User(Page):
     def is_group(self) -> bool:
         return False
 

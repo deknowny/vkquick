@@ -5,13 +5,13 @@ import typing as ty
 
 from vkquick.api import API
 from vkquick.ext.chatbot.providers.base import Provider
-from vkquick.ext.chatbot.wrappers.page_entities import Group, PageEntity, User
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 T = ty.TypeVar("T")
-CO_T = ty.TypeVar("CO_T", bound=PageEntity)
+S = ty.TypeVar("S", bound=Page)
 
 
-class PageEntityProvider(Provider[CO_T], abc.ABC):
+class PageProvider(Provider[S], abc.ABC):
     @classmethod
     @abc.abstractmethod
     async def fetch_one(
@@ -35,7 +35,7 @@ class PageEntityProvider(Provider[CO_T], abc.ABC):
         pass
 
 
-class UserProvider(PageEntityProvider[User]):
+class UserProvider(PageProvider[User]):
     @classmethod
     async def fetch_one(
         cls, api: API, __id, *, fields: ty.Optional[ty.List[str]] = None
@@ -53,7 +53,7 @@ class UserProvider(PageEntityProvider[User]):
         return users
 
 
-class GroupProvider(PageEntityProvider[Group]):
+class GroupProvider(PageProvider[Group]):
     @classmethod
     async def fetch_one(
         cls, api: API, __id, *, fields: ty.Optional[ty.List[str]] = None

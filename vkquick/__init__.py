@@ -60,9 +60,9 @@ from vkquick.ext.chatbot.providers.message import (
     MessageProvider,
     TruncatedMessageProvider,
 )
-from vkquick.ext.chatbot.providers.page_entity import (
+from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
-    PageEntityProvider,
+    PageProvider,
     UserProvider,
 )
 from vkquick.ext.chatbot.ui_builders.base import UIBuilder
@@ -81,7 +81,7 @@ from vkquick.ext.chatbot.wrappers.attachment import (
 )
 from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
-from vkquick.ext.chatbot.wrappers.page_entities import Group, PageEntity, User
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 # Main core
 from .api import API, TokenOwnerEntity, TokenOwnerType
