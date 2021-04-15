@@ -1,8 +1,13 @@
+import abc
 import dataclasses
 import re
 import typing as ty
 
-from vkquick.ext.chatbot.providers.page import UserProvider, GroupProvider, PageProvider
+from vkquick.ext.chatbot.providers.page import (
+    UserProvider,
+    GroupProvider,
+    PageProvider,
+)
 from vkquick.ext.chatbot.wrappers.page import User, Group, Page
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.text_cutters.base import (
@@ -75,7 +80,7 @@ class OptionalCutter(TextCutter):
         *,
         default: ty.Optional = None,
         default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         self._default = default
         self._default_factory = default_factory
@@ -195,12 +200,12 @@ class LiteralCutter(TextCutter):
     ) -> CutterParsingResponse:
         for typevar in self._container_values:
             try:
-                return cut_part_via_regex(re.compile(typevar), arguments_string)
+                return cut_part_via_regex(
+                    re.compile(typevar), arguments_string
+                )
             except BadArgumentError:
                 continue
         raise BadArgumentError("Regex didn't matched")
-
-
 
 
 UserID = ty.NewType("UserID", int)
@@ -208,66 +213,96 @@ GroupID = ty.NewType("GroupID", int)
 PageID = ty.NewType("PageID", int)
 
 
-M = ty.TypeVar("M", UserProvider, GroupProvider, PageProvider, User, Group, Page, UserID, GroupID, PageID)
+M = ty.TypeVar(
+    "M",
+    UserProvider,
+    GroupProvider,
+    PageProvider,
+    User,
+    Group,
+    Page,
+    UserID,
+    GroupID,
+    PageID,
+)
 
 
-class Mention(TextCutter, ty.Generic[T]):
+mention_regex_string = r"""
+\[
+(?P<page_type>(?:id)|(?:club))  # User or group
+(?P<id>\d+)  # ID of the page
+\|(?P<alias>.+?)  # Alias of the mention
+]
+"""
 
-    mention_regex = re.compile(
-        r"""
-        \[
-        (?P<page_type>(?:id)|(?:club))  # User or group
-        (?P<id>\d+)  # ID of the page
-        \|(?P<alias>.+?)  # Alias of the mention
-        ]
-        """,
-        flags=re.X
-    )
+
+class _AnyPageCutter(TextCutter, ty.Generic[T]):
+
+    mention_regex = re.compile(mention_regex_string, flags=re.X)
 
     def __init__(self, *, typevar: ty.Type[T]):
         self._typevar = typevar
         TextCutter.__init__(self)
 
+    def make_part(
+        self,
+        ctx: Context,
+        page_id: int,
+        id_owner: ty.Union[ty.Type[UserID], ty.Type[GroupID]],
+    ) -> T:
+        if id_owner is UserID:
+            if self._typevar is UserID:
+                return page_id
+            elif self._typevar is UserProvider:
+                return await UserProvider.fetch_one(ctx.api, page_id)
+            elif self._typevar is User:
+                provider = await UserProvider.fetch_one(ctx.api, page_id)
+                return provider.storage
+
+        elif id_owner is GroupID:
+            if self._typevar is GroupID:
+                return page_id
+            elif self._typevar is GroupProvider:
+                return await GroupProvider.fetch_one(ctx.api, page_id)
+            elif self._typevar is Group:
+                provider = await GroupProvider.fetch_one(ctx.api, page_id)
+                return provider.storage
+
+        raise BadArgumentError("Mismatched mention kind")
+
+
+class Mention(_AnyPageCutter[M]):
     async def cut_part(
         self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
-        parsing_response = cut_part_via_regex(self.mention_regex, arguments_string)
+
+        parsing_response = cut_part_via_regex(
+            self.mention_regex, arguments_string
+        )
         match_object: ty.Match = parsing_response.extra["match_object"]
         parsed_id = int(match_object.group("id"))
 
-        if self._typevar is UserID and match_object.group("page_type") == "id":
-            parsing_response.parsed_part = parsed_id
-            return parsing_response
-
-        elif self._typevar is GroupID and match_object.group("page_type") == "club":
-            parsing_response.parsed_part = parsed_id
-            return parsing_response
-
-        elif self._typevar is PageID:
-            parsing_response.parsed_part = parsed_id
-            return parsing_response
-
-        elif self._typevar is User and match_object.group("page_type") == "id":
-            provider = await UserProvider.fetch_one(ctx.api, parsed_id)
-            parsing_response.parsed_part = provider.storage
-            return parsing_response
-
-        elif self._typevar is Group and match_object.group("page_type") == "club":
-            provider = await GroupProvider.fetch_one(ctx.api, parsed_id)
-            parsing_response.parsed_part = provider.storage
-            return parsing_response
-
-        elif self._typevar is Group and match_object.group("page_type") == "club":
-            provider = await GroupProvider.fetch_one(ctx.api, parsed_id)
-            parsing_response.parsed_part = provider.storage
-            return parsing_response
-
+        if match_object.group("page_type") == "id":
+            parsing_response.parsed_part = self.make_part(
+                ctx, parsed_id, UserID
+            )
         else:
-            raise BadArgumentError("Mismatched mention kind")
+            parsing_response.parsed_part = self.make_part(
+                ctx, parsed_id, GroupID
+            )
+
+        return parsing_response
 
 
 class Entity(TextCutter):
-    ...
+    page_regex = re.compile(
+        rf"""
+        (?:
+        
+        |{mention_regex_string})
+        """,
+        flags=re.X,
+    )
 
 
 #
