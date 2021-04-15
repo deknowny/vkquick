@@ -12,6 +12,7 @@ from vkquick.bases.event import Event
 from vkquick.bases.events_factories import EventsFactory
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
+from vkquick.exceptions import StopEventProcessing
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.signal import SignalHandler
 
@@ -22,13 +23,20 @@ if ty.TYPE_CHECKING:
 
 @dataclasses.dataclass
 class EventProcessingContext:
-    """Контекстное хранилище, инициализируемое на
-    каждое новое событие.
+    """
+    Контекстное хранилище, инициализируемое на
+    каждое новое событие
 
-    Args:
-
-    Returns:
-
+    Arguments:
+        bot: Инстанс бота, в котором получено новое событие
+        event: Объект нового события
+        event_handling_contexts: Контексты, инициализируемые
+            перед запуском обработки события
+        extra: Дополнительные поля. Используются, например,
+            в мидлварах, чтобы передать какие-то объекты
+        middleware_stop_exception: Если мидлвар поднял исключение
+            об остановке процесса обработки, в этом поле будет
+            храниться сам объект исключения
     """
 
     bot: Bot
@@ -37,18 +45,24 @@ class EventProcessingContext:
         EventHandler, EventHandlingContext
     ] = dataclasses.field(default_factory=dict)
     extra: dict = dataclasses.field(default_factory=dict)
+    middleware_stop_exception: ty.Optional[StopEventProcessing] = None
 
     def make_ehctx_for(self, handler: EventHandler) -> EventHandlingContext:
         """
+        Вспомогательный метод инициализации контекста
+        для обработчика событий. Созданный контекст автоматически
+        добавится в поле `event_handling_contexts`
 
-        Args:
-          handler: EventHandler:
-          handler: EventHandler:
-
+        Arguments:
+            handler: Объект обработчика, которому нужно
+            сделать локальное контекстное хранилище
         Returns:
-
+            Новые контекст, созданный специально
+            для обработчика события
         """
-        ehctx = handler.context_factory(self, handler)
+        ehctx = handler.context_factory(
+            epctx=self, event_handler=handler  # noqa
+        )
         self.event_handling_contexts[handler] = ehctx
         return ehctx
 
@@ -67,7 +81,9 @@ class Bot:
         events_factory: ty.Optional[EventsFactory] = None,
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
         signals: ty.Optional[ty.Dict[str, SignalHandler]] = None,
-        middlewares: ty.Optional[ty.List[Middleware]] = None,
+        middlewares: ty.Optional[
+            ty.List[ty.Union[Middleware, ty.Type[Middleware]]]
+        ] = None,
     ) -> None:
         """
         Arguments:
@@ -93,13 +109,12 @@ class Bot:
         автоматически создавая необходимый инстанс API.
         Универсален как для для пользователей, так и групп
 
-        Args:
+        Arguments:
             token: Токен пользователя/группы, от чьего лица будет работать бот
             kwargs: Настройки, которые можно передать при инициализации бота обычным способом
 
         Returns:
             Новый объекта бота, готовый к добавлению обработчиков и запуску
-
         """
         api = API(token)
         return cls(api=api, **kwargs)
@@ -113,7 +128,9 @@ class Bot:
 
     @property
     def events_factory(self) -> EventsFactory:
-        """Текущая фабрика событий, используемая для получения новых событий."""
+        """
+        Текущая фабрика событий, используемая для получения новых событий
+        """
         return self._events_factory
 
     @property
@@ -204,11 +221,17 @@ class Bot:
         Направляет контекст с событием в необходимые точки:
         через мидлвары и обработчики событий.
 
-        :param epctx: Контекст обработки события.
+        Arguments:
+            Контекст обработки события.
         """
-        await self._call_forward_middlewares(epctx)
-        await self._pass_context_through_handlers(epctx)
-        await self._call_afterword_middlewares(epctx)
+        try:
+            await self._call_forward_middlewares(epctx)
+        except StopEventProcessing as err:
+            epctx.middleware_stop_exception = err
+        else:
+            await self._pass_context_through_handlers(epctx)
+        finally:
+            await self._call_afterword_middlewares(epctx)
 
     async def _pass_context_through_handlers(
         self, epctx: EventProcessingContext
@@ -270,7 +293,6 @@ class Bot:
                 будет передана при создании обработчика
             handling_event_types: Множество типов обрабатываемых событий
             filters: Фильтры обработчика событий
-            pass_ehctx_as_argument: Нужно ли передавать контекст в качестве аргумента
 
         Returns:
             Объект обработчика событий

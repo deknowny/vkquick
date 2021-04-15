@@ -4,13 +4,11 @@ import asyncio
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.providers.attachment import (
-    PhotoProvider,
-)
+from vkquick.ext.chatbot.providers.attachment import PhotoProvider
 from vkquick.ext.chatbot.providers.base import Provider
-from vkquick.ext.chatbot.providers.page_entity import (
+from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
-    PageEntityProvider,
+    PageProvider,
     UserProvider,
 )
 from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
@@ -284,7 +282,7 @@ class TruncatedMessageProvider(AnyMessageProvider[TruncatedMessage]):
 
 
 class MessageProvider(AnyMessageProvider[Message]):
-    async def fetch_any_sender(self) -> PageEntityProvider:
+    async def fetch_any_sender(self) -> PageProvider:
         if self._storage.from_id > 0:
             return await UserProvider.fetch_one(
                 self._api, self._storage.from_id

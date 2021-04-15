@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import typing as ty
 
 from loguru import logger

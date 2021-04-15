@@ -1,8 +1,9 @@
 import inspect
 import re
-import types
 import typing as ty
 import warnings
+
+import typing_extensions as tye
 
 from vkquick.bases.easy_decorator import EasyDecorator
 from vkquick.event_handler.context import EventHandlingContext
@@ -23,12 +24,16 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
 )
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
     FloatCutter,
+    GroupCutter,
+    ImmutableSequenceCutter,
     IntegerCutter,
+    MutableSequenceCutter,
     OptionalCutter,
     StringCutter,
-    WordCutter,
     UnionCutter,
-    MutableSequenceCutter, ImmutableSequenceCutter, GroupCutter, UniqueSequenceCutter,
+    UniqueMutableSequenceCutter,
+    WordCutter,
+    UniqueImmutableSequenceCutter, LiteralCutter, UserMention, UserMentionCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -79,12 +84,13 @@ def _resolve_cutter(
         else:
             return WordCutter()
 
+    elif arg_annotation is UserMention:
+        return UserMentionCutter()
+
     # Optional
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is ty.Union
-        and type(None) in ty.get_args(arg_annotation)
-    ):
+    elif ty.get_origin(arg_annotation) is ty.Union and type(
+        None
+    ) in ty.get_args(arg_annotation):
         return OptionalCutter(
             default=arg_settings.default,
             default_factory=arg_settings.default_factory,
@@ -98,10 +104,7 @@ def _resolve_cutter(
             ],
         )
     # Union
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is ty.Union
-    ):
+    elif ty.get_origin(arg_annotation) is ty.Union:
         typevar_cutters = [
             _resolve_cutter(
                 arg_name=arg_name,
@@ -114,10 +117,7 @@ def _resolve_cutter(
         return UnionCutter(typevars=typevar_cutters)
 
     # List
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is list
-    ):
+    elif ty.get_origin(arg_annotation) is list:
         typevar_cutter = _resolve_cutter(
             arg_name=arg_name,
             arg_annotation=ty.get_args(arg_annotation)[0],
@@ -126,10 +126,8 @@ def _resolve_cutter(
         )
         return MutableSequenceCutter(typevars=[typevar_cutter])
     # Tuple sequence
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is tuple
-        and Ellipsis in ty.get_args(arg_annotation)
+    elif ty.get_origin(arg_annotation) is tuple and Ellipsis in ty.get_args(
+        arg_annotation
     ):
         typevar_cutter = _resolve_cutter(
             arg_name=arg_name,
@@ -140,11 +138,9 @@ def _resolve_cutter(
         return ImmutableSequenceCutter(typevars=[typevar_cutter])
 
     # Tuple
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is tuple
-        and Ellipsis not in ty.get_args(arg_annotation)
-    ):
+    elif ty.get_origin(
+        arg_annotation
+    ) is tuple and Ellipsis not in ty.get_args(arg_annotation):
 
         typevar_cutters = [
             _resolve_cutter(
@@ -159,17 +155,30 @@ def _resolve_cutter(
         return GroupCutter(typevars=typevar_cutters)
 
     # Set
-    elif (
-        arg_annotation.__class__ is ty._GenericAlias  # noqa
-        and ty.get_origin(arg_annotation) is set
-    ):
+    elif ty.get_origin(arg_annotation) is set:
         typevar_cutter = _resolve_cutter(
             arg_name=arg_name,
             arg_annotation=ty.get_args(arg_annotation)[0],
             arg_settings=arg_settings,
             arg_kind=arg_kind,
         )
-        return UniqueSequenceCutter(typevars=[typevar_cutter])
+        return UniqueMutableSequenceCutter(typevars=[typevar_cutter])
+
+    # FrozenSet
+    elif ty.get_origin(arg_annotation) is frozenset:
+        typevar_cutter = _resolve_cutter(
+            arg_name=arg_name,
+            arg_annotation=ty.get_args(arg_annotation)[0],
+            arg_settings=arg_settings,
+            arg_kind=arg_kind,
+        )
+        return UniqueImmutableSequenceCutter(typevars=[typevar_cutter])
+
+    # Literal
+    elif ty.get_origin(arg_annotation) is tye.Literal:
+        return LiteralCutter(
+            container_values=ty.get_args(arg_annotation)
+        )
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")

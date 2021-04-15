@@ -1,6 +1,9 @@
+import dataclasses
 import re
 import typing as ty
 
+from vkquick.ext.chatbot.providers.page import UserProvider, GroupProvider, PageProvider
+from vkquick.ext.chatbot.wrappers.page import User, Group, Page
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.text_cutters.base import (
     CutterParsingResponse,
@@ -8,6 +11,9 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
     cut_part_via_regex,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
+
+
+T = ty.TypeVar("T")
 
 
 class IntegerCutter(TextCutter):
@@ -126,7 +132,7 @@ class GroupCutter(TextCutter):
 
         return CutterParsingResponse(
             parsed_part=tuple(parsed_parts),
-            new_arguments_string=arguments_string
+            new_arguments_string=arguments_string,
         )
 
 
@@ -169,6 +175,145 @@ class ImmutableSequenceCutter(_SequenceCutter):
     _factory = tuple
 
 
-class UniqueSequenceCutter(_SequenceCutter):
+class UniqueMutableSequenceCutter(_SequenceCutter):
 
     _factory = set
+
+
+class UniqueImmutableSequenceCutter(_SequenceCutter):
+
+    _factory = frozenset
+
+
+class LiteralCutter(TextCutter):
+    def __init__(self, container_values: ty.Tuple[str, ...], *args, **kwargs):
+        self._container_values = list(map(re.compile, container_values))
+        TextCutter.__init__(self, *args, **kwargs)
+
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        for typevar in self._container_values:
+            try:
+                return cut_part_via_regex(re.compile(typevar), arguments_string)
+            except BadArgumentError:
+                continue
+        raise BadArgumentError("Regex didn't matched")
+
+
+
+
+UserID = ty.NewType("UserID", int)
+GroupID = ty.NewType("GroupID", int)
+PageID = ty.NewType("PageID", int)
+
+
+M = ty.TypeVar("M", UserProvider, GroupProvider, PageProvider, User, Group, Page, UserID, GroupID, PageID)
+
+
+class Mention(TextCutter, ty.Generic[T]):
+
+    mention_regex = re.compile(
+        r"""
+        \[
+        (?P<page_type>(?:id)|(?:club))  # User or group
+        (?P<id>\d+)  # ID of the page
+        \|(?P<alias>.+?)  # Alias of the mention
+        ]
+        """,
+        flags=re.X
+    )
+
+    def __init__(self, *, typevar: ty.Type[T]):
+        self._typevar = typevar
+        TextCutter.__init__(self)
+
+    async def cut_part(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = cut_part_via_regex(self.mention_regex, arguments_string)
+        match_object: ty.Match = parsing_response.extra["match_object"]
+        parsed_id = int(match_object.group("id"))
+
+        if self._typevar is UserID and match_object.group("page_type") == "id":
+            parsing_response.parsed_part = parsed_id
+            return parsing_response
+
+        elif self._typevar is GroupID and match_object.group("page_type") == "club":
+            parsing_response.parsed_part = parsed_id
+            return parsing_response
+
+        elif self._typevar is PageID:
+            parsing_response.parsed_part = parsed_id
+            return parsing_response
+
+        elif self._typevar is User and match_object.group("page_type") == "id":
+            provider = await UserProvider.fetch_one(ctx.api, parsed_id)
+            parsing_response.parsed_part = provider.storage
+            return parsing_response
+
+        elif self._typevar is Group and match_object.group("page_type") == "club":
+            provider = await GroupProvider.fetch_one(ctx.api, parsed_id)
+            parsing_response.parsed_part = provider.storage
+            return parsing_response
+
+        elif self._typevar is Group and match_object.group("page_type") == "club":
+            provider = await GroupProvider.fetch_one(ctx.api, parsed_id)
+            parsing_response.parsed_part = provider.storage
+            return parsing_response
+
+        else:
+            raise BadArgumentError("Mismatched mention kind")
+
+
+class Entity(TextCutter):
+    ...
+
+
+#
+# mention_regex = re.compile(r"\[id(?P<id>\d+)\|(?P<alias>.+?)]")
+#
+#
+# @dataclasses.dataclass
+# class UserMention:
+#     alias: str
+#     user: UserProvider
+#
+#
+# class UserMentionCutter(TextCutter):
+#     async def cut_part(
+#         self, ctx: Context, arguments_string: str
+#     ) -> CutterParsingResponse:
+#         parsing_response = cut_part_via_regex(mention_regex, arguments_string)
+#         match_object: ty.Match = parsing_response.extra["match_object"]
+#         user_object = await UserProvider.fetch_one(ctx.api, int(match_object.group("id")))
+#         parsed_part = UserMention(
+#             alias=match_object.group("alias"),
+#             user=user_object
+#         )
+#         parsing_response.parsed_part = parsed_part
+#         return parsing_response
+#
+#
+# @dataclasses.dataclass
+# class RawUserMention:
+#     alias: str
+#     id: int
+#
+#
+# class RawUserMentionCutter(TextCutter):
+#     async def cut_part(
+#         self, ctx: Context, arguments_string: str
+#     ) -> CutterParsingResponse:
+#         parsing_response = cut_part_via_regex(mention_regex, arguments_string)
+#         match_object: ty.Match = parsing_response.extra["match_object"]
+#         user_id = int(match_object.group("id"))
+#         parsed_part = RawUserMention(
+#             alias=match_object.group("alias"),
+#             id=user_id
+#         )
+#         parsing_response.parsed_part = parsed_part
+#         return parsing_response
+#
+#
+# UserID = ty.NewType("UserID", int)

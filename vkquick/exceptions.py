@@ -18,67 +18,78 @@ if ty.TYPE_CHECKING:
     )
 
 
-class IncorrectPreparedArgumentsError(Exception):
-    """ """
+@dataclasses.dataclass
+class StopEventProcessing(Exception):
+    """
+    Используется мидлварами в `foreword` методе, чтобы
+    остановить обработку события. Если это исключение
+    поднято, ни один из обработчиков событий не вызовется,
+    но при этом `afterword` методы вызовутся
+    """
 
-    def __init__(
-        self,
-        *,
-        expected_names: ty.FrozenSet[str],
-        actual_names: ty.FrozenSet[str],
-    ) -> None:
-        self.expected_names = expected_names
-        self.actual_names = actual_names
+    reason: ty.Optional[str] = None
+    extra: dict = dataclasses.field(default_factory=dict)
 
 
+@dataclasses.dataclass
 class StopHandlingEvent(Exception):
-    """ """
+    """
+    Поднимается внутри обработчика события,
+    чтобы остановить процесс обработки события.
+    Может быть поднято как и при успешной обработке,
+    так и неуспешной
 
-    def __init__(
-        self, *, status: EventHandlingStatus, payload: StatusPayload
-    ) -> None:
-        self.status = status
-        self.payload = payload
+    Arguments:
+        status: Статус обработки события. Например, один
+            из фильтров не прошел обработку или событие
+            не подходит по своему типу
+        payload: Поле с дополнительной информацией
+            о статусе обработки
+    """
+
+    status: EventHandlingStatus
+    payload: StatusPayload
 
 
+@dataclasses.dataclass
 class ExpectedMiddlewareToBeUsed(Exception):
-    def __init__(self, middleware_name: str):
-        self._middleware_name = middleware_name
+    """
+    Исключение поднимается, если какая-либо логика
+    требует наличие специального мидллвара в боте
+
+    Arguments:
+        middleware_name: Имя мидлвара, который необходимо добавить
+    """
+
+    middleware_name: str
 
     def __str__(self):
         return (
-            f"Expected `{self._middleware_name}` middleware to be used."
+            f"Expected `{self.middleware_name}` middleware to be used."
             "Add it to the bot instance"
         )
 
 
+@dataclasses.dataclass
 class NotCompatibleFilterError(Exception):
-    """Поднимается, если используемый фильтр не способен обработать событие,
-    которое может обработать обработчик событий
+    """
+    Поднимается, если используемый фильтр
+    не способен обработать событие, которое
+    может обработать обработчик событий
 
     Args:
-      filter: Объект фильтра,
-    который не может обработать одно из обрабатываемых
-    событий обработчика событий, куда он прикреплен
-      event_handler: Объект обработчика событий, куда был прикреплен фильтр
-    :uncovered_event_types: События, которые не может покрыть фильтр. Если `Ellipsis`
-
-    Returns:
-
+        filter: Объект фильтра,
+            который не может обработать одно из обрабатываемых
+            событий обработчика событий, куда он прикреплен
+        event_handler: Объект обработчика событий, куда был прикреплен фильтр
+        uncovered_event_types: События, которые не может покрыть фильтр
     """
 
-    def __init__(
-        self,
-        *,
-        filter: Filter,
-        event_handler: EventHandler,
-        uncovered_event_types: ty.Set[ty.Union[int, str]],
-    ):
-        self.filter = filter
-        self.event_handler = event_handler
-        self.uncovered_event_types = uncovered_event_types
+    filter: Filter
+    event_handler: EventHandler
+    uncovered_event_types: ty.Set[ty.Union[int, str]]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"Filter `{self.filter.__class__.__name__}` "
             f"can't handle event types "
@@ -89,20 +100,24 @@ class NotCompatibleFilterError(Exception):
 
 @dataclasses.dataclass
 class FilterFailedError(Exception):
-    """ """
+    """
+    Вызывается внутри фильтров, если полученное им
+    события не подходит по каким-либо критериям
+
+    Arguments:
+        reason: Причина, по которой фильтр не прошел обработку
+        extra: Дополнительные параметры (информация), которую
+            может сообщить фильтр о причине отмены обработки
+    """
 
     reason: ty.Optional[str] = None
     extra: dict = dataclasses.field(default_factory=dict)
 
 
 class _ParamsScheme(tye.TypedDict):
-    """Структура параметров, возвращаемых
+    """
+    Структура параметров, возвращаемых
     при некорректном обращении к API
-
-    Args:
-
-    Returns:
-
     """
 
     key: str
@@ -111,14 +126,17 @@ class _ParamsScheme(tye.TypedDict):
 
 @dataclasses.dataclass
 class VKAPIError(Exception):
-    """Исключение, поднимаемое при некорректном вызове API запроса.
+    """
+    Исключение, поднимаемое при некорректном вызове API запроса.
     Инициализируется через метод класса `destruct_response`
     для деструктуризации ответа от вк
 
     Args:
-
-    Returns:
-
+        pretty_exception_text: Красиво выстроенное сообщение с ошибкой от API
+        description: Описание ошибки (из API ответа)
+        status_code: Статус-код ошибки (из API ответа)
+        request_params: Параметры запроса, в ответ на который пришла ошибка
+        extra_fields: Дополнительные поля (из API ответа)
     """
 
     pretty_exception_text: str
@@ -132,13 +150,10 @@ class VKAPIError(Exception):
         """Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
 
-        Args:
-          response: ty.Dict[str:
-          ty.Any]:
-          response: ty.Dict[str:
-
+        Arguments:
+            response: Ответ с ошибкой, полученный от API
         Returns:
-
+            Новый объект исключения
         """
         status_code = response["error"].pop("error_code")
         description = response["error"].pop("error_msg")
@@ -174,5 +189,5 @@ class VKAPIError(Exception):
             extra_fields=response["error"],
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.pretty_exception_text

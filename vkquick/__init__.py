@@ -5,6 +5,8 @@ except ImportError:
     import importlib as metadata
 
 # Chatbot
+import typing
+
 from vkquick.ext.chatbot.chat_bot import ChatBot
 from vkquick.ext.chatbot.command.command import Command
 from vkquick.ext.chatbot.command.context import Context
@@ -24,16 +26,23 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
 )
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
     FloatCutter,
+    GroupCutter,
+    ImmutableSequenceCutter,
     IntegerCutter,
+    MutableSequenceCutter,
     OptionalCutter,
     ParagraphCutter,
     StringCutter,
-    WordCutter,
     UnionCutter,
-    MutableSequenceCutter,
-    ImmutableSequenceCutter,
-    UniqueSequenceCutter,
-    GroupCutter
+    UniqueMutableSequenceCutter,
+    UniqueImmutableSequenceCutter,
+    LiteralCutter,
+    WordCutter,
+    UserMention,
+    UserMentionCutter,
+    RawUserMentionCutter,
+    RawUserMention,
+    mention_regex
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (
@@ -51,9 +60,9 @@ from vkquick.ext.chatbot.providers.message import (
     MessageProvider,
     TruncatedMessageProvider,
 )
-from vkquick.ext.chatbot.providers.page_entity import (
+from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
-    PageEntityProvider,
+    PageProvider,
     UserProvider,
 )
 from vkquick.ext.chatbot.ui_builders.base import UIBuilder
@@ -72,7 +81,7 @@ from vkquick.ext.chatbot.wrappers.attachment import (
 )
 from vkquick.ext.chatbot.wrappers.base import Wrapper
 from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
-from vkquick.ext.chatbot.wrappers.page_entities import Group, PageEntity, User
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 # Main core
 from .api import API, TokenOwnerEntity, TokenOwnerType
@@ -115,8 +124,5 @@ from .json_parsers import (
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .signal import SignalHandler
-
-import typing
-
 
 __version__ = metadata.version(__name__)
