@@ -33,7 +33,7 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UnionCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
-    UniqueImmutableSequenceCutter, LiteralCutter,
+    UniqueImmutableSequenceCutter, LiteralCutter, UserMention, UserMentionCutter,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -83,6 +83,9 @@ def _resolve_cutter(
             return StringCutter()
         else:
             return WordCutter()
+
+    elif arg_annotation is UserMention:
+        return UserMentionCutter()
 
     # Optional
     elif ty.get_origin(arg_annotation) is ty.Union and type(
@@ -189,7 +192,8 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        /,
         *,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
@@ -215,7 +219,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
         EventHandler.__init__(
             self,
-            __handler,
+            handler,
             handling_event_types=self.__accepted_event_types__,
             filters=previous_filters,
         )
