@@ -48,7 +48,7 @@ class UserProvider(PageProvider[User]):
 
     @classmethod
     async def fetch_many(
-        cls, api: API, *ids, /, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[UserProvider]:
         users = await api.users.get(..., user_ids=ids, fields=fields)
         users = [cls(api, User(user)) for user in users]
@@ -66,7 +66,7 @@ class GroupProvider(PageProvider[Group]):
 
     @classmethod
     async def fetch_many(
-        cls, api: API, *ids, /, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[GroupProvider]:
         groups = await api.groups.get_by_id(
             ..., group_id=ids, fields=fields
