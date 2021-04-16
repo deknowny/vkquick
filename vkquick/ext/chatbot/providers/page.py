@@ -42,7 +42,7 @@ class UserProvider(PageProvider[User]):
     async def fetch_one(
         cls, api: API, id, /, *, fields: ty.Optional[ty.List[str]] = None
     ) -> UserProvider:
-        user = await api.users.get(..., user_ids=id, fields=fields)
+        user = await api.users.get(..., user_ids=__id, fields=fields)
         user = User(user[0])
         return cls(api, user)
 
@@ -50,7 +50,7 @@ class UserProvider(PageProvider[User]):
     async def fetch_many(
         cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[UserProvider]:
-        users = await api.users.get(..., user_ids=ids, fields=fields)
+        users = await api.users.get(..., user_ids=__ids, fields=fields)
         users = [cls(api, User(user)) for user in users]
         return users
 
@@ -60,7 +60,7 @@ class GroupProvider(PageProvider[Group]):
     async def fetch_one(
         cls, api: API, id, /, *, fields: ty.Optional[ty.List[str]] = None
     ) -> GroupProvider:
-        group = await api.groups.get_by_id(..., group_id=id, fields=fields)
+        group = await api.groups.get_by_id(..., group_id=__id, fields=fields)
         group = Group(group[0])
         return cls(api, group)
 
@@ -69,7 +69,7 @@ class GroupProvider(PageProvider[Group]):
         cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[GroupProvider]:
         groups = await api.groups.get_by_id(
-            ..., group_id=ids, fields=fields
+            ..., group_id=__ids, fields=fields
         )
         groups = [cls(api, Group(group)) for group in groups]
         return groups
