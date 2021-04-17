@@ -38,7 +38,8 @@ class ChatBot(Bot):
     @easy_method_decorator
     def add_command(
         self,
-        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        /,
         *,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
@@ -46,9 +47,9 @@ class ChatBot(Bot):
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         previous_filters: ty.Optional[ty.List[CommandFilter]] = None,
     ) -> Command:
-        if not isinstance(__handler, Command):
-            __handler = Command(
-                __handler,
+        if not isinstance(handler, Command):
+            handler = Command(
+                handler,
                 names=names,
                 prefixes=prefixes,
                 allow_regex=allow_regex,
@@ -56,5 +57,5 @@ class ChatBot(Bot):
                 previous_filters=previous_filters,
             )
 
-        self._event_handlers.append(__handler)
-        return __handler
+        self._event_handlers.append(handler)
+        return handler

@@ -4,16 +4,16 @@ import pygments.formatters
 import pygments.lexers
 
 
-def pretty_view(__mapping: dict) -> str:
+def pretty_view(mapping: dict, /) -> str:
     """
 
     Args:
-      __mapping:
+      mapping:
 
     Returns:
 
     """
-    dumped_mapping = json.dumps(__mapping, ensure_ascii=False, indent=4)
+    dumped_mapping = json.dumps(mapping, ensure_ascii=False, indent=4)
     pretty_mapping = pygments.highlight(
         dumped_mapping,
         pygments.lexers.JsonLexer(),

@@ -17,7 +17,8 @@ class PageProvider(Provider[S], abc.ABC):
     async def fetch_one(
         cls: ty.Type[T],
         api: API,
-        __id,
+        id,
+        /,
         *,
         fields: ty.Optional[ty.List[str]] = None
     ) -> T:
@@ -28,7 +29,8 @@ class PageProvider(Provider[S], abc.ABC):
     async def fetch_many(
         cls: ty.Type[T],
         api: API,
-        __id,
+        id,
+        /,
         *,
         fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[T]:
@@ -38,7 +40,7 @@ class PageProvider(Provider[S], abc.ABC):
 class UserProvider(PageProvider[User]):
     @classmethod
     async def fetch_one(
-        cls, api: API, __id, *, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, id, /, *, fields: ty.Optional[ty.List[str]] = None
     ) -> UserProvider:
         user = await api.users.get(..., user_ids=__id, fields=fields)
         user = User(user[0])
@@ -46,7 +48,7 @@ class UserProvider(PageProvider[User]):
 
     @classmethod
     async def fetch_many(
-        cls, api: API, *__ids, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[UserProvider]:
         users = await api.users.get(..., user_ids=__ids, fields=fields)
         users = [cls(api, User(user)) for user in users]
@@ -56,7 +58,7 @@ class UserProvider(PageProvider[User]):
 class GroupProvider(PageProvider[Group]):
     @classmethod
     async def fetch_one(
-        cls, api: API, __id, *, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, id, /, *, fields: ty.Optional[ty.List[str]] = None
     ) -> GroupProvider:
         group = await api.groups.get_by_id(..., group_id=__id, fields=fields)
         group = Group(group[0])
@@ -64,7 +66,7 @@ class GroupProvider(PageProvider[Group]):
 
     @classmethod
     async def fetch_many(
-        cls, api: API, *__ids, fields: ty.Optional[ty.List[str]] = None
+        cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[GroupProvider]:
         groups = await api.groups.get_by_id(
             ..., group_id=__ids, fields=fields

@@ -275,7 +275,8 @@ class Bot:
     @easy_method_decorator
     def add_event_handler(
         self,
-        __handler: ty.Optional[ty.Callable] = None,
+        handler: ty.Optional[ty.Callable] = None,
+        /,
         *,
         handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
@@ -283,13 +284,13 @@ class Bot:
         """
         Добавляет обработчик события в бота.
 
-        Если `__handler` уже является инстансом `EventHandler`,
+        Если `handler` уже является инстансом `EventHandler`,
         то обработчик просто добавится в бота. Иначе будет создан
         новый объект обработчика с другими полями этого метода
         и уже он будет добавлен.
 
         Arguments:
-            __handler: Обработчик события/функция, которая
+            handler: Обработчик события/функция, которая
                 будет передана при создании обработчика
             handling_event_types: Множество типов обрабатываемых событий
             filters: Фильтры обработчика событий
@@ -297,20 +298,21 @@ class Bot:
         Returns:
             Объект обработчика событий
         """
-        if not isinstance(__handler, EventHandler):
-            __handler = EventHandler(
-                __handler,
+        if not isinstance(handler, EventHandler):
+            handler = EventHandler(
+                handler,
                 handling_event_types=handling_event_types,
                 filters=filters,
             )
 
-        self._event_handlers.append(__handler)
-        return __handler
+        self._event_handlers.append(handler)
+        return handler
 
     @easy_method_decorator
     def add_signal_handler(
         self,
-        __handler: ty.Optional[ty.Callable] = None,
+        handler: ty.Optional[ty.Callable] = None,
+        /,
         *,
         name: ty.Optional[str] = None,
     ):
@@ -318,26 +320,26 @@ class Bot:
         Добавляет обработчик сигнала для бота
 
         Args:
-            __handler: Функция, которая должна обработать сигнал
+            handler: Функция, которая должна обработать сигнал
                 или инстанс обработчика сигнала
             name: Имя обрабатываемого сигнала
 
         Returns:
 
         """
-        if not isinstance(__handler, SignalHandler):
-            __handler = SignalHandler(__handler, name=name)
-        self._signals[__handler.name] = __handler
-        return __handler
+        if not isinstance(handler, SignalHandler):
+            handler = SignalHandler(handler, name=name)
+        self._signals[handler.name] = handler
+        return handler
 
-    def add_middleware(self, __handler: Middleware) -> None:
+    def add_middleware(self, handler: Middleware, /) -> None:
         """
         Добавляет мидлвар в бота
 
         Args:
-          __handler: Инстанс мидлвара
+          handler: Инстанс мидлвара
         """
-        self._middlewares.append(__handler)
+        self._middlewares.append(handler)
 
     def __repr__(self) -> str:
         return f'<vkquick.Bot token="{self._api.token[:5]}...">'

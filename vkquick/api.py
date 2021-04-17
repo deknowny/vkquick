@@ -334,13 +334,13 @@ class API(SessionContainerMixin):
             return f"<vkquick.{self.__class__.__name__} owner={owner_name!r}>"
 
 
-def _convert_param_value(__value):
+def _convert_param_value(value, /):
     """
     Конвертирует параметер API запроса в соотвествиями
     с особенностями API и дополнительными удобствами
 
     Args:
-        __value: Текущее значение параметра
+        value: Текущее значение параметра
 
     Returns:
         Новое значение параметра
@@ -349,40 +349,40 @@ def _convert_param_value(__value):
     # Для всех перечислений функция вызывается рекурсивно.
     # Массивы в запросе распознаются вк только если записать их как строку,
     # перечисляя значения через запятую
-    if isinstance(__value, (list, set, tuple)):
-        updated_sequence = map(_convert_param_value, __value)
+    if isinstance(value, (list, set, tuple)):
+        updated_sequence = map(_convert_param_value, value)
         new_value = ",".join(updated_sequence)
         return new_value
 
     # Все словари, как списки, нужно сдампить в JSON
-    elif isinstance(__value, dict):
-        new_value = json_parser_policy.dumps(__value)
+    elif isinstance(value, dict):
+        new_value = json_parser_policy.dumps(value)
         return new_value
 
     # Особенности `aiohttp`
-    elif isinstance(__value, bool):
-        new_value = int(__value)
+    elif isinstance(value, bool):
+        new_value = int(value)
         return new_value
 
     # Если класс определяет протокол сериализации под параметр API,
     # используется соотвествующий метод
-    elif isinstance(__value, APISerializableMixin):
-        new_value = __value.represent_as_api_param()
+    elif isinstance(value, APISerializableMixin):
+        new_value = value.represent_as_api_param()
         new_value = _convert_param_value(new_value)
         return new_value
 
     else:
-        new_value = str(__value)
+        new_value = str(value)
         return new_value
 
 
-def _convert_params_for_api(__params: dict):
+def _convert_params_for_api(params: dict, /):
     """
     Конвертирует словарь из параметров для метода API,
     учитывая определенные особенности
 
     Args:
-        __params: Параметры, передаваемые для вызова метода API
+        params: Параметры, передаваемые для вызова метода API
 
     Returns:
         Новые параметры, которые можно передать
@@ -391,37 +391,37 @@ def _convert_params_for_api(__params: dict):
     """
     updated_params = {
         (key[:-1] if key.endswith("_") else key): _convert_param_value(value)
-        for key, value in __params.items()
+        for key, value in params.items()
         if value is not None
     }
     return updated_params
 
 
-def _upper_zero_group(__match: ty.Match) -> str:
+def _upper_zero_group(match: ty.Match, /) -> str:
     """
     Поднимает все символы в верхний
     регистр у captured-группы `let`. Используется
     для конвертации snake_case в camelCase.
 
     Arguments:
-      __match: Регекс-группа, полученная в реультате `re.sub`
+      match: Регекс-группа, полученная в реультате `re.sub`
 
     Returns:
         Ту же букву из группы, но в верхнем регистре
 
     """
-    return __match.group("let").upper()
+    return match.group("let").upper()
 
 
-def _convert_method_name(__name: str) -> str:
+def _convert_method_name(name: str, /) -> str:
     """
     Конвертирует snake_case в camelCase.
 
     Args:
-      __name: Имя метода, который необходимо перевести в camelCase
+      name: Имя метода, который необходимо перевести в camelCase
 
     Returns:
         Новое имя метода в camelCase
 
     """
-    return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, __name)
+    return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, name)
