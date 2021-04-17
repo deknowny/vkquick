@@ -22,12 +22,11 @@ classifiers = [
     "Typing :: Typed",
     "Topic :: Utilities",
     "Python :: 3.9",
-    "Python :: 3.8",
-    "Python :: 3.7"
+    "Python :: 3.8"
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.8"
 pygments = "^2.6.1"
 huepy = "^1.2.1"
 aiohttp = "^3.7.2"

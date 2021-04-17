@@ -28,14 +28,15 @@ class EventHandler(EasyDecorator):
 
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        /,
         *,
         handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
         filters: ty.List[Filter] = None,
     ):
-        self._handler = __handler
+        self._handler = handler
         self._handling_event_types = handling_event_types or {
-            __handler.__name__
+            handler.__name__
         }
         self._filters = filters or []
 

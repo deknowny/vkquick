@@ -192,7 +192,8 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
     def __init__(
         self,
-        __handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
+        /,
         *,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
@@ -218,7 +219,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
         EventHandler.__init__(
             self,
-            __handler,
+            handler,
             handling_event_types=self.__accepted_event_types__,
             filters=previous_filters,
         )
