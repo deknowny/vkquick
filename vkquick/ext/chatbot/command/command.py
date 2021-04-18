@@ -27,14 +27,16 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     GroupCutter,
     ImmutableSequenceCutter,
     IntegerCutter,
+    LiteralCutter,
+    Mention,
+    MentionCutter,
     MutableSequenceCutter,
     OptionalCutter,
     StringCutter,
     UnionCutter,
+    UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
-    UniqueImmutableSequenceCutter, LiteralCutter,
-    Mention, MentionCutter
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -172,14 +174,10 @@ def _resolve_cutter(
 
     # Literal
     elif ty.get_origin(arg_annotation) is tye.Literal:
-        return LiteralCutter(
-            *ty.get_args(arg_annotation)
-        )
+        return LiteralCutter(*ty.get_args(arg_annotation))
 
     elif ty.get_origin(arg_annotation) is Mention:
-        return MentionCutter(
-            ty.get_args(arg_annotation)[0]
-        )
+        return MentionCutter(ty.get_args(arg_annotation)[0])
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")

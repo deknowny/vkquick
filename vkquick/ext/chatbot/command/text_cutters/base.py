@@ -7,7 +7,6 @@ import typing as ty
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 
-
 T = ty.TypeVar("T")
 
 
@@ -37,7 +36,6 @@ class CutterParsingResponse(ty.Generic[T]):
 
 
 class TextCutter(abc.ABC):
-
     @abc.abstractmethod
     async def cut_part(
         self, ctx: Context, arguments_string: str
@@ -63,4 +61,3 @@ def cut_part_via_regex(
         )
 
     raise BadArgumentError("Regex didn't matched")
-

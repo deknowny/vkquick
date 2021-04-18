@@ -3,12 +3,6 @@ import dataclasses
 import re
 import typing as ty
 
-from vkquick.ext.chatbot.providers.page import (
-    UserProvider,
-    GroupProvider,
-    PageProvider,
-)
-from vkquick.ext.chatbot.wrappers.page import User, Group, Page
 from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.command.text_cutters.base import (
     CutterParsingResponse,
@@ -16,6 +10,12 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
     cut_part_via_regex,
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
+from vkquick.ext.chatbot.providers.page import (
+    GroupProvider,
+    PageProvider,
+    UserProvider,
+)
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 
 class IntegerCutter(TextCutter):
@@ -75,7 +75,8 @@ class OptionalCutter(TextCutter):
     def __init__(
         self,
         typevar: TextCutter,
-        /, *,
+        /,
+        *,
         default: ty.Optional = None,
         default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None,
         **kwargs,
@@ -199,18 +200,14 @@ class UniqueImmutableSequenceCutter(_SequenceCutter):
 
 class LiteralCutter(TextCutter):
     def __init__(self, *container_values: str):
-        self._container_values = tuple(
-            map(re.compile, container_values)
-        )
+        self._container_values = tuple(map(re.compile, container_values))
 
     async def cut_part(
         self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         for typevar in self._container_values:
             try:
-                return cut_part_via_regex(
-                    typevar, arguments_string
-                )
+                return cut_part_via_regex(typevar, arguments_string)
             except BadArgumentError:
                 continue
         raise BadArgumentError("Regex didn't matched")
@@ -250,8 +247,7 @@ class MentionCutter(TextCutter):
         \|(?P<alias>.+?)  # Alias of the mention
         ]
         """,
-        flags=re.X
-
+        flags=re.X,
     )
 
     def __init__(self, page_type: T, /):
@@ -260,26 +256,30 @@ class MentionCutter(TextCutter):
     async def cut_part(
         self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse[Mention[T]]:
-        parsing_response = cut_part_via_regex(self.mention_regex, arguments_string)
+        parsing_response = cut_part_via_regex(
+            self.mention_regex, arguments_string
+        )
         match_object: ty.Match = parsing_response.extra["match_object"]
         page_id = match_object.group("id")
         page_type = match_object.group("page_type")
         if (
-            self._page_type is UserID and page_type == "id"
-            or self._page_type is GroupID and page_type == "club"
+            self._page_type is UserID
+            and page_type == "id"
+            or self._page_type is GroupID
+            and page_type == "club"
             or self._page_type is PageID
         ):
             parsed_part = page_id
 
         elif (
-            self._page_type is UserProvider and page_type == "id"
-            or self._page_type is GroupProvider and page_type == "club"
+            self._page_type is UserProvider
+            and page_type == "id"
+            or self._page_type is GroupProvider
+            and page_type == "club"
         ):
             parsed_part = await self._page_type.fetch_one(ctx.api, page_id)
 
-        elif (
-            self._page_type is PageProvider
-        ):
+        elif self._page_type is PageProvider:
             if page_type == "id":
                 provider_type = UserProvider
             else:
@@ -308,12 +308,9 @@ class MentionCutter(TextCutter):
             raise BadArgumentError("Regex didn't matched")
 
         parsing_response.parsed_part = Mention(
-            alias=match_object.group("alias"),
-            entity=parsed_part
+            alias=match_object.group("alias"), entity=parsed_part
         )
         return parsing_response
-
-
 
 
 #

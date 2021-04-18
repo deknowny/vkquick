@@ -136,7 +136,8 @@ class API(SessionContainerMixin):
 
     async def __call__(
         self,
-        allow_cache: bool = False, /,
+        allow_cache: bool = False,
+        /,
         **request_params,
     ) -> ty.Any:
         """
@@ -156,8 +157,7 @@ class API(SessionContainerMixin):
         method_name = self._method_name
         self._method_name = ""
         return await self.method(
-            method_name, request_params,
-            allow_cache=allow_cache
+            method_name, request_params, allow_cache=allow_cache
         )
 
     async def fetch_token_owner_entity(self) -> TokenOwnerEntity:
@@ -197,7 +197,8 @@ class API(SessionContainerMixin):
         self,
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
-        /, *,
+        /,
+        *,
         allow_cache: bool = False,
     ) -> ty.Any:
         """

@@ -27,19 +27,22 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
     FloatCutter,
     GroupCutter,
+    GroupID,
     ImmutableSequenceCutter,
     IntegerCutter,
+    LiteralCutter,
+    Mention,
+    MentionCutter,
     MutableSequenceCutter,
     OptionalCutter,
+    PageID,
     ParagraphCutter,
     StringCutter,
     UnionCutter,
-    UniqueMutableSequenceCutter,
     UniqueImmutableSequenceCutter,
-    LiteralCutter,
+    UniqueMutableSequenceCutter,
+    UserID,
     WordCutter,
-    Mention, MentionCutter,
-    UserID, GroupID, PageID
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import (

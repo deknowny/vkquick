@@ -20,7 +20,7 @@ class PageProvider(Provider[S], abc.ABC):
         id,
         /,
         *,
-        fields: ty.Optional[ty.List[str]] = None
+        fields: ty.Optional[ty.List[str]] = None,
     ) -> T:
         pass
 
@@ -32,7 +32,7 @@ class PageProvider(Provider[S], abc.ABC):
         id,
         /,
         *,
-        fields: ty.Optional[ty.List[str]] = None
+        fields: ty.Optional[ty.List[str]] = None,
     ) -> ty.List[T]:
         pass
 
@@ -68,8 +68,6 @@ class GroupProvider(PageProvider[Group]):
     async def fetch_many(
         cls, api: API, /, *ids, fields: ty.Optional[ty.List[str]] = None
     ) -> ty.List[GroupProvider]:
-        groups = await api.groups.get_by_id(
-            ..., group_id=ids, fields=fields
-        )
+        groups = await api.groups.get_by_id(..., group_id=ids, fields=fields)
         groups = [cls(api, Group(group)) for group in groups]
         return groups
