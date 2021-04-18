@@ -195,8 +195,9 @@ class API(SessionContainerMixin):
 
     async def method(
         self,
-        __method_name: str,
-        __request_params: ty.Dict[str, ty.Any],
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        /,
         *,
         allow_cache: bool = False,
     ) -> ty.Any:
