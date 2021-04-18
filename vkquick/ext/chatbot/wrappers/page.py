@@ -86,6 +86,23 @@ class User(Page):
     def ln(self):
         return self.fields["last_name"]
 
+    def if_gender(self, female: ty.Any, male: ty.Any, default: ty.Any = None):
+        try:
+            gender = self.fields["sex"]
+        except KeyError as err:
+            raise KeyError("Should fetch the user with field `sex`") from err
+        else:
+            if gender == 1:
+                return female
+            elif gender == 2:
+                return male
+
+            # And gender == 0
+            elif default is None:
+                return male
+            else:
+                return default
+
     def _extra_fields_to_format(self):
         extra_fields = super()._extra_fields_to_format()
         extra_fields.update(fn=self.fn, ln=self.ln)
