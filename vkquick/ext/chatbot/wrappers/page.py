@@ -86,7 +86,7 @@ class User(Page):
     def ln(self):
         return self.fields["last_name"]
 
-    def if_gender(self, female: ty.Any, male: ty.Any, default: ty.Any = None):
+    def ifsex(self, female: ty.Any, male: ty.Any, default: ty.Any = None):
         try:
             gender = self.fields["sex"]
         except KeyError as err:
