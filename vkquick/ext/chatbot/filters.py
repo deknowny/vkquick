@@ -6,12 +6,15 @@ from vkquick.ext.chatbot.command.context import Context
 
 
 class CommandFilter(Filter):
+
+    __accepted_event_types__ = {"message_new", 4}
+
     @abc.abstractmethod
     def make_decision(self, ctx: Context) -> None:
         ...
 
 
 class IgnoreBotsMessagesFilter(CommandFilter):
-    def make_decision(self, ctx: Context) -> None:
-        if ctx.mp.storage.from_id < 0:
+    async def make_decision(self, ctx: Context) -> None:
+        if ctx.msg.from_id < 0:
             raise FilterFailedError()
