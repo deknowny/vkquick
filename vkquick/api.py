@@ -216,8 +216,8 @@ class API(SessionContainerMixin):
         :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
         return await self._make_api_request(
-            method_name=__method_name,
-            request_params=__request_params,
+            method_name=method_name,
+            request_params=request_params,
             allow_cache=allow_cache,
         )
 
