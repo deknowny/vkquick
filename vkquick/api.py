@@ -42,7 +42,7 @@ class TokenOwnerEntity:
         scheme: ty.Optional[dict] = None,
     ) -> None:
         """
-        Args:
+        Arguments:
             entity_type: Тип владельца токена
             scheme: Объект владельца токена (для сервисных токенов отсутствует)
         """
@@ -80,7 +80,7 @@ class API(SessionContainerMixin):
         Arguments:
             token: Токен пользователя/группы/сервисный для отправки API запросов.
                 Можно использовать имя переменной окружения,
-                если добавить в начало `"$"`, т.е. `"$ENV_VAR"`
+                если добавить в начало `"$"`, т.е. `"$ENV_VAR_NAME"`
             version: Версия используемого API.
             requests_url: URL для отправки запросов.
             requests_session: Собственная `aiohttp` сессия.
@@ -112,7 +112,7 @@ class API(SessionContainerMixin):
     @property
     def token(self) -> str:
         """
-        Токен, используемые для API запросов
+        Токен, используемый для API запросов
         """
         return self._token
 
@@ -120,13 +120,13 @@ class API(SessionContainerMixin):
         """
         Используя `__gettattr__`, класс предоставляет возможность
         вызывать методы API, как будто обращаясь к атрибутам.
-        Пример есть в описании класса.
+        Пример есть в описании класса
 
         Arguments:
-            attribute: Имя/заголовок названия метода.
+            attribute: Имя/заголовок названия метода
         Returns:
             Собственный инстанс класса для того,
-            чтобы была возможность продолжить выстроить имя метода через точку.
+            чтобы была возможность продолжить выстроить имя метода через точку
         """
         if self._method_name:
             self._method_name += f".{attribute}"
@@ -136,29 +136,28 @@ class API(SessionContainerMixin):
 
     async def __call__(
         self,
-        __allow_cache: bool = False,
+        allow_cache: bool = False, /,
         **request_params,
     ) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами,
-        добавляя к ним токен и версию (может быть перекрыто).
+        добавляя к ним токен и версию (может быть перекрыто)
 
         Arguments:
-            __allow_cache: Если `True` -- результат запроса
+            allow_cache: Если `True` -- результат запроса
                 с подобными параметрами и методом будет получен из кэш-таблицы,
                 если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
-                просто выполнится по сети.
-            request_params: Параметры, принимаемы методом, которые описаны в документации API.
+                просто выполнится по сети
+            request_params: Параметры, принимаемы методом, которые описаны в документации API
 
         Returns:
-            Пришедший от API ответ.
+            Пришедший от API ответ
         """
         method_name = self._method_name
         self._method_name = ""
-        return await self._make_api_request(
-            method_name=method_name,
-            request_params=request_params,
-            allow_cache=__allow_cache,
+        return await self.method(
+            method_name, request_params,
+            allow_cache=allow_cache
         )
 
     async def fetch_token_owner_entity(self) -> TokenOwnerEntity:
@@ -169,7 +168,8 @@ class API(SessionContainerMixin):
         определяет тип владельца токена (пользователь, группа, токен сервисный)
         и задержку для запросов.
 
-        :return: Сущность владельца токена
+        Returns:
+            Сущность владельца токена
         """
         if self._token_owner is None:
             # Убираем `None`, чтобы запрос строкой ниже выполнился
@@ -195,37 +195,40 @@ class API(SessionContainerMixin):
 
     async def method(
         self,
-        __method_name: str,
-        __request_params: ty.Dict[str, ty.Any],
-        *,
+        method_name: str,
+        request_params: ty.Dict[str, ty.Any],
+        /, *,
         allow_cache: bool = False,
     ) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
 
-        :param __method_name: Имя вызываемого метода API
-        :param __request_params: Параметры, принимаемы методом, которые описаны в документации API.
-        :param allow_cache: Если `True` -- реузультат запроса
-            с подобными параметрами и методом будет получен из кэш-таблицы,
-            если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
-            просто выполнится по сети.
+        Arguments:
+            method_name: Имя вызываемого метода API
+            request_params: Параметры, принимаемы методом, которые описаны в документации API.
+            allow_cache: Если `True` -- результат запроса
+                с подобными параметрами и методом будет получен из кэш-таблицы,
+                если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
+                просто выполнится по сети.
 
-        :return: Пришедший от API ответ.
+        Returns:
+            Пришедший от API ответ.
 
-        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        Raises:
+            VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
         return await self._make_api_request(
-            method_name=__method_name,
-            request_params=__request_params,
+            method_name=method_name,
+            request_params=request_params,
             allow_cache=allow_cache,
         )
 
-    async def execute(self, __code: str) -> ty.Any:
+    async def execute(self, code: str, /) -> ty.Any:
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
         Arguments:
-            __code: VKScript код
+            code: VKScript код
 
         Returns:
             Пришедший ответ от API
@@ -233,7 +236,7 @@ class API(SessionContainerMixin):
         Raises:
             VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
-        return await self.method("execute", {"code": __code})
+        return await self.method("execute", {"code": code})
 
     async def _make_api_request(
         self,
@@ -244,11 +247,13 @@ class API(SessionContainerMixin):
         """
         Выполняет API запрос на определнный метод с заданными параметрами
 
-        :param method_name: Имя метода API
-        :param request_params: Параметры, переданные для метода
-        :param allow_cache: Использовать кэширование
+        Arguments:
+            method_name: Имя метода API
+            request_params: Параметры, переданные для метода
+            allow_cache: Использовать кэширование
 
-        :raises VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
+        Raises:
+            VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
         # Конвертация параметров запроса под особенности API и имени метода
         real_method_name = _convert_method_name(method_name)
@@ -339,7 +344,7 @@ def _convert_param_value(value, /):
     Конвертирует параметер API запроса в соотвествиями
     с особенностями API и дополнительными удобствами
 
-    Args:
+    Arguments:
         value: Текущее значение параметра
 
     Returns:
@@ -381,7 +386,7 @@ def _convert_params_for_api(params: dict, /):
     Конвертирует словарь из параметров для метода API,
     учитывая определенные особенности
 
-    Args:
+    Arguments:
         params: Параметры, передаваемые для вызова метода API
 
     Returns:
@@ -404,7 +409,7 @@ def _upper_zero_group(match: ty.Match, /) -> str:
     для конвертации snake_case в camelCase.
 
     Arguments:
-      match: Регекс-группа, полученная в реультате `re.sub`
+      match: Регекс-группа, полученная в результате `re.sub`
 
     Returns:
         Ту же букву из группы, но в верхнем регистре
@@ -417,7 +422,7 @@ def _convert_method_name(name: str, /) -> str:
     """
     Конвертирует snake_case в camelCase.
 
-    Args:
+    Arguments:
       name: Имя метода, который необходимо перевести в camelCase
 
     Returns:
