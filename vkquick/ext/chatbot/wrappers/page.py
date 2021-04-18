@@ -30,7 +30,7 @@ class Page(Wrapper, abc.ABC):
 
     def mention(self, alias: ty.Optional[str] = None) -> str:
         """
-        Создает упоминание пользователя с `alias` либо с его именем
+        Создает упоминание пользователя либо с `alias` либо с его именем
         """
         if alias:
             updated_alias = format(self, alias)
@@ -40,7 +40,7 @@ class Page(Wrapper, abc.ABC):
         return mention
 
     def _extra_fields_to_format(self) -> dict:
-        return {"fullname": self.fullname}
+        return {"fullname": self.fullname, "id": self.id}
 
     def __format__(self, format_spec) -> str:
         format_value = super().__format__(format_spec)

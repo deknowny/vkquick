@@ -33,7 +33,8 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UnionCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
-    UniqueImmutableSequenceCutter, LiteralCutter, UserMention, UserMentionCutter,
+    UniqueImmutableSequenceCutter, LiteralCutter,
+    Mention, MentionCutter
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
@@ -84,28 +85,23 @@ def _resolve_cutter(
         else:
             return WordCutter()
 
-    elif arg_annotation is UserMention:
-        return UserMentionCutter()
-
     # Optional
     elif ty.get_origin(arg_annotation) is ty.Union and type(
         None
     ) in ty.get_args(arg_annotation):
         return OptionalCutter(
+            _resolve_cutter(
+                arg_name=arg_name,
+                arg_annotation=ty.get_args(arg_annotation)[0],
+                arg_settings=arg_settings,
+                arg_kind=arg_kind,
+            ),
             default=arg_settings.default,
             default_factory=arg_settings.default_factory,
-            typevars=[
-                _resolve_cutter(
-                    arg_name=arg_name,
-                    arg_annotation=ty.get_args(arg_annotation)[0],
-                    arg_settings=arg_settings,
-                    arg_kind=arg_kind,
-                )
-            ],
         )
     # Union
     elif ty.get_origin(arg_annotation) is ty.Union:
-        typevar_cutters = [
+        typevar_cutters = (
             _resolve_cutter(
                 arg_name=arg_name,
                 arg_annotation=typevar,
@@ -113,8 +109,8 @@ def _resolve_cutter(
                 arg_kind=arg_kind,
             )
             for typevar in ty.get_args(arg_annotation)
-        ]
-        return UnionCutter(typevars=typevar_cutters)
+        )
+        return UnionCutter(*typevar_cutters)
 
     # List
     elif ty.get_origin(arg_annotation) is list:
@@ -124,7 +120,7 @@ def _resolve_cutter(
             arg_settings=arg_settings,
             arg_kind=arg_kind,
         )
-        return MutableSequenceCutter(typevars=[typevar_cutter])
+        return MutableSequenceCutter(typevar_cutter)
     # Tuple sequence
     elif ty.get_origin(arg_annotation) is tuple and Ellipsis in ty.get_args(
         arg_annotation
@@ -135,14 +131,14 @@ def _resolve_cutter(
             arg_settings=arg_settings,
             arg_kind=arg_kind,
         )
-        return ImmutableSequenceCutter(typevars=[typevar_cutter])
+        return ImmutableSequenceCutter(typevar_cutter)
 
     # Tuple
     elif ty.get_origin(
         arg_annotation
     ) is tuple and Ellipsis not in ty.get_args(arg_annotation):
 
-        typevar_cutters = [
+        typevar_cutters = (
             _resolve_cutter(
                 arg_name=arg_name,
                 arg_annotation=typevar,
@@ -150,9 +146,9 @@ def _resolve_cutter(
                 arg_kind=arg_kind,
             )
             for typevar in ty.get_args(arg_annotation)
-        ]
+        )
 
-        return GroupCutter(typevars=typevar_cutters)
+        return GroupCutter(*typevar_cutters)
 
     # Set
     elif ty.get_origin(arg_annotation) is set:
@@ -162,7 +158,7 @@ def _resolve_cutter(
             arg_settings=arg_settings,
             arg_kind=arg_kind,
         )
-        return UniqueMutableSequenceCutter(typevars=[typevar_cutter])
+        return UniqueMutableSequenceCutter(typevar_cutter)
 
     # FrozenSet
     elif ty.get_origin(arg_annotation) is frozenset:
@@ -172,12 +168,17 @@ def _resolve_cutter(
             arg_settings=arg_settings,
             arg_kind=arg_kind,
         )
-        return UniqueImmutableSequenceCutter(typevars=[typevar_cutter])
+        return UniqueImmutableSequenceCutter(typevar_cutter)
 
     # Literal
     elif ty.get_origin(arg_annotation) is tye.Literal:
         return LiteralCutter(
-            container_values=ty.get_args(arg_annotation)
+            *ty.get_args(arg_annotation)
+        )
+
+    elif ty.get_origin(arg_annotation) is Mention:
+        return MentionCutter(
+            ty.get_args(arg_annotation)[0]
         )
 
     else:

@@ -8,6 +8,9 @@ from vkquick.ext.chatbot.command.context import Context
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 
 
+T = ty.TypeVar("T")
+
+
 class CommandTextArgument(ty.NamedTuple):
     argument_name: str
     cutter: TextCutter
@@ -27,28 +30,19 @@ class Argument:
 
 
 @dataclasses.dataclass
-class CutterParsingResponse:
-    parsed_part: ty.Any
+class CutterParsingResponse(ty.Generic[T]):
+    parsed_part: T
     new_arguments_string: str
     extra: dict = dataclasses.field(default_factory=dict)
 
 
 class TextCutter(abc.ABC):
-    def __init__(self, *, typevars: ty.Optional[ty.List[TextCutter]] = None):
-        self._typevars = typevars or []
-
-    @property
-    def typevars(self) -> ty.List[TextCutter]:
-        return self._typevars
 
     @abc.abstractmethod
     async def cut_part(
         self, ctx: Context, arguments_string: str
     ) -> CutterParsingResponse:
         ...
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(generic_types={self._typevars})"
 
 
 def cut_part_via_regex(
@@ -69,3 +63,4 @@ def cut_part_via_regex(
         )
 
     raise BadArgumentError("Regex didn't matched")
+
