@@ -10,7 +10,12 @@ from vkquick.ext.chatbot.utils import get_user_registration_date
 from vkquick.ext.chatbot.wrappers.base import Wrapper
 
 
+T = ty.TypeVar("T")
+
+
 class Page(Wrapper, abc.ABC):
+    _mention_prefix: str
+
     @property
     @abc.abstractmethod
     def fullname(self) -> str:
@@ -34,9 +39,9 @@ class Page(Wrapper, abc.ABC):
         """
         if alias:
             updated_alias = format(self, alias)
-            mention = f"[id{self.id}|{updated_alias}]"
+            mention = f"[{self._mention_prefix}{self.id}|{updated_alias}]"
         else:
-            mention = f"[id{self.id}|{self.fullname}]"
+            mention = f"[{self._mention_prefix}{self.id}|{self.fullname}]"
         return mention
 
     def _extra_fields_to_format(self) -> dict:
@@ -52,6 +57,9 @@ class Page(Wrapper, abc.ABC):
 
 
 class Group(Page):
+
+    _mention_prefix = "club"
+
     @property
     def fullname(self) -> str:
         return self.fields["name"]
@@ -64,6 +72,8 @@ class Group(Page):
 
 
 class User(Page):
+    _mention_prefix = "id"
+
     def is_group(self) -> bool:
         return False
 
@@ -86,7 +96,7 @@ class User(Page):
     def ln(self):
         return self.fields["last_name"]
 
-    def ifsex(self, female: ty.Any, male: ty.Any, default: ty.Any = None):
+    def if_gender(self, female: T, male: T = "", default: ty.Optional[T] = None) -> ty.Optional[T]:
         try:
             gender = self.fields["sex"]
         except KeyError as err:

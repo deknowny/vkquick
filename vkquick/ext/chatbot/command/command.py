@@ -37,7 +37,10 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
+    UserID, PageID, GroupID, EntityCutter,
 )
+from vkquick.ext.chatbot.providers.page import PageProvider, UserProvider, GroupProvider
+from vkquick.ext.chatbot.wrappers.page import Page, User, Group
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
 from vkquick.ext.chatbot.providers.message import MessageProvider
@@ -177,7 +180,14 @@ def _resolve_cutter(
         return LiteralCutter(*ty.get_args(arg_annotation))
 
     elif ty.get_origin(arg_annotation) is Mention:
-        return MentionCutter(ty.get_args(arg_annotation)[0])
+        return MentionCutter(ty.get_args(arg_annotation)[0], **arg_settings.cutter_preferences)
+
+    elif arg_annotation in {
+        UserID, GroupID, PageID,
+        User, Group, Page,
+        UserProvider, GroupProvider, PageProvider
+    }:
+        return EntityCutter(arg_annotation, **arg_settings.cutter_preferences)
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
@@ -284,7 +294,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
                         },
                     )
                 raise FilterFailedError(
-                    "Missed an argument",
+                    "Incorrect argument value",
                     extra={
                         "status": CommandStatus.INCORRECT_ARGUMENT,
                         "payload:": IncorrectArgument(

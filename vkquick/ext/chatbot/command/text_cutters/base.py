@@ -23,9 +23,15 @@ class Argument:
     callbacks: ty.List[
         ty.Callable[[Context], ty.Awaitable[ty.Any]]
     ] = dataclasses.field(default_factory=list)
-    cutter: ty.Optional[TextCutter] = None
     default: ty.Optional = None
     default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None
+    cutter_preferences: dict = dataclasses.field(default_factory=dict)
+
+    def setup_cutter(self, **kwargs) -> Argument:
+        if self.cutter_preferences:
+            raise ValueError("Cutter preferences has been already set")
+        self.cutter_preferences = kwargs
+        return self
 
 
 @dataclasses.dataclass
@@ -36,6 +42,7 @@ class CutterParsingResponse(ty.Generic[T]):
 
 
 class TextCutter(abc.ABC):
+
     @abc.abstractmethod
     async def cut_part(
         self, ctx: Context, arguments_string: str
@@ -48,8 +55,8 @@ def cut_part_via_regex(
     arguments_string: str,
     *,
     group: ty.Union[str, int] = 0,
-    factory: ty.Optional[ty.Callable[[str], ty.Any]] = None,
-) -> CutterParsingResponse:
+    factory: ty.Optional[ty.Callable[[str], T]] = None,
+) -> CutterParsingResponse[T]:
     matched = regex.match(arguments_string)
     if matched:
         new_arguments_string = arguments_string[matched.end() :]
