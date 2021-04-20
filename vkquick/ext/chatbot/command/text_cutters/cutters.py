@@ -35,7 +35,19 @@ class IntegerCutter(TextCutter):
 
 class FloatCutter(TextCutter):
 
-    _pattern = re.compile(r"[+|-]?\d*(?:\.?\d+)")
+    _pattern = re.compile(
+        r"""
+        [-+]?  # optional sign
+        (?:
+            (?: \d* \. \d+ )  # .1 .12 .123 etc 9.1 etc 98.1 etc
+            |
+            (?: \d+ \.? )  # 1. 12. 123. etc 1 12 123 etc
+        )
+        # followed by optional exponent part if desired
+        (?: [Ee][+-]? \d+ )?
+        """,
+        flags=re.X
+    )
 
     async def cut_part(
         self, ctx: Context, arguments_string: str
@@ -251,9 +263,10 @@ class MentionCutter(TextCutter):
     mention_regex = re.compile(
         r"""
         \[
-        (?P<page_type>(?:id)|(?:club))  # User or group
-        (?P<id>\d+)  # ID of the page
-        \|(?P<alias>.+?)  # Alias of the mention
+        (?P<page_type> (?:id) | (?:club) )  # User or group
+        (?P<id> \d+ )  # ID of the page
+        \|
+        (?P<alias> .+? )  # Alias of the mention
         ]
         """,
         flags=re.X,
@@ -365,17 +378,16 @@ class EntityCutter(MentionCutter):
     screen_name_regex = re.compile(
         r"""
         # Optional protocol
-        (?:https?://)? 
+        (?: https?:// )? 
         
         # Optional vk domain
-        (?:vk\.com/)?
+        (?: vk\.com/ )?
         
         # Screen name of user or group
-        (?P<screen_name>(?:\w+|\.)+)/?
+        (?P<screen_name> (?: \w+ | \.)+ )
         
-        # Other optional URL ignored parameters.
-        # Need only screen name
-        # (?:\S+)?
+        # URL path part
+        /?
         
         # Example:
         # vk.com/deknowny
@@ -387,10 +399,12 @@ class EntityCutter(MentionCutter):
     raw_id_regex = re.compile(
         r"""
         # Type of id: group/user. Positive ID means user, negative -- group
-        (?P<type>[+-]?|(?:id)|(?:club)) 
+        (?P<type>
+            [+-]? | (?:id) | (?:club)
+        ) 
         
         # ID of user/group
-        (?P<id>\d+)
+        (?P<id> \d+ ∂)
         """,
         flags=re.X,
     )
