@@ -7,10 +7,10 @@ from vkquick.ext.chatbot.command.context import Context
 
 class CommandFilter(Filter):
 
-    __accepted_event_types__ = {"message_new", 4}
+    accepted_event_types = {"message_new", "message_reply", 4}
 
     @abc.abstractmethod
-    def make_decision(self, ctx: Context) -> None:
+    async def make_decision(self, ctx: Context) -> None:
         ...
 
 

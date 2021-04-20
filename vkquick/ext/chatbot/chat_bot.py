@@ -36,26 +36,28 @@ class ChatBot(Bot):
         self._middlewares.append(MakeMessageProviderOnNewMessage())
 
     @easy_method_decorator
-    def add_command(
+    def command(
         self,
-        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
-        /,
-        *,
+        *names_as_args: str,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        previous_filters: ty.Optional[ty.List[CommandFilter]] = None,
+        afterword_filters: ty.Optional[ty.List[CommandFilter]] = None,
+        foreword_filters: ty.Optional[ty.List[CommandFilter]] = None,
     ) -> Command:
-        if not isinstance(handler, Command):
-            handler = Command(
-                handler,
-                names=names,
-                prefixes=prefixes,
-                allow_regex=allow_regex,
-                routing_re_flags=routing_re_flags,
-                previous_filters=previous_filters,
-            )
-
+        handler = Command(
+            *names_as_args,
+            names=names,
+            prefixes=prefixes,
+            allow_regex=allow_regex,
+            routing_re_flags=routing_re_flags,
+            afterword_filters=afterword_filters,
+            foreword_filters=foreword_filters
+        )
         self._event_handlers.append(handler)
+        self.add_commands(handler)
         return handler
+
+    def add_commands(self, *commands: Command) -> None:
+        self._event_handlers.extend(commands)

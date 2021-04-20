@@ -21,28 +21,28 @@ from vkquick.exceptions import (
 )
 
 
-class EventHandler(EasyDecorator):
+class EventHandler(
+    EasyDecorator[
+        ty.Callable[
+            [EventHandlingContext], ty.Awaitable
+        ]
+    ]
+):
     """ """
 
     context_factory: ty.Type[EventHandlingContext] = EventHandlingContext
 
     def __init__(
         self,
-        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
         /,
         *,
-        handling_event_types: ty.Union[ty.Set[str], ty.Type[...]] = None,
+        handling_event_types: ty.Set[str] = None,
         filters: ty.List[Filter] = None,
     ):
-        self._handler = handler
         self._handling_event_types = handling_event_types or {
-            handler.__name__
+            self.handler.__name__
         }
         self._filters = filters or []
-
-    @property
-    def handler(self):
-        return self._handler
 
     def is_handling_event_type(self, event_type: ty.Union[str]) -> bool:
         """
@@ -70,9 +70,9 @@ class EventHandler(EasyDecorator):
 
         """
         uncovered_event_types = (
-            self._handling_event_types - filter.__accepted_event_types__
+            self._handling_event_types - filter.accepted_event_types
         )
-        if self._handling_event_types - filter.__accepted_event_types__:
+        if self._handling_event_types - filter.accepted_event_types:
             raise NotCompatibleFilterError(
                 filter=filter,
                 event_handler=self,

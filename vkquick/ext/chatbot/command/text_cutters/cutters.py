@@ -264,7 +264,7 @@ class MentionCutter(TextCutter):
         r"""
         \[
         (?P<page_type> (?:id) | (?:club) )  # User or group
-        (?P<id> \d+ )  # ID of the page
+        (?P<id> [1-9]\d* )  # ID of the page
         \|
         (?P<alias> .+? )  # Alias of the mention
         ]

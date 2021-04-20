@@ -13,7 +13,7 @@ class MakeMessageProviderOnNewMessage(Middleware):
             epctx.extra["message_provider"] = MessageProvider.from_mapping(
                 epctx.bot.api, cultivated_message
             )
-        elif epctx.event.type == "message_new":
+        elif epctx.event.type in ("message_new", "message_reply"):
             if "message" in epctx.event.object:
                 epctx.extra[
                     "message_provider"

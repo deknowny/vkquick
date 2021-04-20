@@ -17,7 +17,7 @@ class Filter(abc.ABC):
     (обычная команда).
     """
 
-    __accepted_event_types__: ty.FrozenSet[ty.Union[str, int]] = frozenset()
+    accepted_event_types: ty.FrozenSet[ty.Union[str, int]] = frozenset()
     """
     Возможные типы событий, которые способен обработать фильтр.
     Пустое множество событий означает, что фильтр способен обработать любое

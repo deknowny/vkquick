@@ -21,6 +21,9 @@ if ty.TYPE_CHECKING:
     from vkquick.bases.middleware import Middleware
 
 
+T_bot = ty.TypeVar("T_bot", bound="Bot")
+
+
 @dataclasses.dataclass
 class EventProcessingContext:
     """
@@ -82,7 +85,7 @@ class Bot:
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
         signals: ty.Optional[ty.Dict[str, SignalHandler]] = None,
         middlewares: ty.Optional[
-            ty.List[ty.Union[Middleware, ty.Type[Middleware]]]
+            ty.List[Middleware]
         ] = None,
     ) -> None:
         """
@@ -103,7 +106,7 @@ class Bot:
         self._middlewares: ty.List[Middleware] = middlewares or []
 
     @classmethod
-    def via_token(cls, token: str, **kwargs) -> Bot:
+    def via_token(cls: ty.Type[T_bot], token: str, **kwargs) -> T_bot:
         """
         Позволяет создать инстанс бота через токен,
         автоматически создавая необходимый инстанс API.
@@ -127,7 +130,7 @@ class Bot:
         return self._api
 
     @property
-    def events_factory(self) -> EventsFactory:
+    def events_factory(self) -> ty.Optional[EventsFactory]:
         """
         Текущая фабрика событий, используемая для получения новых событий
         """
@@ -181,6 +184,7 @@ class Bot:
         """
         try:
             await self._setup_events_factory()
+            self._events_factory = ty.cast(EventsFactory, self._events_factory)
             startup_signal = self._signals.get("startup")
             if startup_signal is not None:
                 await startup_signal(self)

@@ -5,7 +5,7 @@ import warnings
 
 import typing_extensions as tye
 
-from vkquick.bases.easy_decorator import EasyDecorator
+from vkquick.bases.easy_decorator import EasyDecorator, easy_class_decorator
 from vkquick.event_handler.context import EventHandlingContext
 from vkquick.event_handler.handler import EventHandler
 from vkquick.exceptions import FilterFailedError
@@ -44,7 +44,6 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
-from vkquick.ext.chatbot.providers.message import MessageProvider
 from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
     PageProvider,
@@ -64,7 +63,7 @@ def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
     if (
         arg_settings.default is not None
         or arg_settings.default_factory is not None
-        and not isinstance(parameter.annotation, OptionalCutter)
+        and not ty.get_origin(parameter.annotation) is ty.Union
     ):
         arg_annotation = ty.Optional[parameter.annotation]
     else:
@@ -208,44 +207,53 @@ def _resolve_cutter(
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
 
 
+class CommandHandlerType1(ty.Protocol):
+    async def __call__(self, ctx: Context, *args: type,**kwargs: type):
+        ...
+
+
+class CommandHandlerType2(ty.Protocol):
+    async def __call__(self, **kwargs):
+        ...
+
+
+@easy_class_decorator
 class Command(EventHandler, CommandFilter, EasyDecorator):
 
     context_factory = Context
 
-    __accepted_event_types__ = frozenset({"message_new", 4})
+    accepted_event_types = frozenset({"message_new", "message_reply", 4})
 
     def __init__(
         self,
-        handler: ty.Optional[ty.Callable[..., ty.Awaitable]] = None,
-        /,
-        *,
+        *names_as_args: str,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        previous_filters: ty.Optional[ty.List[CommandFilter]] = None,
+        afterword_filters: ty.Optional[ty.List[CommandFilter]] = None,
+        foreword_filters: ty.Optional[ty.List[CommandFilter]] = None,
     ) -> None:
         self._names = names or set()
+        self._names.update(names_as_args)
         self._prefixes = prefixes or set()
         self._allow_regex = allow_regex
         self._routing_re_flags = routing_re_flags
 
         self._text_arguments: ty.List[CommandTextArgument] = []
-        self._message_provider_argument_name: ty.Optional[str] = None
         self._ctx_argument_name: ty.Optional[str] = None
 
         self._build_routing_regex()
 
-        if previous_filters is None:
-            previous_filters = [self]
-        else:
-            previous_filters.append(self)
+        afterword_filters = afterword_filters or []
+        foreword_filters = foreword_filters or []
+
+        filters = [*afterword_filters, self, *foreword_filters]
 
         EventHandler.__init__(
             self,
-            handler,
-            handling_event_types=self.__accepted_event_types__,
-            filters=previous_filters,
+            handling_event_types=set(self.accepted_event_types),
+            filters=filters,
         )
 
         self._parse_handler_arguments()
@@ -254,8 +262,6 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         function_arguments = ctx.extra["text_arguments"].copy()
         if self._ctx_argument_name is not None:
             function_arguments[self._ctx_argument_name] = ctx
-        if self._message_provider_argument_name is not None:
-            function_arguments[self._message_provider_argument_name] = ctx.mp
 
         return function_arguments
 
@@ -338,26 +344,16 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
             )
 
     def _parse_handler_arguments(self):
-        parameters = inspect.signature(self._handler).parameters
+        parameters = inspect.signature(self.handler).parameters
         for name, argument in parameters.items():
             if argument.annotation is Context:
                 self._ctx_argument_name = argument.name
-                if (
-                    self._text_arguments
-                    or self._message_provider_argument_name is not None
-                ):
+                if self._text_arguments:
                     warnings.warn(
                         "Set `CommandContext` argument the first "
                         "in the function (style recommendation)"
                     )
 
-            elif argument.annotation is MessageProvider:
-                self._message_provider_argument_name = argument.name
-                if self._text_arguments:
-                    warnings.warn(
-                        "Set `MessageProvider` argument the first "
-                        "in the function (style recommendation)"
-                    )
             else:
                 text_argument = _resolve_typing(argument)
                 self._text_arguments.append(text_argument)
@@ -374,8 +370,8 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
             names = self._names
 
         else:
-            prefixes = map(re.escape, self._prefixes)
-            names = map(re.escape, self._names)
+            prefixes = {re.escape(prefix) for prefix in self._prefixes}
+            names = {re.escape(name) for name in self._names}
 
         # Объединение имен и префиксов через или
         prefixes_regex = "|".join(prefixes)

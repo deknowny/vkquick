@@ -74,7 +74,7 @@ import vkquick as vq
 bot = vq.Bot.init_via_token("your-token")
 
 
-@bot.add_command(names="hi")
+@bot.command(names="hi")
 def hello():
     return "hello!"
 

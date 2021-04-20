@@ -114,6 +114,14 @@ class EventsFactory(abc.ABC):
         updates = [callback(event) for callback in self._new_event_callbacks]
         await asyncio.gather(*updates)
 
+    @abc.abstractmethod
+    async def __aenter__(self):
+        pass
+
+    @abc.abstractmethod
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class LongPollBase(SessionContainerMixin, EventsFactory):
     """Базовый интерфейс для всех типов LongPoll"""

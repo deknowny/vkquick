@@ -5,106 +5,68 @@ import functools
 import typing as ty
 
 
-class EasyDecorator(abc.ABC):
+T = ty.TypeVar("T")
+
+
+def easy_class_decorator(
+    cls: ty.Type[EasyDecorator[T]]
+) -> ty.Callable[
+    ..., ty.Callable[
+        [T], EasyDecorator[T]
+    ]
+]:
+    def args_wrapper(*args, **kwargs) -> ty.Callable[
+        [T], EasyDecorator[T]
+    ]:
+        def handler_wrapper(handler: T) -> EasyDecorator[T]:
+            instance = object.__new__(cls)
+            instance.handler = handler
+            cls.__init__(instance, *args, **kwargs)
+            return instance
+        return handler_wrapper
+    return args_wrapper
+
+
+class EasyDecorator(ty.Generic[T], abc.ABC):
     """Легкий способ создать класс-декоратор"""
 
-    def __new__(
-        cls, handler: ty.Optional[ty.Callable] = None, /, **kwargs
-    ) -> ty.Union[EasyDecorator, ty.Callable[..., EasyDecorator]]:
-        self = object.__new__(cls)
-        if handler is None:
-            self.__kwargs = kwargs
-            return self.__partail_init
-        return self
+    __handler: ty.Optional[T] = None
 
-    def __partail_init(self, handler: ty.Callable, /) -> EasyDecorator:
-        self.__init__(handler, **self.__kwargs)
-        return self
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @property
+    def handler(self) -> T:
+        if self.__handler is None:
+            raise RuntimeError("Can't use handler if the class hasn't been wrapped to a function")
+        return self.__handler
+
+    @handler.setter
+    def handler(self, value: T) -> None:
+        self.__handler = value
 
 
-def easy_func_decorator(func: ty.Callable):
-    """
+class DecoratedFunction(ty.Protocol):
+    def __call__(self, handler: T, *args, **kwargs) -> ty.Any:
+        pass
 
-    Args:
-      func: ty.Callable:
-      func: ty.Callable:
 
-    Returns:
+F = ty.TypeVar("F", bound=DecoratedFunction)
 
-    """
 
+def easy_func_decorator(func: F) -> F:
     @functools.wraps(func)
-    def wrapper_args(handler: ty.Optional[ty.Callable] = None, /, **kwargs):
-        """
-
-        Args:
-          handler: ty.Optional[ty.Callable]:  (Default value = None)
-          **kwargs:
-          handler: ty.Optional[ty.Callable]:  (Default value = None)
-
-        Returns:
-
-        """
-        if handler is None:
-
-            def wrapper_handler(handler: ty.Callable, /):
-                """
-
-                Args:
-                  handler: ty.Callable:
-                  handler: ty.Callable:
-
-                Returns:
-
-                """
-                return func(handler, **kwargs)
-
-            return wrapper_handler
-        return func(handler, **kwargs)
-
-    return wrapper_args
+    def wrapper_args(*args, **kwargs):
+        def wrapper_handler(handler, /):
+            return func(handler, *args, **kwargs)
+        return wrapper_handler
+    return ty.cast(F, wrapper_args)
 
 
-def easy_method_decorator(func: ty.Callable):
-    """
-
-    Args:
-      func: ty.Callable:
-      func: ty.Callable:
-
-    Returns:
-
-    """
-
+def easy_method_decorator(func: F) -> F:
     @functools.wraps(func)
-    def wrapper_args(
-        self, handler: ty.Optional[ty.Callable] = None, /, **kwargs
-    ):
-        """
-
-        Args:
-          handler: ty.Optional[ty.Callable]:  (Default value = None)
-          **kwargs:
-          handler: ty.Optional[ty.Callable]:  (Default value = None)
-
-        Returns:
-
-        """
-        if handler is None:
-
-            def wrapper_handler(handler: ty.Callable, /):
-                """
-
-                Args:
-                  handler: ty.Callable:
-                  handler: ty.Callable:
-
-                Returns:
-
-                """
-                return func(self, handler, **kwargs)
-
-            return wrapper_handler
-        return func(self, handler, **kwargs)
-
-    return wrapper_args
+    def wrapper_args(self, *args, **kwargs):
+        def wrapper_handler(handler, /):
+            return func(self, handler, *args, **kwargs)
+        return wrapper_handler
+    return ty.cast(F, wrapper_args)
