@@ -23,8 +23,10 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
     TextCutter,
 )
 from vkquick.ext.chatbot.command.text_cutters.cutters import (
+    EntityCutter,
     FloatCutter,
     GroupCutter,
+    GroupID,
     ImmutableSequenceCutter,
     IntegerCutter,
     LiteralCutter,
@@ -32,18 +34,23 @@ from vkquick.ext.chatbot.command.text_cutters.cutters import (
     MentionCutter,
     MutableSequenceCutter,
     OptionalCutter,
+    PageID,
     StringCutter,
     UnionCutter,
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
+    UserID,
     WordCutter,
-    UserID, PageID, GroupID, EntityCutter,
 )
-from vkquick.ext.chatbot.providers.page import PageProvider, UserProvider, GroupProvider
-from vkquick.ext.chatbot.wrappers.page import Page, User, Group
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.filters import CommandFilter
 from vkquick.ext.chatbot.providers.message import MessageProvider
+from vkquick.ext.chatbot.providers.page import (
+    GroupProvider,
+    PageProvider,
+    UserProvider,
+)
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 
 def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
@@ -180,12 +187,20 @@ def _resolve_cutter(
         return LiteralCutter(*ty.get_args(arg_annotation))
 
     elif ty.get_origin(arg_annotation) is Mention:
-        return MentionCutter(ty.get_args(arg_annotation)[0], **arg_settings.cutter_preferences)
+        return MentionCutter(
+            ty.get_args(arg_annotation)[0], **arg_settings.cutter_preferences
+        )
 
     elif arg_annotation in {
-        UserID, GroupID, PageID,
-        User, Group, Page,
-        UserProvider, GroupProvider, PageProvider
+        UserID,
+        GroupID,
+        PageID,
+        User,
+        Group,
+        Page,
+        UserProvider,
+        GroupProvider,
+        PageProvider,
     }:
         return EntityCutter(arg_annotation, **arg_settings.cutter_preferences)
 

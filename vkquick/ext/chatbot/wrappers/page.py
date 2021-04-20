@@ -9,7 +9,6 @@ import aiohttp
 from vkquick.ext.chatbot.utils import get_user_registration_date
 from vkquick.ext.chatbot.wrappers.base import Wrapper
 
-
 T = ty.TypeVar("T")
 
 
@@ -96,7 +95,9 @@ class User(Page):
     def ln(self):
         return self.fields["last_name"]
 
-    def if_gender(self, female: T, male: T = "", default: ty.Optional[T] = None) -> ty.Optional[T]:
+    def if_gender(
+        self, female: T, male: T = "", default: ty.Optional[T] = None
+    ) -> ty.Optional[T]:
         try:
             gender = self.fields["sex"]
         except KeyError as err:

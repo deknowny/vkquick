@@ -314,17 +314,26 @@ class MessageProvider(AnyMessageProvider[Message]):
             )
 
     async def fetch_any_replied_sender(self) -> ty.Optional[PageProvider]:
-        return await self.fetch_user_replied_sender() or await self.fetch_group_replied_sender()
+        return (
+            await self.fetch_user_replied_sender()
+            or await self.fetch_group_replied_sender()
+        )
 
     async def fetch_user_replied_sender(self) -> ty.Optional[UserProvider]:
-        if self._storage.reply_message is None or self._storage.reply_message.from_id < 0:
+        if (
+            self._storage.reply_message is None
+            or self._storage.reply_message.from_id < 0
+        ):
             return None
         return await UserProvider.fetch_one(
             self._api, self._storage.reply_message.from_id
         )
 
     async def fetch_group_replied_sender(self) -> ty.Optional[GroupProvider]:
-        if self._storage.reply_message is None or self._storage.reply_message.from_id < 0:
+        if (
+            self._storage.reply_message is None
+            or self._storage.reply_message.from_id < 0
+        ):
             return None
         return await GroupProvider.fetch_one(
             self._api, self._storage.reply_message.from_id
@@ -333,23 +342,36 @@ class MessageProvider(AnyMessageProvider[Message]):
     async def fetch_any_forwarded_senders(self) -> ty.List[PageProvider]:
         user_senders, group_senders = await asyncio.gather(
             self.fetch_user_forwarded_senders(),
-            self.fetch_group_forwarded_senders()
+            self.fetch_group_forwarded_senders(),
         )
         user_senders.extend(group_senders)
         return user_senders
 
     async def fetch_user_forwarded_senders(self) -> ty.List[UserProvider]:
         return await UserProvider.fetch_many(
-            self._api, *[msg.from_id for msg in self._storage.fwd_messages if msg.from_id > 0]
+            self._api,
+            *[
+                msg.from_id
+                for msg in self._storage.fwd_messages
+                if msg.from_id > 0
+            ],
         )
 
     async def fetch_group_forwarded_senders(self) -> ty.List[GroupProvider]:
         return await GroupProvider.fetch_many(
-            self._api, *[msg.from_id for msg in self._storage.fwd_messages if msg.from_id < 0]
+            self._api,
+            *[
+                msg.from_id
+                for msg in self._storage.fwd_messages
+                if msg.from_id < 0
+            ],
         )
 
     async def fetch_any_attached_senders(self) -> ty.Optional[PageProvider]:
-        return await self.fetch_user_attached_senders() or self.fetch_group_attached_senders()
+        return (
+            await self.fetch_user_attached_senders()
+            or self.fetch_group_attached_senders()
+        )
 
     async def fetch_user_attached_senders(self) -> ty.Optional[UserProvider]:
         attached_sender = await self.fetch_user_replied_sender()
@@ -362,7 +384,9 @@ class MessageProvider(AnyMessageProvider[Message]):
         else:
             return attached_sender
 
-    async def fetch_group_attached_senders(self) -> ty.Optional[GroupProvider]:
+    async def fetch_group_attached_senders(
+        self,
+    ) -> ty.Optional[GroupProvider]:
         attached_sender = await self.fetch_group_replied_sender()
         if attached_sender is None:
             forwarded_senders = await self.fetch_group_forwarded_senders()

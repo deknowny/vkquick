@@ -14,8 +14,9 @@ from vkquick.ext.chatbot.command.text_cutters.base import (
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
+    IDType,
     PageProvider,
-    UserProvider, IDType,
+    UserProvider,
 )
 from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
@@ -259,28 +260,37 @@ class MentionCutter(TextCutter):
     )
 
     def __init__(
-        self, page_type: T, /,
+        self,
+        page_type: T,
+        /,
         user_fields: ty.Optional[ty.List[str]] = None,
         group_fields: ty.Optional[ty.List[str]] = None,
-        user_name_case: ty.Optional[str] = None
+        user_name_case: ty.Optional[str] = None,
     ):
         self._page_type = page_type
         self._user_fields = user_fields
         self._group_fields = group_fields
         self._user_name_case = user_name_case
 
-    async def _make_user_provider(self, ctx: Context, page_id: IDType) -> UserProvider:
+    async def _make_user_provider(
+        self, ctx: Context, page_id: IDType
+    ) -> UserProvider:
         return await UserProvider.fetch_one(
-            ctx.api, page_id, fields=self._user_fields, name_case=self._user_name_case
+            ctx.api,
+            page_id,
+            fields=self._user_fields,
+            name_case=self._user_name_case,
         )
 
-    async def _make_group_provider(self, ctx: Context, page_id: IDType) -> GroupProvider:
+    async def _make_group_provider(
+        self, ctx: Context, page_id: IDType
+    ) -> GroupProvider:
         return await GroupProvider.fetch_one(
             ctx.api, page_id, fields=self._group_fields
         )
 
     async def _cast_type(
-        self, ctx: Context, page_id: str, page_type: PageType
+        self, ctx: Context, page_id: IDType, page_type: PageType
     ) -> T:
         if (
             self._page_type is UserID
@@ -291,16 +301,10 @@ class MentionCutter(TextCutter):
         ):
             return page_id
 
-        elif (
-            self._page_type is UserProvider
-            and page_type == PageType.USER
-        ):
+        elif self._page_type is UserProvider and page_type == PageType.USER:
             return await self._make_user_provider(ctx, page_id)
 
-        elif (
-            self._page_type is GroupProvider
-            and page_type == PageType.GROUP
-        ):
+        elif self._page_type is GroupProvider and page_type == PageType.GROUP:
             return await self._make_group_provider(ctx, page_id)
 
         elif self._page_type is PageProvider:
@@ -367,7 +371,7 @@ class EntityCutter(MentionCutter):
         (?:vk\.com/)?
         
         # Screen name of user or group
-        (?P<screen_name>.+)/?
+        (?P<screen_name>(?:\w+|\.)+)/?
         
         # Other optional URL ignored parameters.
         # Need only screen name
@@ -378,7 +382,7 @@ class EntityCutter(MentionCutter):
         # vk.com/id100
         # https://vk.com/eee
         """,
-        flags=re.X
+        flags=re.X,
     )
     raw_id_regex = re.compile(
         r"""
@@ -388,7 +392,7 @@ class EntityCutter(MentionCutter):
         # ID of user/group
         (?P<id>\d+)
         """,
-        flags=re.X
+        flags=re.X,
     )
 
     async def cut_part(
@@ -397,7 +401,8 @@ class EntityCutter(MentionCutter):
         for method in (
             self._mention_method(ctx, arguments_string),
             self._link_method(ctx, arguments_string),
-            self._raw_id_method(ctx, arguments_string)
+            self._raw_id_method(ctx, arguments_string),
+            self._attached_method(ctx, arguments_string)
         ):
             try:
                 return await method
@@ -406,13 +411,21 @@ class EntityCutter(MentionCutter):
 
         raise BadArgumentError("Regexes didn't matched, no user attached")
 
-    async def _mention_method(self, ctx: Context, arguments_string: str) -> CutterParsingResponse:
-        parsing_response = await MentionCutter.cut_part(self, ctx, arguments_string)
+    async def _mention_method(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = await MentionCutter.cut_part(
+            self, ctx, arguments_string
+        )
         parsing_response.parsed_part = parsing_response.parsed_part.entity
         return parsing_response
 
-    async def _link_method(self, ctx: Context, arguments_string: str) -> CutterParsingResponse:
-        parsing_response = cut_part_via_regex(self.screen_name_regex, arguments_string, group="screen_name")
+    async def _link_method(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = cut_part_via_regex(
+            self.screen_name_regex, arguments_string, group="screen_name"
+        )
         resolved_screen_name = await ctx.api.utils.resolve_screen_name(
             screen_name=parsing_response.parsed_part
         )
@@ -427,14 +440,17 @@ class EntityCutter(MentionCutter):
             raise BadArgumentError("Invalid screen name")
 
         parsing_response.parsed_part = await self._cast_type(
-            ctx, resolved_screen_name["object_id"],
-            page_type
+            ctx, resolved_screen_name["object_id"], page_type
         )
 
         return parsing_response
 
-    async def _raw_id_method(self, ctx: Context, arguments_string: str) -> CutterParsingResponse:
-        parsing_response = cut_part_via_regex(self.raw_id_regex, arguments_string)
+    async def _raw_id_method(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        parsing_response = cut_part_via_regex(
+            self.raw_id_regex, arguments_string
+        )
         match_object: ty.Match = parsing_response.extra["match_object"]
 
         if match_object.group("type") in ("+", "id", ""):
@@ -443,16 +459,39 @@ class EntityCutter(MentionCutter):
             page_type = PageType.GROUP
 
         parsing_response.parsed_part = await self._cast_type(
-            ctx, match_object.group("id"),
-            page_type
+            ctx, match_object.group("id"), page_type
         )
 
         return parsing_response
 
-    async def _attached_method(self, ctx: Context, arguments_string: str) -> CutterParsingResponse:
-        attached_user = await ctx.mp.fetch_any_attached_senders()
-        if attached_user is None:
-            raise BadArgumentError("No attached users")
+    async def _attached_method(
+        self, ctx: Context, arguments_string: str
+    ) -> CutterParsingResponse:
+        if ctx.msg.reply_message is not None:
+            page_id = ctx.msg.reply_message.from_id
+            if ctx.extra.get("replied_user_used") is None:
+                ctx.extra["replied_user_used"] = ...
+            else:
+                raise BadArgumentError("No user attached")
+        else:
+            forwarded_pages = ctx.msg.fwd_messages
+            step = ctx.extra.get("forward_page_iter_step")
+            if step is None:
+                ctx.extra["forward_page_iter_step"] = 1
+                step = 0
+            else:
+                ctx.extra["forward_page_iter_step"] += 1
+            try:
+                page_id = forwarded_pages[step].from_id
+            except IndexError:
+                raise BadArgumentError("No user attached")
 
-        # TODO
+        parsed_part = await self._cast_type(
+            ctx,
+            abs(page_id),
+            PageType.USER if page_id > 0 else PageType.GROUP,
+        )
 
+        return CutterParsingResponse(
+            parsed_part=parsed_part, new_arguments_string=arguments_string
+        )
