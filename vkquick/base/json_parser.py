@@ -4,7 +4,7 @@ import abc
 import typing as ty
 
 
-class JSONParser(abc.ABC):
+class BaseJSONParser(abc.ABC):
     """
     Неймспейс, объединяющий методы сериализации и десериализации
     JSON в один протокол. Имплементации используются для

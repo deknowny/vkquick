@@ -1,7 +1,7 @@
-from vkquick.bases.event import Event
+from vkquick.bases.event import BaseEvent
 
 
-class GroupEvent(Event):
+class GroupEvent(BaseEvent):
     """
     Обертка над событием в группе
     """
@@ -28,7 +28,7 @@ class GroupEvent(Event):
         return self._content["group_id"]
 
 
-class UserEvent(Event):
+class UserEvent(BaseEvent):
     """
     Обертка над событием у пользователя
     """

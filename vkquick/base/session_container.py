@@ -5,7 +5,7 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.json_parsers import JSONParser, json_parser_policy
+from vkquick.json_parsers import BaseJSONParser, json_parser_policy
 
 
 class SessionContainerMixin:
@@ -26,7 +26,7 @@ class SessionContainerMixin:
         self,
         *,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[JSONParser] = None
+        json_parser: ty.Optional[BaseJSONParser] = None
     ) -> None:
         """
         Arguments:

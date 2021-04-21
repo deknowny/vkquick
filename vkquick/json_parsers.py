@@ -4,7 +4,7 @@
 import json
 import typing as ty
 
-from vkquick.bases.json_parser import JSONParser
+from vkquick.base.json_parser import BaseJSONParser
 
 try:
     import orjson
@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover
     ujson = None
 
 
-class BuiltinJsonParser(JSONParser):
+class BuiltinJsonParser(BaseJSONParser):
     """JSON парсер, использующий стандартную библиотеку"""
 
     @staticmethod
@@ -50,7 +50,7 @@ class BuiltinJsonParser(JSONParser):
         return json.loads(string)
 
 
-class OrjsonParser(JSONParser):
+class OrjsonParser(BaseJSONParser):
     """JSON парсер, использующий `orjson`"""
 
     @staticmethod
@@ -82,7 +82,7 @@ class OrjsonParser(JSONParser):
         return orjson.loads(string)  # pragma: no cover
 
 
-class UjsonParser(JSONParser):
+class UjsonParser(BaseJSONParser):
     """JSON парсер, использующий `ujson`"""
 
     @staticmethod
@@ -114,7 +114,7 @@ class UjsonParser(JSONParser):
         return ujson.loads(string)  # pragma: no cover
 
 
-json_parser_policy: ty.Type[JSONParser]
+json_parser_policy: ty.Type[BaseJSONParser]
 """
 `json_parser_policy` -- установленный JSON парсер, используемый по умолчанию
 """

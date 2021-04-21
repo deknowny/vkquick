@@ -12,109 +12,78 @@ import aiohttp
 import cachetools
 from loguru import logger
 
-from vkquick.bases.api_serializable import APISerializableMixin
-from vkquick.bases.session_container import SessionContainerMixin
+from vkquick.base.api_serializable import APISerializableMixin
+from vkquick.base.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
-    from vkquick.bases.json_parser import JSONParser
+    from vkquick.base.json_parser import JSONParser
 
 
-class TokenOwnerType(enum.Enum):
-    """
-    Тип владельца токена: пользователь/группа
-    """
-
+@enum.unique
+class TokenOwner(enum.Enum):
     USER = enum.auto()
     GROUP = enum.auto()
-
-
-class TokenOwnerEntity:
-    """
-    Сущность владельца токена,
-    возвращаемая при вызове метода [API.token_owner_entity](vkquick.api.API.fetch_token_owner_entity)
-    """
-
-    def __init__(
-        self,
-        entity_type: TokenOwnerType,
-        scheme: ty.Optional[dict] = None,
-    ) -> None:
-        """
-        Arguments:
-            entity_type: Тип владельца токена
-            scheme: Объект владельца токена (для сервисных токенов отсутствует)
-        """
-        self.entity_type = entity_type
-        self.scheme = scheme
-
-    def is_group(self) -> bool:
-        """
-        Является ли сущность группой
-        """
-        return self.entity_type == TokenOwnerType.GROUP
-
-    def is_user(self) -> bool:
-        """
-        Является ли сущность пользователем
-        """
-        return self.entity_type == TokenOwnerType.USER
+    UNKNOWN = enum.auto()
 
 
 class API(SessionContainerMixin):
-    """
-    Api requests
-    """
-
     def __init__(
         self,
         token: str,
-        *,
-        version: ty.Union[float, str] = "5.135",
+        token_owner: TokenOwner = TokenOwner.UNKNOWN,
+        version: str = "5.135",
         requests_url: str = "https://api.vk.com/method/",
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
         json_parser: ty.Optional[JSONParser] = None,
-    ) -> None:
-        """
-        Arguments:
-            token: Токен пользователя/группы/сервисный для отправки API запросов.
-                Можно использовать имя переменной окружения,
-                если добавить в начало `"$"`, т.е. `"$ENV_VAR_NAME"`
-            version: Версия используемого API.
-            requests_url: URL для отправки запросов.
-            requests_session: Собственная `aiohttp` сессия.
-            json_parser: Кастомный JSON парсер
-        """
-        super().__init__(
-            requests_session=requests_session, json_parser=json_parser
+        cache_table: ty.Optional[cachetools.Cache] = None,
+    ):
+        SessionContainerMixin.__init__(
+            self, requests_session=requests_session, json_parser=json_parser
         )
-
-        # Автоматическое получение токена из переменных окружения
         if token.startswith("$"):
-            self._token = os.getenv(token[1:])
+            self._token = os.environ[token[1:]]
         else:
             self._token = token
-
         self._version = version
+        self._token_owner = token_owner
         self._requests_url = requests_url
-        self._cache_table = cachetools.TTLCache(ttl=3600, maxsize=2 ** 15)
+        self._cache_table = cache_table or cachetools.TTLCache(
+            ttl=3600, maxsize=2 ** 15
+        )
 
         self._method_name = ""
-        self._last_request_stamp = 0
-        self._requests_delay = 0
-        self._token_owner = None
+        self._last_request_timestamp = 0.0
+        self._use_cache = False
         self._stable_request_params = {
             "access_token": self._token,
             "v": self._version,
         }
 
-    @property
-    def token(self) -> str:
-        """
-        Токен, используемый для API запросов
-        """
-        return self._token
+        self._update_requests_delay()
+
+    def use_cache(self) -> API:
+        self._use_cache = True
+        return self
+
+    async def define_token_owner(self) -> TokenOwner:
+        if self._token_owner != TokenOwner.UNKNOWN:
+            return self._token_owner
+        seemed_user = await self.use_cache().method("users.get")
+        if seemed_user:
+            self._token_owner = TokenOwner.USER
+        else:
+            self._token_owner = TokenOwner.GROUP
+
+        self._update_requests_delay()
+        return self._token_owner
+
+    def _update_requests_delay(self) -> None:
+        if self._token_owner in {TokenOwner.USER, TokenOwner.UNKNOWN}:
+            self._requests_delay = 1 / 3
+        else:
+            self._requests_delay = 1 / 20
 
     def __getattr__(self, attribute: str) -> API:
         """
@@ -136,8 +105,6 @@ class API(SessionContainerMixin):
 
     async def __call__(
         self,
-        allow_cache: bool = False,
-        /,
         **request_params,
     ) -> ty.Any:
         """
@@ -156,51 +123,9 @@ class API(SessionContainerMixin):
         """
         method_name = self._method_name
         self._method_name = ""
-        return await self.method(
-            method_name, request_params, allow_cache=allow_cache
-        )
+        return await self.method(method_name, **request_params)
 
-    async def fetch_token_owner_entity(self) -> TokenOwnerEntity:
-        """
-        Возвращает сущность владельца токена.
-
-        В зависимости от результата вызова метода `users.get`
-        определяет тип владельца токена (пользователь, группа, токен сервисный)
-        и задержку для запросов.
-
-        Returns:
-            Сущность владельца токена
-        """
-        if self._token_owner is None:
-            # Убираем `None`, чтобы запрос строкой ниже выполнился
-            self._token_owner = ...
-            owner = await self.users.get()
-
-            if owner:
-                self._token_owner = TokenOwnerEntity(
-                    TokenOwnerType.USER, owner[0]
-                )
-                self._requests_delay = 1 / 3
-            else:
-                owner = await self.groups.get_by_id()
-                self._token_owner = TokenOwnerEntity(
-                    TokenOwnerType.GROUP, owner[0]
-                )
-                self._requests_delay = 1 / 20
-
-            return self._token_owner
-
-        else:
-            return self._token_owner
-
-    async def method(
-        self,
-        method_name: str,
-        request_params: ty.Dict[str, ty.Any],
-        /,
-        *,
-        allow_cache: bool = False,
-    ) -> ty.Any:
+    async def method(self, method_name: str, **request_params) -> ty.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
 
@@ -221,7 +146,6 @@ class API(SessionContainerMixin):
         return await self._make_api_request(
             method_name=method_name,
             request_params=request_params,
-            allow_cache=allow_cache,
         )
 
     async def execute(self, code: str, /) -> ty.Any:
@@ -237,13 +161,12 @@ class API(SessionContainerMixin):
         Raises:
             VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
-        return await self.method("execute", {"code": code})
+        return await self.method("execute", code=code)
 
     async def _make_api_request(
         self,
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
-        allow_cache: bool,
     ) -> ty.Any:
         """
         Выполняет API запрос на определнный метод с заданными параметрами
@@ -270,7 +193,7 @@ class API(SessionContainerMixin):
 
         # Кэширование запросов по их методу и переданным параметрам
         # `cache_hash` -- ключ кэш-таблицы
-        if allow_cache:
+        if self._use_cache:
             cache_hash = urllib.parse.urlencode(real_request_params)
             cache_hash = f"{method_name}#{cache_hash}"
             if cache_hash in self._cache_table:
@@ -297,7 +220,7 @@ class API(SessionContainerMixin):
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
-        if allow_cache:
+        if self._use_cache:
             self._cache_table[cache_hash] = response
 
         return response
@@ -319,14 +242,14 @@ class API(SessionContainerMixin):
             Время, необходимое для ожидания.
         """
         now = time.time()
-        diff = now - self._last_request_stamp
+        diff = now - self._last_request_timestamp
         if diff < self._requests_delay:
             wait_time = self._requests_delay - diff
-            self._last_request_stamp += wait_time
+            self._last_request_timestamp += wait_time
             return wait_time
         else:
-            self._last_request_stamp = now
-            return 0
+            self._last_request_timestamp = now
+            return 0.0
 
     def __repr__(self):
         owner = self._token_owner

@@ -40,8 +40,6 @@ watchgod = "^0.6"
 orjson = { version = "^3.4.6", optional = true }
 ujson = { version = "^4.0.1", optional = true }
 
-# compatibility
-typing-extensions = "^3.7.4"
 loguru = "^0.5.3"
 
 

@@ -1,353 +1,104 @@
+from __future__ import annotations
+
+import dataclasses
 import inspect
 import re
 import typing as ty
 import warnings
 
-import typing_extensions as tye
-
-from vkquick.bases.easy_decorator import EasyDecorator, easy_class_decorator
-from vkquick.event_handler.context import EventHandlingContext
-from vkquick.event_handler.handler import EventHandler
-from vkquick.exceptions import FilterFailedError
-from vkquick.ext.chatbot.command.context import Context
-from vkquick.ext.chatbot.command.statuses import (
-    CommandStatus,
-    IncorrectArgument,
-    MissedArgument,
-    NotRouted,
-    UnexpectedArgument,
-)
-from vkquick.ext.chatbot.command.text_cutters.base import (
-    Argument,
-    CommandTextArgument,
-    TextCutter,
-)
-from vkquick.ext.chatbot.command.text_cutters.cutters import (
-    EntityCutter,
-    FloatCutter,
-    GroupCutter,
-    GroupID,
-    ImmutableSequenceCutter,
-    IntegerCutter,
-    LiteralCutter,
-    Mention,
-    MentionCutter,
-    MutableSequenceCutter,
-    OptionalCutter,
-    PageID,
-    StringCutter,
-    UnionCutter,
-    UniqueImmutableSequenceCutter,
-    UniqueMutableSequenceCutter,
-    UserID,
-    WordCutter,
-)
+from vkquick.ext.chatbot.base.cutter import TextCutter, CommandTextArgument
+from vkquick.ext.chatbot.base.filter import Filter
+from vkquick.ext.chatbot.command.adapters import resolve_typing
 from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.filters import CommandFilter
-from vkquick.ext.chatbot.providers.page import (
-    GroupProvider,
-    PageProvider,
-    UserProvider,
-)
-from vkquick.ext.chatbot.wrappers.page import Group, Page, User
+from vkquick.ext.chatbot.storages import MessageStorage
+from vkquick_old.exceptions import FilterFailedError
+
+Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
 
 
-def _resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
-    if isinstance(parameter.default, Argument):
-        arg_settings = parameter.default
-    elif parameter.default != parameter.empty:
-        arg_settings = Argument(default=parameter.default)
-    else:
-        arg_settings = Argument()
-
-    if (
-        arg_settings.default is not None
-        or arg_settings.default_factory is not None
-        and not ty.get_origin(parameter.annotation) is ty.Union
-    ):
-        arg_annotation = ty.Optional[parameter.annotation]
-    else:
-        arg_annotation = parameter.annotation
-
-    cutter = _resolve_cutter(
-        arg_name=parameter.name,
-        arg_annotation=arg_annotation,
-        arg_settings=arg_settings,
-        arg_kind=parameter.kind,
-    )
-    return CommandTextArgument(
-        argument_name=parameter.name,
-        argument_settings=arg_settings,
-        cutter=cutter,
-    )
-
-
-def _resolve_cutter(
-    *, arg_name: str, arg_annotation: ty.Any, arg_settings: Argument, arg_kind
-) -> TextCutter:
-
-    if arg_annotation is int:
-        return IntegerCutter()
-    elif arg_annotation is float:
-        return FloatCutter()
-    elif arg_annotation is str:
-        if arg_kind == inspect.Parameter.KEYWORD_ONLY:
-            return StringCutter()
-        else:
-            return WordCutter()
-
-    # Optional
-    elif ty.get_origin(arg_annotation) is ty.Union and type(
-        None
-    ) in ty.get_args(arg_annotation):
-        return OptionalCutter(
-            _resolve_cutter(
-                arg_name=arg_name,
-                arg_annotation=ty.get_args(arg_annotation)[0],
-                arg_settings=arg_settings,
-                arg_kind=arg_kind,
-            ),
-            default=arg_settings.default,
-            default_factory=arg_settings.default_factory,
-        )
-    # Union
-    elif ty.get_origin(arg_annotation) is ty.Union:
-        typevar_cutters = (
-            _resolve_cutter(
-                arg_name=arg_name,
-                arg_annotation=typevar,
-                arg_settings=arg_settings,
-                arg_kind=arg_kind,
-            )
-            for typevar in ty.get_args(arg_annotation)
-        )
-        return UnionCutter(*typevar_cutters)
-
-    # List
-    elif ty.get_origin(arg_annotation) is list:
-        typevar_cutter = _resolve_cutter(
-            arg_name=arg_name,
-            arg_annotation=ty.get_args(arg_annotation)[0],
-            arg_settings=arg_settings,
-            arg_kind=arg_kind,
-        )
-        return MutableSequenceCutter(typevar_cutter)
-    # Tuple sequence
-    elif ty.get_origin(arg_annotation) is tuple and Ellipsis in ty.get_args(
-        arg_annotation
-    ):
-        typevar_cutter = _resolve_cutter(
-            arg_name=arg_name,
-            arg_annotation=ty.get_args(arg_annotation)[0],
-            arg_settings=arg_settings,
-            arg_kind=arg_kind,
-        )
-        return ImmutableSequenceCutter(typevar_cutter)
-
-    # Tuple
-    elif ty.get_origin(
-        arg_annotation
-    ) is tuple and Ellipsis not in ty.get_args(arg_annotation):
-
-        typevar_cutters = (
-            _resolve_cutter(
-                arg_name=arg_name,
-                arg_annotation=typevar,
-                arg_settings=arg_settings,
-                arg_kind=arg_kind,
-            )
-            for typevar in ty.get_args(arg_annotation)
-        )
-
-        return GroupCutter(*typevar_cutters)
-
-    # Set
-    elif ty.get_origin(arg_annotation) is set:
-        typevar_cutter = _resolve_cutter(
-            arg_name=arg_name,
-            arg_annotation=ty.get_args(arg_annotation)[0],
-            arg_settings=arg_settings,
-            arg_kind=arg_kind,
-        )
-        return UniqueMutableSequenceCutter(typevar_cutter)
-
-    # FrozenSet
-    elif ty.get_origin(arg_annotation) is frozenset:
-        typevar_cutter = _resolve_cutter(
-            arg_name=arg_name,
-            arg_annotation=ty.get_args(arg_annotation)[0],
-            arg_settings=arg_settings,
-            arg_kind=arg_kind,
-        )
-        return UniqueImmutableSequenceCutter(typevar_cutter)
-
-    # Literal
-    elif ty.get_origin(arg_annotation) is tye.Literal:
-        return LiteralCutter(*ty.get_args(arg_annotation))
-
-    elif ty.get_origin(arg_annotation) is Mention:
-        return MentionCutter(
-            ty.get_args(arg_annotation)[0], **arg_settings.cutter_preferences
-        )
-
-    elif arg_annotation in {
-        UserID,
-        GroupID,
-        PageID,
-        User,
-        Group,
-        Page,
-        UserProvider,
-        GroupProvider,
-        PageProvider,
-    }:
-        return EntityCutter(arg_annotation, **arg_settings.cutter_preferences)
-
-    else:
-        raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")
-
-
-class CommandHandlerType1(ty.Protocol):
-    async def __call__(self, ctx: Context, *args: type,**kwargs: type):
-        ...
-
-
-class CommandHandlerType2(ty.Protocol):
-    async def __call__(self, **kwargs):
-        ...
-
-
-@easy_class_decorator
-class Command(EventHandler, CommandFilter, EasyDecorator):
-
-    context_factory = Context
-
-    accepted_event_types = frozenset({"message_new", "message_reply", 4})
-
+@dataclasses.dataclass
+class Command(ty.Generic[Handler]):
     def __init__(
         self,
-        *names_as_args: str,
+        *,
+        handler: Handler,
         names: ty.Optional[ty.Set[str]] = None,
         prefixes: ty.Optional[ty.Set[str]] = None,
-        allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        afterword_filters: ty.Optional[ty.List[CommandFilter]] = None,
-        foreword_filters: ty.Optional[ty.List[CommandFilter]] = None,
-    ) -> None:
-        self._names = names or set()
-        self._names.update(names_as_args)
-        self._prefixes = prefixes or set()
-        self._allow_regex = allow_regex
+        allow_regexes: bool = False,
+        filter: ty.Optional[Filter] = None,
+    ):
+        self._handler = handler
+        self._names: ty.Set[str] = names or set()
+        self._prefixes: ty.Set[str] = prefixes or set()
         self._routing_re_flags = routing_re_flags
+        self._allow_regexes = allow_regexes
+        self._filter = filter
 
-        self._text_arguments: ty.List[CommandTextArgument] = []
-        self._ctx_argument_name: ty.Optional[str] = None
-
+        self._routing_regex: ty.Pattern
         self._build_routing_regex()
 
-        afterword_filters = afterword_filters or []
-        foreword_filters = foreword_filters or []
-
-        filters = [*afterword_filters, self, *foreword_filters]
-
-        EventHandler.__init__(
-            self,
-            handling_event_types=set(self.accepted_event_types),
-            filters=filters,
-        )
-
+        self._text_arguments: ty.List[CommandTextArgument] = []
+        self._message_storage_argument_name: str
         self._parse_handler_arguments()
 
-    def _init_handler_kwargs(self, ctx: Context) -> ty.Mapping:
-        function_arguments = ctx.extra["text_arguments"].copy()
-        if self._ctx_argument_name is not None:
-            function_arguments[self._ctx_argument_name] = ctx
-
-        return function_arguments
-
-    def _init_handler_args(self, ehctx: EventHandlingContext) -> ty.Sequence:
-        return ()
-
-    async def _call_handler(self, ctx: Context, args, kwargs) -> ty.Any:
-        func_response = await EventHandler._call_handler(
-            self, ctx, args, kwargs
-        )
-        if func_response is not None:
-            await ctx.mp.reply(func_response)
-
-    async def make_decision(self, ctx: Context) -> None:
-        matched_routing = self._command_routing_regex.match(
-            ctx.mp.storage.text
-        )
-        if matched_routing is None:
-            raise FilterFailedError(
-                "Routing isn't matched",
-                extra={
-                    "status": CommandStatus.NOT_ROUTED,
-                    "payload:": NotRouted(),
-                },
+    async def handle_message(self, message_storage: MessageStorage) -> None:
+        is_routing_matched = self._routing_regex.match(message_storage.msg.text)
+        if is_routing_matched:
+            arguments = await self._make_arguments(
+                message_storage, message_storage.msg.text[is_routing_matched.end():]
             )
-        else:
-            # Make text arguments
-            ctx.extra["text_arguments"] = {}
-            remain_string = ctx.mp.storage.text[matched_routing.end() :]
-            await self._parse_arguments(ctx, remain_string=remain_string)
+            if arguments is not None:
+                passed_filter = await self._run_through_filters(message_storage)
+                # Were built correctly
+                if passed_filter:
+                    await self._call_handler(message_storage, arguments)
 
-    async def _parse_arguments(
-        self, ctx: Context, remain_string: str
-    ) -> None:
+    async def _run_through_filters(self, message_storage: MessageStorage) -> bool:
+        if self._filter is not None:
+            try:
+                await self._filter.make_decision(message_storage)
+            except FilterFailedError:
+                return False
+            else:
+                return True
+
+    async def _make_arguments(
+        self, message_storage: MessageStorage, arguments_string: str
+    ) -> ty.Optional[ty.Dict[str, ty.Any]]:
+        arguments = {}
+        remain_string = arguments_string.lstrip()
         for argtype in self._text_arguments:
             remain_string = remain_string.lstrip()
             try:
                 parsing_response = await argtype.cutter.cut_part(
-                    ctx, remain_string
+                    message_storage, remain_string
                 )
-            except BadArgumentError as err:
+            except BadArgumentError:
                 if not remain_string:
-                    raise FilterFailedError(
-                        "Missed an argument",
-                        extra={
-                            "status": CommandStatus.MISSED_ARGUMENT,
-                            "payload:": MissedArgument(
-                                command_argument=argtype,
-                                remain_string=remain_string,
-                            ),
-                        },
-                    )
-                raise FilterFailedError(
-                    "Incorrect argument value",
-                    extra={
-                        "status": CommandStatus.INCORRECT_ARGUMENT,
-                        "payload:": IncorrectArgument(
-                            command_argument=argtype,
-                            remain_string=remain_string,
-                            parsing_error=err,
-                        ),
-                    },
-                ) from err
-
+                    return None
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()
-                ctx.extra["text_arguments"][
+                arguments[
                     argtype.argument_name
                 ] = parsing_response.parsed_part
 
         if remain_string:
-            raise FilterFailedError(
-                "Got unexpected argument",
-                extra={
-                    "status": CommandStatus.UNEXPECTED_ARGUMENT,
-                    "payload:": UnexpectedArgument(
-                        remain_string=remain_string
-                    ),
-                },
-            )
+            return None
 
-    def _parse_handler_arguments(self):
-        parameters = inspect.signature(self.handler).parameters
+        arguments[self._message_storage_argument_name] = message_storage
+        return arguments
+
+    async def _call_handler(self, message_storage, arguments) -> None:
+        handler_response = await self._handler(**arguments)
+        if handler_response is not None:
+            message_storage.mp.reply(handler_response)
+
+    def _parse_handler_arguments(self) -> None:
+        parameters = inspect.signature(self._handler).parameters
         for name, argument in parameters.items():
-            if argument.annotation is Context:
-                self._ctx_argument_name = argument.name
+            if argument.annotation is MessageStorage:
+                self._message_storage_argument_name = argument.name
                 if self._text_arguments:
                     warnings.warn(
                         "Set `CommandContext` argument the first "
@@ -355,7 +106,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
                     )
 
             else:
-                text_argument = _resolve_typing(argument)
+                text_argument = resolve_typing(argument)
                 self._text_arguments.append(text_argument)
 
     def _build_routing_regex(self) -> None:
@@ -365,10 +116,9 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         аргументы, т.к. для них задается своя логика фильтром
         """
         # Экранирование специальных символов, если такое указано
-        if self._allow_regex:
+        if self._allow_regexes:
             prefixes = self._prefixes
             names = self._names
-
         else:
             prefixes = {re.escape(prefix) for prefix in self._prefixes}
             names = {re.escape(name) for name in self._names}
@@ -383,7 +133,7 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
         if len(self._names) > 1:
             names_regex = f"(?:{names_regex})"
 
-        self._command_routing_regex = re.compile(
+        self._routing_regex = re.compile(
             prefixes_regex + names_regex,
             flags=self._routing_re_flags,
         )

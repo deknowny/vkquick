@@ -16,7 +16,7 @@ def pretty_view(mapping: dict, /) -> str:
     dumped_mapping = json.dumps(mapping, ensure_ascii=False, indent=4)
     pretty_mapping = pygments.highlight(
         dumped_mapping,
-        pygments.lexers.JsonLexer(),
-        pygments.formatters.TerminalFormatter(bg="light"),
+        pygments.lexers.JsonLexer(),  # noqa
+        pygments.formatters.TerminalFormatter(bg="light"),  # noqa
     )
     return pretty_mapping

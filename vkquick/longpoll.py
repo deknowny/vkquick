@@ -1,32 +1,28 @@
-"""
-Управление событиями LongPoll
-"""
 from __future__ import annotations
 
 import typing as ty
 
 import aiohttp
 
-from vkquick.bases.events_factories import EventsCallback, LongPollBase
+from vkquick.base.event_factories import EventsCallback, BaseLongPoll
 from vkquick.event import GroupEvent, UserEvent
 
 if ty.TYPE_CHECKING:  # pragma: no cover
-    from vkquick.api import API
-    from vkquick.bases.json_parser import JSONParser
+    from vkquick.api import API, TokenOwner
+    from vkquick.base.json_parser import BaseJSONParser
 
 
-class GroupLongPoll(LongPollBase):
-    """LongPoll обработчик для событий в сообществе"""
-
+class GroupLongPoll(BaseLongPoll):
     def __init__(
         self,
         api: API,
+        /,
         *,
         group_id: ty.Optional[int] = None,
         wait: int = 25,
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[JSONParser] = None,
+        json_parser: ty.Optional[BaseJSONParser] = None,
     ) -> None:
         super().__init__(
             api=api,
@@ -48,29 +44,29 @@ class GroupLongPoll(LongPollBase):
             act="a_check", wait=self._wait, **new_lp_settings
         )
 
-    async def _define_group_id(self):
+    async def _define_group_id(self) -> None:
         if self._group_id is None:
-            owner = await self._api.fetch_token_owner_entity()
-            if not owner.is_group:
+            token_owner = await self._api.define_token_owner()
+            if token_owner != TokenOwner.GROUP:
                 raise ValueError(
                     "Can't use `GroupLongPoll` with user token without `group_id`"
                 )
-            self._group_id = owner.scheme["id"]
+            owner = await self._api.method("groups.get_by_id")
+            self._group_id = owner["id"]
 
 
-class UserLongPoll(LongPollBase):
-    """LongPoll обработчик для событий пользователя"""
-
+class UserLongPoll(BaseLongPoll):
     def __init__(
         self,
         api: API,
+        /,
         *,
         version: int = 3,
         wait: int = 15,
         mode: int = 234,
         new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[JSONParser] = None,
+        json_parser: ty.Optional[BaseJSONParser] = None,
     ) -> None:
         super().__init__(
             api=api,

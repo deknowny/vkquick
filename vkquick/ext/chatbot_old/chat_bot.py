@@ -3,8 +3,8 @@ import typing as ty
 
 from vkquick.api import API
 from vkquick.bases.easy_decorator import easy_method_decorator
-from vkquick.bases.events_factories import EventsFactory
-from vkquick.bases.middleware import Middleware
+from vkquick.bases.event_factories import BaseEventFactory
+from vkquick.ext.chatbot.bases.middleware import Middleware
 from vkquick.bot import Bot
 from vkquick.event_handler.handler import EventHandler
 from vkquick.ext.chatbot.command.command import Command
@@ -18,7 +18,7 @@ class ChatBot(Bot):
         self,
         *,
         api: API,
-        events_factory: ty.Optional[EventsFactory] = None,
+        events_factory: ty.Optional[BaseEventFactory] = None,
         commands: ty.Optional[ty.List[Command]] = None,
         event_handlers: ty.Optional[ty.List[EventHandler]] = None,
         signals: ty.Optional[ty.Dict[str, SignalHandler]] = None,
@@ -53,7 +53,7 @@ class ChatBot(Bot):
             allow_regex=allow_regex,
             routing_re_flags=routing_re_flags,
             afterword_filters=afterword_filters,
-            foreword_filters=foreword_filters
+            foreword_filters=foreword_filters,
         )
         self._event_handlers.append(handler)
         self.add_commands(handler)

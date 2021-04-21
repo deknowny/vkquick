@@ -46,7 +46,7 @@ class FloatCutter(TextCutter):
         # followed by optional exponent part if desired
         (?: [Ee][+-]? \d+ )?
         """,
-        flags=re.X
+        flags=re.X,
     )
 
     async def cut_part(
@@ -416,7 +416,7 @@ class EntityCutter(MentionCutter):
             self._mention_method(ctx, arguments_string),
             self._link_method(ctx, arguments_string),
             self._raw_id_method(ctx, arguments_string),
-            self._attached_method(ctx, arguments_string)
+            self._attached_method(ctx, arguments_string),
         ):
             try:
                 return await method

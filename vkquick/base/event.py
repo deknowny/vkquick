@@ -4,7 +4,10 @@ import abc
 import typing as ty
 
 
-class Event(abc.ABC):
+EventType = ty.Union[str, int]
+
+
+class BaseEvent(abc.ABC):
     """ """
 
     def __init__(self, content: ty.Union[dict, list]):
@@ -25,7 +28,7 @@ class Event(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def type(self) -> ty.Union[int, str]:
+    def type(self) -> EventType:
         """ """
         ...
 
