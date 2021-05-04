@@ -10,7 +10,7 @@ from vkquick.base.event import EventType
 
 from vkquick.ext.chatbot.base.filter import Filter
 from vkquick.ext.chatbot.command.command import Command
-from vkquick.ext.chatbot.base.middleware import BaseMiddleware, Dispatcher, MiddlewareWrapper
+from vkquick.ext.chatbot.exceptions import FilterFailedError
 
 if ty.TYPE_CHECKING:
 
@@ -26,16 +26,10 @@ if ty.TYPE_CHECKING:
     MessageHandlerTypevar = ty.TypeVar("MessageHandlerTypevar", bound=MessageHandler)
 
 
-
 @dataclasses.dataclass
 class Package:
     prefixes: ty.Collection[str] = dataclasses.field(default_factory=tuple)
-    event_middlewares: ty.List[BaseMiddleware[NewEvent]] = dataclasses.field(
-        default_factory=list
-    )
-    message_middlewares: ty.List[BaseMiddleware[NewMessage]] = dataclasses.field(
-        default_factory=list
-    )
+    filter: ty.Optional[Filter] = None
     commands: ty.List[Command] = dataclasses.field(default_factory=list)
     event_handlers: ty.Dict[
         EventType, ty.List[EventHandler]
@@ -73,16 +67,6 @@ class Package:
             return command
         return wrapper
 
-    def message_middleware(self, handler: DecoratorFunction) -> MiddlewareWrapper[NewMessage]:
-        middleware = MiddlewareWrapper(handler)
-        self.message_middlewares.append(middleware)
-        return middleware
-
-    def event_middleware(self, handler: DecoratorFunction) -> MiddlewareWrapper[NewEvent]:
-        middleware = MiddlewareWrapper(handler)
-        self.event_middlewares.append(middleware)
-        return middleware
-
     def on_event(
         self, *event_types: EventType
     ) -> ty.Callable[[EventHandlerTypevar], EventHandlerTypevar]:
@@ -113,23 +97,19 @@ class Package:
         return handler
 
     async def handle_event(self, new_event_storage: NewEvent) -> None:
-        dispatcher = Dispatcher(self.event_middlewares, new_event_storage)
-        continue_handling = await dispatcher.foreword()
-        if not continue_handling:
-            return
         handlers = self.event_handlers[new_event_storage.event.type]
         handle_coroutines = [
             handler(new_event_storage)
             for handler in handlers
         ]
         await asyncio.gather(*handle_coroutines)
-        await dispatcher.afterword()
 
     async def handle_message(self, message_storage: NewMessage):
-        dispatcher = Dispatcher(self.message_middlewares, message_storage)
-        continue_handling = await dispatcher.foreword()
-        if not continue_handling:
-            return
+        if self.filter is not None:
+            try:
+                await self.filter.make_decision(message_storage)
+            except FilterFailedError:
+                return
         command_coroutines = [
             command.handle_message(message_storage)
             for command in self.commands
@@ -139,5 +119,4 @@ class Package:
             for message_handler in self.message_handlers
         ]
         await asyncio.gather(*command_coroutines, *message_handler_coroutines)
-        await dispatcher.afterword()
 
