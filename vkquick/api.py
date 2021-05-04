@@ -18,7 +18,7 @@ from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
-    from vkquick.base.json_parser import JSONParser
+    from vkquick.base.json_parser import BaseJSONParser
 
 
 @enum.unique
@@ -36,7 +36,7 @@ class API(SessionContainerMixin):
         version: str = "5.135",
         requests_url: str = "https://api.vk.com/method/",
         requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[JSONParser] = None,
+        json_parser: ty.Optional[BaseJSONParser] = None,
         cache_table: ty.Optional[cachetools.Cache] = None,
     ):
         SessionContainerMixin.__init__(
@@ -222,6 +222,7 @@ class API(SessionContainerMixin):
         # Если кэширование включено -- запрос добавится в таблицу
         if self._use_cache:
             self._cache_table[cache_hash] = response
+            self._use_cache = False
 
         return response
 

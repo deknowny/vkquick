@@ -6,9 +6,9 @@ import aiohttp
 
 from vkquick.base.event_factories import EventsCallback, BaseLongPoll
 from vkquick.event import GroupEvent, UserEvent
+from vkquick.api import API, TokenOwner
 
 if ty.TYPE_CHECKING:  # pragma: no cover
-    from vkquick.api import API, TokenOwner
     from vkquick.base.json_parser import BaseJSONParser
 
 
@@ -52,7 +52,7 @@ class GroupLongPoll(BaseLongPoll):
                     "Can't use `GroupLongPoll` with user token without `group_id`"
                 )
             owner = await self._api.method("groups.get_by_id")
-            self._group_id = owner["id"]
+            self._group_id = owner[0]["id"]
 
 
 class UserLongPoll(BaseLongPoll):

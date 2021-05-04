@@ -7,7 +7,7 @@ import typing as ty
 import aiohttp
 
 from vkquick.ext.chatbot.utils import get_user_registration_date
-from vkquick.ext.chatbot.wrapper.base import Wrapper
+from vkquick.ext.chatbot.base.wrapper import Wrapper
 
 T = ty.TypeVar("T")
 

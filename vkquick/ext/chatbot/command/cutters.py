@@ -5,8 +5,8 @@ import re
 import typing as ty
 
 from vkquick.exceptions import VKAPIError
-from vkquick.ext.chatbot.command.context import Context
-from vkquick.ext.chatbot.command.text_cutters.base import (
+from vkquick.ext.chatbot.storages import NewMessage
+from vkquick.ext.chatbot.base.cutter import (
     CutterParsingResponse,
     TextCutter,
     cut_part_via_regex,
@@ -25,7 +25,7 @@ class IntegerCutter(TextCutter):
     _pattern = re.compile(r"[+-]?\d+")
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=int
@@ -48,7 +48,7 @@ class FloatCutter(TextCutter):
     )
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=float
@@ -59,7 +59,7 @@ class WordCutter(TextCutter):
     _pattern = re.compile(r"\S+")
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -68,7 +68,7 @@ class StringCutter(TextCutter):
     _pattern = re.compile(r".+", flags=re.DOTALL)
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -77,7 +77,7 @@ class ParagraphCutter(TextCutter):
     _pattern = re.compile(r".+")
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         return cut_part_via_regex(self._pattern, arguments_string)
 
@@ -97,7 +97,7 @@ class OptionalCutter(TextCutter):
         self._typevar = typevar
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         try:
             return await self._typevar.cut_part(ctx, arguments_string)
@@ -120,7 +120,7 @@ class UnionCutter(TextCutter):
         self._typevars = typevars
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         for typevar in self._typevars:
             try:
@@ -138,7 +138,7 @@ class GroupCutter(TextCutter):
         self._typevars = typevars
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         parsed_parts = []
         for typevar in self._typevars:
@@ -164,7 +164,7 @@ class _SequenceCutter(TextCutter):
         self._typevar = typevar
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         typevar = self._typevar
         parsed_values = []
@@ -209,7 +209,7 @@ class LiteralCutter(TextCutter):
         self._container_values = tuple(map(re.compile, container_values))
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         for typevar in self._container_values:
             try:
@@ -277,7 +277,7 @@ class MentionCutter(TextCutter):
         self._user_name_case = user_name_case
 
     async def _make_user_provider(
-        self, ctx: Context, page_id: IDType
+        self, ctx: NewMessage, page_id: IDType
     ) -> UserProvider:
         return await UserProvider.fetch_one(
             ctx.api,
@@ -287,14 +287,14 @@ class MentionCutter(TextCutter):
         )
 
     async def _make_group_provider(
-        self, ctx: Context, page_id: IDType
+        self, ctx: NewMessage, page_id: IDType
     ) -> GroupProvider:
         return await GroupProvider.fetch_one(
             ctx.api, page_id, fields=self._group_fields
         )
 
     async def _cast_type(
-        self, ctx: Context, page_id: IDType, page_type: PageType
+        self, ctx: NewMessage, page_id: IDType, page_type: PageType
     ) -> T:
         if (
             self._page_type is UserID
@@ -337,7 +337,7 @@ class MentionCutter(TextCutter):
             raise BadArgumentError("Regex didn't matched")
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[Mention[T]]:
         parsing_response = cut_part_via_regex(
             self.mention_regex, arguments_string
@@ -400,7 +400,7 @@ class EntityCutter(MentionCutter):
     )
 
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         for method in (
             self._mention_method(ctx, arguments_string),
@@ -416,7 +416,7 @@ class EntityCutter(MentionCutter):
         raise BadArgumentError("Regexes didn't matched, no user attached")
 
     async def _mention_method(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         parsing_response = await MentionCutter.cut_part(
             self, ctx, arguments_string
@@ -425,7 +425,7 @@ class EntityCutter(MentionCutter):
         return parsing_response
 
     async def _link_method(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         parsing_response = cut_part_via_regex(
             self.screen_name_regex, arguments_string, group="screen_name"
@@ -450,7 +450,7 @@ class EntityCutter(MentionCutter):
         return parsing_response
 
     async def _raw_id_method(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         parsing_response = cut_part_via_regex(
             self.raw_id_regex, arguments_string
@@ -469,7 +469,7 @@ class EntityCutter(MentionCutter):
         return parsing_response
 
     async def _attached_method(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         if ctx.msg.reply_message is not None:
             page_id = ctx.msg.reply_message.from_id

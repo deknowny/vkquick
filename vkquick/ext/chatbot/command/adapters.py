@@ -34,7 +34,6 @@ from vkquick.ext.chatbot.providers.page import (
     PageProvider,
 )
 from vkquick.ext.chatbot.wrappers.page import User, Group, Page
-from vkquick.ext.chatbot_old.wrappers import User, Group, Page
 
 
 def resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:

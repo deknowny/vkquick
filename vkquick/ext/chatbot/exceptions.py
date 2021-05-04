@@ -1,2 +1,6 @@
 class BadArgumentError(Exception):
     ...
+
+
+class FilterFailedError(Exception):
+    ...

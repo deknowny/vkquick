@@ -5,6 +5,7 @@ import typing as ty
 from vkquick.api import API
 
 T = ty.TypeVar("T")
+C = ty.TypeVar("C")
 
 
 class Provider(ty.Generic[T]):
@@ -13,11 +14,11 @@ class Provider(ty.Generic[T]):
         self._storage: T = storage
 
     @classmethod
-    def from_wrapper(cls, api: API, storage: T) -> Provider:
+    def from_wrapper(cls: ty.Type[C], api: API, storage: T) -> C:
         return cls(api, storage)
 
     @classmethod
-    def from_mapping(cls, api: API, storage: dict) -> Provider:
+    def from_mapping(cls: ty.Type[C], api: API, storage: dict) -> C:
         type_from_generic = cls.__orig_bases__[0].__args__[0]
         return cls(api, type_from_generic(storage))
 

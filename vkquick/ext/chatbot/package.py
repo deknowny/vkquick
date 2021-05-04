@@ -10,109 +10,134 @@ from vkquick.base.event import EventType
 
 from vkquick.ext.chatbot.base.filter import Filter
 from vkquick.ext.chatbot.command.command import Command
+from vkquick.ext.chatbot.base.middleware import BaseMiddleware, Dispatcher, MiddlewareWrapper
 
 if ty.TYPE_CHECKING:
-    from vkquick.ext.chatbot.base.middleware import EventMiddleware, MessageMiddleware
+
     from vkquick.types import DecoratorFunction
     from vkquick.ext.chatbot.application import Bot
-    from vkquick.ext.chatbot.storages import NewEventStorage, MessageStorage
+    from vkquick.ext.chatbot.storages import NewEvent, NewMessage
 
-SignalHandler = ty.Callable[[Bot], ty.Awaitable]
-SignalHandlerTypevar = ty.TypeVar("SignalHandlerTypevar", bound=SignalHandler)
+    SignalHandler = ty.Callable[[Bot], ty.Awaitable]
+    SignalHandlerTypevar = ty.TypeVar("SignalHandlerTypevar", bound=SignalHandler)
+    EventHandler = ty.Callable[[NewEvent], ty.Awaitable]
+    EventHandlerTypevar = ty.TypeVar("EventHandlerTypevar", bound=EventHandler)
+    MessageHandler = ty.Callable[[NewMessage], ty.Awaitable]
+    MessageHandlerTypevar = ty.TypeVar("MessageHandlerTypevar", bound=MessageHandler)
+
 
 
 @dataclasses.dataclass
 class Package:
-
-    packages: ty.List[Package] = dataclasses.field(default_factory=list)
-    event_middlewares: ty.List[EventMiddleware] = dataclasses.field(
+    prefixes: ty.Collection[str] = dataclasses.field(default_factory=tuple)
+    event_middlewares: ty.List[BaseMiddleware[NewEvent]] = dataclasses.field(
         default_factory=list
     )
-    message_middlewares: ty.List[MessageMiddleware] = dataclasses.field(
+    message_middlewares: ty.List[BaseMiddleware[NewMessage]] = dataclasses.field(
         default_factory=list
     )
     commands: ty.List[Command] = dataclasses.field(default_factory=list)
     event_handlers: ty.Dict[
-        EventType, ty.List[ty.Callable[[NewEventStorage], ty.Awaitable]]
+        EventType, ty.List[EventHandler]
     ] = dataclasses.field(
         default_factory=lambda: collections.defaultdict(list)
     )
-    startup_handler: ty.Optional[SignalHandler] = None
-    shutdown_handler: ty.Optional[SignalHandler] = None
+    message_handlers: ty.List[MessageHandler] = dataclasses.field(
+        default_factory=list
+    )
+    startup_handlers: ty.List[SignalHandler] = dataclasses.field(
+        default_factory=list
+    )
+    shutdown_handlers: ty.List[SignalHandler] = dataclasses.field(
+        default_factory=list
+    )
 
     def command(
         self,
-        *names_as_args: str,
-        names: ty.Optional[ty.Set[str]] = None,
-        prefixes: ty.Optional[ty.Set[str]] = None,
+        *names: str,
+        prefixes: ty.Collection[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        allow_regexes: bool = False,
+        enable_regexes: bool = False,
         filter: ty.Optional[Filter] = None
     ) -> ty.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
             command = Command(
                 handler=func,
-                names=set(names_as_args) or names,
-                prefixes=prefixes,
+                names=set(names),
+                prefixes=set(prefixes or self.prefixes),
                 routing_re_flags=routing_re_flags,
-                allow_regexes=allow_regexes,
+                enable_regexes=enable_regexes,
                 filter=filter,
             )
             self.commands.append(command)
             return command
         return wrapper
 
+    def message_middleware(self, handler: DecoratorFunction) -> MiddlewareWrapper[NewMessage]:
+        middleware = MiddlewareWrapper(handler)
+        self.message_middlewares.append(middleware)
+        return middleware
+
+    def event_middleware(self, handler: DecoratorFunction) -> MiddlewareWrapper[NewEvent]:
+        middleware = MiddlewareWrapper(handler)
+        self.event_middlewares.append(middleware)
+        return middleware
+
     def on_event(
         self, *event_types: EventType
-    ) -> ty.Callable[[DecoratorFunction], DecoratorFunction]:
+    ) -> ty.Callable[[EventHandlerTypevar], EventHandlerTypevar]:
         def wrapper(func):
             for event_type in event_types:
                 self.event_handlers[event_type].append(func)
             return func
         return wrapper
 
+    def on_message(self) -> ty.Callable[
+        [MessageHandlerTypevar], MessageHandlerTypevar
+    ]:
+        def wrapper(func):
+            self.message_handlers.append(func)
+            return func
+        return wrapper
+
     def on_startup(
         self, handler: SignalHandlerTypevar
     ) -> SignalHandlerTypevar:
-        self.startup_handler = handler
+        self.startup_handlers.append(handler)
         return handler
 
     def on_shutdown(
         self, handler: SignalHandlerTypevar
     ) -> SignalHandlerTypevar:
-        self.shutdown_handler = handler
+        self.shutdown_handlers.append(handler)
         return handler
 
-    def add_package(self, package: Package) -> None:
-        self.packages.append(package)
-
-    async def route_event(self, new_event_storage) -> None:
-        routing_coroutines = [
-            package.route_event(new_event_storage)
-            for package in self.packages
-        ]
-        routing_coroutines.append(self.handle_event(new_event_storage))
-        await asyncio.gather(*routing_coroutines)
-
-    async def handle_event(self, new_event_storage: NewEventStorage) -> None:
+    async def handle_event(self, new_event_storage: NewEvent) -> None:
+        dispatcher = Dispatcher(self.event_middlewares, new_event_storage)
+        continue_handling = await dispatcher.foreword()
+        if not continue_handling:
+            return
         handlers = self.event_handlers[new_event_storage.event.type]
         handle_coroutines = [
             handler(new_event_storage)
             for handler in handlers
         ]
         await asyncio.gather(*handle_coroutines)
+        await dispatcher.afterword()
 
-    async def route_message(self, message_storage: MessageStorage):
-        routing_coroutines = [
-            package.handle_message(message_storage)
-            for package in self.packages
-        ]
-        routing_coroutines.append(self.handle_message(message_storage))
-        await asyncio.gather(*routing_coroutines)
-
-    async def handle_message(self, message_storage: MessageStorage):
-        handle_coroutines = [
+    async def handle_message(self, message_storage: NewMessage):
+        dispatcher = Dispatcher(self.message_middlewares, message_storage)
+        continue_handling = await dispatcher.foreword()
+        if not continue_handling:
+            return
+        command_coroutines = [
             command.handle_message(message_storage)
             for command in self.commands
         ]
-        await asyncio.gather(*handle_coroutines)
+        message_handler_coroutines = [
+            message_handler(message_storage)
+            for message_handler in self.message_handlers
+        ]
+        await asyncio.gather(*command_coroutines, *message_handler_coroutines)
+        await dispatcher.afterword()
+

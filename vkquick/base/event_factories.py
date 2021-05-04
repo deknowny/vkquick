@@ -41,11 +41,13 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
     async def _coroutine_run_polling(self):
         ...
 
-    async def listen(self) -> ty.AsyncGenerator[BaseEvent, None]:
+    async def listen(self, sublisten: bool = False) -> ty.AsyncGenerator[BaseEvent, None]:
         events_queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         logger.debug("Run events listening")
         try:
             self.add_event_callback(events_queue.put)
+            if not sublisten:
+                asyncio.create_task(self.coroutine_run_polling())
             while True:
                 yield await events_queue.get()
 
@@ -123,7 +125,7 @@ class BaseLongPoll(BaseEventFactory):
 
     async def _coroutine_run_polling(self) -> None:
         await self._setup()
-        self._requests_query_params = ty.cast(dict, self._server_url)
+        self._requests_query_params = ty.cast(dict, self._requests_query_params)
         self._update_baked_request()
         self._baked_request = ty.cast(asyncio.Task, self._baked_request)
 

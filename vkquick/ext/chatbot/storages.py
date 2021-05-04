@@ -1,30 +1,33 @@
 from __future__ import annotations
 
 import dataclasses
+import typing as ty
 
-from vkquick import MessageProvider, Message
-from vkquick.base import BaseEvent
-from vkquick.ext.chatbot.application import Bot
+from vkquick.ext.chatbot.providers.message import MessageProvider, Message
+
+if ty.TYPE_CHECKING:
+    from vkquick.base.event import BaseEvent
+    from vkquick.ext.chatbot.application import Bot
 
 
 @dataclasses.dataclass
-class NewEventStorage:
+class NewEvent:
     event: BaseEvent
     bot: Bot
     metadata: dict = dataclasses.field(default_factory=dict)
 
 
-class MessageStorage:
+class NewMessage:
     def __init__(
-        self, new_event_storage: NewEventStorage, mp: MessageProvider
+        self, new_event_storage: NewEvent, mp: MessageProvider
     ):
         self._new_event_storage = new_event_storage
         self._mp = mp
 
     @classmethod
     async def from_new_event_storage(
-        cls, new_event_storage: NewEventStorage
-    ) -> MessageStorage:
+        cls, new_event_storage: NewEvent
+    ) -> NewMessage:
         # User event
         if new_event_storage.event.type == 4:
             extended_message = await new_event_storage.bot.api.method(
@@ -36,13 +39,13 @@ class MessageStorage:
         else:
             extended_message = new_event_storage.event.object
 
-        mp = MessageProvider.from_wrapper(
+        mp = MessageProvider.from_mapping(
             new_event_storage.bot.api, extended_message
         )
         return cls(new_event_storage, mp)
 
     @property
-    def new_event_storage(self) -> NewEventStorage:
+    def new_event_storage(self) -> NewEvent:
         return self._new_event_storage
 
     @property

@@ -68,7 +68,7 @@ class AnyMessageProvider(Provider[T]):
     async def _send_message(self, params: dict) -> TruncatedMessageProvider:
         new_fields = await self._response_storage.fetch_new_fields()
         params.update(new_fields)
-        sent_message = await self._api.method("messages.send", params)
+        sent_message = await self._api.method("messages.send", **params)
         return TruncatedMessageProvider.from_mapping(
             api=self._api, storage=sent_message[0]
         )

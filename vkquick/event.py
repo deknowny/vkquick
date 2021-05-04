@@ -1,4 +1,4 @@
-from vkquick.bases.event import BaseEvent
+from vkquick.base.event import BaseEvent
 
 
 class GroupEvent(BaseEvent):

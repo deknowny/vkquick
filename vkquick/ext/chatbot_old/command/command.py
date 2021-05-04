@@ -71,9 +71,8 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
     def __init__(
         self,
-        *names_as_args: str,
+
         names: ty.Optional[ty.Set[str]] = None,
-        prefixes: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         afterword_filters: ty.Optional[ty.List[CommandFilter]] = None,
@@ -81,7 +80,6 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
     ) -> None:
         self._names = names or set()
         self._names.update(names_as_args)
-        self._prefixes = prefixes or set()
         self._allow_regex = allow_regex
         self._routing_re_flags = routing_re_flags
 

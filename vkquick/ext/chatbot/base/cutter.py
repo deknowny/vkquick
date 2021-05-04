@@ -4,7 +4,7 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.command.context import Context
+from vkquick.ext.chatbot.storages import NewMessage
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 
 T = ty.TypeVar("T")
@@ -21,7 +21,7 @@ class Argument:
     description: ty.Optional[str] = None
     cast_to_type: bool = True
     callbacks: ty.List[
-        ty.Callable[[Context], ty.Awaitable[ty.Any]]
+        ty.Callable[[NewMessage], ty.Awaitable[ty.Any]]
     ] = dataclasses.field(default_factory=list)
     default: ty.Optional = None
     default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None
@@ -44,7 +44,7 @@ class CutterParsingResponse(ty.Generic[T]):
 class TextCutter(abc.ABC):
     @abc.abstractmethod
     async def cut_part(
-        self, ctx: Context, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         ...
 

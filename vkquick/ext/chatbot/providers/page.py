@@ -4,7 +4,7 @@ import abc
 import typing as ty
 
 from vkquick.api import API
-from vkquick.ext.chatbot.provider.base import Provider
+from vkquick.ext.chatbot.base.provider import Provider
 from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 T = ty.TypeVar("T")
@@ -55,9 +55,8 @@ class UserProvider(PageProvider[User]):
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> UserProvider:
-        user = await api.users.get(
-            ...,
-            user_ids=id,
+        user = await api.use_cache().method(
+            "users.get", user_ids=id,
             fields=fields or cls.default_fields,
             name_case=name_case,
         )
@@ -73,9 +72,8 @@ class UserProvider(PageProvider[User]):
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> ty.List[UserProvider]:
-        users = await api.users.get(
-            ...,
-            user_ids=ids,
+        users = await api.use_cache().method(
+            "users.get", user_ids=ids,
             fields=fields or cls.default_fields,
             name_case=name_case,
         )
@@ -96,8 +94,8 @@ class GroupProvider(PageProvider[Group]):
         *,
         fields: ty.Optional[ty.List[str]] = None,
     ) -> GroupProvider:
-        group = await api.groups.get_by_id(
-            ..., group_id=id, fields=fields or cls.default_fields
+        group = await api.use_cache().method(
+            "get_by_id", group_id=id, fields=fields or cls.default_fields
         )
         group = Group(group[0])
         return cls(api, group)
@@ -110,8 +108,8 @@ class GroupProvider(PageProvider[Group]):
         *ids: IDType,
         fields: ty.Optional[ty.List[str]] = None,
     ) -> ty.List[GroupProvider]:
-        groups = await api.groups.get_by_id(
-            ..., group_id=ids, fields=fields or cls.default_fields
+        groups = await api.use_cache().method(
+            "get_by_id", group_id=ids, fields=fields or cls.default_fields
         )
         groups = [cls(api, Group(group)) for group in groups]
         return groups
