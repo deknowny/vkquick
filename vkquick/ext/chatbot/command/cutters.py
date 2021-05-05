@@ -6,14 +6,13 @@ import typing as ty
 
 from vkquick.exceptions import VKAPIError
 from vkquick.ext.chatbot.base.cutter import (
-    CutterParsingResponse,
     Cutter,
+    CutterParsingResponse,
     cut_part_via_regex,
 )
-from vkquick.ext.chatbot.wrappers.page import IDType
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.storages import NewMessage
-from vkquick.ext.chatbot.wrappers.page import Group, Page, User
+from vkquick.ext.chatbot.wrappers.page import Group, IDType, Page, User
 
 
 class IntegerCutter(Cutter):
@@ -271,9 +270,7 @@ class MentionCutter(Cutter):
         self._group_fields = group_fields
         self._user_name_case = user_name_case
 
-    async def _make_user_provider(
-        self, ctx: NewMessage, page_id: IDType
-    ):
+    async def _make_user_provider(self, ctx: NewMessage, page_id: IDType):
         return await UserProvider.fetch_one(
             ctx.api,
             page_id,
@@ -281,9 +278,7 @@ class MentionCutter(Cutter):
             name_case=self._user_name_case,
         )
 
-    async def _make_group_provider(
-        self, ctx: NewMessage, page_id: IDType
-    ):
+    async def _make_group_provider(self, ctx: NewMessage, page_id: IDType):
         return await GroupProvider.fetch_one(
             ctx.api, page_id, fields=self._group_fields
         )

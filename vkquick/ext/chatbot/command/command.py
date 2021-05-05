@@ -92,7 +92,9 @@ class Command(ty.Generic[Handler]):
             arguments[self._message_storage_argument_name] = message_storage
         return arguments
 
-    async def _call_handler(self, message_storage: NewMessage, arguments: dict) -> None:
+    async def _call_handler(
+        self, message_storage: NewMessage, arguments: dict
+    ) -> None:
         handler_response = await self.handler(**arguments)
         if handler_response is not None:
             await message_storage.reply(handler_response)

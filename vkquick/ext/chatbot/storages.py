@@ -3,9 +3,13 @@ from __future__ import annotations
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage, SentMessage
-from vkquick.ext.chatbot.utils import random_id as random_id_
 from vkquick.cached_property import cached_property
+from vkquick.ext.chatbot.utils import random_id as random_id_
+from vkquick.ext.chatbot.wrappers.message import (
+    Message,
+    SentMessage,
+    TruncatedMessage,
+)
 
 if ty.TYPE_CHECKING:
     from vkquick.base.event import BaseEvent
@@ -20,11 +24,13 @@ class NewEvent:
 
     @classmethod
     async def from_event(
-        cls, *,
+        cls,
+        *,
         event: BaseEvent,
         bot: Bot,
     ):
         return cls(event=event, bot=bot)
+
 
 @dataclasses.dataclass
 class NewMessage(NewEvent, SentMessage):
@@ -34,7 +40,8 @@ class NewMessage(NewEvent, SentMessage):
 
     @classmethod
     async def from_event(
-        cls, *,
+        cls,
+        *,
         event: BaseEvent,
         bot: Bot,
     ):
@@ -50,7 +57,9 @@ class NewMessage(NewEvent, SentMessage):
 
         extended_message = Message(extended_message)
 
-        return cls(event=event, bot=bot, api=bot.api, message=extended_message)
+        return cls(
+            event=event, bot=bot, api=bot.api, message=extended_message
+        )
 
     @cached_property
     def msg(self) -> Message:

@@ -6,6 +6,7 @@ import typing as ty
 
 import aiohttp
 
+from vkquick import API
 from vkquick.ext.chatbot.base.wrapper import Wrapper
 from vkquick.ext.chatbot.utils import get_user_registration_date
 
@@ -29,6 +30,29 @@ class Page(Wrapper, abc.ABC):
     @abc.abstractmethod
     def is_user(self) -> bool:
         ...
+
+    @classmethod
+    @abc.abstractmethod
+    async def fetch_one(
+        cls: ty.Type[T],
+        api: API,
+        id: IDType,
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+    ) -> T:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    async def fetch_many(
+        cls: ty.Type[T],
+        api: API,
+        /,
+        *ids: IDType,
+        fields: ty.Optional[ty.List[str]] = None,
+    ) -> ty.List[T]:
+        pass
 
     @property
     def id(self) -> int:
@@ -60,6 +84,7 @@ class Page(Wrapper, abc.ABC):
 class Group(Page):
 
     _mention_prefix = "club"
+    default_fields = ()
 
     @property
     def fullname(self) -> str:
@@ -71,10 +96,39 @@ class Group(Page):
     def is_user(self) -> bool:
         return False
 
+    @classmethod
+    async def fetch_one(
+        cls: ty.Type[Group],
+        api: API,
+        id: IDType,
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+    ) -> Group:
+        group = await api.groups.get_by_id(
+            ..., group_id=id, fields=fields or cls.default_fields
+        )
+        return cls(group)
+
+    @classmethod
+    async def fetch_many(
+        cls: ty.Type[Group],
+        api: API,
+        /,
+        *ids: IDType,
+        fields: ty.Optional[ty.List[str]] = None,
+    ) -> ty.List[Group]:
+        groups = await api.groups.get_by_id(
+            ..., group_id=ids, fields=fields or cls.default_fields
+        )
+        groups = [cls(group) for group in groups]
+        return groups
+
 
 class User(Page):
 
     _mention_prefix = "id"
+    default_fields = ("sex",)
 
     def is_group(self) -> bool:
         return False
@@ -126,3 +180,39 @@ class User(Page):
         self, session: ty.Optional[aiohttp.ClientSession] = None
     ) -> datetime.datetime:
         return await get_user_registration_date(self.id, session=session)
+
+    @classmethod
+    async def fetch_one(
+        cls: ty.Type[User],
+        api: API,
+        id: IDType,
+        /,
+        *,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> User:
+        user = await api.users.get(
+            ...,
+            user_ids=id,
+            fields=fields or cls.default_fields,
+            name_case=name_case,
+        )
+        return cls(user)
+
+    @classmethod
+    async def fetch_many(
+        cls: ty.Type[User],
+        api: API,
+        /,
+        *ids: IDType,
+        fields: ty.Optional[ty.List[str]] = None,
+        name_case: ty.Optional[str] = None,
+    ) -> ty.List[User]:
+        users = await api.users.get(
+            ...,
+            user_ids=ids,
+            fields=fields or cls.default_fields,
+            name_case=name_case,
+        )
+        users = [cls(user) for user in users]
+        return users

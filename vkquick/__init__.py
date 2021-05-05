@@ -1,14 +1,14 @@
 import importlib.metadata
 
+from .api import API, TokenOwner
 # Main core
 from .base.api_serializable import APISerializableMixin
 from .base.event import BaseEvent
 from .base.event_factories import BaseEventFactory, BaseLongPoll
 from .base.json_parser import BaseJSONParser
-
-
 from .cached_property import cached_property
 from .event import GroupEvent, UserEvent
+from .exceptions import VKAPIError
 from .json_parsers import (
     BuiltinJsonParser,
     OrjsonParser,
@@ -17,9 +17,6 @@ from .json_parsers import (
 )
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
-from .exceptions import VKAPIError
-from .api import API, TokenOwner
-
 
 # from vkquick.ext.chatbot.providers.attachment import (
 #     DocumentProvider,
