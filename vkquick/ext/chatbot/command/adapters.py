@@ -165,11 +165,9 @@ def _resolve_cutter(
         return LiteralCutter(*ty.get_args(arg_annotation))
 
     elif ty.get_origin(arg_annotation) is Mention:
-        return MentionCutter(
-            ty.get_args(arg_annotation)[0], **arg_settings.cutter_preferences
-        )
+        return MentionCutter(ty.get_args(arg_annotation)[0])
 
-    elif arg_annotation in {
+    elif ty.get_origin(arg_annotation) in {
         UserID,
         GroupID,
         PageID,
@@ -177,7 +175,7 @@ def _resolve_cutter(
         Group,
         Page,
     }:
-        return EntityCutter(arg_annotation, **arg_settings.cutter_preferences)
+        return EntityCutter(arg_annotation)
 
     else:
         raise TypeError(f"Can't resolve cutter from argument `{arg_name}`")

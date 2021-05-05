@@ -12,6 +12,7 @@ import aiohttp
 import cachetools
 from loguru import logger
 
+from vkquick.pretty_view import pretty_view
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
@@ -184,7 +185,6 @@ class API(SessionContainerMixin):
         real_request_params = _convert_params_for_api(request_params)
         extra_request_params = self._stable_request_params.copy()
         extra_request_params.update(real_request_params)
-        real_request_params = extra_request_params
 
         # Определение владельца токена нужно
         # для определения задержки между запросами
@@ -205,14 +205,18 @@ class API(SessionContainerMixin):
 
         # Отправка запроса с последующей проверкой ответа
         response = await self._send_api_request(
-            real_method_name, real_request_params
+            real_method_name, extra_request_params
         )
-        logger.info(
-            "Called method {method_name}({method_params})",
-            method_name=method_name,
-            method_params=request_params,
+        logger.opt(colors=True).info(
+            "Called method <m>{method_name}</m>({method_params})".format(
+                method_name=real_method_name,
+                method_params=", ".join(
+                    f"<c>{key}</c>=<y>{value!r}</y>"
+                    for key, value in real_request_params.items()
+                ),
+            )
         )
-        logger.debug("Response is: {response}", response=response)
+        logger.opt(lazy=True).debug("Response is: {response}", response=lambda: pretty_view(response))
 
         if "error" in response:
             raise VKAPIError.destruct_response(response)
@@ -270,29 +274,28 @@ def _convert_param_value(value, /):
     # перечисляя значения через запятую
     if isinstance(value, (list, set, tuple)):
         updated_sequence = map(_convert_param_value, value)
-        new_value = ",".join(updated_sequence)
-        return new_value
+        return ",".join(updated_sequence)
 
     # Все словари, как списки, нужно сдампить в JSON
     elif isinstance(value, dict):
-        new_value = json_parser_policy.dumps(value)
-        return new_value
+        return json_parser_policy.dumps(value)
 
     # Особенности `aiohttp`
     elif isinstance(value, bool):
-        new_value = int(value)
-        return new_value
+        return int(value)
 
     # Если класс определяет протокол сериализации под параметр API,
     # используется соотвествующий метод
     elif isinstance(value, APISerializableMixin):
         new_value = value.represent_as_api_param()
-        new_value = _convert_param_value(new_value)
-        return new_value
+        return _convert_param_value(new_value)
+
+    # Для корректного отображения в логах
+    elif isinstance(value, int):
+        return value
 
     else:
-        new_value = str(value)
-        return new_value
+        return str(value)
 
 
 def _convert_params_for_api(params: dict, /):

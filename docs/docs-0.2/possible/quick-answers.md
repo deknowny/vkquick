@@ -102,7 +102,7 @@ import vkquick as vq
 @vq.Reaction("message_new")
 async def hello(api: vq.API, event: vq.Event()):
     await api.messages.send(
-        peer_id=event.object.message.peer_id,
+        peer_id=event.object.truncated_message.peer_id,
         message="hello",
         random_id=vq.random_id()
     )

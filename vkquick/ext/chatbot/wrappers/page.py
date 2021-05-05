@@ -11,6 +11,7 @@ from vkquick.ext.chatbot.base.wrapper import Wrapper
 from vkquick.ext.chatbot.utils import get_user_registration_date
 
 T = ty.TypeVar("T")
+FieldsTypevar = ty.TypeVar("FieldsTypevar")
 IDType: ty.TypeAlias = ty.Union[str, int]
 
 
@@ -80,6 +81,9 @@ class Page(Wrapper, abc.ABC):
             return format_value
         return format_value
 
+    def __repr__(self):
+        return f"<vkquick.{self.__class__.__name__} fullname={self.fullname!r}>"
+
 
 class Group(Page):
 
@@ -105,10 +109,12 @@ class Group(Page):
         *,
         fields: ty.Optional[ty.List[str]] = None,
     ) -> Group:
-        group = await api.groups.get_by_id(
-            ..., group_id=id, fields=fields or cls.default_fields
+        group = await api.use_cache().method(
+            "groups.get_by_id",
+            group_id=id,
+            fields=fields or cls.default_fields,
         )
-        return cls(group)
+        return cls(group[0])
 
     @classmethod
     async def fetch_many(
@@ -118,14 +124,16 @@ class Group(Page):
         *ids: IDType,
         fields: ty.Optional[ty.List[str]] = None,
     ) -> ty.List[Group]:
-        groups = await api.groups.get_by_id(
-            ..., group_id=ids, fields=fields or cls.default_fields
+        groups = await api.use_cache().method(
+            "groups.get_by_id",
+            group_id=id,
+            fields=fields or cls.default_fields,
         )
         groups = [cls(group) for group in groups]
         return groups
 
 
-class User(Page):
+class User(Page, ty.Generic[FieldsTypevar]):
 
     _mention_prefix = "id"
     default_fields = ("sex",)
@@ -191,13 +199,13 @@ class User(Page):
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> User:
-        user = await api.users.get(
-            ...,
+        user = await api.use_cache().method(
+            "users.get",
             user_ids=id,
             fields=fields or cls.default_fields,
             name_case=name_case,
         )
-        return cls(user)
+        return cls(user[0])
 
     @classmethod
     async def fetch_many(
@@ -208,9 +216,9 @@ class User(Page):
         fields: ty.Optional[ty.List[str]] = None,
         name_case: ty.Optional[str] = None,
     ) -> ty.List[User]:
-        users = await api.users.get(
-            ...,
-            user_ids=ids,
+        users = await api.use_cache().method(
+            "users.get",
+            user_ids=id,
             fields=fields or cls.default_fields,
             name_case=name_case,
         )

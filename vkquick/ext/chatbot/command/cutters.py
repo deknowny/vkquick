@@ -1,4 +1,3 @@
-import abc
 import dataclasses
 import enum
 import re
@@ -20,7 +19,7 @@ class IntegerCutter(Cutter):
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
-    ) -> CutterParsingResponse:
+    ) -> CutterParsingResponse[int]:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=int
         )
@@ -43,7 +42,7 @@ class FloatCutter(Cutter):
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
-    ) -> CutterParsingResponse:
+    ) -> CutterParsingResponse[float]:
         return cut_part_via_regex(
             self._pattern, arguments_string, factory=float
         )
@@ -54,7 +53,7 @@ class WordCutter(Cutter):
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
-    ) -> CutterParsingResponse:
+    ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(self._pattern, arguments_string)
 
 
@@ -63,7 +62,7 @@ class StringCutter(Cutter):
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
-    ) -> CutterParsingResponse:
+    ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(self._pattern, arguments_string)
 
 
@@ -260,32 +259,24 @@ class MentionCutter(Cutter):
     def __init__(
         self,
         page_type: T,
-        /,
-        user_fields: ty.Optional[ty.List[str]] = None,
-        group_fields: ty.Optional[ty.List[str]] = None,
-        user_name_case: ty.Optional[str] = None,
     ):
-        self._page_type = page_type
-        self._user_fields = user_fields
-        self._group_fields = group_fields
-        self._user_name_case = user_name_case
+        self._page_type = ty.get_origin(page_type)
+        fields = ty.get_args(page_type)
+        if fields:
+            self._fields = ty.get_args(fields[0])
+        else:
+            self._fields = None
 
-    async def _make_user_provider(self, ctx: NewMessage, page_id: IDType):
-        return await UserProvider.fetch_one(
-            ctx.api,
-            page_id,
-            fields=self._user_fields,
-            name_case=self._user_name_case,
-        )
+    async def _make_user(self, ctx: NewMessage, page_id: IDType):
+        return await User.fetch_one(ctx.api, page_id, fields=self._fields)
 
-    async def _make_group_provider(self, ctx: NewMessage, page_id: IDType):
-        return await GroupProvider.fetch_one(
-            ctx.api, page_id, fields=self._group_fields
-        )
+    async def _make_group(self, ctx: NewMessage, page_id: IDType):
+        return await Group.fetch_one(ctx.api, page_id, fields=self._fields)
 
     async def _cast_type(
         self, ctx: NewMessage, page_id: IDType, page_type: PageType
     ) -> T:
+
         if (
             self._page_type is UserID
             and page_type == PageType.USER
@@ -295,33 +286,17 @@ class MentionCutter(Cutter):
         ):
             return page_id
 
-        elif self._page_type is UserProvider and page_type == PageType.USER:
-            return await self._make_user_provider(ctx, page_id)
-
-        elif self._page_type is GroupProvider and page_type == PageType.GROUP:
-            return await self._make_group_provider(ctx, page_id)
-
-        elif self._page_type is PageProvider:
-            if page_type == PageType.USER:
-                return await self._make_user_provider(ctx, page_id)
-            else:
-                return await self._make_group_provider(ctx, page_id)
-
         elif self._page_type is User and page_type == PageType.USER:
-            provider = await self._make_user_provider(ctx, page_id)
-            return provider.storage
+            return await self._make_user(ctx, page_id)
 
         elif self._page_type is Group and page_type == PageType.GROUP:
-            provider = await self._make_group_provider(ctx, page_id)
-            return provider.storage
+            return await self._make_group(ctx, page_id)
 
         elif self._page_type is Page:
             if page_type == PageType.USER:
-                provider_type = await self._make_user_provider(ctx, page_id)
+                return await self._make_user(ctx, page_id)
             else:
-                provider_type = await self._make_group_provider(ctx, page_id)
-
-            return provider_type.storage
+                return await self._make_group(ctx, page_id)
 
         else:
             raise BadArgumentError("Regex didn't matched")
@@ -345,7 +320,6 @@ class MentionCutter(Cutter):
             casted_part = await self._cast_type(ctx, page_id, page_type)
         # Если ID невалидно
         except VKAPIError as err:
-
             raise BadArgumentError("Invalid id") from err
         else:
             parsing_response.parsed_part = Mention(
@@ -384,7 +358,7 @@ class EntityCutter(MentionCutter):
         ) 
 
         # ID of user/group
-        (?P<id> \d+ ∂)
+        (?P<id> \d+ )
         """,
         flags=re.X,
     )
@@ -393,13 +367,13 @@ class EntityCutter(MentionCutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
         for method in (
-            self._mention_method(ctx, arguments_string),
-            self._link_method(ctx, arguments_string),
-            self._raw_id_method(ctx, arguments_string),
-            self._attached_method(ctx, arguments_string),
+            self._mention_method,
+            self._link_method,
+            self._raw_id_method,
+            self._attached_method,
         ):
             try:
-                return await method
+                return await method(ctx, arguments_string)
             except BadArgumentError:
                 continue
 
@@ -463,18 +437,18 @@ class EntityCutter(MentionCutter):
     ) -> CutterParsingResponse:
         if ctx.msg.reply_message is not None:
             page_id = ctx.msg.reply_message.from_id
-            if ctx.extra.get("replied_user_used") is None:
-                ctx.extra["replied_user_used"] = ...
+            if ctx.metadata.get("_replied_user_used") is None:
+                ctx.metadata["_replied_user_used"] = ...
             else:
                 raise BadArgumentError("No user attached")
         else:
             forwarded_pages = ctx.msg.fwd_messages
-            step = ctx.extra.get("forward_page_iter_step")
+            step = ctx.metadata.get("_forward_page_iter_step")
             if step is None:
-                ctx.extra["forward_page_iter_step"] = 1
+                ctx.metadata["_forward_page_iter_step"] = 1
                 step = 0
             else:
-                ctx.extra["forward_page_iter_step"] += 1
+                ctx.metadata["_forward_page_iter_step"] += 1
             try:
                 page_id = forwarded_pages[step].from_id
             except IndexError:

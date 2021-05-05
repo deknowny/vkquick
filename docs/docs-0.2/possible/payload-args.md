@@ -11,7 +11,7 @@ import vkquick as vq
 @vq.Reaction("message_new")
 def get_time(event: vq.Event()):
     time = datetime.fromtimestamp(
-        event.object.message.date
+        event.object.truncated_message.date
     )
     return f"Время отправки: {time:%H:%M}"
 ```

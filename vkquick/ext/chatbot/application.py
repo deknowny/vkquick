@@ -4,7 +4,10 @@ import asyncio
 import dataclasses
 import typing as ty
 
-from vkquick import GroupLongPoll, UserLongPoll
+from loguru import logger
+
+from vkquick.logger import update_logging_level
+from vkquick.longpoll import GroupLongPoll, UserLongPoll
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
 from vkquick.ext.chatbot.package import Package
@@ -15,8 +18,12 @@ from vkquick.ext.chatbot.storages import NewEvent, NewMessage
 class App(Package):
 
     packages: ty.List[Package] = dataclasses.field(default_factory=list)
+    debug: bool = True
 
     def __post_init__(self):
+        if self.debug:
+            update_logging_level("DEBUG")
+
         self.packages.append(self)
         for package in self.packages:
             for command in package.commands:
@@ -43,6 +50,9 @@ class App(Package):
         asyncio.run(self.coroutine_run(*tokens))
 
     async def coroutine_run(self, *tokens) -> None:
+        logger.opt(colors=True).success(
+            "Run app (<b>{count}</b> bot{postfix})", count=len(tokens), postfix="s" if len(tokens) > 1 else ""
+        )
         bots_init_coroutines = [
             Bot.via_token(token, self) for token in tokens
         ]
@@ -97,6 +107,7 @@ class Bot:
 
     async def handle_event(self, new_event_storage: NewEvent):
         # Запуск обработки события
+        logger.opt(colors=True).info("New event: <y>{event_type}</y>", event_type=new_event_storage.event.type)
         asyncio.create_task(self.app.route_event(new_event_storage))
 
         if new_event_storage.event.type in {

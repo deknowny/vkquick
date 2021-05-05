@@ -10,6 +10,7 @@ from loguru import logger
 from vkquick.base.event import BaseEvent
 from vkquick.base.json_parser import BaseJSONParser
 from vkquick.base.session_container import SessionContainerMixin
+from vkquick.pretty_view import pretty_view
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API
@@ -58,12 +59,12 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
             self.remove_event_callback(events_queue.put)
 
     def add_event_callback(self, func: EventsCallback) -> EventsCallback:
-        logger.info("Add event callback: {func}", func=func)
+        logger.debug("Add event callback: {func}", func=func)
         self._new_event_callbacks.append(func)
         return func
 
     def remove_event_callback(self, func: EventsCallback) -> EventsCallback:
-        logger.info("Remove event callback: {func}", func=func)
+        logger.debug("Remove event callback: {func}", func=func)
         self._new_event_callbacks.remove(func)
         return func
 
@@ -80,13 +81,13 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
             )
 
     async def _run_through_callbacks(self, event: BaseEvent) -> None:
-        logger.info(
+        logger.debug(
             "New event: {event}",
             event=event,
         )
-        logger.debug(
+        logger.opt(lazy=True).debug(
             "Event content: {event_content}",
-            event_content=event.content,
+            event_content=lambda: pretty_view(event.content),
         )
         updates = [callback(event) for callback in self._new_event_callbacks]
         await asyncio.gather(*updates)

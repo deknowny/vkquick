@@ -6,6 +6,8 @@ import re
 import typing as ty
 import warnings
 
+from loguru import logger
+
 from vkquick.ext.chatbot.base.cutter import CommandTextArgument, Cutter
 from vkquick.ext.chatbot.base.filter import BaseFilter
 from vkquick.ext.chatbot.command.adapters import resolve_typing
@@ -26,6 +28,7 @@ class Command(ty.Generic[Handler]):
     filter: ty.Optional[BaseFilter] = None
 
     def __post_init__(self):
+        self.handler = logger.catch(reraise=True)(self.handler)
         self._routing_regex: ty.Pattern
         self._build_routing_regex()
 
@@ -95,9 +98,23 @@ class Command(ty.Generic[Handler]):
     async def _call_handler(
         self, message_storage: NewMessage, arguments: dict
     ) -> None:
-        handler_response = await self.handler(**arguments)
-        if handler_response is not None:
-            await message_storage.reply(handler_response)
+        try:
+            handler_response = await self.handler(**arguments)
+            if handler_response is not None:
+                await message_storage.reply(handler_response)
+
+        except Exception:
+            ...
+        else:
+            logger.opt(colors=True).success(
+                "Called command <m>{com_name}</m><w>({args})</w>".format(
+                    com_name=self.handler.__name__,
+                    args=", ".join(
+                        f"<c>{key}</c>=<y>{value!r}</y>"
+                        for key, value in arguments.items()
+                    ),
+                )
+            )
 
     def _parse_handler_arguments(self) -> None:
         parameters = inspect.signature(self.handler).parameters

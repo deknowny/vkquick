@@ -5,13 +5,8 @@ import typing as ty
 
 from vkquick import API
 from vkquick.cached_property import cached_property
-from vkquick.ext.chatbot.utils import random_id as random_id_
-from vkquick.ext.chatbot.wrappers import User, Group, Page
-from vkquick.ext.chatbot.wrappers.message import (
-    Message,
-    SentMessage,
-    TruncatedMessage,
-)
+from vkquick.ext.chatbot.wrappers.message import Message, SentMessage
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 if ty.TYPE_CHECKING:
     from vkquick.base.event import BaseEvent
@@ -33,17 +28,12 @@ class NewEvent:
     ):
         return cls(event=event, bot=bot)
 
-    @property
-    def api(self) -> API:
-        return self.bot.api
+
+SenderTypevar = ty.TypeVar("SenderTypevar", bound=Page)
 
 
 @dataclasses.dataclass
 class NewMessage(NewEvent, SentMessage):
-
-    # _extended_message: Message
-    # _sent_message: SentMessage
-
     @classmethod
     async def from_event(
         cls,
@@ -64,39 +54,27 @@ class NewMessage(NewEvent, SentMessage):
         extended_message = Message(extended_message)
 
         return cls(
-            event=event, bot=bot, api=bot.api, message=extended_message
+            event=event,
+            bot=bot,
+            api=bot.api,
+            truncated_message=extended_message,
         )
 
     @cached_property
     def msg(self) -> Message:
-        return ty.cast(Message, self.message)
+        return ty.cast(Message, self.truncated_message)
 
-    async def fetch_any_sender(self) -> Page:
-        if self.msg.from_id > 0:
-            return await User.fetch_one(
-                self.api, self.msg.from_id
-            )
+    async def fetch_sender(
+        self, typevar: ty.Type[SenderTypevar], /
+    ) -> SenderTypevar:
+        if self.msg.from_id > 0 and typevar in {Page, User}:
+            return await User.fetch_one(self.api, self.msg.from_id)
+        elif self.msg.from_id < 0 and typevar in {Page, Group}:
+            return await Group.fetch_one(self.api, self.msg.from_id)
         else:
-            return await Group.fetch_one(
-                self.api, self.msg.from_id
-            )
-
-    async def fetch_user_sender(self) -> User:
-        if self.msg.from_id < 0:
             raise ValueError(
-                "Message was sent by a group. Can't fetch user provider"
-            )
-        else:
-            return await User.fetch_one(
-                self.api, self.msg.from_id
+                f"Can't make wrapper with typevar `{typevar}` and from_id `{self.msg.from_id}`"
             )
 
-    async def fetch_group_sender(self) -> Group:
-        if self.msg.from_id > 0:
-            raise ValueError(
-                "Message was sent by a user. Can't fetch group provider"
-            )
-        else:
-            return await Group.fetch_one(
-                self.api, self.msg.from_id
-            )
+    def __repr__(self):
+        return f"<vkquick.NewMessage text={self.msg.text!r}>"

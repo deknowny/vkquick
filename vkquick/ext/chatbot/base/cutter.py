@@ -19,7 +19,6 @@ class CommandTextArgument(ty.NamedTuple):
 @dataclasses.dataclass
 class Argument:
     description: ty.Optional[str] = None
-    cast_to_type: bool = True
     callbacks: ty.List[
         ty.Callable[[NewMessage], ty.Awaitable[ty.Any]]
     ] = dataclasses.field(default_factory=list)

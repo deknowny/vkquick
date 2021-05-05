@@ -10,8 +10,8 @@ from vkquick.ext.chatbot.base.wrapper import Wrapper
 from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.ext.chatbot.utils import peer
 from vkquick.ext.chatbot.utils import random_id as random_id_
-from vkquick.ext.chatbot.wrappers import User, Page, Group
 from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 from vkquick.json_parsers import json_parser_policy
 
 
@@ -153,7 +153,7 @@ class Message(TruncatedMessage):
 @dataclasses.dataclass
 class SentMessage:
     api: API
-    message: TruncatedMessage
+    truncated_message: TruncatedMessage
 
     async def _send_message(self, params: dict) -> TruncatedMessage:
         sent_message = await self.api.method("messages.send", **params)
@@ -197,18 +197,18 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
-            peer_ids=self.message.peer_id,
+            peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )
-        if self.message.id:
-            params["reply_to"] = self.message.id
+        if self.truncated_message.id:
+            params["reply_to"] = self.truncated_message.id
         else:
             params["forward"] = {
                 "is_reply": True,
                 "conversation_message_ids": [
-                    self.message.conversation_message_id
+                    self.truncated_message.conversation_message_id
                 ],
-                "peer_id": self.message.peer_id,
+                "peer_id": self.truncated_message.peer_id,
             }
         return await self._send_message(params)
 
@@ -250,7 +250,7 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
-            peer_ids=self.message.peer_id,
+            peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )
         return await self._send_message(params)
@@ -293,16 +293,16 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
-            peer_ids=self.message.peer_id,
+            peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )
-        if self.message.id:
-            params["forward_messages"] = self.message.id
+        if self.truncated_message.id:
+            params["forward_messages"] = self.truncated_message.id
         else:
             params["forward"] = {
                 "conversation_message_ids": [
-                    self.message.conversation_message_id
+                    self.truncated_message.conversation_message_id
                 ],
-                "peer_id": self.message.peer_id,
+                "peer_id": self.truncated_message.peer_id,
             }
         return await self._send_message(params)

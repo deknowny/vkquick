@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as ty
 
-from vkquick.ext.chatbot.ui_builders.base import UIBuilder
+from vkquick.ext.chatbot.base.ui_builder import UIBuilder
 from vkquick.ext.chatbot.ui_builders.button import InitializedButton
 from vkquick.ext.chatbot.wrappers.attachment import Photo
 
