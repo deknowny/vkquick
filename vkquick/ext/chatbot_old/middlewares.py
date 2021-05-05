@@ -1,5 +1,5 @@
-from vkquick.ext.chatbot.bases.middleware import Middleware
 from vkquick.bot import EventProcessingContext
+from vkquick.ext.chatbot.bases.middleware import Middleware
 from vkquick.ext.chatbot.providers.message import MessageProvider
 
 

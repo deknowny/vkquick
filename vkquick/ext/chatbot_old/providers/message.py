@@ -4,8 +4,8 @@ import asyncio
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.providers.attachment import PhotoProvider
 from vkquick.ext.chatbot.provider.base import Provider
+from vkquick.ext.chatbot.providers.attachment import PhotoProvider
 from vkquick.ext.chatbot.providers.page import (
     GroupProvider,
     PageProvider,

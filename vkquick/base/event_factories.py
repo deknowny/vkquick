@@ -7,9 +7,9 @@ import typing as ty
 import aiohttp
 from loguru import logger
 
+from vkquick.base.event import BaseEvent
 from vkquick.base.json_parser import BaseJSONParser
 from vkquick.base.session_container import SessionContainerMixin
-from vkquick.base.event import BaseEvent
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API
@@ -41,7 +41,9 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
     async def _coroutine_run_polling(self):
         ...
 
-    async def listen(self, sublisten: bool = False) -> ty.AsyncGenerator[BaseEvent, None]:
+    async def listen(
+        self, sublisten: bool = False
+    ) -> ty.AsyncGenerator[BaseEvent, None]:
         events_queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         logger.debug("Run events listening")
         try:
@@ -125,7 +127,9 @@ class BaseLongPoll(BaseEventFactory):
 
     async def _coroutine_run_polling(self) -> None:
         await self._setup()
-        self._requests_query_params = ty.cast(dict, self._requests_query_params)
+        self._requests_query_params = ty.cast(
+            dict, self._requests_query_params
+        )
         self._update_baked_request()
         self._baked_request = ty.cast(asyncio.Task, self._baked_request)
 

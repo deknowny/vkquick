@@ -71,7 +71,6 @@ class Command(EventHandler, CommandFilter, EasyDecorator):
 
     def __init__(
         self,
-
         names: ty.Optional[ty.Set[str]] = None,
         allow_regex: bool = False,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,

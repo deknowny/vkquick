@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import typing as ty
 
+from vkquick import API
 from vkquick.cached_property import cached_property
+from vkquick.ext.chatbot.base.wrapper import Wrapper
+from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.ext.chatbot.utils import peer
 from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
-from vkquick.ext.chatbot.base.wrapper import Wrapper
+from vkquick.ext.chatbot.utils import random_id as random_id_
 from vkquick.json_parsers import json_parser_policy
 
 
@@ -143,3 +147,161 @@ class Message(TruncatedMessage):
             if attachment["type"] == "doc"
         ]
         return docs
+
+
+@dataclasses.dataclass
+class SentMessage:
+    api: API
+    message: TruncatedMessage
+
+    async def _send_message(self, params: dict) -> TruncatedMessage:
+        sent_message = await self.api.method("messages.send", **params)
+        return TruncatedMessage(sent_message)
+
+    async def reply(
+            self,
+            message: ty.Optional[str] = None,
+            *,
+            random_id: ty.Optional[int] = None,
+            lat: ty.Optional[float] = None,
+            long: ty.Optional[float] = None,
+            attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
+            sticker_id: ty.Optional[int] = None,
+            group_id: ty.Optional[int] = None,
+            keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+            payload: ty.Optional[str] = None,
+            dont_parse_links: ty.Optional[bool] = None,
+            disable_mentions: bool = True,
+            intent: ty.Optional[str] = None,
+            expire_ttl: ty.Optional[int] = None,
+            silent: ty.Optional[bool] = None,
+            subscribe_id: ty.Optional[int] = None,
+            content_source: ty.Optional[str] = None,
+            **kwargs,
+    ) -> TruncatedMessage:
+        params = dict(
+            message=message,
+            random_id=random_id_() if random_id is None else random_id,
+            lat=lat,
+            long=long,
+            attachment=attachment,
+            sticker_id=sticker_id,
+            group_id=group_id,
+            keyboard=keyboard,
+            payload=payload,
+            dont_parse_links=dont_parse_links,
+            disable_mentions=disable_mentions,
+            intent=intent,
+            expire_ttl=expire_ttl,
+            silent=silent,
+            subscribe_id=subscribe_id,
+            content_source=content_source,
+            peer_ids=self.message.peer_id,
+            **kwargs,
+        )
+        if self.message.id:
+            params["reply_to"] = self.message.id
+        else:
+            params["forward"] = {
+                "is_reply": True,
+                "conversation_message_ids": [
+                    self.message.conversation_message_id
+                ],
+                "peer_id": self.message.peer_id,
+            }
+        return await self._send_message(params)
+
+    async def answer(
+            self,
+            message: ty.Optional[str] = None,
+            *,
+            random_id: ty.Optional[int] = None,
+            lat: ty.Optional[float] = None,
+            long: ty.Optional[float] = None,
+            attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
+            sticker_id: ty.Optional[int] = None,
+            group_id: ty.Optional[int] = None,
+            keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+            payload: ty.Optional[str] = None,
+            dont_parse_links: ty.Optional[bool] = None,
+            disable_mentions: bool = True,
+            intent: ty.Optional[str] = None,
+            expire_ttl: ty.Optional[int] = None,
+            silent: ty.Optional[bool] = None,
+            subscribe_id: ty.Optional[int] = None,
+            content_source: ty.Optional[str] = None,
+            **kwargs,
+    ) -> TruncatedMessage:
+        params = dict(
+            message=message,
+            random_id=random_id_() if random_id is None else random_id,
+            lat=lat,
+            long=long,
+            attachment=attachment,
+            sticker_id=sticker_id,
+            group_id=group_id,
+            keyboard=keyboard,
+            payload=payload,
+            dont_parse_links=dont_parse_links,
+            disable_mentions=disable_mentions,
+            intent=intent,
+            expire_ttl=expire_ttl,
+            silent=silent,
+            subscribe_id=subscribe_id,
+            content_source=content_source,
+            peer_ids=self.message.peer_id,
+            **kwargs,
+        )
+        return await self._send_message(params)
+
+    async def forward(
+            self,
+            message: ty.Optional[str] = None,
+            *,
+            random_id: ty.Optional[int] = None,
+            lat: ty.Optional[float] = None,
+            long: ty.Optional[float] = None,
+            attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
+            sticker_id: ty.Optional[int] = None,
+            group_id: ty.Optional[int] = None,
+            keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+            payload: ty.Optional[str] = None,
+            dont_parse_links: ty.Optional[bool] = None,
+            disable_mentions: bool = True,
+            intent: ty.Optional[str] = None,
+            expire_ttl: ty.Optional[int] = None,
+            silent: ty.Optional[bool] = None,
+            subscribe_id: ty.Optional[int] = None,
+            content_source: ty.Optional[str] = None,
+            **kwargs,
+    ) -> TruncatedMessage:
+        params = dict(
+            message=message,
+            random_id=random_id_() if random_id is None else random_id,
+            lat=lat,
+            long=long,
+            attachment=attachment,
+            sticker_id=sticker_id,
+            group_id=group_id,
+            keyboard=keyboard,
+            payload=payload,
+            dont_parse_links=dont_parse_links,
+            disable_mentions=disable_mentions,
+            intent=intent,
+            expire_ttl=expire_ttl,
+            silent=silent,
+            subscribe_id=subscribe_id,
+            content_source=content_source,
+            peer_ids=self.message.peer_id,
+            **kwargs,
+        )
+        if self.message.id:
+            params["forward_messages"] = self.message.id
+        else:
+            params["forward"] = {
+                "conversation_message_ids": [
+                    self.message.conversation_message_id
+                ],
+                "peer_id": self.message.peer_id,
+            }
+        return await self._send_message(params)

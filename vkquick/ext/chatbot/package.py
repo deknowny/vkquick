@@ -1,35 +1,40 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
 import collections
+import dataclasses
 import re
 import typing as ty
 
 from vkquick.base.event import EventType
-
-from vkquick.ext.chatbot.base.filter import Filter
+from vkquick.ext.chatbot.base.filter import BaseFilter
 from vkquick.ext.chatbot.command.command import Command
 from vkquick.ext.chatbot.exceptions import FilterFailedError
 
 if ty.TYPE_CHECKING:
 
-    from vkquick.types import DecoratorFunction
     from vkquick.ext.chatbot.application import Bot
     from vkquick.ext.chatbot.storages import NewEvent, NewMessage
+    from vkquick.types import DecoratorFunction
 
     SignalHandler = ty.Callable[[Bot], ty.Awaitable]
-    SignalHandlerTypevar = ty.TypeVar("SignalHandlerTypevar", bound=SignalHandler)
+    SignalHandlerTypevar = ty.TypeVar(
+        "SignalHandlerTypevar", bound=SignalHandler
+    )
     EventHandler = ty.Callable[[NewEvent], ty.Awaitable]
-    EventHandlerTypevar = ty.TypeVar("EventHandlerTypevar", bound=EventHandler)
+    EventHandlerTypevar = ty.TypeVar(
+        "EventHandlerTypevar", bound=EventHandler
+    )
     MessageHandler = ty.Callable[[NewMessage], ty.Awaitable]
-    MessageHandlerTypevar = ty.TypeVar("MessageHandlerTypevar", bound=MessageHandler)
+    MessageHandlerTypevar = ty.TypeVar(
+        "MessageHandlerTypevar", bound=MessageHandler
+    )
 
 
 @dataclasses.dataclass
 class Package:
     prefixes: ty.Collection[str] = dataclasses.field(default_factory=tuple)
-    filter: ty.Optional[Filter] = None
+    filter: ty.Optional[BaseFilter] = None
     commands: ty.List[Command] = dataclasses.field(default_factory=list)
     event_handlers: ty.Dict[
         EventType, ty.List[EventHandler]
@@ -52,7 +57,7 @@ class Package:
         prefixes: ty.Collection[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         enable_regexes: bool = False,
-        filter: ty.Optional[Filter] = None
+        filter: ty.Optional[BaseFilter] = None
     ) -> ty.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
             command = Command(
@@ -65,6 +70,7 @@ class Package:
             )
             self.commands.append(command)
             return command
+
         return wrapper
 
     def on_event(
@@ -74,14 +80,16 @@ class Package:
             for event_type in event_types:
                 self.event_handlers[event_type].append(func)
             return func
+
         return wrapper
 
-    def on_message(self) -> ty.Callable[
-        [MessageHandlerTypevar], MessageHandlerTypevar
-    ]:
+    def on_message(
+        self,
+    ) -> ty.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
         def wrapper(func):
             self.message_handlers.append(func)
             return func
+
         return wrapper
 
     def on_startup(
@@ -99,8 +107,7 @@ class Package:
     async def handle_event(self, new_event_storage: NewEvent) -> None:
         handlers = self.event_handlers[new_event_storage.event.type]
         handle_coroutines = [
-            handler(new_event_storage)
-            for handler in handlers
+            handler(new_event_storage) for handler in handlers
         ]
         await asyncio.gather(*handle_coroutines)
 
@@ -119,4 +126,3 @@ class Package:
             for message_handler in self.message_handlers
         ]
         await asyncio.gather(*command_coroutines, *message_handler_coroutines)
-

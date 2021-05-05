@@ -252,17 +252,6 @@ class API(SessionContainerMixin):
             self._last_request_timestamp = now
             return 0.0
 
-    def __repr__(self):
-        owner = self._token_owner
-        if owner is None:
-            return f"<vkquick.{self.__class__.__name__}>"
-        else:
-            if owner.is_group():
-                owner_name = owner.scheme["name"]
-            else:
-                owner_name = f"{owner.scheme['first_name']} {owner.scheme['last_name']}"
-            return f"<vkquick.{self.__class__.__name__} owner={owner_name!r}>"
-
 
 def _convert_param_value(value, /):
     """

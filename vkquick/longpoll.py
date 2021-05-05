@@ -4,9 +4,9 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.base.event_factories import EventsCallback, BaseLongPoll
-from vkquick.event import GroupEvent, UserEvent
 from vkquick.api import API, TokenOwner
+from vkquick.base.event_factories import BaseLongPoll, EventsCallback
+from vkquick.event import GroupEvent, UserEvent
 
 if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser

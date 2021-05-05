@@ -1,5 +1,26 @@
 import importlib.metadata
 
+# Main core
+from .base.api_serializable import APISerializableMixin
+from .base.event import BaseEvent
+from .base.event_factories import BaseEventFactory, BaseLongPoll
+from .base.json_parser import BaseJSONParser
+
+
+from .cached_property import cached_property
+from .event import GroupEvent, UserEvent
+from .json_parsers import (
+    BuiltinJsonParser,
+    OrjsonParser,
+    UjsonParser,
+    json_parser_policy,
+)
+from .longpoll import GroupLongPoll, UserLongPoll
+from .pretty_view import pretty_view
+from .exceptions import VKAPIError
+from .api import API, TokenOwner
+
+
 # from vkquick.ext.chatbot.providers.attachment import (
 #     DocumentProvider,
 #     PhotoProvider,
@@ -28,20 +49,5 @@ import importlib.metadata
 # from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage
 # from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
-# Main core
-from .base.api_serializable import APISerializableMixin
-from .base.event import BaseEvent
-
-# from .bot import Bot, EventProcessingContext
-from .cached_property import cached_property
-from .event import GroupEvent, UserEvent
-from .json_parsers import (
-    BuiltinJsonParser,
-    OrjsonParser,
-    UjsonParser,
-    json_parser_policy,
-)
-from .longpoll import GroupLongPoll, UserLongPoll
-from .pretty_view import pretty_view
 
 __version__ = importlib.metadata.version(__name__)

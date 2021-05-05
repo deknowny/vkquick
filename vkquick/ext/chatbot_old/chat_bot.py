@@ -4,9 +4,9 @@ import typing as ty
 from vkquick.api import API
 from vkquick.bases.easy_decorator import easy_method_decorator
 from vkquick.bases.event_factories import BaseEventFactory
-from vkquick.ext.chatbot.bases.middleware import Middleware
 from vkquick.bot import Bot
 from vkquick.event_handler.handler import EventHandler
+from vkquick.ext.chatbot.bases.middleware import Middleware
 from vkquick.ext.chatbot.command.command import Command
 from vkquick.ext.chatbot.filters import CommandFilter
 from vkquick.ext.chatbot.middlewares import MakeMessageProviderOnNewMessage

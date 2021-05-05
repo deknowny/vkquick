@@ -5,8 +5,8 @@ import typing as ty
 import aiohttp
 
 from vkquick.base.api_serializable import APISerializableMixin
-from vkquick.ext.chatbot.utils import download_file
 from vkquick.ext.chatbot.base.wrapper import Wrapper
+from vkquick.ext.chatbot.utils import download_file
 
 
 class Attachment(Wrapper, APISerializableMixin):

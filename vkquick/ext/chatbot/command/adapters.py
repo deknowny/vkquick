@@ -6,34 +6,29 @@ import typing as ty
 from vkquick.ext.chatbot.base.cutter import (
     Argument,
     CommandTextArgument,
-    TextCutter,
+    Cutter,
 )
 from vkquick.ext.chatbot.command.cutters import (
-    MentionCutter,
-    IntegerCutter,
+    EntityCutter,
     FloatCutter,
-    StringCutter,
-    WordCutter,
-    OptionalCutter,
-    UnionCutter,
-    MutableSequenceCutter,
-    ImmutableSequenceCutter,
     GroupCutter,
-    UniqueMutableSequenceCutter,
-    UniqueImmutableSequenceCutter,
+    GroupID,
+    ImmutableSequenceCutter,
+    IntegerCutter,
     LiteralCutter,
     Mention,
-    UserID,
-    GroupID,
+    MentionCutter,
+    MutableSequenceCutter,
+    OptionalCutter,
     PageID,
-    EntityCutter,
+    StringCutter,
+    UnionCutter,
+    UniqueImmutableSequenceCutter,
+    UniqueMutableSequenceCutter,
+    UserID,
+    WordCutter,
 )
-from vkquick.ext.chatbot.providers.page import (
-    UserProvider,
-    GroupProvider,
-    PageProvider,
-)
-from vkquick.ext.chatbot.wrappers.page import User, Group, Page
+from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 
 def resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
@@ -68,7 +63,7 @@ def resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
 
 def _resolve_cutter(
     *, arg_name: str, arg_annotation: ty.Any, arg_settings: Argument, arg_kind
-) -> TextCutter:
+) -> Cutter:
 
     if arg_annotation is int:
         return IntegerCutter()
@@ -181,9 +176,6 @@ def _resolve_cutter(
         User,
         Group,
         Page,
-        UserProvider,
-        GroupProvider,
-        PageProvider,
     }:
         return EntityCutter(arg_annotation, **arg_settings.cutter_preferences)
 

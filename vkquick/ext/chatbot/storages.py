@@ -3,7 +3,9 @@ from __future__ import annotations
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.providers.message import MessageProvider, Message
+from vkquick.ext.chatbot.wrappers.message import Message, TruncatedMessage, SentMessage
+from vkquick.ext.chatbot.utils import random_id as random_id_
+from vkquick.cached_property import cached_property
 
 if ty.TYPE_CHECKING:
     from vkquick.base.event import BaseEvent
@@ -16,46 +18,40 @@ class NewEvent:
     bot: Bot
     metadata: dict = dataclasses.field(default_factory=dict)
 
-
-class NewMessage:
-    def __init__(
-        self, new_event_storage: NewEvent, mp: MessageProvider
+    @classmethod
+    async def from_event(
+        cls, *,
+        event: BaseEvent,
+        bot: Bot,
     ):
-        self._new_event_storage = new_event_storage
-        self._mp = mp
+        return cls(event=event, bot=bot)
+
+@dataclasses.dataclass
+class NewMessage(NewEvent, SentMessage):
+
+    # _extended_message: Message
+    # _sent_message: SentMessage
 
     @classmethod
-    async def from_new_event_storage(
-        cls, new_event_storage: NewEvent
-    ) -> NewMessage:
-        # User event
-        if new_event_storage.event.type == 4:
-            extended_message = await new_event_storage.bot.api.method(
+    async def from_event(
+        cls, *,
+        event: BaseEvent,
+        bot: Bot,
+    ):
+        if event.type == 4:
+            extended_message = await bot.api.method(
                 "messages.get_by_id",
-                message_ids=new_event_storage.event.content[1],
+                message_ids=event.content[1],
             )
-        elif "message" in new_event_storage.event.object:
-            extended_message = new_event_storage.event.object["message"]
+        elif "message" in event.object:
+            extended_message = event.object["message"]
         else:
-            extended_message = new_event_storage.event.object
+            extended_message = event.object
 
-        mp = MessageProvider.from_mapping(
-            new_event_storage.bot.api, extended_message
-        )
-        return cls(new_event_storage, mp)
+        extended_message = Message(extended_message)
 
-    @property
-    def new_event_storage(self) -> NewEvent:
-        return self._new_event_storage
+        return cls(event=event, bot=bot, api=bot.api, message=extended_message)
 
-    @property
-    def mp(self) -> MessageProvider:
-        return self._mp
-
-    @property
+    @cached_property
     def msg(self) -> Message:
-        return self._mp.storage
-
-    @property
-    def bot(self) -> Bot:
-        return self._new_event_storage.bot
+        return ty.cast(Message, self.message)

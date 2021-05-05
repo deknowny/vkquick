@@ -5,23 +5,18 @@ import re
 import typing as ty
 
 from vkquick.exceptions import VKAPIError
-from vkquick.ext.chatbot.storages import NewMessage
 from vkquick.ext.chatbot.base.cutter import (
     CutterParsingResponse,
-    TextCutter,
+    Cutter,
     cut_part_via_regex,
 )
+from vkquick.ext.chatbot.wrappers.page import IDType
 from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.providers.page import (
-    GroupProvider,
-    IDType,
-    PageProvider,
-    UserProvider,
-)
+from vkquick.ext.chatbot.storages import NewMessage
 from vkquick.ext.chatbot.wrappers.page import Group, Page, User
 
 
-class IntegerCutter(TextCutter):
+class IntegerCutter(Cutter):
     _pattern = re.compile(r"[+-]?\d+")
 
     async def cut_part(
@@ -32,7 +27,7 @@ class IntegerCutter(TextCutter):
         )
 
 
-class FloatCutter(TextCutter):
+class FloatCutter(Cutter):
     _pattern = re.compile(
         r"""
         [-+]?  # optional sign
@@ -55,7 +50,7 @@ class FloatCutter(TextCutter):
         )
 
 
-class WordCutter(TextCutter):
+class WordCutter(Cutter):
     _pattern = re.compile(r"\S+")
 
     async def cut_part(
@@ -64,7 +59,7 @@ class WordCutter(TextCutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
 
-class StringCutter(TextCutter):
+class StringCutter(Cutter):
     _pattern = re.compile(r".+", flags=re.DOTALL)
 
     async def cut_part(
@@ -73,7 +68,7 @@ class StringCutter(TextCutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
 
-class ParagraphCutter(TextCutter):
+class ParagraphCutter(Cutter):
     _pattern = re.compile(r".+")
 
     async def cut_part(
@@ -82,10 +77,10 @@ class ParagraphCutter(TextCutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
 
-class OptionalCutter(TextCutter):
+class OptionalCutter(Cutter):
     def __init__(
         self,
-        typevar: TextCutter,
+        typevar: Cutter,
         /,
         *,
         default: ty.Optional = None,
@@ -115,8 +110,8 @@ class OptionalCutter(TextCutter):
                 )
 
 
-class UnionCutter(TextCutter):
-    def __init__(self, *typevars: TextCutter):
+class UnionCutter(Cutter):
+    def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
     async def cut_part(
@@ -133,8 +128,8 @@ class UnionCutter(TextCutter):
         raise BadArgumentError("Regexes didn't matched")
 
 
-class GroupCutter(TextCutter):
-    def __init__(self, *typevars: TextCutter):
+class GroupCutter(Cutter):
+    def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
     async def cut_part(
@@ -157,10 +152,10 @@ class GroupCutter(TextCutter):
         )
 
 
-class _SequenceCutter(TextCutter):
+class _SequenceCutter(Cutter):
     _factory: ty.Callable[[list], ty.Sequence]
 
-    def __init__(self, typevar: TextCutter):
+    def __init__(self, typevar: Cutter):
         self._typevar = typevar
 
     async def cut_part(
@@ -204,7 +199,7 @@ class UniqueImmutableSequenceCutter(_SequenceCutter):
     _factory = frozenset
 
 
-class LiteralCutter(TextCutter):
+class LiteralCutter(Cutter):
     def __init__(self, *container_values: str):
         self._container_values = tuple(map(re.compile, container_values))
 
@@ -250,7 +245,7 @@ class Mention(ty.Generic[T]):
     entity: T
 
 
-class MentionCutter(TextCutter):
+class MentionCutter(Cutter):
     mention_regex = re.compile(
         r"""
         \[
@@ -278,7 +273,7 @@ class MentionCutter(TextCutter):
 
     async def _make_user_provider(
         self, ctx: NewMessage, page_id: IDType
-    ) -> UserProvider:
+    ):
         return await UserProvider.fetch_one(
             ctx.api,
             page_id,
@@ -288,7 +283,7 @@ class MentionCutter(TextCutter):
 
     async def _make_group_provider(
         self, ctx: NewMessage, page_id: IDType
-    ) -> GroupProvider:
+    ):
         return await GroupProvider.fetch_one(
             ctx.api, page_id, fields=self._group_fields
         )

@@ -4,15 +4,15 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.storages import NewMessage
 from vkquick.ext.chatbot.exceptions import BadArgumentError
+from vkquick.ext.chatbot.storages import NewMessage
 
 T = ty.TypeVar("T")
 
 
 class CommandTextArgument(ty.NamedTuple):
     argument_name: str
-    cutter: TextCutter
+    cutter: Cutter
     argument_settings: Argument
 
 
@@ -41,7 +41,7 @@ class CutterParsingResponse(ty.Generic[T]):
     extra: dict = dataclasses.field(default_factory=dict)
 
 
-class TextCutter(abc.ABC):
+class Cutter(abc.ABC):
     @abc.abstractmethod
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str

@@ -4,7 +4,7 @@ import asyncio
 import dataclasses
 import typing as ty
 
-from vkquick import UserLongPoll, GroupLongPoll
+from vkquick import GroupLongPoll, UserLongPoll
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
 from vkquick.ext.chatbot.package import Package
@@ -44,15 +44,11 @@ class App(Package):
 
     async def coroutine_run(self, *tokens) -> None:
         bots_init_coroutines = [
-            Bot.via_token(token, self)
-            for token in tokens
+            Bot.via_token(token, self) for token in tokens
         ]
         bots = await asyncio.gather(*bots_init_coroutines)
         await self._call_startup(*bots)
-        run_coroutines = [
-            bot.run_polling()
-            for bot in bots
-        ]
+        run_coroutines = [bot.run_polling() for bot in bots]
         try:
             await asyncio.gather(*run_coroutines)
         finally:
@@ -108,8 +104,8 @@ class Bot:
             "message_reply",
             4,
         }:
-            message_storage = await NewMessage.from_new_event_storage(
-                new_event_storage
+            message_storage = await NewMessage.from_event(
+                event=new_event_storage.event, bot=new_event_storage.bot
             )
 
             asyncio.create_task(self.app.route_message(message_storage))

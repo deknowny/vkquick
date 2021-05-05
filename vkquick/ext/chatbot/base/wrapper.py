@@ -10,6 +10,10 @@ class Wrapper:
     def __init__(self, fields: dict) -> None:
         self._fields = fields
 
+    @classmethod
+    def from_kwargs(cls, **kwargs):
+        return cls(kwargs)
+
     def __format__(self, format_spec: str) -> str:
         format_spec = format_spec.replace(">", "}")
         format_spec = format_spec.replace("<", "{")

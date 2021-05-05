@@ -6,13 +6,11 @@ import re
 import typing as ty
 import warnings
 
-from vkquick.ext.chatbot.base.cutter import TextCutter, CommandTextArgument
-from vkquick.ext.chatbot.base.filter import Filter
+from vkquick.ext.chatbot.base.cutter import CommandTextArgument, Cutter
+from vkquick.ext.chatbot.base.filter import BaseFilter
 from vkquick.ext.chatbot.command.adapters import resolve_typing
-from vkquick.ext.chatbot.exceptions import BadArgumentError
+from vkquick.ext.chatbot.exceptions import BadArgumentError, FilterFailedError
 from vkquick.ext.chatbot.storages import NewMessage
-from vkquick.ext.chatbot.exceptions import FilterFailedError
-
 
 Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
 
@@ -25,7 +23,7 @@ class Command(ty.Generic[Handler]):
     names: ty.Optional[ty.Set[str]] = None
     enable_regexes: bool = False
     routing_re_flags: re.RegexFlag = re.IGNORECASE
-    filter: ty.Optional[Filter] = None
+    filter: ty.Optional[BaseFilter] = None
 
     def __post_init__(self):
         self._routing_regex: ty.Pattern
@@ -42,13 +40,18 @@ class Command(ty.Generic[Handler]):
             self._build_routing_regex()
 
     async def handle_message(self, message_storage: NewMessage) -> None:
-        is_routing_matched = self._routing_regex.match(message_storage.msg.text)
+        is_routing_matched = self._routing_regex.match(
+            message_storage.msg.text
+        )
         if is_routing_matched:
             arguments = await self._make_arguments(
-                message_storage, message_storage.msg.text[is_routing_matched.end():]
+                message_storage,
+                message_storage.msg.text[is_routing_matched.end() :],
             )
             if arguments is not None:
-                passed_filter = await self._run_through_filters(message_storage)
+                passed_filter = await self._run_through_filters(
+                    message_storage
+                )
                 # Were built correctly
                 if passed_filter:
                     await self._call_handler(message_storage, arguments)
@@ -89,10 +92,10 @@ class Command(ty.Generic[Handler]):
             arguments[self._message_storage_argument_name] = message_storage
         return arguments
 
-    async def _call_handler(self, message_storage, arguments) -> None:
+    async def _call_handler(self, message_storage: NewMessage, arguments: dict) -> None:
         handler_response = await self.handler(**arguments)
         if handler_response is not None:
-            await message_storage.mp.reply(handler_response)
+            await message_storage.reply(handler_response)
 
     def _parse_handler_arguments(self) -> None:
         parameters = inspect.signature(self.handler).parameters

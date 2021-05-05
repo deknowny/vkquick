@@ -6,13 +6,15 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.ext.chatbot.utils import get_user_registration_date
 from vkquick.ext.chatbot.base.wrapper import Wrapper
+from vkquick.ext.chatbot.utils import get_user_registration_date
 
 T = ty.TypeVar("T")
+IDType: ty.TypeAlias = ty.Union[str, int]
 
 
 class Page(Wrapper, abc.ABC):
+
     _mention_prefix: str
 
     @property
@@ -71,6 +73,7 @@ class Group(Page):
 
 
 class User(Page):
+
     _mention_prefix = "id"
 
     def is_group(self) -> bool:
