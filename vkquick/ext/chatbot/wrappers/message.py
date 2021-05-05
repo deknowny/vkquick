@@ -10,6 +10,7 @@ from vkquick.ext.chatbot.base.wrapper import Wrapper
 from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.ext.chatbot.utils import peer
 from vkquick.ext.chatbot.utils import random_id as random_id_
+from vkquick.ext.chatbot.wrappers import User, Page, Group
 from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
 from vkquick.json_parsers import json_parser_policy
 
