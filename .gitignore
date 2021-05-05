@@ -18,8 +18,6 @@ tests_old/
 
 # Old
 examples/TodoBot/
-vkquick_old/
-vkquick_old2/
 
 poetry.lock
 
