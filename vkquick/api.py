@@ -150,9 +150,12 @@ class API(SessionContainerMixin):
         Raises:
             VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
+        use_cache = self._use_cache
+        self._use_cache = False
         return await self._make_api_request(
             method_name=method_name,
             request_params=request_params,
+            use_cache=use_cache
         )
 
     async def execute(self, code: str, /) -> ty.Any:
@@ -174,6 +177,7 @@ class API(SessionContainerMixin):
         self,
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
+        use_cache: bool
     ) -> ty.Any:
         """
         Выполняет API запрос на определнный метод с заданными параметрами
@@ -199,7 +203,7 @@ class API(SessionContainerMixin):
 
         # Кэширование запросов по их методу и переданным параметрам
         # `cache_hash` -- ключ кэш-таблицы
-        if self._use_cache:
+        if use_cache:
             cache_hash = urllib.parse.urlencode(real_request_params)
             cache_hash = f"{method_name}#{cache_hash}"
             if cache_hash in self._cache_table:
@@ -232,7 +236,7 @@ class API(SessionContainerMixin):
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
-        if self._use_cache:
+        if use_cache:
             self._cache_table[cache_hash] = response
             self._use_cache = False
 

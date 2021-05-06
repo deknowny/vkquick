@@ -11,6 +11,7 @@ from vkquick.ext.chatbot.base.cutter import (
 )
 from vkquick.ext.chatbot.exceptions import BadArgumentError
 from vkquick.ext.chatbot.storages import NewMessage
+from vkquick.ext.chatbot.utils import get_origin_typing
 from vkquick.ext.chatbot.wrappers.page import Group, IDType, Page, User
 
 
@@ -240,6 +241,7 @@ class PageType(enum.Enum):
 class Mention(ty.Generic[T]):
     alias: str
     entity: T
+    page_type: PageType
 
 
 class MentionCutter(Cutter):
@@ -259,23 +261,22 @@ class MentionCutter(Cutter):
         self,
         page_type: T,
     ):
-        self._page_type = ty.get_origin(page_type)
+        self._page_type = get_origin_typing(page_type)
         fields = ty.get_args(page_type)
         if fields:
             self._fields = ty.get_args(fields[0])
         else:
             self._fields = None
 
-    async def _make_user(self, ctx: NewMessage, page_id: IDType):
+    async def _make_user(self, ctx: NewMessage, page_id: int):
         return await User.fetch_one(ctx.api, page_id, fields=self._fields)
 
-    async def _make_group(self, ctx: NewMessage, page_id: IDType):
+    async def _make_group(self, ctx: NewMessage, page_id: int):
         return await Group.fetch_one(ctx.api, page_id, fields=self._fields)
 
     async def _cast_type(
-        self, ctx: NewMessage, page_id: IDType, page_type: PageType
+        self, ctx: NewMessage, page_id: int, page_type: PageType
     ) -> T:
-
         if (
             self._page_type is UserID
             and page_type == PageType.USER
@@ -307,7 +308,7 @@ class MentionCutter(Cutter):
             self.mention_regex, arguments_string
         )
         match_object: ty.Match = parsing_response.extra["match_object"]
-        page_id = match_object.group("id")
+        page_id = int(match_object.group("id"))
         page_type = match_object.group("page_type")
 
         if page_type == "id":
@@ -322,7 +323,7 @@ class MentionCutter(Cutter):
             raise BadArgumentError("Invalid id") from err
         else:
             parsing_response.parsed_part = Mention(
-                alias=match_object.group("alias"), entity=casted_part
+                alias=match_object.group("alias"), entity=casted_part, page_type=page_type
             )
             return parsing_response
 

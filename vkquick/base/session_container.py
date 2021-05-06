@@ -96,7 +96,7 @@ class SessionContainerMixin:
             Новую `aiohttp`-сессию
         """
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl_context=ssl.SSLContext()),
+            connector=aiohttp.TCPConnector(ssl=ssl.SSLContext()),
             skip_auto_headers={"User-Agent"},
             raise_for_status=True,
             json_serialize=self.__json_parser.dumps,

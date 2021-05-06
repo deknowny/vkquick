@@ -68,3 +68,9 @@ async def get_user_registration_date(
                 registration_date
             )
             return registration_date
+
+
+def get_origin_typing(type):
+    if ty.get_args(type):
+        return ty.get_origin(type)
+    return type
