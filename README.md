@@ -77,8 +77,9 @@ async def get_name(ctx: vq.NewMessage):
 app.run("token")
 ```
 Запускаем файл и идем к боту в личные сообщения!
-![Пример работы бота](./imgs/echo-example.png)
 
+
+<img src="./imgs/echo-example.png" alt="Пример работы бота" style="border-radius: 10%; padding: 10%">
 
 
 Хотите больше? Переходите на наш официальный сайт [https://vkquick.rtfd.io](https://vkquick.rtfd.io) и продолжайте углубляться в разработку ботов вместе с VK Quick!
