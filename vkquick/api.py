@@ -24,12 +24,18 @@ if ty.TYPE_CHECKING:
 
 @enum.unique
 class TokenOwner(enum.Enum):
+    """
+    Тип владельца токена: пользователь/группа/не определено
+    """
     USER = enum.auto()
     GROUP = enum.auto()
     UNKNOWN = enum.auto()
 
 
 class API(SessionContainerMixin):
+    """
+    Основной класс, позволяющий с помощью токена выполнять API-запросы
+    """
     def __init__(
         self,
         token: str,
