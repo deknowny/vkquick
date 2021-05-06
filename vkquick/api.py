@@ -12,11 +12,11 @@ import aiohttp
 import cachetools
 from loguru import logger
 
-from vkquick.pretty_view import pretty_view
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.exceptions import VKAPIError
 from vkquick.json_parsers import json_parser_policy
+from vkquick.pretty_view import pretty_view
 
 if ty.TYPE_CHECKING:
     from vkquick.base.json_parser import BaseJSONParser
@@ -216,7 +216,9 @@ class API(SessionContainerMixin):
                 ),
             )
         )
-        logger.opt(lazy=True).debug("Response is: {response}", response=lambda: pretty_view(response))
+        logger.opt(lazy=True).debug(
+            "Response is: {response}", response=lambda: pretty_view(response)
+        )
 
         if "error" in response:
             raise VKAPIError.destruct_response(response)

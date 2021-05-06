@@ -2,12 +2,10 @@ import sys
 
 from loguru import logger
 
-
 logger.remove(0)
 
 
 class LoggingLevel:
-
     def __init__(self, level):
         self.level = level
 

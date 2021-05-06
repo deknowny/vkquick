@@ -82,7 +82,9 @@ class Page(Wrapper, abc.ABC):
         return format_value
 
     def __repr__(self):
-        return f"<vkquick.{self.__class__.__name__} fullname={self.fullname!r}>"
+        return (
+            f"<vkquick.{self.__class__.__name__} fullname={self.fullname!r}>"
+        )
 
 
 class Group(Page):
