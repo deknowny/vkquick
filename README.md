@@ -78,8 +78,6 @@ app.run("token")
 ```
 Запускаем файл и идем к боту в личные сообщения!
 
-<div style="border-radius: 50%; padding: 10%">
-<img src="./imgs/echo-example.png" alt="Пример работы бота">
-</div>
+<img src="./imgs/echo-example.png" alt="Пример работы бота" style="padding: 10%">
 
 Хотите больше? Переходите на наш официальный сайт [https://vkquick.rtfd.io](https://vkquick.rtfd.io) и продолжайте углубляться в разработку ботов вместе с VK Quick!
