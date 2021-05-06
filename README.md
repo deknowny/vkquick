@@ -1,5 +1,8 @@
 __НА ДАННЫЙ МОМЕНТ ПРОДУКТ ВЕРСИИ 1.0 В РАЗРАБОТКЕ, ВСЯ ИНФОРМАЦИЯ НИЖЕ ЕЩЕ НЕ АКТУАЛЬНА. ПОДДЕРЖКИ 0.2 БОЛЬШЕ НЕТ, НО ВЫ ВСЕ ЕЩЕ МОЖЕТЕ УСТАНОВИТЬ ЕЕ С PYPI, НАЙТИ ДОКУМЕНТАЦИЮ НА [https://vkquick.github.io](https://vkquick.github.io) И ИСХОДНЫЙ КОД В ВЕТКЕ 0.2__
 ***
+
+<img src="./imgs/vkquick-header.jpg" alt="VK Quick шапка" align="center">
+
 # VK Quick
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/vkquick)
 [![Downloads](https://pepy.tech/badge/vkquick)](https://pepy.tech/project/vkquick)
