@@ -78,7 +78,7 @@ app.run("token")
 ```
 Запускаем файл и идем к боту в личные сообщения!
 
-<div style="border-radius: 10%; padding: 10%">
+<div style="border-radius: 50%; padding: 10%">
 <img src="./imgs/echo-example.png" alt="Пример работы бота">
 </div>
 
