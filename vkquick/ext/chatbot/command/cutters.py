@@ -83,7 +83,6 @@ class OptionalCutter(Cutter):
         *,
         default: ty.Optional = None,
         default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None,
-        **kwargs,
     ) -> None:
         self._default = default
         self._default_factory = default_factory
