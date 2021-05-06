@@ -30,31 +30,17 @@
 ***
 
 ## Установка
-Для начала нужно проверить версию Python:
-```shell script
-python -V
-```
-Если она выше, чем `3.8`, можно переходить к установке:
-
 ```shell script
 python -m pip install vkquick
 ```
-
 > До релиза 1.0: `python -m pip install https://github.com/deknowny/vkquick/archive/master.zip`
 
-Нужно проверить, корректно ли установился VK Quick:
-```shell script
-python -m pip show vkquick
-```
 
 Вместе с фреймворком устанавливается треминальная утилита — `kwik`:
 
 ```shell script
 kwik --help
 ```
-
-Если установка прошла успешно, можно переходить к созданию самого простого бота
-
 ***
 
 # Echo-бот
