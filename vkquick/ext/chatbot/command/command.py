@@ -21,13 +21,18 @@ Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
 class Command(ty.Generic[Handler]):
 
     handler: Handler
-    prefixes: ty.Optional[ty.Optional[ty.Set[str]]] = None
-    names: ty.Optional[ty.Set[str]] = None
+    prefixes: ty.List[str] = dataclasses.field(default_factory=list)
+    names: ty.List[str] = dataclasses.field(default_factory=list)
     enable_regexes: bool = False
     routing_re_flags: re.RegexFlag = re.IGNORECASE
     filter: ty.Optional[BaseFilter] = None
+    description: ty.Optional[str] = None
 
     def __post_init__(self):
+        self.prefixes = list(self.prefixes)
+        self.names = list(self.names)
+        if not self.names:
+            self.names = self.handler.__name__
         self.handler = logger.catch(reraise=True)(self.handler)
         self._routing_regex: ty.Pattern
         self._build_routing_regex()
@@ -37,9 +42,22 @@ class Command(ty.Generic[Handler]):
         self._message_storage_argument_name: str
         self._parse_handler_arguments()
 
+    @property
+    def trusted_description(self) -> str:
+        if self.description is None:
+            docstring = inspect.getdoc(self.handler)
+            if docstring is None:
+                return "Описание отсутствует"
+            return docstring
+        return self.description
+
+    @property
+    def text_arguments(self) -> ty.List[CommandTextArgument]:
+        return self._text_arguments
+
     def update_prefix(self, *prefixes: str) -> None:
         if not self.prefixes:
-            self.prefixes = set(prefixes)
+            self.prefixes = list(set(prefixes))
             self._build_routing_regex()
 
     async def handle_message(self, message_storage: NewMessage) -> None:

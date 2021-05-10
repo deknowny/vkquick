@@ -27,6 +27,7 @@ class TokenOwner(enum.Enum):
     """
     Тип владельца токена: пользователь/группа/не определено
     """
+
     USER = enum.auto()
     GROUP = enum.auto()
     UNKNOWN = enum.auto()
@@ -36,6 +37,7 @@ class API(SessionContainerMixin):
     """
     Основной класс, позволяющий с помощью токена выполнять API-запросы
     """
+
     def __init__(
         self,
         token: str,
@@ -155,7 +157,7 @@ class API(SessionContainerMixin):
         return await self._make_api_request(
             method_name=method_name,
             request_params=request_params,
-            use_cache=use_cache
+            use_cache=use_cache,
         )
 
     async def execute(self, code: str, /) -> ty.Any:
@@ -177,7 +179,7 @@ class API(SessionContainerMixin):
         self,
         method_name: str,
         request_params: ty.Dict[str, ty.Any],
-        use_cache: bool
+        use_cache: bool,
     ) -> ty.Any:
         """
         Выполняет API запрос на определнный метод с заданными параметрами

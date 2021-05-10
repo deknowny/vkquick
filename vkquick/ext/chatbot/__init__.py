@@ -22,17 +22,15 @@ from .command.cutters import (
     MentionCutter,
     MutableSequenceCutter,
     OptionalCutter,
-    ParagraphCutter,
     StringCutter,
     UnionCutter,
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
     WordCutter,
-PageID,
-GroupID,
-UserID,
-PageType,
-
+    PageID,
+    GroupID,
+    UserID,
+    PageType,
 )
 from .exceptions import BadArgumentError, FilterFailedError
 from .package import Package

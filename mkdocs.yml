@@ -5,7 +5,7 @@ site_name: VK Quick
 site_description: Async python framework for creating VK chat bots
 
 # URL for pages editing
-repo_url: https://github.com/Rhinik/vkquick/tree/1.0
+repo_url: https://github.com/deknowny/vkquick/tree/1.0
 
 # Repository name
 repo_name: vkquick
@@ -50,7 +50,7 @@ theme:
     # Material coloring
     palette:
         # Use custom css-style. Check `css/custom.css`
-        scheme: preference
+        scheme: slate
         # Color when place the cursor on links (some kind of orange)
         accent: amber
 
@@ -94,8 +94,8 @@ extra:
         - icon: fontawesome/brands/vk
           link: https://vk.com/vkquick
 
-plugins:
-    # Docs generator
-    - mkdocstrings:
-        watch:
-            - vkquick
+#plugins:
+#    # Docs generator
+#    - mkdocstrings:
+#        watch:
+#            - vkquick

@@ -3,11 +3,26 @@
   --md-primary-fg-color--light: #282C36;
   --md-primary-fg-color--dark:  #282C36;
 
-  # hsla(var(--md-hue), 15%, 15%, 1);
+
+  /*hsla(var(--md-hue), 15%, 15%, 1);*/
   --md-primary-fg-color:  hsla(var(--md-hue), 15%, 12%, 0.87);
+  /*--md-primary-fg-color:  hsla(var(--md-hue), 15%, 50%, 0.95);*/
   --md-primary-fg-color--light:  hsla(var(--md-hue), 75%, 90%, 0.62);
+
 }
 
+.md-typeset a {
+    color: #669297!important;
+}
+
+.md-typeset a:hover {
+    color: #282C36!important;
+}
+
+
+/*a {*/
+/*    color: #a4cac8!important;*/
+/*}*/
 
 /* Indentation for mkdocstrings items. */
 div.doc-contents:not(.first) {

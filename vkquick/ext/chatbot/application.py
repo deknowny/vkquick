@@ -19,6 +19,10 @@ class App(Package):
 
     packages: ty.List[Package] = dataclasses.field(default_factory=list)
     debug: bool = True
+    # Autodoc preferences
+    name: str = "VK Quick Бот"
+    description: str = "Чат-бот для ВКонтакте, написанный на Python с использованием VK Quick"
+    site_title: str = "Документация к чат-боту"
 
     def __post_init__(self):
         if self.debug:

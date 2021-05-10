@@ -1,0 +1,67 @@
+.command-container {
+    background-color: #1a1c21;
+    padding: 5%;
+    border-radius: 30px;
+    height: auto;
+    margin-bottom: 20px;
+    display: grid;
+    grid-gap: 10px;
+}
+
+.command-divider {
+    background-color: dimgray;
+    height: 1px;
+    border-radius: 3px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.command-inner {
+    color: whitesmoke;
+    padding: 5px;
+}
+
+.command-argument {
+    color: dimgray;
+}
+
+.command-parameters {
+    background-color: #282C36;
+    padding: 4%;
+    border-radius: 30px;
+    display: grid;
+    grid-gap: 10px;
+}
+.command-parameter-name {
+    background-color: #1a1c21;
+}
+
+.command-extra {
+    background-color: #282C36;
+    padding: 4%;
+    border-radius: 30px;
+    display: grid;
+    grid-gap: 10px;
+}
+
+.command-alternative {
+    background-color: #282C36;
+    border-radius: 30px;
+    display: grid;
+    padding: 4%;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.command-headerlink {
+    color: #36a993;
+    display: inline-block;
+    text-decoration: none;
+    opacity: 0;
+}
+
+.command-headerlink:hover {
+    opacity: 1;
+    transition: opacity 250ms;
+}
+

@@ -1,0 +1,71 @@
+{%- for pkg in app.packages -%}
+    {%- for command in app.commands -%}
+        <div class="command-container">
+            <h1 class="command-header" id="{{ command.names[0] }}">
+                <code>
+                    {#- Нужно ли добавлять префикс (если вынести генерацию имени вне блока, будут лишние пробелы) -#}
+                    {%- if command.prefixes -%}
+                        <span>{{ command.prefixes[0] }}</span><span>{{- command.names[0] }}</span>
+                    {% else %}
+                        <span>{{- command.names[0] }}</span>
+                    {%- endif -%}
+
+                    {%- for text_argument in command.text_arguments %}
+                        <span class="command-argument"><i>{{ "{" + text_argument.argument_name +"}"}}</i></span>
+                    {%- endfor -%}
+                </code>
+                <a class="command-headerlink" href="#{{ command.names[0] }}" title="Permanent link">#</a>
+            </h1>
+            <div class="command-divider"></div>
+            <p class="command-description command-inner">
+                <i>
+                    {{ command.trusted_description }}
+                </i>
+            </p>
+            {%- if command.text_arguments -%}
+                <div class="command-inner">
+                    <div class="command-parameters">
+                        {%- for text_argument in command.text_arguments -%}
+                            {%- if loop.index >= 2 -%}
+                                <div class="command-divider"></div>
+                            {%- endif -%}
+                            <h2>
+                                <code class=" command-argument command-parameter-name">
+                                    {{ "{" + text_argument.argument_name +"}"}}
+                                </code>
+                            </h2>
+                            <p>
+                                {{ text_argument.cutter.gen_doc() }}
+                            </p>
+                        {%- endfor -%}
+                    </div>
+                </div>
+            {%- endif -%}
+            {%- if command.names|length >= 2 or command.prefixes|length >= 2 -%}
+                <div class="command-inner">
+                    <div class="command-alternative">
+                        {%- if command.prefixes|length >= 2 -%}
+                            <h3>Альтернативные префиксы</h3>
+                            <ol>
+                                {%- for alt_prefix in command.prefixes[1:] -%}
+                                    <li><code class="command-parameter-name">{{ alt_prefix }}</code></li>
+                                {%- endfor -%}
+                            </ol>
+                            {%- if command.names|length >= 2 -%}
+                                <div class="command-divider"></div>
+                            {%- endif -%}
+                        {%- endif -%}
+                        {%- if command.names|length >= 2 -%}
+                            <h3>Альтернативные имена</h3>
+                            <ol>
+                                {%- for alt_name in command.names[1:] -%}
+                                <li><code class="command-parameter-name">{{ alt_name }}</code></li>
+                                {%- endfor -%}
+                            </ol>
+                        {%- endif -%}
+                    </div>
+                </div>
+            {%- endif -%}
+        </div>
+    {% endfor %}
+{% endfor %}

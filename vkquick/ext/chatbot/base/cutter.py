@@ -47,6 +47,10 @@ class Cutter(abc.ABC):
     ) -> CutterParsingResponse:
         ...
 
+    @abc.abstractmethod
+    def gen_doc(self) -> str:
+        ...
+
 
 def cut_part_via_regex(
     regex: ty.Pattern,

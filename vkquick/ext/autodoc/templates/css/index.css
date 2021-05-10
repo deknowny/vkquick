@@ -1,0 +1,35 @@
+body {
+    background-color: #282C36;
+    font-family: "Comic Sans MS", "Ubuntu",-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+    padding: 15px;
+    color: white;
+}
+
+p {
+    font-size: 22px;
+}
+
+ol {
+    list-style-type: disc;
+    margin-left: -5px;
+}
+
+li {
+    margin-bottom: 5%;
+}
+
+code {
+    background-color: #15161a;
+    /*font-family: "c",sans-serif;*/
+    font-family: "Comic Sans MS", Ubuntu, sans-serif;
+    border-radius: 10px;
+    /*margin: 10px;*/
+    padding: 2%;
+    width: fit-content;
+    font-weight: 100;
+}
+
+#bot_name {
+    text-align: center;
+}
+

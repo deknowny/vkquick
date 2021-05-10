@@ -25,6 +25,9 @@ class IntegerCutter(Cutter):
             self._pattern, arguments_string, factory=int
         )
 
+    def gen_doc(self):
+        return "Целое положительное или отрицательное число"
+
 
 class FloatCutter(Cutter):
     _pattern = re.compile(
@@ -48,6 +51,9 @@ class FloatCutter(Cutter):
             self._pattern, arguments_string, factory=float
         )
 
+    def gen_doc(self):
+        return "Дробное положительное или отрицательное число в десятичной форме (3.14, 2.718...). Число так же может быть записано в экспоненциальной форме (4e6, 3.5E-6...). Если целая часть равна нулю, то она может быть опущена: .45 это 0.45 "
+
 
 class WordCutter(Cutter):
     _pattern = re.compile(r"\S+")
@@ -56,6 +62,9 @@ class WordCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(self._pattern, arguments_string)
+
+    def gen_doc(self):
+        return "Любое слово (последовательность непробельных символов)"
 
 
 class StringCutter(Cutter):
@@ -66,14 +75,8 @@ class StringCutter(Cutter):
     ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(self._pattern, arguments_string)
 
-
-class ParagraphCutter(Cutter):
-    _pattern = re.compile(r".+")
-
-    async def cut_part(
-        self, ctx: NewMessage, arguments_string: str
-    ) -> CutterParsingResponse:
-        return cut_part_via_regex(self._pattern, arguments_string)
+    def gen_doc(self):
+        return "Любой текст"
 
 
 class OptionalCutter(Cutter):
@@ -106,6 +109,18 @@ class OptionalCutter(Cutter):
                     parsed_part=self._default,
                     new_arguments_string=arguments_string,
                 )
+
+    def gen_doc(self):
+        typevar_docstring = self._typevar.gen_doc()
+        default = (
+            f"(по умолчанию — {self._default!r})"
+            if self._default is not None
+            else ""
+        )
+        return (
+            typevar_docstring
+            + f". Аргумент опционален и может быть опущен {default}"
+        )
 
 
 class UnionCutter(Cutter):
@@ -323,7 +338,9 @@ class MentionCutter(Cutter):
             raise BadArgumentError("Invalid id") from err
         else:
             parsing_response.parsed_part = Mention(
-                alias=match_object.group("alias"), entity=casted_part, page_type=page_type
+                alias=match_object.group("alias"),
+                entity=casted_part,
+                page_type=page_type,
             )
             return parsing_response
 
@@ -362,6 +379,12 @@ class EntityCutter(MentionCutter):
         """,
         flags=re.X,
     )
+
+    def gen_doc(self):
+        return (
+            "Пользователь в виде упоминания/ID/короткого имени/ссылки на страницу. "
+            "Так же можно просто переслать сообщение пользователя"
+        )
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str

@@ -33,7 +33,7 @@ if ty.TYPE_CHECKING:
 
 @dataclasses.dataclass
 class Package:
-    prefixes: ty.Collection[str] = dataclasses.field(default_factory=tuple)
+    prefixes: ty.List[str] = dataclasses.field(default_factory=list)
     filter: ty.Optional[BaseFilter] = None
     commands: ty.List[Command] = dataclasses.field(default_factory=list)
     event_handlers: ty.Dict[
@@ -54,7 +54,7 @@ class Package:
     def command(
         self,
         *names: str,
-        prefixes: ty.Collection[str] = None,
+        prefixes: ty.List[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         enable_regexes: bool = False,
         filter: ty.Optional[BaseFilter] = None
@@ -62,8 +62,8 @@ class Package:
         def wrapper(func):
             command = Command(
                 handler=func,
-                names=set(names),
-                prefixes=set(prefixes or self.prefixes),
+                names=list(names),
+                prefixes=prefixes or self.prefixes,
                 routing_re_flags=routing_re_flags,
                 enable_regexes=enable_regexes,
                 filter=filter,

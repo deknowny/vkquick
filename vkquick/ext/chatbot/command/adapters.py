@@ -174,6 +174,13 @@ def _resolve_cutter(
         User,
         Group,
         Page,
+    } or arg_annotation in {
+        UserID,
+        GroupID,
+        PageID,
+        User,
+        Group,
+        Page,
     }:
         return EntityCutter(arg_annotation)
 
