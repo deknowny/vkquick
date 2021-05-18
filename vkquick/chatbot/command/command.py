@@ -8,11 +8,11 @@ import warnings
 
 from loguru import logger
 
-from vkquick.ext.chatbot.base.cutter import CommandTextArgument, Cutter
-from vkquick.ext.chatbot.base.filter import BaseFilter
-from vkquick.ext.chatbot.command.adapters import resolve_typing
-from vkquick.ext.chatbot.exceptions import BadArgumentError, FilterFailedError
-from vkquick.ext.chatbot.storages import NewMessage
+from vkquick.chatbot.base.cutter import CommandTextArgument, Cutter
+from vkquick.chatbot.base.filter import BaseFilter
+from vkquick.chatbot.command.adapters import resolve_typing
+from vkquick.chatbot.exceptions import BadArgumentError, FilterFailedError
+from vkquick.chatbot.storages import NewMessage
 
 Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
 

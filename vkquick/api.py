@@ -224,7 +224,7 @@ class API(SessionContainerMixin):
                 method_name=real_method_name,
                 method_params=", ".join(
                     f"<c>{key}</c>=<y>{value!r}</y>"
-                    for key, value in real_request_params.items()
+                    for key, value in request_params.items()
                 ),
             )
         )

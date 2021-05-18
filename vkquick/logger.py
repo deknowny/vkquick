@@ -21,7 +21,13 @@ def update_logging_level(level):
 level_handler = LoggingLevel("INFO")
 logger_handler = logger.add(
     sys.stdout,
-    format="<lvl><n>[</n></lvl><c>{time:YYYY-MM-DD HH:mm:ss.SSS}</c><lvl><n>]</n></lvl>: <lvl><n>{message}</n></lvl>",
+    format=(
+        "<lvl><n>["
+        "{level.name[0]} "
+        "</n></lvl><c>{time:YYYY-MM-DD HH:mm:ss.SSS}</c><lvl><n>"
+        "]</n></lvl>"
+        ": <lvl><n>{message}</n></lvl>"
+    ),
     filter=level_handler,
     level=0,
 )

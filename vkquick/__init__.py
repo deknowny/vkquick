@@ -6,9 +6,9 @@ from .base.event import BaseEvent
 from .base.event_factories import BaseEventFactory, BaseLongPoll
 from .base.json_parser import BaseJSONParser
 from .cached_property import cached_property
+from .chatbot import *
 from .event import GroupEvent, UserEvent
 from .exceptions import VKAPIError
-from .ext.chatbot import *
 from .json_parsers import (
     BuiltinJsonParser,
     OrjsonParser,

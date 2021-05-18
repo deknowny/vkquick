@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import typing as ty
 
-from vkquick.ext.chatbot.base.ui_builder import UIBuilder
-from vkquick.ext.chatbot.ui_builders.button import InitializedButton
-from vkquick.ext.chatbot.wrappers.attachment import Photo
+from vkquick.chatbot.base.ui_builder import UIBuilder
+from vkquick.chatbot.ui_builders.button import InitializedButton
+from vkquick.chatbot.wrappers.attachment import Photo
 
 
 class Element(UIBuilder):

@@ -4,8 +4,8 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.storages import NewMessage
+from vkquick.chatbot.exceptions import BadArgumentError
+from vkquick.chatbot.storages import NewMessage
 
 T = ty.TypeVar("T")
 

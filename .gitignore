@@ -32,3 +32,5 @@ vk-api-schema/
 penv/
 .tox/
 .benchmarks/
+
+autodocs/

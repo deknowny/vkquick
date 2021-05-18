@@ -3,15 +3,13 @@ from __future__ import annotations
 import dataclasses
 import typing as ty
 
-from vkquick import API
 from vkquick.cached_property import cached_property
-from vkquick.ext.chatbot.utils import peer
-from vkquick.ext.chatbot.wrappers.message import Message, SentMessage
-from vkquick.ext.chatbot.wrappers.page import Group, Page, User
+from vkquick.chatbot.wrappers.message import Message, SentMessage
+from vkquick.chatbot.wrappers.page import Group, Page, User
 
 if ty.TYPE_CHECKING:
     from vkquick.base.event import BaseEvent
-    from vkquick.ext.chatbot.application import Bot
+    from vkquick.chatbot.application import Bot
 
 
 @dataclasses.dataclass
@@ -43,16 +41,6 @@ class NewMessage(NewEvent, SentMessage):
         bot: Bot,
     ):
         if event.type == 4:
-            # extended_message = dict(
-            #     id=event.content[1],
-            #     peer_id=event.content[3],
-            #     date=event.content[4],
-            #     text=event.content[5],
-            #     from_id=event.content[3] if event.content[3] > peer() else event.content[6],
-            #     random_id=event.content[8],
-            #     conversation_message_id=None,
-            #     fwd_messages=[]
-            # )
             extended_message = await bot.api.method(
                 "messages.get_by_id",
                 message_ids=event.content[1],

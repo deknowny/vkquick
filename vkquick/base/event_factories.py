@@ -148,10 +148,12 @@ class BaseLongPoll(BaseEventFactory):
                         )
                         self._update_baked_request()
                         response = await self.parse_json_body(response)
+                        if "updates" not in response:
+                            await self._resolve_faileds(response)
+                            continue
                     else:
                         response = await self.parse_json_body(response)
                         await self._resolve_faileds(response)
-                        self._update_baked_request()
                         continue
 
                 if not response["updates"]:
@@ -171,6 +173,8 @@ class BaseLongPoll(BaseEventFactory):
             await self._setup()
         else:
             raise ValueError("Invalid longpoll version")
+
+        self._update_baked_request()
 
     def _update_baked_request(self) -> None:
         self._server_url = ty.cast(str, self._server_url)

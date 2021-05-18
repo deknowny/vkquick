@@ -6,12 +6,12 @@ import typing as ty
 
 from vkquick import API
 from vkquick.cached_property import cached_property
-from vkquick.ext.chatbot.base.wrapper import Wrapper
-from vkquick.ext.chatbot.ui_builders.keyboard import Keyboard
-from vkquick.ext.chatbot.utils import peer
-from vkquick.ext.chatbot.utils import random_id as random_id_
-from vkquick.ext.chatbot.wrappers.attachment import Document, Photo
-from vkquick.ext.chatbot.wrappers.page import Group, Page, User
+from vkquick.chatbot.base.wrapper import Wrapper
+from vkquick.chatbot.ui_builders.keyboard import Keyboard
+from vkquick.chatbot.utils import peer
+from vkquick.chatbot.utils import random_id as random_id_
+from vkquick.chatbot.wrappers.attachment import Document, Photo
+from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.json_parsers import json_parser_policy
 
 

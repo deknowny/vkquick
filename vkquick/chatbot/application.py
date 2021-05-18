@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import os
+import pathlib
+import shutil
 import typing as ty
 
+import jinja2
 from loguru import logger
 
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
-from vkquick.ext.chatbot.package import Package
-from vkquick.ext.chatbot.storages import NewEvent, NewMessage
+from vkquick.chatbot.package import Package
+from vkquick.chatbot.storages import NewEvent, NewMessage
 from vkquick.logger import update_logging_level
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 
@@ -50,10 +54,33 @@ class App(Package):
     def add_package(self, package: Package) -> None:
         self.packages.append(package)
 
-    def run(self, *tokens: str) -> None:
-        asyncio.run(self.coroutine_run(*tokens))
+    def run(
+        self,
+        *tokens: str,
+        build_autodoc: bool = True,
+        docs_directory: str = "autodocs",
+        docs_filename: str = "index.html"
+    ) -> None:
+        asyncio.run(
+            self.coroutine_run(
+                *tokens,
+                build_autodoc=build_autodoc,
+                docs_directory=docs_directory,
+                docs_filename=docs_filename
+            ),
+            debug=self.debug,
+        )
 
-    async def coroutine_run(self, *tokens) -> None:
+    async def coroutine_run(
+        self,
+        *tokens,
+        build_autodoc: bool = True,
+        docs_directory: str = "autodocs",
+        docs_filename: str = "index.html"
+    ) -> None:
+        if build_autodoc:
+            self.render_autodoc(directory=docs_directory, filename=docs_filename)
+
         logger.opt(colors=True).success(
             "Run app (<b>{count}</b> bot{postfix})",
             count=len(tokens),
@@ -87,6 +114,30 @@ class App(Package):
                     shutdown_coroutines.append(shutdown_handler(bot))
 
         await asyncio.gather(*shutdown_coroutines)
+
+    def render_autodoc(
+        self, directory: str = "autodocs", filename: str = "index.html"
+    ):
+        autodoc_dir = pathlib.Path(__file__).parent.parent / "autodoc"
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(autodoc_dir / "templates")
+        )
+        main_template = env.get_template("index.html")
+
+        saved_path_dir = pathlib.Path(directory)
+
+        # Remove old files
+        shutil.rmtree(saved_path_dir)
+
+        # Recreate dir
+        saved_path_dir.mkdir()
+
+        # Copy assets
+        shutil.copytree(autodoc_dir / "assets", saved_path_dir / "assets")
+
+        saving_path = saved_path_dir / filename
+        with open(saving_path, "w+") as autodoc_file:
+            main_template.stream(app=self, print=print).dump(autodoc_file)
 
 
 @dataclasses.dataclass

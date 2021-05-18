@@ -3,12 +3,8 @@ from __future__ import annotations
 import inspect
 import typing as ty
 
-from vkquick.ext.chatbot.base.cutter import (
-    Argument,
-    CommandTextArgument,
-    Cutter,
-)
-from vkquick.ext.chatbot.command.cutters import (
+from vkquick.chatbot.base.cutter import Argument, CommandTextArgument, Cutter
+from vkquick.chatbot.command.cutters import (
     EntityCutter,
     FloatCutter,
     GroupCutter,
@@ -28,7 +24,7 @@ from vkquick.ext.chatbot.command.cutters import (
     UserID,
     WordCutter,
 )
-from vkquick.ext.chatbot.wrappers.page import Group, Page, User
+from vkquick.chatbot.wrappers.page import Group, Page, User
 
 
 def resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:

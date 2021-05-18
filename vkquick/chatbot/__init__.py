@@ -15,6 +15,7 @@ from .command.cutters import (
     EntityCutter,
     FloatCutter,
     GroupCutter,
+    GroupID,
     ImmutableSequenceCutter,
     IntegerCutter,
     LiteralCutter,
@@ -22,15 +23,14 @@ from .command.cutters import (
     MentionCutter,
     MutableSequenceCutter,
     OptionalCutter,
+    PageID,
+    PageType,
     StringCutter,
     UnionCutter,
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
-    WordCutter,
-    PageID,
-    GroupID,
     UserID,
-    PageType,
+    WordCutter,
 )
 from .exceptions import BadArgumentError, FilterFailedError
 from .package import Package

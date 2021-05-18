@@ -7,14 +7,14 @@ import re
 import typing as ty
 
 from vkquick.base.event import EventType
-from vkquick.ext.chatbot.base.filter import BaseFilter
-from vkquick.ext.chatbot.command.command import Command
-from vkquick.ext.chatbot.exceptions import FilterFailedError
+from vkquick.chatbot.base.filter import BaseFilter
+from vkquick.chatbot.command.command import Command
+from vkquick.chatbot.exceptions import FilterFailedError
 
 if ty.TYPE_CHECKING:
 
-    from vkquick.ext.chatbot.application import Bot
-    from vkquick.ext.chatbot.storages import NewEvent, NewMessage
+    from vkquick.chatbot.application import Bot
+    from vkquick.chatbot.storages import NewEvent, NewMessage
     from vkquick.types import DecoratorFunction
 
     SignalHandler = ty.Callable[[Bot], ty.Awaitable]
@@ -93,16 +93,22 @@ class Package:
         return wrapper
 
     def on_startup(
-        self, handler: SignalHandlerTypevar
-    ) -> SignalHandlerTypevar:
-        self.startup_handlers.append(handler)
-        return handler
+        self,
+    ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
+        def wrapper(func):
+            self.startup_handlers.append(func)
+            return func
+
+        return wrapper
 
     def on_shutdown(
-        self, handler: SignalHandlerTypevar
-    ) -> SignalHandlerTypevar:
-        self.shutdown_handlers.append(handler)
-        return handler
+        self,
+    ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
+        def wrapper(func):
+            self.shutdown_handlers.append(func)
+            return func
+
+        return wrapper
 
     async def handle_event(self, new_event_storage: NewEvent) -> None:
         handlers = self.event_handlers[new_event_storage.event.type]

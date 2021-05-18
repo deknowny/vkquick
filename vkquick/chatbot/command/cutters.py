@@ -3,16 +3,16 @@ import enum
 import re
 import typing as ty
 
-from vkquick.exceptions import VKAPIError
-from vkquick.ext.chatbot.base.cutter import (
+from vkquick.chatbot.base.cutter import (
     Cutter,
     CutterParsingResponse,
     cut_part_via_regex,
 )
-from vkquick.ext.chatbot.exceptions import BadArgumentError
-from vkquick.ext.chatbot.storages import NewMessage
-from vkquick.ext.chatbot.utils import get_origin_typing
-from vkquick.ext.chatbot.wrappers.page import Group, IDType, Page, User
+from vkquick.chatbot.exceptions import BadArgumentError
+from vkquick.chatbot.storages import NewMessage
+from vkquick.chatbot.utils import get_origin_typing
+from vkquick.chatbot.wrappers.page import Group, IDType, Page, User
+from vkquick.exceptions import VKAPIError
 
 
 class IntegerCutter(Cutter):
@@ -143,8 +143,7 @@ class UnionCutter(Cutter):
     def gen_doc(self):
         header = "Любое из следующих:<br><ol>{elements}</ol>"
         elements_docs = [
-            f"<li>{typevar.gen_doc()}</li>"
-            for typevar in self._typevars
+            f"<li>{typevar.gen_doc()}</li>" for typevar in self._typevars
         ]
         elements_docs = "\n".join(elements_docs)
         return header.format(elements=elements_docs)
@@ -172,6 +171,14 @@ class GroupCutter(Cutter):
             parsed_part=tuple(parsed_parts),
             new_arguments_string=arguments_string,
         )
+
+    def gen_doc(self):
+        header = "Последовательность следующих аргументов без пробелов:<br><ol>{elements}</ol>"
+        elements_docs = [
+            f"<li>{typevar.gen_doc()}</li>" for typevar in self._typevars
+        ]
+        elements_docs = "\n".join(elements_docs)
+        return header.format(elements=elements_docs)
 
 
 class _SequenceCutter(Cutter):

@@ -4,10 +4,10 @@ import abc
 import dataclasses
 import typing as ty
 
-from vkquick.ext.chatbot.exceptions import FilterFailedError
+from vkquick.chatbot.exceptions import FilterFailedError
 
 if ty.TYPE_CHECKING:
-    from vkquick.ext.chatbot.storages import NewMessage
+    from vkquick.chatbot.storages import NewMessage
 
 
 class BaseFilter(abc.ABC):
