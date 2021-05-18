@@ -304,9 +304,9 @@ def _convert_param_value(value, /):
         new_value = value.represent_as_api_param()
         return _convert_param_value(new_value)
 
-    # Для корректного отображения в логах
-    elif isinstance(value, int):
-        return value
+    # # Для корректного отображения в логах
+    # elif isinstance(value, int):
+    #     return value
 
     else:
         return str(value)

@@ -140,6 +140,15 @@ class UnionCutter(Cutter):
 
         raise BadArgumentError("Regexes didn't matched")
 
+    def gen_doc(self):
+        header = "Любое из следующих:<br><ol>{elements}</ol>"
+        elements_docs = [
+            f"<li>{typevar.gen_doc()}</li>"
+            for typevar in self._typevars
+        ]
+        elements_docs = "\n".join(elements_docs)
+        return header.format(elements=elements_docs)
+
 
 class GroupCutter(Cutter):
     def __init__(self, *typevars: Cutter):
