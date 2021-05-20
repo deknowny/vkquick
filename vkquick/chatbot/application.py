@@ -96,6 +96,8 @@ class App(Package):
             await asyncio.gather(*run_coroutines)
         finally:
             await self._call_shutdown(*bots)
+            for bot in bots:
+                await bot.close()
 
     async def _call_startup(self, *bots: Bot) -> None:
         startup_coroutines = []
@@ -180,3 +182,7 @@ class Bot:
             )
 
             asyncio.create_task(self.app.route_message(message_storage))
+
+    async def close_sessions(self):
+        await self.events_factory.close_session()
+        await self.api.close_session()
