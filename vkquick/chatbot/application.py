@@ -97,7 +97,7 @@ class App(Package):
         finally:
             await self._call_shutdown(*bots)
             for bot in bots:
-                await bot.close()
+                await bot.close_sessions()
 
     async def _call_startup(self, *bots: Bot) -> None:
         startup_coroutines = []
@@ -129,7 +129,8 @@ class App(Package):
         saved_path_dir = pathlib.Path(directory)
 
         # Remove old files
-        shutil.rmtree(saved_path_dir)
+        if saved_path_dir.exists():
+            shutil.rmtree(saved_path_dir)
 
         # Recreate dir
         saved_path_dir.mkdir()
