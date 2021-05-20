@@ -140,7 +140,7 @@ class App(Package):
 
         saving_path = saved_path_dir / filename
         with open(saving_path, "w+") as autodoc_file:
-            main_template.stream(app=self, print=print).dump(autodoc_file)
+            main_template.stream(app=self, print=print).dump(autodoc_file, encoding="UTF-8")
 
 
 @dataclasses.dataclass
