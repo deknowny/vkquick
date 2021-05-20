@@ -15,8 +15,8 @@ class Wrapper:
         return cls(kwargs)
 
     def __format__(self, format_spec: str) -> str:
-        format_spec = format_spec.replace(">", "}")
-        format_spec = format_spec.replace("<", "{")
+        format_spec = format_spec.replace("]", "}")
+        format_spec = format_spec.replace("[", "{")
         extra_fields = self._extra_fields_to_format()
         format_fields = {**self._fields, **extra_fields}
         inserted_values = SafeDict(format_fields)
