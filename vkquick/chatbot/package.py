@@ -10,6 +10,7 @@ from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
+from vkquick.chatbot.ui_builders.button import ButtonOnclickHandler
 
 if ty.TYPE_CHECKING:
 
@@ -28,6 +29,9 @@ if ty.TYPE_CHECKING:
     MessageHandler = ty.Callable[[NewMessage], ty.Awaitable]
     MessageHandlerTypevar = ty.TypeVar(
         "MessageHandlerTypevar", bound=MessageHandler
+    )
+    ButtonOnclickHandlerTypevar = ty.TypeVar(
+        "ButtonOnclickHandlerTypevar", bound=ButtonClickedHandler
     )
 
 
@@ -50,13 +54,15 @@ class Package:
     shutdown_handlers: ty.List[SignalHandler] = dataclasses.field(
         default_factory=list
     )
+    button_onclick_handlers: ty.Dict[
+        str, ButtonOnclickHandler
+    ] = dataclasses.field(default_factory=dict)
 
     def command(
         self,
         *names: str,
         prefixes: ty.List[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
-        enable_regexes: bool = False,
         filter: ty.Optional[BaseFilter] = None
     ) -> ty.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
@@ -65,11 +71,22 @@ class Package:
                 names=list(names),
                 prefixes=prefixes or self.prefixes,
                 routing_re_flags=routing_re_flags,
-                enable_regexes=enable_regexes,
                 filter=filter,
             )
             self.commands.append(command)
             return command
+
+        return wrapper
+
+    def on_clicked_button(
+        self,
+    ) -> ty.Callable[
+        [ButtonOnclickHandlerTypevar], Command[ButtonOnclickHandlerTypevar]
+    ]:
+        def wrapper(func):
+            handler = ButtonOnclickHandler(func)
+            self.button_onclick_handlers[func.__name__] = handler
+            return handler
 
         return wrapper
 
@@ -131,4 +148,23 @@ class Package:
             message_handler(message_storage)
             for message_handler in self.message_handlers
         ]
-        await asyncio.gather(*command_coroutines, *message_handler_coroutines)
+        await asyncio.gather(
+            self.routing_payload(message_storage),
+            *command_coroutines,
+            *message_handler_coroutines
+        )
+
+    async def routing_payload(self, message_storage: NewMessage):
+        if (
+            message_storage.msg.payload is not None
+            and message_storage.msg.payload.get("handler")
+            in self.button_onclick_handlers
+        ):
+            handler_name = message_storage.msg.payload.get("handler")
+            extra_arguments = {}
+            if "args" in message_storage.msg.payload:
+                extra_arguments = message_storage.msg.payload.get("args")
+            handler = self.button_onclick_handlers[handler_name]
+            response = await handler.handler(message_storage, **extra_arguments)
+            if response is not None:
+                await message_storage.reply(str(response))

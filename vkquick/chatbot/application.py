@@ -79,7 +79,9 @@ class App(Package):
         docs_filename: str = "index.html"
     ) -> None:
         if build_autodoc:
-            self.render_autodoc(directory=docs_directory, filename=docs_filename)
+            self.render_autodoc(
+                directory=docs_directory, filename=docs_filename
+            )
 
         logger.opt(colors=True).success(
             "Run app (<b>{count}</b> bot{postfix})",
@@ -139,8 +141,12 @@ class App(Package):
         shutil.copytree(autodoc_dir / "assets", saved_path_dir / "assets")
 
         saving_path = saved_path_dir / filename
-        with open(saving_path, "w+") as autodoc_file:
-            main_template.stream(app=self, print=print).dump(autodoc_file, encoding="UTF-8")
+        with open(saving_path, "wb+") as autodoc_file:
+            main_template.stream(app=self).dump(
+                autodoc_file, encoding="UTF-8"
+            )
+
+        logger.opt(colors=True).success("Documentation was built in directory <c>{directory}</c>", directory=directory)
 
 
 @dataclasses.dataclass

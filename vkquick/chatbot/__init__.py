@@ -35,7 +35,11 @@ from .command.cutters import (
 from .exceptions import BadArgumentError, FilterFailedError
 from .package import Package
 from .storages import NewEvent, NewMessage
-from .ui_builders.button import Button, InitializedButton
+from .ui_builders.button import (
+    Button,
+    InitializedButton,
+    ButtonOnclickHandler,
+)
 from .ui_builders.carousel import Carousel
 from .ui_builders.keyboard import Keyboard
 from .utils import random_id

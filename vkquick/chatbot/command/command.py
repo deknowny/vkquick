@@ -23,7 +23,6 @@ class Command(ty.Generic[Handler]):
     handler: Handler
     prefixes: ty.List[str] = dataclasses.field(default_factory=list)
     names: ty.List[str] = dataclasses.field(default_factory=list)
-    enable_regexes: bool = False
     routing_re_flags: re.RegexFlag = re.IGNORECASE
     filter: ty.Optional[BaseFilter] = None
     description: ty.Optional[str] = None
@@ -155,13 +154,9 @@ class Command(ty.Generic[Handler]):
         определяется вызов команды. Не включает в себя
         аргументы, т.к. для них задается своя логика фильтром
         """
-        # Экранирование специальных символов, если такое указано
-        if self.enable_regexes:
-            names = self.names
-            prefixes = self.prefixes
-        else:
-            names = {re.escape(name) for name in self.names}
-            prefixes = {re.escape(prefix) for prefix in self.prefixes}
+        # Экранирование специальных символов
+        names = {re.escape(name) for name in self.names}
+        prefixes = {re.escape(prefix) for prefix in self.prefixes}
 
         names_regex = "|".join(names)
         prefixes_regex = "|".join(prefixes)

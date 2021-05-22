@@ -1,14 +1,35 @@
 from __future__ import annotations
 
+import dataclasses
 import functools
 import typing as ty
 
 from vkquick.json_parsers import json_parser_policy
 
+if ty.TYPE_CHECKING:
+    from vkquick.chatbot.storages import NewMessage
+
+
+@dataclasses.dataclass
+class ButtonOnclickHandler:
+    handler: ty.Callable[[NewMessage, ...], ty.Awaitable]
+
 
 class InitializedButton:
     def __init__(self, **scheme) -> None:
         self.scheme = {"action": scheme}
+
+    def on_click(self, handler: ButtonOnclickHandler, **kwargs) -> InitializedButton:
+        if self.scheme["action"].get("payload"):
+            raise ValueError(
+                "Payload has been already set. "
+                "You can set only or onclick handler or "
+                "custom payload, not bath at hte same time"
+            )
+
+        schema = dict(handler=handler.handler.__name__, args=kwargs)
+        self.scheme["action"]["payload"] = json_parser_policy.dumps(schema)
+        return self
 
 
 class _ColoredButton(InitializedButton):
