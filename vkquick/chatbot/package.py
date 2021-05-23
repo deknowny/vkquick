@@ -31,7 +31,7 @@ if ty.TYPE_CHECKING:
         "MessageHandlerTypevar", bound=MessageHandler
     )
     ButtonOnclickHandlerTypevar = ty.TypeVar(
-        "ButtonOnclickHandlerTypevar", bound=ButtonClickedHandler
+        "ButtonOnclickHandlerTypevar", bound=ButtonOnclickHandler
     )
 
 
@@ -63,6 +63,7 @@ class Package:
         *names: str,
         prefixes: ty.List[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
+        exclude_from_autodoc: bool = False,
         filter: ty.Optional[BaseFilter] = None
     ) -> ty.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
@@ -71,6 +72,7 @@ class Package:
                 names=list(names),
                 prefixes=prefixes or self.prefixes,
                 routing_re_flags=routing_re_flags,
+                exclude_from_autodoc=exclude_from_autodoc,
                 filter=filter,
             )
             self.commands.append(command)
@@ -81,7 +83,7 @@ class Package:
     def on_clicked_button(
         self,
     ) -> ty.Callable[
-        [ButtonOnclickHandlerTypevar], Command[ButtonOnclickHandlerTypevar]
+        [ButtonOnclickHandlerTypevar], ButtonOnclickHandlerTypevar
     ]:
         def wrapper(func):
             handler = ButtonOnclickHandler(func)

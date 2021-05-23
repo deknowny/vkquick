@@ -26,6 +26,7 @@ class Command(ty.Generic[Handler]):
     routing_re_flags: re.RegexFlag = re.IGNORECASE
     filter: ty.Optional[BaseFilter] = None
     description: ty.Optional[str] = None
+    exclude_from_autodoc: bool = False
 
     def __post_init__(self):
         self.prefixes = list(self.prefixes)
