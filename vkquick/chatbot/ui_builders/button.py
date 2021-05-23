@@ -7,7 +7,7 @@ import typing as ty
 from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
-    from vkquick.chatbot.storages import NewMessage, CallbackButtonPressed
+    from vkquick.chatbot.storages import CallbackButtonPressed, NewMessage
 
 
 @dataclasses.dataclass

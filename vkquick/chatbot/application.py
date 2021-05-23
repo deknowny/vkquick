@@ -14,9 +14,9 @@ from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
 from vkquick.chatbot.package import Package
 from vkquick.chatbot.storages import (
+    CallbackButtonPressed,
     NewEvent,
     NewMessage,
-    CallbackButtonPressed,
 )
 from vkquick.logger import update_logging_level
 from vkquick.longpoll import GroupLongPoll, UserLongPoll

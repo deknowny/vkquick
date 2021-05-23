@@ -11,17 +11,17 @@ from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
 from vkquick.chatbot.ui_builders.button import (
-    ButtonOnclickHandler,
     ButtonCallbackHandler,
+    ButtonOnclickHandler,
 )
 
 if ty.TYPE_CHECKING:
 
     from vkquick.chatbot.application import Bot
     from vkquick.chatbot.storages import (
+        CallbackButtonPressed,
         NewEvent,
         NewMessage,
-        CallbackButtonPressed,
     )
     from vkquick.types import DecoratorFunction
 

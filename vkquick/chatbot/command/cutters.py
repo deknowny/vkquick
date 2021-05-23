@@ -252,7 +252,8 @@ class LiteralCutter(Cutter):
     def gen_doc(self):
         header = "Любое из следующих значений:<br><ol>{elements}</ol>"
         elements_docs = [
-            f"<li><code>{typevar.pattern}</code></li>" for typevar in self._container_values
+            f"<li><code>{typevar.pattern}</code></li>"
+            for typevar in self._container_values
         ]
         elements_docs = "\n".join(elements_docs)
         return header.format(elements=elements_docs)
@@ -429,7 +430,7 @@ class EntityCutter(MentionCutter):
             who = "Пользователь или группа"
         return (
             f"{who} в виде упоминания/ID/короткого имени/ссылки на страницу. "
-            "Так же можно просто переслать сообщение пользователя"
+            "Также можно просто переслать сообщение пользователя"
         )
 
     async def cut_part(

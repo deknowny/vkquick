@@ -5,9 +5,9 @@ import datetime
 import typing as ty
 
 from vkquick.api import API
-from vkquick.chatbot.ui_builders.carousel import Carousel
 from vkquick.cached_property import cached_property
 from vkquick.chatbot.base.wrapper import Wrapper
+from vkquick.chatbot.ui_builders.carousel import Carousel
 from vkquick.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.chatbot.utils import peer
 from vkquick.chatbot.utils import random_id as random_id_

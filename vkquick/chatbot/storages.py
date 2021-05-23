@@ -5,9 +5,9 @@ import typing as ty
 
 from vkquick.cached_property import cached_property
 from vkquick.chatbot.wrappers.message import (
+    CallbackButtonPressedMessage,
     Message,
     SentMessage,
-    CallbackButtonPressedMessage,
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
