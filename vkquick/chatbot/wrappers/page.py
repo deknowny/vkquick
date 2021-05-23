@@ -128,7 +128,7 @@ class Group(Page):
     ) -> ty.List[Group]:
         groups = await api.use_cache().method(
             "groups.get_by_id",
-            group_id=id,
+            group_id=ids,
             fields=fields or cls.default_fields,
         )
         groups = [cls(group) for group in groups]
@@ -220,7 +220,7 @@ class User(Page, ty.Generic[FieldsTypevar]):
     ) -> ty.List[User]:
         users = await api.use_cache().method(
             "users.get",
-            user_ids=id,
+            user_ids=ids,
             fields=fields or cls.default_fields,
             name_case=name_case,
         )
