@@ -83,7 +83,7 @@ class Package:
     def on_clicked_button(
         self,
     ) -> ty.Callable[
-        [ButtonOnclickHandlerTypevar], ButtonOnclickHandlerTypevar
+        [DecoratorFunction], ButtonOnclickHandlerTypevar
     ]:
         def wrapper(func):
             handler = ButtonOnclickHandler(func)
@@ -167,6 +167,8 @@ class Package:
             if "args" in message_storage.msg.payload:
                 extra_arguments = message_storage.msg.payload.get("args")
             handler = self.button_onclick_handlers[handler_name]
-            response = await handler.handler(message_storage, **extra_arguments)
+            response = await handler.handler(
+                message_storage, **extra_arguments
+            )
             if response is not None:
                 await message_storage.reply(str(response))

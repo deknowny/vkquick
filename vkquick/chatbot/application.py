@@ -146,7 +146,10 @@ class App(Package):
                 autodoc_file, encoding="UTF-8"
             )
 
-        logger.opt(colors=True).success("Documentation was built in directory <c>{directory}</c>", directory=directory)
+        logger.opt(colors=True).success(
+            "Documentation was built in directory <c>{directory}</c>",
+            directory=directory,
+        )
 
 
 @dataclasses.dataclass

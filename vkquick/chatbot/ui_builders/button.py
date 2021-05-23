@@ -19,7 +19,9 @@ class InitializedButton:
     def __init__(self, **scheme) -> None:
         self.scheme = {"action": scheme}
 
-    def on_click(self, handler: ButtonOnclickHandler, **kwargs) -> InitializedButton:
+    def on_click(
+        self, handler: ButtonOnclickHandler, **kwargs
+    ) -> InitializedButton:
         if self.scheme["action"].get("payload"):
             raise ValueError(
                 "Payload has been already set. "

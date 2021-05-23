@@ -240,7 +240,6 @@ class API(SessionContainerMixin):
         # Если кэширование включено -- запрос добавится в таблицу
         if use_cache:
             self._cache_table[cache_hash] = response
-            self._use_cache = False
 
         return response
 
