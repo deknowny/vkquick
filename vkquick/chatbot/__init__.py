@@ -34,7 +34,7 @@ from .command.cutters import (
 )
 from .exceptions import BadArgumentError, FilterFailedError
 from .package import Package
-from .storages import NewEvent, NewMessage
+from .storages import NewEvent, NewMessage, CallbackButtonPressed
 from .ui_builders.button import (
     Button,
     ButtonOnclickHandler,

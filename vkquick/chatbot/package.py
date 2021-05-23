@@ -10,12 +10,12 @@ from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
-from vkquick.chatbot.ui_builders.button import ButtonOnclickHandler
+from vkquick.chatbot.ui_builders.button import ButtonOnclickHandler, ButtonCallbackHandler
 
 if ty.TYPE_CHECKING:
 
     from vkquick.chatbot.application import Bot
-    from vkquick.chatbot.storages import NewEvent, NewMessage
+    from vkquick.chatbot.storages import NewEvent, NewMessage, CallbackButtonPressed
     from vkquick.types import DecoratorFunction
 
     SignalHandler = ty.Callable[[Bot], ty.Awaitable]
@@ -29,9 +29,6 @@ if ty.TYPE_CHECKING:
     MessageHandler = ty.Callable[[NewMessage], ty.Awaitable]
     MessageHandlerTypevar = ty.TypeVar(
         "MessageHandlerTypevar", bound=MessageHandler
-    )
-    ButtonOnclickHandlerTypevar = ty.TypeVar(
-        "ButtonOnclickHandlerTypevar", bound=ButtonOnclickHandler
     )
 
 
@@ -56,6 +53,10 @@ class Package:
     )
     button_onclick_handlers: ty.Dict[
         str, ButtonOnclickHandler
+    ] = dataclasses.field(default_factory=dict)
+
+    button_callback_handlers: ty.Dict[
+        str, ButtonCallbackHandler
     ] = dataclasses.field(default_factory=dict)
 
     def command(
@@ -83,11 +84,23 @@ class Package:
     def on_clicked_button(
         self,
     ) -> ty.Callable[
-        [DecoratorFunction], ButtonOnclickHandlerTypevar
+        [DecoratorFunction], ButtonOnclickHandler
     ]:
         def wrapper(func):
             handler = ButtonOnclickHandler(func)
             self.button_onclick_handlers[func.__name__] = handler
+            return handler
+
+        return wrapper
+
+    def on_called_button(
+        self,
+    ) -> ty.Callable[
+        [DecoratorFunction], ButtonCallbackHandler
+    ]:
+        def wrapper(func):
+            handler = ButtonCallbackHandler(func)
+            self.button_callback_handlers[func.__name__] = handler
             return handler
 
         return wrapper
@@ -172,3 +185,23 @@ class Package:
             )
             if response is not None:
                 await message_storage.reply(str(response))
+
+    async def handle_callback_button_pressing(self, ctx: CallbackButtonPressed):
+        if (
+            ctx.msg.payload is not None
+            and ctx.msg.payload.get("handler")
+            in self.button_callback_handlers
+        ):
+            handler_name = ctx.msg.payload.get("handler")
+            extra_arguments = {}
+            if "args" in ctx.msg.payload:
+                extra_arguments = ctx.msg.payload.get("args")
+                # Я тебя ненавижу, апи вконтукте
+                if isinstance(extra_arguments, list):
+                    extra_arguments = {}
+            handler = self.button_callback_handlers[handler_name]
+            response = await handler.handler(
+                ctx, **extra_arguments
+            )
+            if response is not None:
+                await ctx.show_snackbar(str(response))

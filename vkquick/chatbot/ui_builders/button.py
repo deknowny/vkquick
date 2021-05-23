@@ -7,20 +7,30 @@ import typing as ty
 from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
-    from vkquick.chatbot.storages import NewMessage
+    from vkquick.chatbot.storages import NewMessage, CallbackButtonPressed
 
 
 @dataclasses.dataclass
-class ButtonOnclickHandler:
+class _ButtonHandler:
+    handler: ty.Callable
+
+
+@dataclasses.dataclass
+class ButtonOnclickHandler(_ButtonHandler):
     handler: ty.Callable[[NewMessage, ...], ty.Awaitable]
+
+
+@dataclasses.dataclass
+class ButtonCallbackHandler(_ButtonHandler):
+    handler: ty.Callable[[CallbackButtonPressed, ...], ty.Awaitable]
 
 
 class InitializedButton:
     def __init__(self, **scheme) -> None:
         self.scheme = {"action": scheme}
 
-    def on_click(
-        self, handler: ButtonOnclickHandler, **kwargs
+    def _on_action(
+        self, handler: _ButtonHandler, **kwargs
     ) -> InitializedButton:
         if self.scheme["action"].get("payload"):
             raise ValueError(
@@ -28,7 +38,6 @@ class InitializedButton:
                 "You can set only or onclick handler or "
                 "custom payload, not bath at hte same time"
             )
-
         schema = dict(handler=handler.handler.__name__, args=kwargs)
         self.scheme["action"]["payload"] = json_parser_policy.dumps(schema)
         return self
@@ -64,6 +73,18 @@ class _ColoredButton(InitializedButton):
         return self
 
 
+class _ClickableColoredButton(_ColoredButton):
+    def on_click(
+        self, handler: ButtonOnclickHandler, **kwargs
+    ) -> InitializedButton:
+        return self._on_action(handler, **kwargs)
+
+
+class _CallableColoredButton(_ColoredButton):
+    def on_called(self, handler: ButtonCallbackHandler, **kwargs):
+        return self._on_action(handler, **kwargs)
+
+
 class _UncoloredButton(InitializedButton):
     ...
 
@@ -92,11 +113,11 @@ class Button:
     @_convert_payload
     def text(
         cls, label: str, *, payload: ty.Optional[ty.Union[str, dict]] = None
-    ) -> _ColoredButton:
+    ) -> _ClickableColoredButton:
         """
         Кнопка типа `text`
         """
-        return _ColoredButton(label=label, type="text", payload=payload)
+        return _ClickableColoredButton(label=label, type="text", payload=payload)
 
     @classmethod
     @_convert_payload
@@ -164,8 +185,8 @@ class Button:
     @_convert_payload
     def callback(
         cls, label: str, *, payload: ty.Optional[ty.Union[str, dict]] = None
-    ) -> _ColoredButton:
+    ) -> _CallableColoredButton:
         """
         Кнопка типа `callback`
         """
-        return _ColoredButton(label=label, type="callback", payload=payload)
+        return _CallableColoredButton(label=label, type="callback", payload=payload)

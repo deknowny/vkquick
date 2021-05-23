@@ -306,3 +306,35 @@ class SentMessage:
                 "peer_id": self.truncated_message.peer_id,
             }
         return await self._send_message(params)
+
+
+class CallbackButtonPressedMessage(Wrapper):
+    @property
+    def peer_id(self) -> int:
+        return self.fields["peer_id"]
+
+    @property
+    def user_id(self) -> int:
+        return self.fields["user_id"]
+
+    # Alias
+    @property
+    def from_id(self) -> int:
+        return self.user_id
+
+    @property
+    def conversation_message_id(self) -> int:
+        return self.fields["conversation_message_id"]
+
+    @property
+    def event_id(self) -> str:
+        return self.fields["event_id"]
+
+    @cached_property
+    def payload(self) -> ty.Optional[dict]:
+        return self.fields["payload"]
+
+    # Shortcuts
+    @property
+    def cmid(self) -> int:
+        return self.conversation_message_id
