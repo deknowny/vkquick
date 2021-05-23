@@ -4,7 +4,8 @@ import dataclasses
 import datetime
 import typing as ty
 
-from vkquick import API
+from vkquick.api import API
+from vkquick.chatbot.ui_builders.carousel import Carousel
 from vkquick.cached_property import cached_property
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.ui_builders.keyboard import Keyboard
@@ -155,13 +156,53 @@ class SentMessage:
     api: API
     truncated_message: TruncatedMessage
 
-    async def _send_message(self, params: dict) -> TruncatedMessage:
+    async def _send_message(self, params: dict) -> SentMessage:
         sent_message = await self.api.method("messages.send", **params)
-        return TruncatedMessage(sent_message)
+        sent_message = TruncatedMessage(sent_message[0])
+        return SentMessage(self.api, sent_message)
+
+    async def edit(
+        self,
+        message: str,
+        /,
+        lat: ty.Optional[float] = None,
+        long: ty.Optional[float] = None,
+        attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
+        keep_forward_messages: bool = True,
+        keep_snippets: bool = True,
+        group_id: ty.Optional[int] = None,
+        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+        dont_parse_links: bool = True,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
+    ) -> int:
+        if self.truncated_message.id:
+            routing = dict(message_id=self.truncated_message.id)
+        else:
+            routing = dict(
+                conversation_message_id=self.truncated_message.cmid
+            )
+
+        routing["peer_id"] = self.truncated_message.peer_id
+
+        return await self.api.method(
+            "messages.edit",
+            message=message,
+            lat=lat,
+            long=long,
+            attachment=attachment,
+            keep_forward_messages=keep_forward_messages,
+            keep_snippets=keep_snippets,
+            group_id=group_id,
+            keyboard=keyboard,
+            dont_parse_links=dont_parse_links,
+            template=template,
+            **routing,
+        )
 
     async def reply(
         self,
         message: ty.Optional[str] = None,
+        /,
         *,
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
@@ -170,6 +211,7 @@ class SentMessage:
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: bool = True,
@@ -179,7 +221,7 @@ class SentMessage:
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> TruncatedMessage:
+    ) -> SentMessage:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -197,6 +239,7 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
+            template=template,
             peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )
@@ -226,13 +269,14 @@ class SentMessage:
         payload: ty.Optional[str] = None,
         dont_parse_links: ty.Optional[bool] = None,
         disable_mentions: bool = True,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
         intent: ty.Optional[str] = None,
         expire_ttl: ty.Optional[int] = None,
         silent: ty.Optional[bool] = None,
         subscribe_id: ty.Optional[int] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> TruncatedMessage:
+    ) -> SentMessage:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -250,6 +294,7 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
+            template=template,
             peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )
@@ -273,9 +318,10 @@ class SentMessage:
         expire_ttl: ty.Optional[int] = None,
         silent: ty.Optional[bool] = None,
         subscribe_id: ty.Optional[int] = None,
+        template: ty.Optional[ty.Union[str, Carousel]] = None,
         content_source: ty.Optional[str] = None,
         **kwargs,
-    ) -> TruncatedMessage:
+    ) -> SentMessage:
         params = dict(
             message=message,
             random_id=random_id_() if random_id is None else random_id,
@@ -293,6 +339,7 @@ class SentMessage:
             silent=silent,
             subscribe_id=subscribe_id,
             content_source=content_source,
+            template=template,
             peer_ids=self.truncated_message.peer_id,
             **kwargs,
         )

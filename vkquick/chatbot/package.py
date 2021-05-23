@@ -10,12 +10,19 @@ from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
-from vkquick.chatbot.ui_builders.button import ButtonOnclickHandler, ButtonCallbackHandler
+from vkquick.chatbot.ui_builders.button import (
+    ButtonOnclickHandler,
+    ButtonCallbackHandler,
+)
 
 if ty.TYPE_CHECKING:
 
     from vkquick.chatbot.application import Bot
-    from vkquick.chatbot.storages import NewEvent, NewMessage, CallbackButtonPressed
+    from vkquick.chatbot.storages import (
+        NewEvent,
+        NewMessage,
+        CallbackButtonPressed,
+    )
     from vkquick.types import DecoratorFunction
 
     SignalHandler = ty.Callable[[Bot], ty.Awaitable]
@@ -83,9 +90,7 @@ class Package:
 
     def on_clicked_button(
         self,
-    ) -> ty.Callable[
-        [DecoratorFunction], ButtonOnclickHandler
-    ]:
+    ) -> ty.Callable[[DecoratorFunction], ButtonOnclickHandler]:
         def wrapper(func):
             handler = ButtonOnclickHandler(func)
             self.button_onclick_handlers[func.__name__] = handler
@@ -95,9 +100,7 @@ class Package:
 
     def on_called_button(
         self,
-    ) -> ty.Callable[
-        [DecoratorFunction], ButtonCallbackHandler
-    ]:
+    ) -> ty.Callable[[DecoratorFunction], ButtonCallbackHandler]:
         def wrapper(func):
             handler = ButtonCallbackHandler(func)
             self.button_callback_handlers[func.__name__] = handler
@@ -186,7 +189,9 @@ class Package:
             if response is not None:
                 await message_storage.reply(str(response))
 
-    async def handle_callback_button_pressing(self, ctx: CallbackButtonPressed):
+    async def handle_callback_button_pressing(
+        self, ctx: CallbackButtonPressed
+    ):
         if (
             ctx.msg.payload is not None
             and ctx.msg.payload.get("handler")
@@ -200,8 +205,6 @@ class Package:
                 if isinstance(extra_arguments, list):
                     extra_arguments = {}
             handler = self.button_callback_handlers[handler_name]
-            response = await handler.handler(
-                ctx, **extra_arguments
-            )
+            response = await handler.handler(ctx, **extra_arguments)
             if response is not None:
                 await ctx.show_snackbar(str(response))

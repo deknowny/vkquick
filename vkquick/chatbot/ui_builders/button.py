@@ -117,7 +117,9 @@ class Button:
         """
         Кнопка типа `text`
         """
-        return _ClickableColoredButton(label=label, type="text", payload=payload)
+        return _ClickableColoredButton(
+            label=label, type="text", payload=payload
+        )
 
     @classmethod
     @_convert_payload
@@ -189,4 +191,6 @@ class Button:
         """
         Кнопка типа `callback`
         """
-        return _CallableColoredButton(label=label, type="callback", payload=payload)
+        return _CallableColoredButton(
+            label=label, type="callback", payload=payload
+        )

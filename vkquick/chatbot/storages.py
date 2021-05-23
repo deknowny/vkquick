@@ -4,7 +4,11 @@ import dataclasses
 import typing as ty
 
 from vkquick.cached_property import cached_property
-from vkquick.chatbot.wrappers.message import Message, SentMessage, CallbackButtonPressedMessage
+from vkquick.chatbot.wrappers.message import (
+    Message,
+    SentMessage,
+    CallbackButtonPressedMessage,
+)
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
 if ty.TYPE_CHECKING:
@@ -91,7 +95,7 @@ class CallbackButtonPressed(NewEvent):
             event_id=self.msg.event_id,
             user_id=self.msg.user_id,
             peer_id=self.msg.peer_id,
-            event_data=event_data
+            event_data=event_data,
         )
 
     async def show_snackbar(self, text: str) -> dict:
@@ -100,5 +104,9 @@ class CallbackButtonPressed(NewEvent):
     async def open_link(self, link: str) -> dict:
         return await self._call_action(link=link, type="open_link")
 
-    async def open_app(self, app_id: int, hash: str, owner_id: ty.Optional[int] = None) -> dict:
-        return await self._call_action(app_id=app_id, hash=hash, owner_id=owner_id, type="open_app")
+    async def open_app(
+        self, app_id: int, hash: str, owner_id: ty.Optional[int] = None
+    ) -> dict:
+        return await self._call_action(
+            app_id=app_id, hash=hash, owner_id=owner_id, type="open_app"
+        )

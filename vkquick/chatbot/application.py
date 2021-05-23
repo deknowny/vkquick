@@ -13,7 +13,11 @@ from loguru import logger
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
 from vkquick.chatbot.package import Package
-from vkquick.chatbot.storages import NewEvent, NewMessage, CallbackButtonPressed
+from vkquick.chatbot.storages import (
+    NewEvent,
+    NewMessage,
+    CallbackButtonPressed,
+)
 from vkquick.logger import update_logging_level
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 
@@ -51,7 +55,9 @@ class App(Package):
         ]
         await asyncio.gather(*routing_coroutines)
 
-    async def route_callback_button_pressing(self, ctx: CallbackButtonPressed):
+    async def route_callback_button_pressing(
+        self, ctx: CallbackButtonPressed
+    ):
         routing_coroutines = [
             package.handle_callback_button_pressing(ctx)
             for package in self.packages
@@ -204,9 +210,10 @@ class Bot:
             context = await CallbackButtonPressed.from_event(
                 event=new_event_storage.event, bot=new_event_storage.bot
             )
-            asyncio.create_task(self.app.route_callback_button_pressing(context))
+            asyncio.create_task(
+                self.app.route_callback_button_pressing(context)
+            )
 
     async def close_sessions(self):
         await self.events_factory.close_session()
         await self.api.close_session()
-
