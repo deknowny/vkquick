@@ -10,6 +10,9 @@ import huepy
 import typing_extensions as tye
 
 
+exceptions_storage: ty.Dict[int, ty.Type[APIError]] = {}
+
+
 class _ParamsScheme(tye.TypedDict):
     """
     Структура параметров, возвращаемых
@@ -21,11 +24,9 @@ class _ParamsScheme(tye.TypedDict):
 
 
 @dataclasses.dataclass
-class VKAPIError(Exception):
+class APIError(Exception):
     """
     Исключение, поднимаемое при некорректном вызове API запроса.
-    Инициализируется через метод класса `destruct_response`
-    для деструктуризации ответа от вк
 
     Args:
         pretty_exception_text: Красиво выстроенное сообщение с ошибкой от API
@@ -35,14 +36,26 @@ class VKAPIError(Exception):
         extra_fields: Дополнительные поля (из API ответа)
     """
 
-    pretty_exception_text: str
     description: str
     status_code: int
-    request_params: _ParamsScheme
+    request_params: ty.List[_ParamsScheme]
     extra_fields: dict
 
+    def __class_getitem__(cls, code: ty.Union[int, ty.Tuple[int, ...]]) -> ty.Tuple[ty.Type[APIError]]:
+        result_classes = []
+        codes = (code,) if isinstance(code, int) else code
+        for code in codes:
+            if code in exceptions_storage:
+                result_classes.append(exceptions_storage[code])
+            else:
+                new_class = type(f"APIError{code}", (APIError,), {})
+                exceptions_storage[code] = new_class
+                result_classes.append(new_class)
+
+        return tuple(result_classes)
+
     @classmethod
-    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> VKAPIError:
+    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> APIError:
         """Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
 
@@ -51,39 +64,26 @@ class VKAPIError(Exception):
         Returns:
             Новый объект исключения
         """
-        status_code = response["error"].pop("error_code")
-        description = response["error"].pop("error_msg")
-        request_params = response["error"].pop("request_params")
-        request_params = {
-            item["key"]: item["value"] for item in request_params
-        }
 
+    def __str__(self) -> str:
         pretty_exception_text = (
-            huepy.red(f"\n[{status_code}]")
-            + f" {description}\n\n"
+            huepy.red(f"\n[{self.status_code}]")
+            + f" {self.description}\n\n"
             + huepy.grey("Request params:")
         )
 
-        for key, value in request_params.items():
+        for param in self.request_params:
+            key = param["key"]
+            value = param["value"]
             key = huepy.yellow(key)
             value = huepy.cyan(value)
             pretty_exception_text += f"\n{key} = {value}"
 
         # Если остались дополнительные поля
-        if response["error"]:
+        if self.extra_fields:
             pretty_exception_text += (
                 "\n\n"
                 + huepy.info("There are some extra fields:\n")
-                + str(response["error"])
+                + str(self.extra_fields)
             )
-
-        return cls(
-            pretty_exception_text=pretty_exception_text,
-            description=description,
-            status_code=status_code,
-            request_params=request_params,
-            extra_fields=response["error"],
-        )
-
-    def __str__(self) -> str:
-        return self.pretty_exception_text
+        return pretty_exception_text

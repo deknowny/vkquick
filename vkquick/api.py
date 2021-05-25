@@ -14,7 +14,7 @@ from loguru import logger
 
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
-from vkquick.exceptions import VKAPIError
+from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
 
@@ -233,7 +233,14 @@ class API(SessionContainerMixin):
         )
 
         if "error" in response:
-            raise VKAPIError.destruct_response(response)
+            error = response["error"].copy()
+            exception_class = APIError[error["error_code"]][0]
+            raise exception_class(
+                status_code=error.pop("error_code"),
+                description=error.pop("error_msg"),
+                request_params=error.pop("request_params"),
+                extra_fields=error,
+            )
         else:
             response = response["response"]
 

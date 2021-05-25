@@ -12,7 +12,7 @@ from vkquick.chatbot.exceptions import BadArgumentError
 from vkquick.chatbot.storages import NewMessage
 from vkquick.chatbot.utils import get_origin_typing
 from vkquick.chatbot.wrappers.page import Group, IDType, Page, User
-from vkquick.exceptions import VKAPIError
+from vkquick.exceptions import APIError
 
 
 class IntegerCutter(Cutter):
@@ -366,7 +366,7 @@ class MentionCutter(Cutter):
         try:
             casted_part = await self._cast_type(ctx, page_id, page_type)
         # Если ID невалидно
-        except VKAPIError as err:
+        except APIError as err:
             raise BadArgumentError("Invalid id") from err
         else:
             parsing_response.parsed_part = Mention(
