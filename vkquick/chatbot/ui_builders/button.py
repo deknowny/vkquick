@@ -38,7 +38,7 @@ class InitializedButton:
                 "You can set only or onclick handler or "
                 "custom payload, not bath at hte same time"
             )
-        schema = dict(handler=handler.handler.__name__, args=kwargs)
+        schema = dict(command=handler.handler.__name__, args=kwargs)
         self.scheme["action"]["payload"] = json_parser_policy.dumps(schema)
         return self
 

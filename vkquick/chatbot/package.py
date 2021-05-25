@@ -3,37 +3,52 @@ from __future__ import annotations
 import asyncio
 import collections
 import dataclasses
+import inspect
 import re
 import typing as ty
 
 from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
+from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
 from vkquick.chatbot.ui_builders.button import (
     ButtonCallbackHandler,
     ButtonOnclickHandler,
 )
+from vkquick.chatbot.storages import (
+    CallbackButtonPressed,
+    NewEvent,
+    NewMessage,
+)
+
+
+@dataclasses.dataclass
+class MessageHandler(HandlerMixin):
+    handler: ty.Callable[[NewMessage], ty.Awaitable]
+
+
+@dataclasses.dataclass
+class SignalHandler(HandlerMixin):
+    handler: ty.Callable[[Bot], ty.Awaitable]
+
+
+@dataclasses.dataclass
+class EventHandler(HandlerMixin):
+    handler: ty.Callable[[NewEvent], ty.Awaitable]
+
 
 if ty.TYPE_CHECKING:
 
     from vkquick.chatbot.application import Bot
-    from vkquick.chatbot.storages import (
-        CallbackButtonPressed,
-        NewEvent,
-        NewMessage,
-    )
     from vkquick.types import DecoratorFunction
 
-    SignalHandler = ty.Callable[[Bot], ty.Awaitable]
     SignalHandlerTypevar = ty.TypeVar(
         "SignalHandlerTypevar", bound=SignalHandler
     )
-    EventHandler = ty.Callable[[NewEvent], ty.Awaitable]
     EventHandlerTypevar = ty.TypeVar(
         "EventHandlerTypevar", bound=EventHandler
     )
-    MessageHandler = ty.Callable[[NewMessage], ty.Awaitable]
     MessageHandlerTypevar = ty.TypeVar(
         "MessageHandlerTypevar", bound=MessageHandler
     )
@@ -92,6 +107,8 @@ class Package:
         self,
     ) -> ty.Callable[[DecoratorFunction], ButtonOnclickHandler]:
         def wrapper(func):
+            if isinstance(func, Command):
+                func = func.handler
             handler = ButtonOnclickHandler(func)
             self.button_onclick_handlers[func.__name__] = handler
             return handler
@@ -102,6 +119,8 @@ class Package:
         self,
     ) -> ty.Callable[[DecoratorFunction], ButtonCallbackHandler]:
         def wrapper(func):
+            if isinstance(func, Command):
+                func = func.handler
             handler = ButtonCallbackHandler(func)
             self.button_callback_handlers[func.__name__] = handler
             return handler
@@ -113,7 +132,8 @@ class Package:
     ) -> ty.Callable[[EventHandlerTypevar], EventHandlerTypevar]:
         def wrapper(func):
             for event_type in event_types:
-                self.event_handlers[event_type].append(func)
+                handler = EventHandler(func)
+                self.event_handlers[event_type].append(handler)
             return func
 
         return wrapper
@@ -122,7 +142,8 @@ class Package:
         self,
     ) -> ty.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
         def wrapper(func):
-            self.message_handlers.append(func)
+            handler = MessageHandler(func)
+            self.message_handlers.append(handler)
             return func
 
         return wrapper
@@ -131,7 +152,8 @@ class Package:
         self,
     ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
         def wrapper(func):
-            self.startup_handlers.append(func)
+            handler = SignalHandler(func)
+            self.startup_handlers.append(handler)
             return func
 
         return wrapper
@@ -140,7 +162,8 @@ class Package:
         self,
     ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
         def wrapper(func):
-            self.shutdown_handlers.append(func)
+            handler = SignalHandler(func)
+            self.shutdown_handlers.append(handler)
             return func
 
         return wrapper
@@ -148,7 +171,7 @@ class Package:
     async def handle_event(self, new_event_storage: NewEvent) -> None:
         handlers = self.event_handlers[new_event_storage.event.type]
         handle_coroutines = [
-            handler(new_event_storage) for handler in handlers
+            handler.handler(new_event_storage) for handler in handlers
         ]
         await asyncio.gather(*handle_coroutines)
 
@@ -163,7 +186,7 @@ class Package:
             for command in self.commands
         ]
         message_handler_coroutines = [
-            message_handler(message_storage)
+            message_handler.handler(message_storage)
             for message_handler in self.message_handlers
         ]
         await asyncio.gather(
@@ -175,17 +198,18 @@ class Package:
     async def routing_payload(self, message_storage: NewMessage):
         if (
             message_storage.msg.payload is not None
-            and message_storage.msg.payload.get("handler")
+            and message_storage.msg.payload.get("command")
             in self.button_onclick_handlers
         ):
-            handler_name = message_storage.msg.payload.get("handler")
+            handler_name = message_storage.msg.payload.get("command")
             extra_arguments = {}
             if "args" in message_storage.msg.payload:
                 extra_arguments = message_storage.msg.payload.get("args")
             handler = self.button_onclick_handlers[handler_name]
-            response = await handler.handler(
-                message_storage, **extra_arguments
-            )
+            if NewMessage in handler.handler.__annotations__.values():
+                response = await handler.handler(message_storage, **extra_arguments)
+            else:
+                response = await handler.handler(**extra_arguments)
             if response is not None:
                 await message_storage.reply(str(response))
 
@@ -194,10 +218,10 @@ class Package:
     ):
         if (
             ctx.msg.payload is not None
-            and ctx.msg.payload.get("handler")
+            and ctx.msg.payload.get("command")
             in self.button_callback_handlers
         ):
-            handler_name = ctx.msg.payload.get("handler")
+            handler_name = ctx.msg.payload.get("command")
             extra_arguments = {}
             if "args" in ctx.msg.payload:
                 extra_arguments = ctx.msg.payload.get("args")
@@ -205,6 +229,9 @@ class Package:
                 if isinstance(extra_arguments, list):
                     extra_arguments = {}
             handler = self.button_callback_handlers[handler_name]
-            response = await handler.handler(ctx, **extra_arguments)
+            if NewMessage in handler.handler.__annotations__.values():
+                response = await handler.handler(ctx, **extra_arguments)
+            else:
+                response = await handler.handler(**extra_arguments)
             if response is not None:
                 await ctx.show_snackbar(str(response))

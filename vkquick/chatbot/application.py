@@ -119,7 +119,7 @@ class App(Package):
         for pkg in self.packages:
             for startup_handler in pkg.startup_handlers:
                 for bot in bots:
-                    startup_coroutines.append(startup_handler(bot))
+                    startup_coroutines.append(startup_handler.handler(bot))
 
         await asyncio.gather(*startup_coroutines)
 
@@ -128,7 +128,7 @@ class App(Package):
         for pkg in self.packages:
             for shutdown_handler in pkg.shutdown_handlers:
                 for bot in bots:
-                    shutdown_coroutines.append(shutdown_handler(bot))
+                    shutdown_coroutines.append(shutdown_handler.handler(bot))
 
         await asyncio.gather(*shutdown_coroutines)
 

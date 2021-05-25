@@ -8,6 +8,7 @@ import warnings
 
 from loguru import logger
 
+from vkquick.chatbot.base.handler_container import HandlerMixin, HandlerTypevar
 from vkquick.chatbot.base.cutter import CommandTextArgument, Cutter
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.adapters import resolve_typing
@@ -18,9 +19,7 @@ Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
 
 
 @dataclasses.dataclass
-class Command(ty.Generic[Handler]):
-
-    handler: Handler
+class Command(HandlerMixin):
     prefixes: ty.List[str] = dataclasses.field(default_factory=list)
     names: ty.List[str] = dataclasses.field(default_factory=list)
     routing_re_flags: re.RegexFlag = re.IGNORECASE

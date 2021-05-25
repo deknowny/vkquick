@@ -28,7 +28,7 @@ class APIError(Exception):
     """
     Исключение, поднимаемое при некорректном вызове API запроса.
 
-    Args:
+    Arguments:
         pretty_exception_text: Красиво выстроенное сообщение с ошибкой от API
         description: Описание ошибки (из API ответа)
         status_code: Статус-код ошибки (из API ответа)
