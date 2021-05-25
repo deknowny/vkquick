@@ -59,10 +59,10 @@ async def greeting():
     return "Привет!"
 
 
-@app.command("имя", prefixes={"/"})
+@app.command("имя", prefixes=["/"])
 async def get_name(ctx: vq.NewMessage):
     sender = await ctx.fetch_sender(vq.User)
-    return f"Тебя зовут {sender:@<fullname>}"
+    return f"Тебя зовут {sender:@[fullname]}"
 
 
 app.run("token")
