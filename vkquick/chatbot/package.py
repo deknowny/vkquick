@@ -12,14 +12,14 @@ from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
 from vkquick.chatbot.exceptions import FilterFailedError
-from vkquick.chatbot.ui_builders.button import (
-    ButtonCallbackHandler,
-    ButtonOnclickHandler,
-)
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
     NewEvent,
     NewMessage,
+)
+from vkquick.chatbot.ui_builders.button import (
+    ButtonCallbackHandler,
+    ButtonOnclickHandler,
 )
 
 

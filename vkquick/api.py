@@ -18,7 +18,7 @@ from loguru import logger
 
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
-from vkquick.chatbot.wrappers.attachment import Photo
+from vkquick.chatbot.wrappers.attachment import Document, Photo
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
@@ -283,7 +283,9 @@ class API(SessionContainerMixin):
         self, *photos: PhotoEntityTyping, peer_id: int = 0
     ) -> ty.List[Photo]:
 
-        photo_bytes_coroutines = [self._fetch_photo_entity(photo) for photo in photos]
+        photo_bytes_coroutines = [
+            self._fetch_photo_entity(photo) for photo in photos
+        ]
         photo_bytes = await asyncio.gather(*photo_bytes_coroutines)
         result_photos = []
         for loading_step in itertools.count(0):
@@ -293,7 +295,7 @@ class API(SessionContainerMixin):
             start_step = loading_step * 5
             end_step = start_step + 5
             if len(photo_bytes) < end_step:
-                continue
+                break
 
             for ind, photo in enumerate(photo_bytes[start_step:end_step]):
                 data_storage.add_field(
@@ -308,13 +310,54 @@ class API(SessionContainerMixin):
             async with self.requests_session.post(
                 uploading_info["upload_url"], data=data_storage
             ) as response:
-                response = await self.parse_json_body(response, content_type=None)
+                response = await self.parse_json_body(
+                    response, content_type=None
+                )
 
             uploaded_photos = await self.method(
                 "photos.save_messages_photo", **response
             )
-            result_photos.extend(Photo(uploaded_photo) for uploaded_photo in uploaded_photos)
+            result_photos.extend(
+                Photo(uploaded_photo) for uploaded_photo in uploaded_photos
+            )
         return result_photos
+
+    async def upload_doc_to_message(
+        self,
+        content: ty.Union[str, bytes],
+        filename: str,
+        *,
+        tags: ty.Optional[str] = None,
+        return_tags: ty.Optional[bool] = None,
+        type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
+        peer_id: int = 0,
+    ) -> Document:
+        if "." not in filename:
+            filename = f"{filename}.txt"
+        data_storage = aiohttp.FormData()
+        data_storage.add_field(
+            f"file",
+            content,
+            content_type="multipart/form-data",
+            filename=filename or "file.txt",
+        )
+
+        uploading_info = await self.method(
+            "docs.get_messages_upload_server", peer_id=peer_id
+        )
+        async with self.requests_session.post(
+            uploading_info["upload_url"], data=data_storage
+        ) as response:
+            response = await self.parse_json_body(response, content_type=None)
+
+        document = await self.method(
+            "docs.save",
+            **response,
+            title=filename,
+            tags=tags,
+            return_tags=return_tags,
+        )
+        return Document(document[type])
 
     def _get_waiting_time(self) -> float:
         """

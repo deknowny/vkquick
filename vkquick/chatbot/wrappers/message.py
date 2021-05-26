@@ -4,7 +4,6 @@ import dataclasses
 import datetime
 import typing as ty
 
-
 from vkquick.cached_property import cached_property
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.ui_builders.carousel import Carousel
@@ -17,6 +16,9 @@ from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:
     from vkquick.api import API, PhotoEntityTyping
+
+    AttachmentTyping = ty.Union[str, Photo, Document]
+    AttachmentsTyping = ty.Union[ty.List[AttachmentTyping], AttachmentTyping]
 
 
 class TruncatedMessage(Wrapper):
@@ -164,8 +166,30 @@ class SentMessage:
         sent_message = TruncatedMessage(sent_message[0])
         return SentMessage(self.api, sent_message)
 
-    async def upload_photos(self, *photos: PhotoEntityTyping) -> ty.List[Photo]:
-        return await self.api.upload_photos_to_message(*photos, peer_id=self.truncated_message.peer_id)
+    async def upload_photos(
+        self, *photos: PhotoEntityTyping
+    ) -> ty.List[Photo]:
+        return await self.api.upload_photos_to_message(
+            *photos, peer_id=self.truncated_message.peer_id
+        )
+
+    async def upload_doc(
+        self,
+        content: ty.Union[str, bytes],
+        filename: str,
+        *,
+        tags: ty.Optional[str] = None,
+        return_tags: ty.Optional[bool] = None,
+        type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
+    ) -> Document:
+        return await self.api.upload_doc_to_message(
+            content,
+            filename,
+            tags=tags,
+            return_tags=return_tags,
+            type=type,
+            peer_id=self.truncated_message.peer_id,
+        )
 
     async def delete(
         self,
@@ -197,7 +221,7 @@ class SentMessage:
         /,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[ty.Union[str]]] = None,
+        attachment: ty.Optional[AttachmentsTyping] = None,
         keep_forward_messages: bool = True,
         keep_snippets: bool = True,
         group_id: ty.Optional[int] = None,
@@ -237,7 +261,7 @@ class SentMessage:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[ty.Union[str, Photo]]] = None,
+        attachment: ty.Optional[AttachmentsTyping] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
@@ -292,7 +316,7 @@ class SentMessage:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[ty.Union[str, Photo]]] = None,
+        attachment: ty.Optional[AttachmentsTyping] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
@@ -337,7 +361,7 @@ class SentMessage:
         random_id: ty.Optional[int] = None,
         lat: ty.Optional[float] = None,
         long: ty.Optional[float] = None,
-        attachment: ty.Optional[ty.List[ty.Union[str, Photo]]] = None,
+        attachment: ty.Optional[AttachmentsTyping] = None,
         sticker_id: ty.Optional[int] = None,
         group_id: ty.Optional[int] = None,
         keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,

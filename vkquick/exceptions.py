@@ -9,7 +9,6 @@ import typing as ty
 import huepy
 import typing_extensions as tye
 
-
 exceptions_storage: ty.Dict[int, ty.Type[APIError]] = {}
 
 
