@@ -8,7 +8,10 @@ import warnings
 
 from loguru import logger
 
-from vkquick.chatbot.base.handler_container import HandlerMixin, HandlerTypevar
+from vkquick.chatbot.base.handler_container import (
+    HandlerMixin,
+    HandlerTypevar,
+)
 from vkquick.chatbot.base.cutter import CommandTextArgument, Cutter
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.command.adapters import resolve_typing

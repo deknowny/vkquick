@@ -43,6 +43,7 @@ ujson = { version = "^4.0.1", optional = true }
 loguru = "^0.5.3"
 Jinja2 = "^2.11.3"
 typer = "^0.3.2"
+aiofiles = "^0.7.0"
 
 
 [tool.poetry.dev-dependencies]

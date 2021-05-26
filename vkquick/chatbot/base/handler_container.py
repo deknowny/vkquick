@@ -2,7 +2,9 @@ import dataclasses
 import typing
 
 
-HandlerTypevar = typing.TypeVar("HandlerTypevar", bound=typing.Callable[..., typing.Awaitable])
+HandlerTypevar = typing.TypeVar(
+    "HandlerTypevar", bound=typing.Callable[..., typing.Awaitable]
+)
 
 
 @dataclasses.dataclass

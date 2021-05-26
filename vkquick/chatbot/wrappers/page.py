@@ -6,7 +6,7 @@ import typing as ty
 
 import aiohttp
 
-from vkquick import API
+from vkquick.api import API
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.utils import get_user_registration_date
 

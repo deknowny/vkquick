@@ -41,7 +41,9 @@ class APIError(Exception):
     request_params: ty.List[_ParamsScheme]
     extra_fields: dict
 
-    def __class_getitem__(cls, code: ty.Union[int, ty.Tuple[int, ...]]) -> ty.Tuple[ty.Type[APIError]]:
+    def __class_getitem__(
+        cls, code: ty.Union[int, ty.Tuple[int, ...]]
+    ) -> ty.Tuple[ty.Type[APIError]]:
         result_classes = []
         codes = (code,) if isinstance(code, int) else code
         for code in codes:

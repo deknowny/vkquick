@@ -2,24 +2,31 @@ from __future__ import annotations
 
 import asyncio
 import enum
+import io
+import itertools
 import os
+import pathlib
 import re
 import time
 import typing as ty
 import urllib.parse
 
+import aiofiles
 import aiohttp
 import cachetools
 from loguru import logger
 
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
+from vkquick.chatbot.wrappers.attachment import Photo
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
 
 if ty.TYPE_CHECKING:
     from vkquick.base.json_parser import BaseJSONParser
+
+    PhotoEntityTyping = ty.Union[str, bytes, ty.BinaryIO, os.PathLike]
 
 
 @enum.unique
@@ -256,6 +263,58 @@ class API(SessionContainerMixin):
         ) as response:
             loaded_response = await self.parse_json_body(response)
             return loaded_response
+
+    async def _fetch_photo_entity(self, photo: PhotoEntityTyping) -> bytes:
+        """
+        Получает байты фотографии через IO-хранилища/ссылку/путь до файла
+        """
+        if isinstance(photo, bytes):
+            return photo
+        elif isinstance(photo, ty.BinaryIO):
+            return photo.read()
+        elif isinstance(photo, str) and photo.startswith("http"):
+            async with self.requests_session.get(photo) as response:
+                return await response.read()
+        elif isinstance(photo, (str, os.PathLike)):
+            async with aiofiles.open(photo, "rb") as file:
+                return await file.read()
+
+    async def upload_photos_to_message(
+        self, *photos: PhotoEntityTyping, peer_id: int = 0
+    ) -> ty.List[Photo]:
+
+        photo_bytes_coroutines = [self._fetch_photo_entity(photo) for photo in photos]
+        photo_bytes = await asyncio.gather(*photo_bytes_coroutines)
+        result_photos = []
+        for loading_step in itertools.count(0):
+            data_storage = aiohttp.FormData()
+
+            # За один раз можно загрузить только 5 фотографий, поэтому необходимо разбить фотографии на части
+            start_step = loading_step * 5
+            end_step = start_step + 5
+            if len(photo_bytes) < end_step:
+                continue
+
+            for ind, photo in enumerate(photo_bytes[start_step:end_step]):
+                data_storage.add_field(
+                    f"file{ind}",
+                    photo,
+                    content_type="multipart/form-data",
+                    filename=f"a.png",  # Расширение не играет роли
+                )
+            uploading_info = await self.method(
+                "photos.get_messages_upload_server", peer_id=peer_id
+            )
+            async with self.requests_session.post(
+                uploading_info["upload_url"], data=data_storage
+            ) as response:
+                response = await self.parse_json_body(response, content_type=None)
+
+            uploaded_photos = await self.method(
+                "photos.save_messages_photo", **response
+            )
+            result_photos.extend(Photo(uploaded_photo) for uploaded_photo in uploaded_photos)
+        return result_photos
 
     def _get_waiting_time(self) -> float:
         """

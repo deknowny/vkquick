@@ -5,7 +5,7 @@ import typing as ty
 
 import aiohttp
 
-from vkquick.api import json_parser_policy
+from vkquick.json_parsers import json_parser_policy
 
 
 def random_id(side: int = 2 ** 31 - 1) -> int:

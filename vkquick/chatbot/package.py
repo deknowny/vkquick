@@ -207,7 +207,9 @@ class Package:
                 extra_arguments = message_storage.msg.payload.get("args")
             handler = self.button_onclick_handlers[handler_name]
             if NewMessage in handler.handler.__annotations__.values():
-                response = await handler.handler(message_storage, **extra_arguments)
+                response = await handler.handler(
+                    message_storage, **extra_arguments
+                )
             else:
                 response = await handler.handler(**extra_arguments)
             if response is not None:
