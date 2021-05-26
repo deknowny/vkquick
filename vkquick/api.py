@@ -19,6 +19,7 @@ from loguru import logger
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.chatbot.wrappers.attachment import Document, Photo
+from vkquick.chatbot.wrappers.page import User, Group, Page
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
@@ -64,6 +65,7 @@ class API(SessionContainerMixin):
             self._token = token
         self._version = version
         self._token_owner = token_owner
+        self._owner_schema = None
         self._requests_url = requests_url
         self._cache_table = cache_table or cachetools.TTLCache(
             ttl=3600, maxsize=2 ** 15
@@ -83,17 +85,20 @@ class API(SessionContainerMixin):
         self._use_cache = True
         return self
 
-    async def define_token_owner(self) -> TokenOwner:
+    async def define_token_owner(self) -> ty.Tuple[TokenOwner, Page]:
         if self._token_owner != TokenOwner.UNKNOWN:
-            return self._token_owner
-        seemed_user = await self.use_cache().method("users.get")
-        if seemed_user:
+            return self._token_owner, self._owner_schema
+        owner_schema = await self.use_cache().method("users.get")
+        if owner_schema:
+            self._owner_schema = User(owner_schema[0])
             self._token_owner = TokenOwner.USER
         else:
+            owner_schema = await self.use_cache().method("groups.get_by_id")
+            self._owner_schema = Group(owner_schema[0])
             self._token_owner = TokenOwner.GROUP
 
         self._update_requests_delay()
-        return self._token_owner
+        return self._token_owner, self._owner_schema
 
     def _update_requests_delay(self) -> None:
         if self._token_owner in {TokenOwner.USER, TokenOwner.UNKNOWN}:

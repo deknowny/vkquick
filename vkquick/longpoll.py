@@ -46,13 +46,12 @@ class GroupLongPoll(BaseLongPoll):
 
     async def _define_group_id(self) -> None:
         if self._group_id is None:
-            token_owner = await self._api.define_token_owner()
+            token_owner, owner_schema = await self._api.define_token_owner()
             if token_owner != TokenOwner.GROUP:
                 raise ValueError(
                     "Can't use `GroupLongPoll` with user token without `group_id`"
                 )
-            owner = await self._api.method("groups.get_by_id")
-            self._group_id = owner[0]["id"]
+            self._group_id = owner_schema.id
 
 
 class UserLongPoll(BaseLongPoll):

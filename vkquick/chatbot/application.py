@@ -175,9 +175,9 @@ class Bot:
     @classmethod
     async def via_token(cls, token: str, app: App) -> Bot:
         api = API(token)
-        token_owner = await api.define_token_owner()
+        token_owner, _ = await api.define_token_owner()
         events_factory: BaseEventFactory
-        if token_owner is TokenOwner.USER:
+        if token_owner == TokenOwner.USER:
             events_factory = UserLongPoll(api)
         else:
             events_factory = GroupLongPoll(api)

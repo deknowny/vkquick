@@ -37,16 +37,6 @@ NOT_PARSED = object()
             "!@привет#4123\n\n !@привет#4123",
             "!@привет#4123\n\n !@привет#4123",
         ),
-        (
-            vq.ParagraphCutter(),
-            "!@привет#4123 !@привет#4123",
-            "!@привет#4123 !@привет#4123",
-        ),
-        (
-            vq.ParagraphCutter(),
-            "!@привет#4123\n!@привет#4123",
-            "!@привет#4123",
-        ),
         (vq.OptionalCutter(vq.IntegerCutter()), "123", 123),
         (vq.OptionalCutter(vq.IntegerCutter()), "abc", None),
         (vq.OptionalCutter(vq.IntegerCutter(), default=123), "abc", 123),

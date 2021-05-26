@@ -44,23 +44,3 @@ class AndFilter(BaseFilter):
         await self.filter1.make_decision(ctx)
         await self.filter2.make_decision(ctx)
 
-
-@dataclasses.dataclass
-class ShortcutFilter(BaseFilter):
-
-    handler: ty.Callable[[NewMessage], ty.Awaitable]
-
-    async def make_decision(self, ctx: NewMessage):
-        await self.handler(ctx)
-
-
-def filter(
-    handler: ty.Callable[[NewMessage, ...], ty.Awaitable]
-) -> ty.Callable[..., ShortcutFilter]:
-    def args_wrapper(*args, **kwargs):
-        def func_replacement(ctx: NewMessage):
-            return handler(ctx, *args, **kwargs)
-
-        return ShortcutFilter(func_replacement)
-
-    return args_wrapper
