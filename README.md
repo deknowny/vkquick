@@ -82,6 +82,6 @@ app.run("token")
 
 И __автоматически__ созданная документация по командам в папке `autodocs`
 
-<img src="./imgs/autodocs-example.png" alt="Пример автоматически сгенерированной документации" style="padding: 10%">
+<img src="./imgs/autodocs-example-high.png" alt="Пример автоматически сгенерированной документации" style="padding: 10%">
 
 Хотите больше возможностей? Переходите на наш официальный сайт [https://vkquick.rtfd.io](https://vkquick.rtfd.io) и продолжайте углубляться в разработку ботов вместе с VK Quick!
