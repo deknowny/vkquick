@@ -170,6 +170,7 @@ class Bot:
     app: App
     api: API
     events_factory: BaseEventFactory
+    metadata: dict = dataclasses.field(default_factory=dict)
 
     @classmethod
     async def via_token(cls, token: str, app: App) -> Bot:
