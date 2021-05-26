@@ -1,6 +1,6 @@
 <img src="./imgs/vkquick-header.jpg" alt="VK Quick шапка" align="center">
 
-*__VK Quick__* — __это современный асинхронный фреймворк для создания ботов ВКонтакте__
+*__VK Quick__* — __это современный асинхронный фреймворк для создания ботов ВКонтакте, автоматически генерирующий документацию к командам бота в виде сайта__
 
 * [__Официальное сообщество в ВКонтакте__](https://vk.com/vkquick)
 
@@ -51,18 +51,25 @@ kwik --help
 import vkquick as vq
 
 
-app = vq.App()
+app = vq.App(debug=False)
 
 
-@app.command("echo", "привет")
+@app.command("пинг", "ping")
 async def greeting():
-    return "Привет!"
+    """
+    Самая обычная пинг-понг команда
+    """
+    return "Понг!"
 
 
-@app.command("имя", prefixes=["/"])
-async def get_name(ctx: vq.NewMessage):
-    sender = await ctx.fetch_sender(vq.User)
-    return f"Тебя зовут {sender:@[fullname]}"
+@app.command("дата", prefixes=["/"])
+async def resolve_user(user: vq.User):
+    """
+    Возвращает дату регистрации указанного пользователя
+    """
+    registration_date = await vq.get_user_registration_date(user.id)
+    formatted_date = registration_date.strftime("%d.%m.%Y")
+    return f"Дата регистрации пользователя {user:@[fullname]}: {formatted_date}"
 
 
 app.run("token")
@@ -71,5 +78,10 @@ app.run("token")
 Остается подставить вместо `"token"` свой токен. Теперь у нас есть бот сразу с двумя командами!
 
 <img src="./imgs/echo-example.png" alt="Пример работы бота" style="padding: 10%">
+
+
+И __автоматически__ созданная документация по командам в папке `autodocs`
+
+<img src="./imgs/autodocs-example.png" alt="Пример автоматически сгенерированной документации" style="padding: 10%">
 
 Хотите больше возможностей? Переходите на наш официальный сайт [https://vkquick.rtfd.io](https://vkquick.rtfd.io) и продолжайте углубляться в разработку ботов вместе с VK Quick!
