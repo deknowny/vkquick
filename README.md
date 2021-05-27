@@ -51,7 +51,7 @@ kwik --help
 import vkquick as vq
 
 
-app = vq.App(debug=False)
+app = vq.App()
 
 
 @app.command("пинг", "ping")

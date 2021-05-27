@@ -1,11 +1,7 @@
 class cached_property:
-    """Дескриптор для создания разово исполняемых property.
-    Скопировано с библиотеки `pyramid`.
-
-    Args:
-
-    Returns:
-
+    """
+    Дескриптор для создания разово исполняемых property.
+    Скопировано с библиотеки `pyramid`
     """
 
     def __init__(self, wrapped):
