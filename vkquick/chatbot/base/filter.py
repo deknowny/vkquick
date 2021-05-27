@@ -6,14 +6,19 @@ import typing as ty
 
 from vkquick.chatbot.exceptions import FilterFailedError
 
-if ty.TYPE_CHECKING:
+if ty.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import NewMessage
 
 
 class BaseFilter(abc.ABC):
     @abc.abstractmethod
     async def make_decision(self, ctx: NewMessage):
-        ...
+        """
+        Метод, вызываемый для проверки корректности события
+
+        Arguments:
+            ctx: Контекст нового сообщения
+        """
 
     def __or__(self, other: BaseFilter) -> OrFilter:
         return OrFilter(self, other)

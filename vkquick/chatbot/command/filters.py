@@ -12,9 +12,7 @@ if ty.TYPE_CHECKING:
 
 class OnlyMe(BaseFilter):
     async def make_decision(self, ctx: NewMessage):
-        # Для определения используется кэширование
-        _, owner_schema = await ctx.api.define_token_owner()
-        if ctx.msg.from_id != owner_schema.id:
+        if not ctx.msg.out:
             raise FilterFailedError()
 
 
