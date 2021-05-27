@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
-import functools
 import datetime
+import functools
 import textwrap
 import typing
-
 
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.ui_builders.carousel import Carousel
@@ -15,11 +14,13 @@ from vkquick.chatbot.utils import random_id as random_id_
 from vkquick.chatbot.wrappers.attachment import Document, Photo
 from vkquick.json_parsers import json_parser_policy
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API, PhotoEntityTyping
 
     AttachmentTyping = typing.Union[str, Photo, Document]
-    AttachmentsTyping = typing.Union[typing.List[AttachmentTyping], AttachmentTyping]
+    AttachmentsTyping = typing.Union[
+        typing.List[AttachmentTyping], AttachmentTyping
+    ]
 
 
 class TruncatedMessage(Wrapper):

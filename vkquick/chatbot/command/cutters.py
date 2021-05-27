@@ -86,7 +86,9 @@ class OptionalCutter(Cutter):
         /,
         *,
         default: typing.Optional = None,
-        default_factory: typing.Optional[typing.Callable[[], typing.Any]] = None,
+        default_factory: typing.Optional[
+            typing.Callable[[], typing.Any]
+        ] = None,
     ) -> None:
         self._default = default
         self._default_factory = default_factory

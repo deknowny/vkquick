@@ -20,7 +20,9 @@ class GroupLongPoll(BaseLongPoll):
         *,
         group_id: typing.Optional[int] = None,
         wait: int = 25,
-        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        new_event_callbacks: typing.Optional[
+            typing.List[EventsCallback]
+        ] = None,
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ) -> None:
@@ -63,7 +65,9 @@ class UserLongPoll(BaseLongPoll):
         version: int = 3,
         wait: int = 15,
         mode: int = 234,
-        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        new_event_callbacks: typing.Optional[
+            typing.List[EventsCallback]
+        ] = None,
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ) -> None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import functools
 import dataclasses
+import functools
 import typing
 
 from vkquick.chatbot.utils import peer
@@ -12,7 +12,7 @@ from vkquick.chatbot.wrappers.message import (
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
     from vkquick.chatbot.application import Bot
 

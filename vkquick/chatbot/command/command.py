@@ -15,7 +15,9 @@ from vkquick.chatbot.command.adapters import resolve_typing
 from vkquick.chatbot.exceptions import BadArgumentError, FilterFailedError
 from vkquick.chatbot.storages import NewMessage
 
-Handler = typing.TypeVar("Handler", bound=typing.Callable[..., typing.Awaitable])
+Handler = typing.TypeVar(
+    "Handler", bound=typing.Callable[..., typing.Awaitable]
+)
 
 
 @dataclasses.dataclass

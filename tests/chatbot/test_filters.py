@@ -1,6 +1,7 @@
 import unittest.mock
 
 import pytest
+
 import vkquick as vq
 
 
@@ -47,7 +48,8 @@ async def test_or_filter():
 
 
 @pytest.mark.parametrize(
-    "filter,fields,passed", [
+    "filter,fields,passed",
+    [
         (vq.filters.OnlyMe(), {"out": True}, True),
         (vq.filters.OnlyMe(), {"out": False}, False),
         (vq.filters.IgnoreBots(), {"from_id": 100}, True),
@@ -56,14 +58,18 @@ async def test_or_filter():
         (vq.filters.ChatOnly(), {"peer_id": 100}, False),
         (vq.filters.DirectOnly(), {"peer_id": 100}, True),
         (vq.filters.DirectOnly(), {"peer_id": vq.peer(100)}, False),
-        (vq.filters.Dynamic(
-            lambda ctx: ctx.msg.some_field == "egg"
-        ), {"some_field": "egg"}, True),
-        (vq.filters.Dynamic(
-            lambda ctx: 5 > 10
-        ), {"some_field": "egg"}, False),
+        (
+            vq.filters.Dynamic(lambda ctx: ctx.msg.some_field == "egg"),
+            {"some_field": "egg"},
+            True,
+        ),
+        (
+            vq.filters.Dynamic(lambda ctx: 5 > 10),
+            {"some_field": "egg"},
+            False,
+        ),
         (vq.filters.DirectOnly(), {"peer_id": vq.peer(100)}, False),
-    ]
+    ],
 )
 @pytest.mark.asyncio
 async def test_or_filter(filter, fields, passed):

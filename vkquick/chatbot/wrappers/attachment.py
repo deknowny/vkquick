@@ -41,7 +41,10 @@ class Photo(Attachment):
         )
 
     async def download_with_size(
-        self, size: str, *, session: typing.Optional[aiohttp.ClientSession] = None
+        self,
+        size: str,
+        *,
+        session: typing.Optional[aiohttp.ClientSession] = None,
     ) -> bytes:
         for photo_size in self.fields["sizes"]:
             if photo_size["type"] == size:

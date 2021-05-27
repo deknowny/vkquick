@@ -12,7 +12,7 @@ from vkquick.base.json_parser import BaseJSONParser
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.pretty_view import pretty_view
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
 
 
@@ -28,7 +28,9 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         self,
         *,
         api: API,
-        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        new_event_callbacks: typing.Optional[
+            typing.List[EventsCallback]
+        ] = None,
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ):
@@ -102,7 +104,9 @@ class BaseLongPoll(BaseEventFactory):
         *,
         api: API,
         event_wrapper: typing.Type[BaseEvent],
-        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        new_event_callbacks: typing.Optional[
+            typing.List[EventsCallback]
+        ] = None,
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ):

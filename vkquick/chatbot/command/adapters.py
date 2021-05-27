@@ -58,7 +58,11 @@ def resolve_typing(parameter: inspect.Parameter) -> CommandTextArgument:
 
 
 def _resolve_cutter(
-    *, arg_name: str, arg_annotation: typing.Any, arg_settings: Argument, arg_kind
+    *,
+    arg_name: str,
+    arg_annotation: typing.Any,
+    arg_settings: Argument,
+    arg_kind,
 ) -> Cutter:
 
     if arg_annotation is int:
@@ -108,9 +112,9 @@ def _resolve_cutter(
         )
         return MutableSequenceCutter(typevar_cutter)
     # Tuple sequence
-    elif typing.get_origin(arg_annotation) is tuple and Ellipsis in typing.get_args(
+    elif typing.get_origin(
         arg_annotation
-    ):
+    ) is tuple and Ellipsis in typing.get_args(arg_annotation):
         typevar_cutter = _resolve_cutter(
             arg_name=arg_name,
             arg_annotation=typing.get_args(arg_annotation)[0],

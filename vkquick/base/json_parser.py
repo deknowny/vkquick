@@ -28,7 +28,9 @@ class BaseJSONParser(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def loads(string: typing.Union[str, bytes]) -> typing.Dict[str, typing.Any]:
+    def loads(
+        string: typing.Union[str, bytes]
+    ) -> typing.Dict[str, typing.Any]:
         """
         Метод, сериализующий JSON из строки
 

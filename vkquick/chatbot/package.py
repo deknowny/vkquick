@@ -37,7 +37,7 @@ class EventHandler(HandlerMixin):
     handler: typing.Callable[[NewEvent], typing.Awaitable]
 
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
 
     from vkquick.chatbot.application import Bot
     from vkquick.types import DecoratorFunction

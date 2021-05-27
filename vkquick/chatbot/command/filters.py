@@ -7,7 +7,7 @@ from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.exceptions import FilterFailedError
 from vkquick.chatbot.utils import peer
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import NewMessage
 
 

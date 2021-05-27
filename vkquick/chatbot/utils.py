@@ -28,7 +28,10 @@ def peer(chat_id: int = 0) -> int:
 
 
 async def download_file(
-    url: str, *, session: typing.Optional[aiohttp.ClientSession] = None, **kwargs
+    url: str,
+    *,
+    session: typing.Optional[aiohttp.ClientSession] = None,
+    **kwargs,
 ) -> bytes:
     """
     Скачивание файлов по их прямой ссылке

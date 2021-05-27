@@ -6,7 +6,7 @@ import typing
 
 from vkquick.json_parsers import json_parser_policy
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import CallbackButtonPressed, NewMessage
 
 
@@ -112,7 +112,10 @@ class Button:
     @classmethod
     @_convert_payload
     def text(
-        cls, label: str, *, payload: typing.Optional[typing.Union[str, dict]] = None
+        cls,
+        label: str,
+        *,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _ClickableColoredButton:
         """
         Кнопка типа `text`
@@ -153,7 +156,10 @@ class Button:
     @classmethod
     @_convert_payload
     def vkpay(
-        cls, *, hash_: str, payload: typing.Optional[typing.Union[str, dict]] = None
+        cls,
+        *,
+        hash_: str,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _UncoloredButton:
         """
         Кнопка типа `vkpay`
@@ -186,7 +192,10 @@ class Button:
     @classmethod
     @_convert_payload
     def callback(
-        cls, label: str, *, payload: typing.Optional[typing.Union[str, dict]] = None
+        cls,
+        label: str,
+        *,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _CallableColoredButton:
         """
         Кнопка типа `callback`

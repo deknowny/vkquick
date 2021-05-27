@@ -22,7 +22,7 @@ from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser
 
     PhotoEntityTyping = typing.Union[str, bytes, typing.BinaryIO, os.PathLike]

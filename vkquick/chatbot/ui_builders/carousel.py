@@ -36,7 +36,9 @@ class Element(UIBuilder):
 
 
 class Carousel(UIBuilder):
-    def __init__(self, gen: typing.Callable[..., typing.Iterator[Element]]) -> None:
+    def __init__(
+        self, gen: typing.Callable[..., typing.Iterator[Element]]
+    ) -> None:
         self._gen = gen
         self.scheme = {"type": "carousel", "elements": []}
 

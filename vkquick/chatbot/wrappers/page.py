@@ -9,7 +9,7 @@ import aiohttp
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.utils import get_user_registration_date
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API
 
 T = typing.TypeVar("T")
