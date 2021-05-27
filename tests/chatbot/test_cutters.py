@@ -115,9 +115,9 @@ async def test_simple_cutters(cutter, string, expected):
 
 
 @pytest.mark.asyncio
-async def test_mention_with_wrapper(user_api):
+async def test_mention_with_wrapper(group_api):
     mocked_context = unittest.mock.Mock()
-    mocked_context.api = user_api
+    mocked_context.api = group_api
 
     cutter = vq.MentionCutter(vq.Page)
     call1 = await cutter.cut_part(mocked_context, "[id1|abc]")
@@ -195,9 +195,9 @@ async def test_mention_with_id():
     ],
 )
 @pytest.mark.asyncio
-async def test_group_entity_by_string(input_string, user_api):
+async def test_group_entity_by_string(input_string, group_api):
     mocked_context = unittest.mock.Mock()
-    mocked_context.api = user_api
+    mocked_context.api = group_api
     page_cutter = vq.EntityCutter(vq.Page)
     user_cutter = vq.EntityCutter(vq.User)
     user_id_cutter = vq.EntityCutter(vq.User)
