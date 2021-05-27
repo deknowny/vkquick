@@ -4,6 +4,7 @@ import dataclasses
 import typing as ty
 
 from vkquick.cached_property import cached_property
+from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
     Message,

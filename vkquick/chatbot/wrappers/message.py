@@ -50,7 +50,7 @@ class Message(TruncatedMessage):
         chat_id = self.peer_id - peer()
         if chat_id < 0:
             raise ValueError(
-                "Can't get `chat_id` if message " "wasn't sent in a chat"
+                "Can't get `chat_id` if message wasn't sent in a chat"
             )
 
         return chat_id
@@ -162,9 +162,9 @@ class SentMessage:
     truncated_message: TruncatedMessage
 
     async def _send_message(self, params: dict) -> SentMessage:
-        # Нужно сделать строку из сообщения и если такие есть, убрать
-        # лишние табы, присутствующие перед каждой строкой
-        params["message"] = textwrap.dedent(str(params["message"])).strip()
+        # Нужно убрать лишние табы, если такие есть,
+        # присутствующие перед каждой строкой
+        params["message"] = textwrap.dedent(params["message"]).strip()
 
         sent_message = await self.api.method("messages.send", **params)
         sent_message = TruncatedMessage(sent_message[0])
@@ -173,6 +173,17 @@ class SentMessage:
     async def upload_photos(
         self, *photos: PhotoEntityTyping
     ) -> ty.List[Photo]:
+        """
+        Загружает фотографию для отправки в сообщение
+
+        Arguments:
+            photos: Фотографии в виде ссылки/пути до файла/сырых байтов/
+                IO-хранилища/Path-like объекта
+
+        Returns:
+            Список врапперов загруженных фотографий, который можно напрямую
+            передать в поле `attachment` при отправке сообщения
+        """
         return await self.api.upload_photos_to_message(
             *photos, peer_id=self.truncated_message.peer_id
         )
@@ -186,6 +197,21 @@ class SentMessage:
         return_tags: ty.Optional[bool] = None,
         type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
     ) -> Document:
+        """
+        Загружает документ для отправки в сообщение
+
+        Arguments:
+            content: Содержимое документа. Документ может быть
+                как текстовым, так и содержать сырые байты
+            filename: Имя файла
+            tags: Теги для файла, используемые при поиске
+            return_tags: Возвращать переданные теги при запросе
+            type: Тип документа: файл/голосовое сообщение/граффити
+
+        Returns:
+            Враппер загруженного документа. Этот объект можно напрямую
+            передать в поле `attachment` при отправке сообщения
+        """
         return await self.api.upload_doc_to_message(
             content,
             filename,
@@ -201,7 +227,15 @@ class SentMessage:
         spam: ty.Optional[bool] = None,
         group_id: ty.Optional[int] = None,
         delete_for_all: bool = True,
-    ):
+    ) -> None:
+        """
+        Удаляет указанное сообщение (по умолчанию у всех)
+
+        :param spam: Пометить сообщение как спам
+        :param group_id: ID группы, от лица которого
+            было отправлено сообщение
+        :param delete_for_all: Нужно ли удалять сообщение у всех
+        """
         if self.truncated_message.id:
             routing = dict(message_ids=self.truncated_message.id)
         else:

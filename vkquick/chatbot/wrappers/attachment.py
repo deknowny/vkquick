@@ -10,6 +10,9 @@ from vkquick.chatbot.utils import download_file
 
 
 class Attachment(Wrapper, APISerializableMixin):
+    """
+    Базовый класс для всех attachment-типов
+    """
 
     _name = None
 
@@ -19,7 +22,12 @@ class Attachment(Wrapper, APISerializableMixin):
         else:
             access_key = ""
 
-        return f"""{self._name}{self.fields["owner_id"]}_{self.fields["id"]}{access_key}"""
+        return "{type}{owner_id}_{attachment_id}{access_key}".format(
+            type=self._name,
+            owner_id=self.fields["owner_id"],
+            attachment_id=self.fields["id"],
+            access_key=access_key
+        )
 
 
 class Photo(Attachment):

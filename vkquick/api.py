@@ -409,7 +409,7 @@ class API(SessionContainerMixin):
         peer_id: int = 0,
     ) -> Document:
         """
-        Загружает документ в сообщения
+        Загружает документ для отправки в сообщение
 
         Arguments:
             content: Содержимое документа. Документ может быть
