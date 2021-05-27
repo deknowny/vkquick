@@ -12,7 +12,6 @@ from vkquick.chatbot.ui_builders.keyboard import Keyboard
 from vkquick.chatbot.utils import peer
 from vkquick.chatbot.utils import random_id as random_id_
 from vkquick.chatbot.wrappers.attachment import Document, Photo
-from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.json_parsers import json_parser_policy
 
 if ty.TYPE_CHECKING:

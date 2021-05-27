@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import collections
 import dataclasses
-import inspect
 import re
 import typing as ty
 

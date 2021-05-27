@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import enum
-import io
 import itertools
 import os
-import pathlib
 import re
 import time
 import typing as ty
@@ -194,7 +192,7 @@ class API(SessionContainerMixin):
         use_cache: bool,
     ) -> ty.Any:
         """
-        Выполняет API запрос на определнный метод с заданными параметрами
+        Выполняет API запрос на определенный метод с заданными параметрами
 
         Arguments:
             method_name: Имя метода API
@@ -386,7 +384,7 @@ class API(SessionContainerMixin):
 
 def _convert_param_value(value, /):
     """
-    Конвертирует параметер API запроса в соотвествиями
+    Конвертирует параметр API запроса в соответствии
     с особенностями API и дополнительными удобствами
 
     Arguments:
@@ -412,7 +410,7 @@ def _convert_param_value(value, /):
         return int(value)
 
     # Если класс определяет протокол сериализации под параметр API,
-    # используется соотвествующий метод
+    # используется соответствующий метод
     elif isinstance(value, APISerializableMixin):
         new_value = value.represent_as_api_param()
         return _convert_param_value(new_value)
