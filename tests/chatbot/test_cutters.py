@@ -1,5 +1,5 @@
 import asyncio
-import typing as ty
+import typing
 import unittest.mock
 
 import pytest
@@ -149,7 +149,7 @@ async def test_mention_with_wrapper(user_api):
             mocked_context, "[id123123123123123123123123|abc]"
         )
 
-    cutter = vq.MentionCutter(vq.User[ty.Literal["bdate"]])
+    cutter = vq.MentionCutter(vq.User[typing.Literal["bdate"]])
     call = await cutter.cut_part(mocked_context, "[id1|abc]")
     assert "bdate" in call.parsed_part.entity.fields
 
