@@ -464,7 +464,9 @@ class EntityCutter(MentionCutter):
         parsing_response = cut_part_via_regex(
             self.screen_name_regex, arguments_string, group="screen_name"
         )
-        resolved_screen_name = await ctx.api.utils.resolve_screen_name(
+
+        resolved_screen_name = await ctx.api.use_cache().method(
+            "utils.resolve_screen_name",
             screen_name=parsing_response.parsed_part
         )
         if not resolved_screen_name:
