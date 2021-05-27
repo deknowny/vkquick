@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as ty
+import typing
 
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.exceptions import FilterFailedError
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.chatbot.storages import NewMessage
 
 
@@ -24,7 +24,7 @@ class IgnoreBots(BaseFilter):
 
 @dataclasses.dataclass
 class Dynamic(BaseFilter):
-    executable: ty.Callable[[NewMessage], ...]
+    executable: typing.Callable[[NewMessage], ...]
 
     async def make_decision(self, ctx: NewMessage):
         if not self.executable(ctx):

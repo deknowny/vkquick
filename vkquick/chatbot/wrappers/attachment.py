@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import typing as ty
+import typing
 
 import aiohttp
 
@@ -34,14 +34,14 @@ class Photo(Attachment):
     _name = "photo"
 
     async def download_min_size(
-        self, *, session: ty.Optional[aiohttp.ClientSession] = None
+        self, *, session: typing.Optional[aiohttp.ClientSession] = None
     ) -> bytes:
         return await download_file(
             self.fields["sizes"][0]["url"], session=session
         )
 
     async def download_with_size(
-        self, size: str, *, session: ty.Optional[aiohttp.ClientSession] = None
+        self, size: str, *, session: typing.Optional[aiohttp.ClientSession] = None
     ) -> bytes:
         for photo_size in self.fields["sizes"]:
             if photo_size["type"] == size:
@@ -49,7 +49,7 @@ class Photo(Attachment):
         raise ValueError(f"There isn’t a size `{size}` in available sizes")
 
     async def download_max_size(
-        self, *, session: ty.Optional[aiohttp.ClientSession] = None
+        self, *, session: typing.Optional[aiohttp.ClientSession] = None
     ) -> bytes:
         return await download_file(
             self.fields["sizes"][-1]["url"], session=session

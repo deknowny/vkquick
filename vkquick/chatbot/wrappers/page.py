@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import abc
 import datetime
-import typing as ty
+import typing
 
 import aiohttp
 
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.utils import get_user_registration_date
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.api import API
 
-T = ty.TypeVar("T")
-FieldsTypevar = ty.TypeVar("FieldsTypevar")
-IDType: ty.TypeAlias = ty.Union[str, int]
+T = typing.TypeVar("T")
+FieldsTypevar = typing.TypeVar("FieldsTypevar")
+IDType: typing.TypeAlias = typing.Union[str, int]
 
 
 class Page(Wrapper, abc.ABC):
@@ -37,31 +37,31 @@ class Page(Wrapper, abc.ABC):
     @classmethod
     @abc.abstractmethod
     async def fetch_one(
-        cls: ty.Type[T],
+        cls: typing.Type[T],
         api: API,
         id: IDType,
         /,
         *,
-        fields: ty.Optional[ty.List[str]] = None,
+        fields: typing.Optional[typing.List[str]] = None,
     ) -> T:
         pass
 
     @classmethod
     @abc.abstractmethod
     async def fetch_many(
-        cls: ty.Type[T],
+        cls: typing.Type[T],
         api: API,
         /,
         *ids: IDType,
-        fields: ty.Optional[ty.List[str]] = None,
-    ) -> ty.List[T]:
+        fields: typing.Optional[typing.List[str]] = None,
+    ) -> typing.List[T]:
         pass
 
     @property
     def id(self) -> int:
         return self.fields["id"]
 
-    def mention(self, alias: ty.Optional[str] = None) -> str:
+    def mention(self, alias: typing.Optional[str] = None) -> str:
         """
         Создает упоминание пользователя либо с `alias` либо с его именем
         """
@@ -106,12 +106,12 @@ class Group(Page):
 
     @classmethod
     async def fetch_one(
-        cls: ty.Type[Group],
+        cls: typing.Type[Group],
         api: API,
         id: IDType,
         /,
         *,
-        fields: ty.Optional[ty.List[str]] = None,
+        fields: typing.Optional[typing.List[str]] = None,
     ) -> Group:
         group = await api.use_cache().method(
             "groups.get_by_id",
@@ -122,12 +122,12 @@ class Group(Page):
 
     @classmethod
     async def fetch_many(
-        cls: ty.Type[Group],
+        cls: typing.Type[Group],
         api: API,
         /,
         *ids: IDType,
-        fields: ty.Optional[ty.List[str]] = None,
-    ) -> ty.List[Group]:
+        fields: typing.Optional[typing.List[str]] = None,
+    ) -> typing.List[Group]:
         groups = await api.use_cache().method(
             "groups.get_by_id",
             group_id=ids,
@@ -137,7 +137,7 @@ class Group(Page):
         return groups
 
 
-class User(Page, ty.Generic[FieldsTypevar]):
+class User(Page, typing.Generic[FieldsTypevar]):
 
     _mention_prefix = "id"
     default_fields = ("sex",)
@@ -165,8 +165,8 @@ class User(Page, ty.Generic[FieldsTypevar]):
         return self.fields["last_name"]
 
     def if_gender(
-        self, female: T, male: T = "", default: ty.Optional[T] = None
-    ) -> ty.Optional[T]:
+        self, female: T, male: T = "", default: typing.Optional[T] = None
+    ) -> typing.Optional[T]:
         try:
             gender = self.fields["sex"]
         except KeyError as err:
@@ -189,19 +189,19 @@ class User(Page, ty.Generic[FieldsTypevar]):
         return extra_fields
 
     async def get_registration_date(
-        self, session: ty.Optional[aiohttp.ClientSession] = None
+        self, session: typing.Optional[aiohttp.ClientSession] = None
     ) -> datetime.datetime:
         return await get_user_registration_date(self.id, session=session)
 
     @classmethod
     async def fetch_one(
-        cls: ty.Type[User],
+        cls: typing.Type[User],
         api: API,
         id: IDType,
         /,
         *,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
+        fields: typing.Optional[typing.List[str]] = None,
+        name_case: typing.Optional[str] = None,
     ) -> User:
         user = await api.use_cache().method(
             "users.get",
@@ -213,13 +213,13 @@ class User(Page, ty.Generic[FieldsTypevar]):
 
     @classmethod
     async def fetch_many(
-        cls: ty.Type[User],
+        cls: typing.Type[User],
         api: API,
         /,
         *ids: IDType,
-        fields: ty.Optional[ty.List[str]] = None,
-        name_case: ty.Optional[str] = None,
-    ) -> ty.List[User]:
+        fields: typing.Optional[typing.List[str]] = None,
+        name_case: typing.Optional[str] = None,
+    ) -> typing.List[User]:
         users = await api.use_cache().method(
             "users.get",
             user_ids=ids,

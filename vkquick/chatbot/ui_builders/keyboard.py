@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import typing as ty
+import typing
 
 from vkquick.chatbot.base.ui_builder import UIBuilder
 from vkquick.chatbot.ui_builders.button import InitializedButton
@@ -22,7 +22,7 @@ class Keyboard(UIBuilder):
 
     def __init__(
         self,
-        *buttons: ty.Union[InitializedButton, type(Ellipsis)],
+        *buttons: typing.Union[InitializedButton, type(Ellipsis)],
         one_time: bool = True,
         inline: bool = False
     ) -> None:
@@ -63,7 +63,7 @@ class Keyboard(UIBuilder):
         return self
 
     def _build(
-        self, *buttons: ty.Union[InitializedButton, type(Ellipsis)]
+        self, *buttons: typing.Union[InitializedButton, type(Ellipsis)]
     ) -> None:
         """
         Вспомогательный метод для построения рядов кнопок

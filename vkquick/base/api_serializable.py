@@ -1,5 +1,5 @@
 import abc
-import typing as ty
+import typing
 
 
 class APISerializableMixin(abc.ABC):
@@ -12,7 +12,7 @@ class APISerializableMixin(abc.ABC):
     """
 
     @abc.abstractmethod
-    def represent_as_api_param(self) -> ty.Any:
+    def represent_as_api_param(self) -> typing.Any:
         """
         Этот метод будет вызван в момент обработки
         параметров, переданных при вызове метода API.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import ssl
-import typing as ty
+import typing
 
 import aiohttp
 
@@ -25,8 +25,8 @@ class SessionContainerMixin:
     def __init__(
         self,
         *,
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None
     ) -> None:
         """
         Arguments:

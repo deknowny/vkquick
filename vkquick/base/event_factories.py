@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import asyncio
-import typing as ty
+import typing
 
 import aiohttp
 from loguru import logger
@@ -12,25 +12,25 @@ from vkquick.base.json_parser import BaseJSONParser
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.pretty_view import pretty_view
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.api import API
 
 
-EventsCallback = ty.Callable[[BaseEvent], ty.Awaitable[None]]
+EventsCallback = typing.Callable[[BaseEvent], typing.Awaitable[None]]
 
 
 class BaseEventFactory(SessionContainerMixin, abc.ABC):
 
     _api: API
-    _new_event_callbacks: ty.List[EventsCallback]
+    _new_event_callbacks: typing.List[EventsCallback]
 
     def __init__(
         self,
         *,
         api: API,
-        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
+        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
     ):
         self._api = api
         self._new_event_callbacks = new_event_callbacks or []
@@ -44,7 +44,7 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
 
     async def listen(
         self, sublisten: bool = False
-    ) -> ty.AsyncGenerator[BaseEvent, None]:
+    ) -> typing.AsyncGenerator[BaseEvent, None]:
         events_queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         logger.debug("Run events listening")
         try:
@@ -101,15 +101,15 @@ class BaseLongPoll(BaseEventFactory):
         self,
         *,
         api: API,
-        event_wrapper: ty.Type[BaseEvent],
-        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
+        event_wrapper: typing.Type[BaseEvent],
+        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
     ):
         self._event_wrapper = event_wrapper
-        self._baked_request: ty.Optional[ty.Awaitable] = None
-        self._requests_query_params: ty.Optional[dict] = None
-        self._server_url: ty.Optional[str] = None
+        self._baked_request: typing.Optional[typing.Awaitable] = None
+        self._requests_query_params: typing.Optional[dict] = None
+        self._server_url: typing.Optional[str] = None
 
         BaseEventFactory.__init__(
             self,
@@ -128,11 +128,11 @@ class BaseLongPoll(BaseEventFactory):
 
     async def _coroutine_run_polling(self) -> None:
         await self._setup()
-        self._requests_query_params = ty.cast(
+        self._requests_query_params = typing.cast(
             dict, self._requests_query_params
         )
         self._update_baked_request()
-        self._baked_request = ty.cast(asyncio.Task, self._baked_request)
+        self._baked_request = typing.cast(asyncio.Task, self._baked_request)
 
         while True:
             try:
@@ -164,7 +164,7 @@ class BaseLongPoll(BaseEventFactory):
                     asyncio.create_task(self._run_through_callbacks(event))
 
     async def _resolve_faileds(self, response: dict):
-        self._requests_query_params = ty.cast(
+        self._requests_query_params = typing.cast(
             dict, self._requests_query_params
         )
         if response["failed"] == 1:
@@ -177,7 +177,7 @@ class BaseLongPoll(BaseEventFactory):
         self._update_baked_request()
 
     def _update_baked_request(self) -> None:
-        self._server_url = ty.cast(str, self._server_url)
+        self._server_url = typing.cast(str, self._server_url)
         self._baked_request = self.requests_session.get(
             self._server_url, params=self._requests_query_params
         )

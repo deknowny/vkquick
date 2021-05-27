@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import typing as ty
+import typing
 
 import aiohttp
 
@@ -8,7 +8,7 @@ from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseLongPoll, EventsCallback
 from vkquick.event import GroupEvent, UserEvent
 
-if ty.TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser
 
 
@@ -18,11 +18,11 @@ class GroupLongPoll(BaseLongPoll):
         api: API,
         /,
         *,
-        group_id: ty.Optional[int] = None,
+        group_id: typing.Optional[int] = None,
         wait: int = 25,
-        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
+        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
     ) -> None:
         super().__init__(
             api=api,
@@ -63,9 +63,9 @@ class UserLongPoll(BaseLongPoll):
         version: int = 3,
         wait: int = 15,
         mode: int = 234,
-        new_event_callbacks: ty.Optional[ty.List[EventsCallback]] = None,
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
+        new_event_callbacks: typing.Optional[typing.List[EventsCallback]] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
     ) -> None:
         super().__init__(
             api=api,

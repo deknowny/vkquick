@@ -1,5 +1,5 @@
-import typing as ty
+import typing
 
-DecoratorFunction = ty.TypeVar(
-    "DecoratorFunction", bound=ty.Callable[..., ty.Any]
+DecoratorFunction = typing.TypeVar(
+    "DecoratorFunction", bound=typing.Callable[..., typing.Any]
 )

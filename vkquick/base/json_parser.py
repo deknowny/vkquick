@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-import typing as ty
+import typing
 
 
 class BaseJSONParser(abc.ABC):
@@ -16,7 +16,7 @@ class BaseJSONParser(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def dumps(data: ty.Dict[str, ty.Any]) -> ty.Union[str, bytes]:
+    def dumps(data: typing.Dict[str, typing.Any]) -> typing.Union[str, bytes]:
         """
         Метод, сериализующий JSON в строку
 
@@ -28,7 +28,7 @@ class BaseJSONParser(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def loads(string: ty.Union[str, bytes]) -> ty.Dict[str, ty.Any]:
+    def loads(string: typing.Union[str, bytes]) -> typing.Dict[str, typing.Any]:
         """
         Метод, сериализующий JSON из строки
 

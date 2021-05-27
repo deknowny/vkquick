@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-import typing as ty
+import typing
 
 from vkquick.chatbot.exceptions import FilterFailedError
 
-if ty.TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import NewMessage
 
 

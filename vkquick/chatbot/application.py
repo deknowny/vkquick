@@ -4,7 +4,7 @@ import asyncio
 import dataclasses
 import pathlib
 import shutil
-import typing as ty
+import typing
 
 import jinja2
 from loguru import logger
@@ -24,7 +24,7 @@ from vkquick.longpoll import GroupLongPoll, UserLongPoll
 @dataclasses.dataclass
 class App(Package):
 
-    packages: ty.List[Package] = dataclasses.field(default_factory=list)
+    packages: typing.List[Package] = dataclasses.field(default_factory=list)
     debug: bool = False
     # Autodoc preferences
     name: str = "VK Quick Бот"

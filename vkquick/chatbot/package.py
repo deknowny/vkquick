@@ -4,7 +4,7 @@ import asyncio
 import collections
 import dataclasses
 import re
-import typing as ty
+import typing
 
 from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
@@ -24,70 +24,70 @@ from vkquick.chatbot.ui_builders.button import (
 
 @dataclasses.dataclass
 class MessageHandler(HandlerMixin):
-    handler: ty.Callable[[NewMessage], ty.Awaitable]
+    handler: typing.Callable[[NewMessage], typing.Awaitable]
 
 
 @dataclasses.dataclass
 class SignalHandler(HandlerMixin):
-    handler: ty.Callable[[Bot], ty.Awaitable]
+    handler: typing.Callable[[Bot], typing.Awaitable]
 
 
 @dataclasses.dataclass
 class EventHandler(HandlerMixin):
-    handler: ty.Callable[[NewEvent], ty.Awaitable]
+    handler: typing.Callable[[NewEvent], typing.Awaitable]
 
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
 
     from vkquick.chatbot.application import Bot
     from vkquick.types import DecoratorFunction
 
-    SignalHandlerTypevar = ty.TypeVar(
+    SignalHandlerTypevar = typing.TypeVar(
         "SignalHandlerTypevar", bound=SignalHandler
     )
-    EventHandlerTypevar = ty.TypeVar(
+    EventHandlerTypevar = typing.TypeVar(
         "EventHandlerTypevar", bound=EventHandler
     )
-    MessageHandlerTypevar = ty.TypeVar(
+    MessageHandlerTypevar = typing.TypeVar(
         "MessageHandlerTypevar", bound=MessageHandler
     )
 
 
 @dataclasses.dataclass
 class Package:
-    prefixes: ty.List[str] = dataclasses.field(default_factory=list)
-    filter: ty.Optional[BaseFilter] = None
-    commands: ty.List[Command] = dataclasses.field(default_factory=list)
-    event_handlers: ty.Dict[
-        EventType, ty.List[EventHandler]
+    prefixes: typing.List[str] = dataclasses.field(default_factory=list)
+    filter: typing.Optional[BaseFilter] = None
+    commands: typing.List[Command] = dataclasses.field(default_factory=list)
+    event_handlers: typing.Dict[
+        EventType, typing.List[EventHandler]
     ] = dataclasses.field(
         default_factory=lambda: collections.defaultdict(list)
     )
-    message_handlers: ty.List[MessageHandler] = dataclasses.field(
+    message_handlers: typing.List[MessageHandler] = dataclasses.field(
         default_factory=list
     )
-    startup_handlers: ty.List[SignalHandler] = dataclasses.field(
+    startup_handlers: typing.List[SignalHandler] = dataclasses.field(
         default_factory=list
     )
-    shutdown_handlers: ty.List[SignalHandler] = dataclasses.field(
+    shutdown_handlers: typing.List[SignalHandler] = dataclasses.field(
         default_factory=list
     )
-    button_onclick_handlers: ty.Dict[
+    button_onclick_handlers: typing.Dict[
         str, ButtonOnclickHandler
     ] = dataclasses.field(default_factory=dict)
 
-    button_callback_handlers: ty.Dict[
+    button_callback_handlers: typing.Dict[
         str, ButtonCallbackHandler
     ] = dataclasses.field(default_factory=dict)
 
     def command(
         self,
         *names: str,
-        prefixes: ty.List[str] = None,
+        prefixes: typing.List[str] = None,
         routing_re_flags: re.RegexFlag = re.IGNORECASE,
         exclude_from_autodoc: bool = False,
-        filter: ty.Optional[BaseFilter] = None
-    ) -> ty.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
+        filter: typing.Optional[BaseFilter] = None
+    ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
             command = Command(
                 handler=func,
@@ -104,7 +104,7 @@ class Package:
 
     def on_clicked_button(
         self,
-    ) -> ty.Callable[[DecoratorFunction], ButtonOnclickHandler]:
+    ) -> typing.Callable[[DecoratorFunction], ButtonOnclickHandler]:
         def wrapper(func):
             if isinstance(func, Command):
                 func = func.handler
@@ -116,7 +116,7 @@ class Package:
 
     def on_called_button(
         self,
-    ) -> ty.Callable[[DecoratorFunction], ButtonCallbackHandler]:
+    ) -> typing.Callable[[DecoratorFunction], ButtonCallbackHandler]:
         def wrapper(func):
             if isinstance(func, Command):
                 func = func.handler
@@ -128,7 +128,7 @@ class Package:
 
     def on_event(
         self, *event_types: EventType
-    ) -> ty.Callable[[EventHandlerTypevar], EventHandlerTypevar]:
+    ) -> typing.Callable[[EventHandlerTypevar], EventHandlerTypevar]:
         def wrapper(func):
             for event_type in event_types:
                 handler = EventHandler(func)
@@ -139,7 +139,7 @@ class Package:
 
     def on_message(
         self,
-    ) -> ty.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
+    ) -> typing.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
         def wrapper(func):
             handler = MessageHandler(func)
             self.message_handlers.append(handler)
@@ -149,7 +149,7 @@ class Package:
 
     def on_startup(
         self,
-    ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
+    ) -> typing.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
         def wrapper(func):
             handler = SignalHandler(func)
             self.startup_handlers.append(handler)
@@ -159,7 +159,7 @@ class Package:
 
     def on_shutdown(
         self,
-    ) -> ty.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
+    ) -> typing.Callable[[SignalHandlerTypevar], SignalHandlerTypevar]:
         def wrapper(func):
             handler = SignalHandler(func)
             self.shutdown_handlers.append(handler)

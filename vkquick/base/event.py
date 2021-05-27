@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import abc
-import typing as ty
+import typing
 
-EventType = ty.Union[str, int]
+EventType = typing.Union[str, int]
 
 
 class BaseEvent(abc.ABC):
     """ """
 
-    def __init__(self, content: ty.Union[dict, list]):
+    def __init__(self, content: typing.Union[dict, list]):
         self._content = content
 
     @property
-    def content(self) -> ty.Union[dict, list]:
+    def content(self) -> typing.Union[dict, list]:
         """
         Сырой объект события (то, что пришло в `updates`)
         """
@@ -21,7 +21,7 @@ class BaseEvent(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def object(self) -> ty.Union[dict, list]:
+    def object(self) -> typing.Union[dict, list]:
         """ """
         ...
 

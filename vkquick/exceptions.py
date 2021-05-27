@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as ty
+import typing
 
 import huepy
 import typing_extensions as tye
 
-exceptions_storage: ty.Dict[int, ty.Type[APIError]] = {}
+exceptions_storage: typing.Dict[int, typing.Type[APIError]] = {}
 
 
 class _ParamsScheme(tye.TypedDict):
@@ -37,12 +37,12 @@ class APIError(Exception):
 
     description: str
     status_code: int
-    request_params: ty.List[_ParamsScheme]
+    request_params: typing.List[_ParamsScheme]
     extra_fields: dict
 
     def __class_getitem__(
-        cls, code: ty.Union[int, ty.Tuple[int, ...]]
-    ) -> ty.Tuple[ty.Type[APIError]]:
+        cls, code: typing.Union[int, typing.Tuple[int, ...]]
+    ) -> typing.Tuple[typing.Type[APIError]]:
         result_classes = []
         codes = (code,) if isinstance(code, int) else code
         for code in codes:
@@ -56,7 +56,7 @@ class APIError(Exception):
         return tuple(result_classes)
 
     @classmethod
-    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> APIError:
+    def destruct_response(cls, response: typing.Dict[str, typing.Any]) -> APIError:
         """Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
 

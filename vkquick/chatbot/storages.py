@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import dataclasses
-import typing as ty
+import typing
 
 from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
@@ -12,7 +12,7 @@ from vkquick.chatbot.wrappers.message import (
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.base.event import BaseEvent
     from vkquick.chatbot.application import Bot
 
@@ -33,7 +33,7 @@ class NewEvent:
         return cls(event=event, bot=bot)
 
 
-SenderTypevar = ty.TypeVar("SenderTypevar", bound=Page)
+SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
 
 @dataclasses.dataclass
@@ -67,10 +67,10 @@ class NewMessage(NewEvent, SentMessage):
 
     @functools.cached_property
     def msg(self) -> Message:
-        return ty.cast(Message, self.truncated_message)
+        return typing.cast(Message, self.truncated_message)
 
     async def fetch_sender(
-        self, typevar: ty.Type[SenderTypevar], /
+        self, typevar: typing.Type[SenderTypevar], /
     ) -> SenderTypevar:
         if self.msg.from_id > 0 and typevar in {Page, User}:
             return await User.fetch_one(self.api, self.msg.from_id)
@@ -106,7 +106,7 @@ class CallbackButtonPressed(NewEvent):
         return await self._call_action(link=link, type="open_link")
 
     async def open_app(
-        self, app_id: int, hash: str, owner_id: ty.Optional[int] = None
+        self, app_id: int, hash: str, owner_id: typing.Optional[int] = None
     ) -> dict:
         return await self._call_action(
             app_id=app_id, hash=hash, owner_id=owner_id, type="open_app"

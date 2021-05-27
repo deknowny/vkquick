@@ -4,7 +4,7 @@ import dataclasses
 import functools
 import datetime
 import textwrap
-import typing as ty
+import typing
 
 
 from vkquick.chatbot.base.wrapper import Wrapper
@@ -15,11 +15,11 @@ from vkquick.chatbot.utils import random_id as random_id_
 from vkquick.chatbot.wrappers.attachment import Document, Photo
 from vkquick.json_parsers import json_parser_policy
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.api import API, PhotoEntityTyping
 
-    AttachmentTyping = ty.Union[str, Photo, Document]
-    AttachmentsTyping = ty.Union[ty.List[AttachmentTyping], AttachmentTyping]
+    AttachmentTyping = typing.Union[str, Photo, Document]
+    AttachmentsTyping = typing.Union[typing.List[AttachmentTyping], AttachmentTyping]
 
 
 class TruncatedMessage(Wrapper):
@@ -73,7 +73,7 @@ class Message(TruncatedMessage):
         return self.fields["random_id"]
 
     @property
-    def attachments(self) -> ty.List[dict]:
+    def attachments(self) -> typing.List[dict]:
         return self.fields["attachments"]
 
     @property
@@ -89,27 +89,27 @@ class Message(TruncatedMessage):
         return bool(self.fields["out"])
 
     @functools.cached_property
-    def keyboard(self) -> ty.Optional[dict]:
+    def keyboard(self) -> typing.Optional[dict]:
         if "keyboard" in self.fields:
             return json_parser_policy.loads(self.fields["keyboard"])
         return None
 
     @functools.cached_property
-    def fwd_messages(self) -> ty.List[Message]:
+    def fwd_messages(self) -> typing.List[Message]:
         return list(map(self.__class__, self.fields["fwd_messages"]))
 
     @property
-    def geo(self) -> ty.Optional[dict]:
+    def geo(self) -> typing.Optional[dict]:
         return self.fields.get("geo")
 
     @functools.cached_property
-    def payload(self) -> ty.Optional[dict]:
+    def payload(self) -> typing.Optional[dict]:
         if "payload" in self.fields:
             return json_parser_policy.loads(self.fields["payload"])
         return None
 
     @functools.cached_property
-    def reply_message(self) -> ty.Optional[Message]:
+    def reply_message(self) -> typing.Optional[Message]:
         if "reply_message" in self.fields:
             return self.__class__(self.fields["reply_message"])
         return None
@@ -119,19 +119,19 @@ class Message(TruncatedMessage):
         return self.fields.get("action")
 
     @property
-    def ref(self) -> ty.Optional[str]:
+    def ref(self) -> typing.Optional[str]:
         return self.fields.get("ref")
 
     @property
-    def ref_source(self) -> ty.Optional[str]:
+    def ref_source(self) -> typing.Optional[str]:
         return self.fields.get("ref_source")
 
     @property
-    def expire_ttl(self) -> ty.Optional[int]:
+    def expire_ttl(self) -> typing.Optional[int]:
         return self.fields.get("expire_ttl")
 
     @functools.cached_property
-    def photos(self) -> ty.List[Photo]:
+    def photos(self) -> typing.List[Photo]:
         """
         Возвращает только фотографии из всего,
         что есть во вложениях, оборачивая их в обертку
@@ -144,7 +144,7 @@ class Message(TruncatedMessage):
         return photos
 
     @functools.cached_property
-    def docs(self) -> ty.List[Document]:
+    def docs(self) -> typing.List[Document]:
         """
         Возвращает только вложения с типом документ из всего,
         что есть во вложениях, оборачивая их в обертку
@@ -173,7 +173,7 @@ class SentMessage:
 
     async def upload_photos(
         self, *photos: PhotoEntityTyping
-    ) -> ty.List[Photo]:
+    ) -> typing.List[Photo]:
         """
         Загружает фотографию для отправки в сообщение
 
@@ -191,12 +191,12 @@ class SentMessage:
 
     async def upload_doc(
         self,
-        content: ty.Union[str, bytes],
+        content: typing.Union[str, bytes],
         filename: str,
         *,
-        tags: ty.Optional[str] = None,
-        return_tags: ty.Optional[bool] = None,
-        type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
+        tags: typing.Optional[str] = None,
+        return_tags: typing.Optional[bool] = None,
+        type: typing.Literal["doc", "audio_message", "graffiti"] = "doc",
     ) -> Document:
         """
         Загружает документ для отправки в сообщение
@@ -225,8 +225,8 @@ class SentMessage:
     async def delete(
         self,
         *,
-        spam: ty.Optional[bool] = None,
-        group_id: ty.Optional[int] = None,
+        spam: typing.Optional[bool] = None,
+        group_id: typing.Optional[int] = None,
         delete_for_all: bool = True,
     ) -> None:
         """
@@ -258,15 +258,15 @@ class SentMessage:
         self,
         message: str,
         /,
-        lat: ty.Optional[float] = None,
-        long: ty.Optional[float] = None,
-        attachment: ty.Optional[AttachmentsTyping] = None,
+        lat: typing.Optional[float] = None,
+        long: typing.Optional[float] = None,
+        attachment: typing.Optional[AttachmentsTyping] = None,
         keep_forward_messages: bool = True,
         keep_snippets: bool = True,
-        group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
+        group_id: typing.Optional[int] = None,
+        keyboard: typing.Optional[typing.Union[str, Keyboard]] = None,
         dont_parse_links: bool = True,
-        template: ty.Optional[ty.Union[str, Carousel]] = None,
+        template: typing.Optional[typing.Union[str, Carousel]] = None,
     ) -> int:
         if self.truncated_message.id:
             routing = dict(message_id=self.truncated_message.id)
@@ -294,25 +294,25 @@ class SentMessage:
 
     async def reply(
         self,
-        message: ty.Optional[str] = None,
+        message: typing.Optional[str] = None,
         /,
         *,
-        random_id: ty.Optional[int] = None,
-        lat: ty.Optional[float] = None,
-        long: ty.Optional[float] = None,
-        attachment: ty.Optional[AttachmentsTyping] = None,
-        sticker_id: ty.Optional[int] = None,
-        group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
-        template: ty.Optional[ty.Union[str, Carousel]] = None,
-        payload: ty.Optional[str] = None,
-        dont_parse_links: ty.Optional[bool] = None,
+        random_id: typing.Optional[int] = None,
+        lat: typing.Optional[float] = None,
+        long: typing.Optional[float] = None,
+        attachment: typing.Optional[AttachmentsTyping] = None,
+        sticker_id: typing.Optional[int] = None,
+        group_id: typing.Optional[int] = None,
+        keyboard: typing.Optional[typing.Union[str, Keyboard]] = None,
+        template: typing.Optional[typing.Union[str, Carousel]] = None,
+        payload: typing.Optional[str] = None,
+        dont_parse_links: typing.Optional[bool] = None,
         disable_mentions: bool = True,
-        intent: ty.Optional[str] = None,
-        expire_ttl: ty.Optional[int] = None,
-        silent: ty.Optional[bool] = None,
-        subscribe_id: ty.Optional[int] = None,
-        content_source: ty.Optional[str] = None,
+        intent: typing.Optional[str] = None,
+        expire_ttl: typing.Optional[int] = None,
+        silent: typing.Optional[bool] = None,
+        subscribe_id: typing.Optional[int] = None,
+        content_source: typing.Optional[str] = None,
         **kwargs,
     ) -> SentMessage:
         params = dict(
@@ -350,24 +350,24 @@ class SentMessage:
 
     async def answer(
         self,
-        message: ty.Optional[str] = None,
+        message: typing.Optional[str] = None,
         *,
-        random_id: ty.Optional[int] = None,
-        lat: ty.Optional[float] = None,
-        long: ty.Optional[float] = None,
-        attachment: ty.Optional[AttachmentsTyping] = None,
-        sticker_id: ty.Optional[int] = None,
-        group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
-        payload: ty.Optional[str] = None,
-        dont_parse_links: ty.Optional[bool] = None,
+        random_id: typing.Optional[int] = None,
+        lat: typing.Optional[float] = None,
+        long: typing.Optional[float] = None,
+        attachment: typing.Optional[AttachmentsTyping] = None,
+        sticker_id: typing.Optional[int] = None,
+        group_id: typing.Optional[int] = None,
+        keyboard: typing.Optional[typing.Union[str, Keyboard]] = None,
+        payload: typing.Optional[str] = None,
+        dont_parse_links: typing.Optional[bool] = None,
         disable_mentions: bool = True,
-        template: ty.Optional[ty.Union[str, Carousel]] = None,
-        intent: ty.Optional[str] = None,
-        expire_ttl: ty.Optional[int] = None,
-        silent: ty.Optional[bool] = None,
-        subscribe_id: ty.Optional[int] = None,
-        content_source: ty.Optional[str] = None,
+        template: typing.Optional[typing.Union[str, Carousel]] = None,
+        intent: typing.Optional[str] = None,
+        expire_ttl: typing.Optional[int] = None,
+        silent: typing.Optional[bool] = None,
+        subscribe_id: typing.Optional[int] = None,
+        content_source: typing.Optional[str] = None,
         **kwargs,
     ) -> SentMessage:
         params = dict(
@@ -395,24 +395,24 @@ class SentMessage:
 
     async def forward(
         self,
-        message: ty.Optional[str] = None,
+        message: typing.Optional[str] = None,
         *,
-        random_id: ty.Optional[int] = None,
-        lat: ty.Optional[float] = None,
-        long: ty.Optional[float] = None,
-        attachment: ty.Optional[AttachmentsTyping] = None,
-        sticker_id: ty.Optional[int] = None,
-        group_id: ty.Optional[int] = None,
-        keyboard: ty.Optional[ty.Union[str, Keyboard]] = None,
-        payload: ty.Optional[str] = None,
-        dont_parse_links: ty.Optional[bool] = None,
+        random_id: typing.Optional[int] = None,
+        lat: typing.Optional[float] = None,
+        long: typing.Optional[float] = None,
+        attachment: typing.Optional[AttachmentsTyping] = None,
+        sticker_id: typing.Optional[int] = None,
+        group_id: typing.Optional[int] = None,
+        keyboard: typing.Optional[typing.Union[str, Keyboard]] = None,
+        payload: typing.Optional[str] = None,
+        dont_parse_links: typing.Optional[bool] = None,
         disable_mentions: bool = True,
-        intent: ty.Optional[str] = None,
-        expire_ttl: ty.Optional[int] = None,
-        silent: ty.Optional[bool] = None,
-        subscribe_id: ty.Optional[int] = None,
-        template: ty.Optional[ty.Union[str, Carousel]] = None,
-        content_source: ty.Optional[str] = None,
+        intent: typing.Optional[str] = None,
+        expire_ttl: typing.Optional[int] = None,
+        silent: typing.Optional[bool] = None,
+        subscribe_id: typing.Optional[int] = None,
+        template: typing.Optional[typing.Union[str, Carousel]] = None,
+        content_source: typing.Optional[str] = None,
         **kwargs,
     ) -> SentMessage:
         params = dict(
@@ -471,7 +471,7 @@ class CallbackButtonPressedMessage(Wrapper):
         return self.fields["event_id"]
 
     @functools.cached_property
-    def payload(self) -> ty.Optional[dict]:
+    def payload(self) -> typing.Optional[dict]:
         return self.fields["payload"]
 
     # Shortcuts

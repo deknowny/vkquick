@@ -1,7 +1,7 @@
 import dataclasses
 import enum
 import re
-import typing as ty
+import typing
 
 from vkquick.chatbot.base.cutter import (
     Cutter,
@@ -85,8 +85,8 @@ class OptionalCutter(Cutter):
         typevar: Cutter,
         /,
         *,
-        default: ty.Optional = None,
-        default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None,
+        default: typing.Optional = None,
+        default_factory: typing.Optional[typing.Callable[[], typing.Any]] = None,
     ) -> None:
         self._default = default
         self._default_factory = default_factory
@@ -182,7 +182,7 @@ class GroupCutter(Cutter):
 
 
 class _SequenceCutter(Cutter):
-    _factory: ty.Callable[[list], ty.Sequence]
+    _factory: typing.Callable[[list], typing.Sequence]
 
     def __init__(self, typevar: Cutter):
         self._typevar = typevar
@@ -259,21 +259,21 @@ class LiteralCutter(Cutter):
         return header.format(elements=elements_docs)
 
 
-UserID = ty.NewType("UserID", int)
-GroupID = ty.NewType("GroupID", int)
-PageID = ty.NewType("PageID", int)
+UserID = typing.NewType("UserID", int)
+GroupID = typing.NewType("GroupID", int)
+PageID = typing.NewType("PageID", int)
 
-T = ty.TypeVar(
+T = typing.TypeVar(
     "T",
-    # ty.Type[UserProvider],
-    # ty.Type[GroupProvider],
-    # ty.Type[PageProvider],
-    # ty.Type[User],
-    # ty.Type[Group],
-    # ty.Type[Page],
-    # ty.Type[UserID],
-    # ty.Type[GroupID],
-    # ty.Type[PageID],
+    # typing.Type[UserProvider],
+    # typing.Type[GroupProvider],
+    # typing.Type[PageProvider],
+    # typing.Type[User],
+    # typing.Type[Group],
+    # typing.Type[Page],
+    # typing.Type[UserID],
+    # typing.Type[GroupID],
+    # typing.Type[PageID],
     # covariant=True
 )
 
@@ -285,7 +285,7 @@ class PageType(enum.Enum):
 
 
 @dataclasses.dataclass
-class Mention(ty.Generic[T]):
+class Mention(typing.Generic[T]):
     alias: str
     entity: T
     page_type: PageType
@@ -309,9 +309,9 @@ class MentionCutter(Cutter):
         page_type: T,
     ):
         self._page_type = get_origin_typing(page_type)
-        fields = ty.get_args(page_type)
+        fields = typing.get_args(page_type)
         if fields:
-            self._fields = ty.get_args(fields[0])
+            self._fields = typing.get_args(fields[0])
         else:
             self._fields = None
 
@@ -354,7 +354,7 @@ class MentionCutter(Cutter):
         parsing_response = cut_part_via_regex(
             self.mention_regex, arguments_string
         )
-        match_object: ty.Match = parsing_response.extra["match_object"]
+        match_object: typing.Match = parsing_response.extra["match_object"]
         page_id = int(match_object.group("id"))
         page_type = match_object.group("page_type")
 
@@ -491,7 +491,7 @@ class EntityCutter(MentionCutter):
         parsing_response = cut_part_via_regex(
             self.raw_id_regex, arguments_string
         )
-        match_object: ty.Match = parsing_response.extra["match_object"]
+        match_object: typing.Match = parsing_response.extra["match_object"]
 
         if match_object.group("type") in ("+", "id", ""):
             page_type = PageType.USER

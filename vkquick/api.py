@@ -6,7 +6,7 @@ import itertools
 import os
 import re
 import time
-import typing as ty
+import typing
 import urllib.parse
 
 import aiofiles
@@ -22,10 +22,10 @@ from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from vkquick.base.json_parser import BaseJSONParser
 
-    PhotoEntityTyping = ty.Union[str, bytes, ty.BinaryIO, os.PathLike]
+    PhotoEntityTyping = typing.Union[str, bytes, typing.BinaryIO, os.PathLike]
 
 
 @enum.unique
@@ -46,9 +46,9 @@ class API(SessionContainerMixin):
         token_owner: TokenOwner = TokenOwner.UNKNOWN,
         version: str = "5.135",
         requests_url: str = "https://api.vk.com/method/",
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
-        cache_table: ty.Optional[cachetools.Cache] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
+        cache_table: typing.Optional[cachetools.Cache] = None,
     ):
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser
@@ -99,7 +99,7 @@ class API(SessionContainerMixin):
         self._use_cache = True
         return self
 
-    async def define_token_owner(self) -> ty.Tuple[TokenOwner, Page]:
+    async def define_token_owner(self) -> typing.Tuple[TokenOwner, Page]:
         """
         Позволяет определить владельца токена: группа или пользователь.
 
@@ -162,7 +162,7 @@ class API(SessionContainerMixin):
     async def __call__(
         self,
         **request_params,
-    ) -> ty.Any:
+    ) -> typing.Any:
         """
         Вызывает метод `method` после обращения к имени метода через `__getattr__`
 
@@ -176,7 +176,7 @@ class API(SessionContainerMixin):
         self._method_name = ""
         return await self.method(method_name, **request_params)
 
-    async def method(self, method_name: str, **request_params) -> ty.Any:
+    async def method(self, method_name: str, **request_params) -> typing.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
         Вызов метода поддерживает конвертацию из snake_case в camelCase.
@@ -219,7 +219,7 @@ class API(SessionContainerMixin):
             use_cache=use_cache,
         )
 
-    async def execute(self, code: str, /) -> ty.Any:
+    async def execute(self, code: str, /) -> typing.Any:
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
@@ -237,9 +237,9 @@ class API(SessionContainerMixin):
     async def _make_api_request(
         self,
         method_name: str,
-        request_params: ty.Dict[str, ty.Any],
+        request_params: typing.Dict[str, typing.Any],
         use_cache: bool,
-    ) -> ty.Any:
+    ) -> typing.Any:
         """
         Выполняет API запрос на определенный метод с заданными параметрами
 
@@ -333,7 +333,7 @@ class API(SessionContainerMixin):
         """
         if isinstance(photo, bytes):
             return photo
-        elif isinstance(photo, ty.BinaryIO):
+        elif isinstance(photo, typing.BinaryIO):
             return photo.read()
         elif isinstance(photo, str) and photo.startswith("http"):
             async with self.requests_session.get(photo) as response:
@@ -344,7 +344,7 @@ class API(SessionContainerMixin):
 
     async def upload_photos_to_message(
         self, *photos: PhotoEntityTyping, peer_id: int = 0
-    ) -> ty.List[Photo]:
+    ) -> typing.List[Photo]:
         """
         Загружает фотографию в сообщения
 
@@ -400,12 +400,12 @@ class API(SessionContainerMixin):
 
     async def upload_doc_to_message(
         self,
-        content: ty.Union[str, bytes],
+        content: typing.Union[str, bytes],
         filename: str,
         *,
-        tags: ty.Optional[str] = None,
-        return_tags: ty.Optional[bool] = None,
-        type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
+        tags: typing.Optional[str] = None,
+        return_tags: typing.Optional[bool] = None,
+        type: typing.Literal["doc", "audio_message", "graffiti"] = "doc",
         peer_id: int = 0,
     ) -> Document:
         """
@@ -533,7 +533,7 @@ def _convert_params_for_api(params: dict, /):
     return updated_params
 
 
-def _upper_zero_group(match: ty.Match, /) -> str:
+def _upper_zero_group(match: typing.Match, /) -> str:
     """
     Поднимает все символы в верхний
     регистр у captured-группы `let`. Используется

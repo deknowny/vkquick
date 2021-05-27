@@ -1,4 +1,4 @@
-import typing as ty
+import typing
 
 
 class SafeDict(dict):
@@ -29,7 +29,7 @@ class Wrapper:
     def _extra_fields_to_format(self) -> dict:
         return {}
 
-    def __getitem__(self, item: str) -> ty.Any:
+    def __getitem__(self, item: str) -> typing.Any:
         return self._fields[item]
 
     def __repr__(self) -> str:
