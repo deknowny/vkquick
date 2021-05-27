@@ -467,7 +467,7 @@ class EntityCutter(MentionCutter):
 
         resolved_screen_name = await ctx.api.use_cache().method(
             "utils.resolve_screen_name",
-            screen_name=parsing_response.parsed_part
+            screen_name=parsing_response.parsed_part,
         )
         if not resolved_screen_name:
             raise BadArgumentError("Invalid screen name")

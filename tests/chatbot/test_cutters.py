@@ -1,10 +1,10 @@
 import asyncio
-import unittest.mock
 import typing as ty
+import unittest.mock
 
 import pytest
-import vkquick as vq
 
+import vkquick as vq
 
 NOT_PARSED = object()
 
@@ -191,7 +191,7 @@ async def test_mention_with_id():
         "http://vk.com/id1",
         "id1",
         "durov",
-        "1"
+        "1",
     ],
 )
 @pytest.mark.asyncio
@@ -204,7 +204,11 @@ async def test_group_entity_by_string(input_string, user_api):
     result_page, result_user, result_user_id = await asyncio.gather(
         page_cutter.cut_part(mocked_context, input_string),
         user_cutter.cut_part(mocked_context, input_string),
-        user_id_cutter.cut_part(mocked_context, input_string)
+        user_id_cutter.cut_part(mocked_context, input_string),
     )
-    assert result_page.parsed_part.id == result_user.parsed_part.id == result_user_id.parsed_part.id == 1
-
+    assert (
+        result_page.parsed_part.id
+        == result_user.parsed_part.id
+        == result_user_id.parsed_part.id
+        == 1
+    )

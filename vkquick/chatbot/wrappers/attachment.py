@@ -26,7 +26,7 @@ class Attachment(Wrapper, APISerializableMixin):
             type=self._name,
             owner_id=self.fields["owner_id"],
             attachment_id=self.fields["id"],
-            access_key=access_key
+            access_key=access_key,
         )
 
 

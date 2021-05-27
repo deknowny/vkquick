@@ -1,9 +1,12 @@
 import vkquick as vq
-import pytest
 
 
 def test_group_event():
-    event_content = {"type": "message_new", "object": {"text": "abc"}, "group_id": 1}
+    event_content = {
+        "type": "message_new",
+        "object": {"text": "abc"},
+        "group_id": 1,
+    }
     event = vq.GroupEvent(event_content)
     assert event.content == event_content
     assert event.object == event_content["object"]

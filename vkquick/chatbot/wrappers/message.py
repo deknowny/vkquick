@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import datetime
 import textwrap
 import typing as ty
 
-from vkquick.cached_property import cached_property
+
 from vkquick.chatbot.base.wrapper import Wrapper
 from vkquick.chatbot.ui_builders.carousel import Carousel
 from vkquick.chatbot.ui_builders.keyboard import Keyboard
@@ -45,7 +46,7 @@ class Message(TruncatedMessage):
     def id(self) -> int:
         return self.fields["id"]
 
-    @cached_property
+    @functools.cached_property
     def chat_id(self) -> int:
         chat_id = self.peer_id - peer()
         if chat_id < 0:
@@ -55,7 +56,7 @@ class Message(TruncatedMessage):
 
         return chat_id
 
-    @cached_property
+    @functools.cached_property
     def date(self) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(self.fields["date"])
 
@@ -87,13 +88,13 @@ class Message(TruncatedMessage):
     def out(self) -> bool:
         return bool(self.fields["out"])
 
-    @cached_property
+    @functools.cached_property
     def keyboard(self) -> ty.Optional[dict]:
         if "keyboard" in self.fields:
             return json_parser_policy.loads(self.fields["keyboard"])
         return None
 
-    @cached_property
+    @functools.cached_property
     def fwd_messages(self) -> ty.List[Message]:
         return list(map(self.__class__, self.fields["fwd_messages"]))
 
@@ -101,13 +102,13 @@ class Message(TruncatedMessage):
     def geo(self) -> ty.Optional[dict]:
         return self.fields.get("geo")
 
-    @cached_property
+    @functools.cached_property
     def payload(self) -> ty.Optional[dict]:
         if "payload" in self.fields:
             return json_parser_policy.loads(self.fields["payload"])
         return None
 
-    @cached_property
+    @functools.cached_property
     def reply_message(self) -> ty.Optional[Message]:
         if "reply_message" in self.fields:
             return self.__class__(self.fields["reply_message"])
@@ -129,7 +130,7 @@ class Message(TruncatedMessage):
     def expire_ttl(self) -> ty.Optional[int]:
         return self.fields.get("expire_ttl")
 
-    @cached_property
+    @functools.cached_property
     def photos(self) -> ty.List[Photo]:
         """
         Возвращает только фотографии из всего,
@@ -142,7 +143,7 @@ class Message(TruncatedMessage):
         ]
         return photos
 
-    @cached_property
+    @functools.cached_property
     def docs(self) -> ty.List[Document]:
         """
         Возвращает только вложения с типом документ из всего,
@@ -469,7 +470,7 @@ class CallbackButtonPressedMessage(Wrapper):
     def event_id(self) -> str:
         return self.fields["event_id"]
 
-    @cached_property
+    @functools.cached_property
     def payload(self) -> ty.Optional[dict]:
         return self.fields["payload"]
 

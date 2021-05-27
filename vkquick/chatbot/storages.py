@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import functools
 import dataclasses
 import typing as ty
 
-from vkquick.cached_property import cached_property
 from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
@@ -65,7 +65,7 @@ class NewMessage(NewEvent, SentMessage):
             truncated_message=extended_message,
         )
 
-    @cached_property
+    @functools.cached_property
     def msg(self) -> Message:
         return ty.cast(Message, self.truncated_message)
 
@@ -86,7 +86,7 @@ class NewMessage(NewEvent, SentMessage):
 
 
 class CallbackButtonPressed(NewEvent):
-    @cached_property
+    @functools.cached_property
     def msg(self) -> CallbackButtonPressedMessage:
         return CallbackButtonPressedMessage(self.event.object)
 

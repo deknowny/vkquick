@@ -5,7 +5,6 @@ from .base.api_serializable import APISerializableMixin
 from .base.event import BaseEvent
 from .base.event_factories import BaseEventFactory, BaseLongPoll
 from .base.json_parser import BaseJSONParser
-from .cached_property import cached_property
 from .chatbot.application import App, Bot
 from .chatbot.base.cutter import (
     Argument,

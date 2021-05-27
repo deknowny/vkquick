@@ -3,7 +3,6 @@ import sys
 
 from loguru import logger
 
-
 # Удаление настроек логгера по умолчанию
 logger.remove(0)
 
@@ -14,6 +13,7 @@ class LoggingLevel:
     Вспомогательный класс для фильтрации
     логов по их уровню
     """
+
     level: str
 
     def __call__(self, record: dict) -> bool:
