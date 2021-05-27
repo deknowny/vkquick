@@ -43,4 +43,3 @@ class AndFilter(BaseFilter):
     async def make_decision(self, ctx: NewMessage):
         await self.filter1.make_decision(ctx)
         await self.filter2.make_decision(ctx)
-

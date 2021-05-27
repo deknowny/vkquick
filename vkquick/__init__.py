@@ -17,6 +17,7 @@ from .chatbot.base.cutter import (
 from .chatbot.base.filter import AndFilter, BaseFilter, OrFilter
 from .chatbot.base.ui_builder import UIBuilder
 from .chatbot.base.wrapper import Wrapper
+from .chatbot.command import filters
 from .chatbot.command.adapters import resolve_typing
 from .chatbot.command.command import Command
 from .chatbot.command.cutters import (
@@ -73,7 +74,6 @@ from .logger import LoggingLevel, update_logging_level
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .types import DecoratorFunction
-from .chatbot.command import filters
 
 __all__ = [var for var in locals().keys() if not var.startswith("_")]
 __version__ = importlib.metadata.version(__name__)

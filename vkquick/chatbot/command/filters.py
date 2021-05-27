@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing as ty
+
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.exceptions import FilterFailedError
 
