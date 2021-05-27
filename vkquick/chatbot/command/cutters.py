@@ -11,7 +11,7 @@ from vkquick.chatbot.base.cutter import (
 from vkquick.chatbot.exceptions import BadArgumentError
 from vkquick.chatbot.storages import NewMessage
 from vkquick.chatbot.utils import get_origin_typing
-from vkquick.chatbot.wrappers.page import Group, IDType, Page, User
+from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
 
 
@@ -64,7 +64,7 @@ class WordCutter(Cutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
     def gen_doc(self):
-        return "Любое слово (последовательность непробельных символов)"
+        return "Любое слово (последовательность не пробельных символов)"
 
 
 class StringCutter(Cutter):
@@ -247,7 +247,7 @@ class LiteralCutter(Cutter):
                 return cut_part_via_regex(typevar, arguments_string)
             except BadArgumentError:
                 continue
-        raise BadArgumentError("Regex didn't matched")
+        raise BadArgumentError("Regex didn't match")
 
     def gen_doc(self):
         header = "Любое из следующих значений:<br><ol>{elements}</ol>"
@@ -346,7 +346,7 @@ class MentionCutter(Cutter):
                 return await self._make_group(ctx, page_id)
 
         else:
-            raise BadArgumentError("Regex didn't matched")
+            raise BadArgumentError("Regex didn't match")
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
@@ -447,7 +447,7 @@ class EntityCutter(MentionCutter):
             except BadArgumentError:
                 continue
 
-        raise BadArgumentError("Regexes didn't matched, no user attached")
+        raise BadArgumentError("Regexes didn't match, no user attached")
 
     async def _mention_method(
         self, ctx: NewMessage, arguments_string: str

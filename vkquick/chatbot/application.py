@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-import os
 import pathlib
 import shutil
 import typing as ty
