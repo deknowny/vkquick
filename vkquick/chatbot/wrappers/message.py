@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import textwrap
 import typing as ty
 
 from vkquick.cached_property import cached_property
@@ -162,6 +163,12 @@ class SentMessage:
     truncated_message: TruncatedMessage
 
     async def _send_message(self, params: dict) -> SentMessage:
+        # Нужно сделать строку из сообщения и если такие есть, убрать
+        # лишние табы, присутствующие перед каждой строкой
+        params["message"] = textwrap.dedent(
+            str(params["message"])
+        ).strip()
+
         sent_message = await self.api.method("messages.send", **params)
         sent_message = TruncatedMessage(sent_message[0])
         return SentMessage(self.api, sent_message)
