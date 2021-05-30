@@ -34,6 +34,7 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ):
+        self.stop = False
         self._api = api
         self._new_event_callbacks = new_event_callbacks or []
         SessionContainerMixin.__init__(
@@ -145,6 +146,8 @@ class BaseLongPoll(BaseEventFactory):
                 self._update_baked_request()
                 continue
             else:
+                if self.stop:
+                    return
                 async with response:
                     if "X-Next-Ts" in response.headers:
                         self._requests_query_params.update(

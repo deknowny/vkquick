@@ -35,10 +35,11 @@ class App(Package):
         if self.debug:
             update_logging_level("DEBUG")
 
+        packages_gen = self.packages.copy()
+        for package in packages_gen:
+            self.add_package(package)
+
         self.packages.append(self)
-        for package in self.packages:
-            for command in package.commands:
-                command.update_prefix(*self.prefixes)
 
     async def route_event(self, new_event_storage) -> None:
         routing_coroutines = [
@@ -65,6 +66,8 @@ class App(Package):
 
     def add_package(self, package: Package) -> None:
         self.packages.append(package)
+        for command in package.commands:
+            command.update_prefix(*self.prefixes)
 
     def run(
         self,
