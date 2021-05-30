@@ -370,7 +370,7 @@ class API(SessionContainerMixin):
             # поэтому необходимо разбить фотографии на части
             start_step = loading_step * 5
             end_step = start_step + 5
-            if len(photo_bytes) < end_step:
+            if len(photo_bytes) < end_step and result_photos:
                 break
 
             for ind, photo in enumerate(photo_bytes[start_step:end_step]):
@@ -503,10 +503,6 @@ def _convert_param_value(value, /):
     elif isinstance(value, APISerializableMixin):
         new_value = value.represent_as_api_param()
         return _convert_param_value(new_value)
-
-    # Для корректного отображения в логах
-    elif isinstance(value, int):
-        return value
 
     else:
         return str(value)

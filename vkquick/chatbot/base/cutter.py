@@ -19,9 +19,6 @@ class CommandTextArgument(typing.NamedTuple):
 @dataclasses.dataclass
 class Argument:
     description: typing.Optional[str] = None
-    callbacks: typing.List[
-        typing.Callable[[NewMessage], typing.Awaitable[typing.Any]]
-    ] = dataclasses.field(default_factory=list)
     default: typing.Optional = None
     default_factory: typing.Optional[typing.Callable[[], typing.Any]] = None
     cutter_preferences: dict = dataclasses.field(default_factory=dict)

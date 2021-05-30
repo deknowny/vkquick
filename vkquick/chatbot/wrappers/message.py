@@ -16,6 +16,7 @@ from vkquick.json_parsers import json_parser_policy
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.api import API, PhotoEntityTyping
+    from vkquick.chatbot.storages import NewMessage
 
     AttachmentTyping = typing.Union[str, Photo, Document]
     AttachmentsTyping = typing.Union[

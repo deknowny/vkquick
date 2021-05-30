@@ -45,13 +45,13 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         ...
 
     async def listen(
-        self, sublisten: bool = False
+        self, same_poll: bool = False
     ) -> typing.AsyncGenerator[BaseEvent, None]:
         events_queue: asyncio.Queue[BaseEvent] = asyncio.Queue()
         logger.debug("Run events listening")
         try:
             self.add_event_callback(events_queue.put)
-            if not sublisten:
+            if not same_poll:
                 asyncio.create_task(self.coroutine_run_polling())
             while True:
                 yield await events_queue.get()

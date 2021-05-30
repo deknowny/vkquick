@@ -16,6 +16,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
     from vkquick.chatbot.application import Bot
 
+    SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
+
 
 @dataclasses.dataclass
 class NewEvent:
@@ -31,9 +33,6 @@ class NewEvent:
         bot: Bot,
     ):
         return cls(event=event, bot=bot)
-
-
-SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
 
 @dataclasses.dataclass
@@ -68,6 +67,26 @@ class NewMessage(NewEvent, SentMessage):
     @functools.cached_property
     def msg(self) -> Message:
         return typing.cast(Message, self.truncated_message)
+
+    async def conquer_new_message(
+        self, *,
+        same_chat: bool = True,
+        same_user: bool = True
+    ) -> typing.Generator[NewMessage, None, None]:
+        async for new_event in self.bot.events_factory.listen(same_poll=True):
+            if new_event.type in {
+                "message_new",
+                "message_reply",
+                4,
+            }:
+                conquered_message = await NewMessage.from_event(
+                    event=new_event, bot=self.bot
+                )
+                if (
+                    (conquered_message.msg.peer_id == self.msg.peer_id or not same_chat)
+                    and (conquered_message.msg.from_id == self.msg.from_id or not same_user)
+                ):
+                    yield conquered_message
 
     async def fetch_sender(
         self, typevar: typing.Type[SenderTypevar], /
@@ -111,3 +130,5 @@ class CallbackButtonPressed(NewEvent):
         return await self._call_action(
             app_id=app_id, hash=hash, owner_id=owner_id, type="open_app"
         )
+
+

@@ -12,7 +12,7 @@
                         {%- endif -%}
 
                         {%- for text_argument in command.text_arguments %}
-                            <span class="command-argument"><i>{{ "{" + text_argument.argument_name +"}"}}</i></span>
+                            <span class="command-argument"><i>{{ "{" + text_argument.argument_name +"}" }}</i></span>
                         {%- endfor -%}
                     </code>
                     <a class="command-headerlink" href="#{{ command.names[0] }}" title="Permanent link">#</a>
@@ -36,7 +36,7 @@
                                     </code>
                                 </h2>
                                 <p>
-                                    {{ text_argument.cutter.gen_doc() }}
+                                    {{ text_argument.argument_settings.description or text_argument.cutter.gen_doc() }}
                                 </p>
                             {%- endfor -%}
                         </div>
