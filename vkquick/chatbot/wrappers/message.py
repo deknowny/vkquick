@@ -167,7 +167,8 @@ class SentMessage:
     async def _send_message(self, params: dict) -> SentMessage:
         # Нужно убрать лишние табы, если такие есть,
         # присутствующие перед каждой строкой
-        params["message"] = textwrap.dedent(params["message"]).strip()
+        if params["message"] is not None:
+            params["message"] = textwrap.dedent(params["message"]).strip()
 
         sent_message = await self.api.method("messages.send", **params)
         sent_message = TruncatedMessage(sent_message[0])

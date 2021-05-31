@@ -6,6 +6,7 @@ import itertools
 import os
 import re
 import time
+import traceback
 import typing
 import urllib.parse
 
@@ -21,6 +22,7 @@ from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
+from vkquick import error_codes
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser
@@ -363,6 +365,7 @@ class API(SessionContainerMixin):
         ]
         photo_bytes = await asyncio.gather(*photo_bytes_coroutines)
         result_photos = []
+        # TODO: concurrency between uploading
         for loading_step in itertools.count(0):
             data_storage = aiohttp.FormData()
 
@@ -370,7 +373,7 @@ class API(SessionContainerMixin):
             # поэтому необходимо разбить фотографии на части
             start_step = loading_step * 5
             end_step = start_step + 5
-            if len(photo_bytes) < end_step and result_photos:
+            if len(photo_bytes) <= start_step and result_photos:
                 break
 
             for ind, photo in enumerate(photo_bytes[start_step:end_step]):
@@ -390,12 +393,21 @@ class API(SessionContainerMixin):
                     response, content_type=None
                 )
 
-            uploaded_photos = await self.method(
-                "photos.save_messages_photo", **response
-            )
-            result_photos.extend(
-                Photo(uploaded_photo) for uploaded_photo in uploaded_photos
-            )
+            try:
+                uploaded_photos = await self.method(
+                    "photos.save_messages_photo", **response
+                )
+            except APIError[error_codes.CODE_1_UNKNOWN]:
+                traceback.print_exc()
+                print(
+                    "(Вк пока что не позволяет загружать "
+                    "фотографии в беседу сообщества, "
+                    "что и является причиной ошибки)"
+                )
+            else:
+                result_photos.extend(
+                    Photo(uploaded_photo) for uploaded_photo in uploaded_photos
+                )
         return result_photos
 
     async def upload_doc_to_message(
