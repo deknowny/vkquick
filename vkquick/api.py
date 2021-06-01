@@ -6,7 +6,8 @@ import itertools
 import os
 import re
 import time
-import typing as ty
+import traceback
+import typing
 import urllib.parse
 
 import aiofiles
@@ -17,15 +18,16 @@ from loguru import logger
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.chatbot.wrappers.attachment import Document, Photo
-from vkquick.chatbot.wrappers.page import User, Group, Page
+from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
+from vkquick import error_codes
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser
 
-    PhotoEntityTyping = ty.Union[str, bytes, ty.BinaryIO, os.PathLike]
+    PhotoEntityTyping = typing.Union[str, bytes, typing.BinaryIO, os.PathLike]
 
 
 @enum.unique
@@ -40,19 +42,15 @@ class TokenOwner(enum.Enum):
 
 
 class API(SessionContainerMixin):
-    """
-    Основной класс, позволяющий с помощью токена выполнять API-запросы
-    """
-
     def __init__(
         self,
         token: str,
         token_owner: TokenOwner = TokenOwner.UNKNOWN,
         version: str = "5.135",
         requests_url: str = "https://api.vk.com/method/",
-        requests_session: ty.Optional[aiohttp.ClientSession] = None,
-        json_parser: ty.Optional[BaseJSONParser] = None,
-        cache_table: ty.Optional[cachetools.Cache] = None,
+        requests_session: typing.Optional[aiohttp.ClientSession] = None,
+        json_parser: typing.Optional[BaseJSONParser] = None,
+        cache_table: typing.Optional[cachetools.Cache] = None,
     ):
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser
@@ -66,7 +64,7 @@ class API(SessionContainerMixin):
         self._owner_schema = None
         self._requests_url = requests_url
         self._cache_table = cache_table or cachetools.TTLCache(
-            ttl=3600, maxsize=2 ** 15
+            ttl=7200, maxsize=2 ** 12
         )
 
         self._method_name = ""
@@ -80,10 +78,47 @@ class API(SessionContainerMixin):
         self._update_requests_delay()
 
     def use_cache(self) -> API:
+        """
+        Включает кэширование для следующего запроса.
+        Кэширование выключается автоматически, т.е.
+        кэширование будет использовано только для первого следующего
+        выполняемого API запроса.
+
+        Включение кэщирования подразумевает, что следующий запрос
+        будет занесен в специальную кэш-таблицу. Ключ кэша
+        привязывается к имени вызываемого метода и переданным параметрам,
+        а значение -- к ответу API. Если запрос с таким именем метода
+        и такими параметрами уже был выполнен когда-то, то вместо
+        отправки запроса будет возвращено значение из кэш-таблицы
+
+        Если необходимо передать свою собственную имплементацию
+        кэш-таблицы, укажите соответствующий инстанс при инициализации объекта
+        в поле `cache_table`. По умолчанию используется TTL-алгоритм.
+
+        Returns:
+            Тот же самый инстанс API, готовый к кэшированному запросу
+        """
         self._use_cache = True
         return self
 
-    async def define_token_owner(self) -> ty.Tuple[TokenOwner, Page]:
+    async def define_token_owner(self) -> typing.Tuple[TokenOwner, Page]:
+        """
+        Позволяет определить владельца токена: группа или пользователь.
+
+        Метод использует кэширование, поэтому в своем коде
+        можно смело каждый раз вызывать этот метод, не боясь лишних
+        исполняемых запросов
+
+        Владелец токена будет определен автоматически после первого выполненного
+        запроса для определения задержки, если `token_owner` поле
+        не было установленно вручную при инициализации объекта
+
+        Returns:
+            Возвращает словарь, первый элемент которого TokenOwner значение,
+            указывающее, группа это или пользователь, а в второй -- сама схема объекта
+            сущности пользователя/группы, обернутая соответствующим враппером
+        :rtype:
+        """
         if self._token_owner != TokenOwner.UNKNOWN:
             return self._token_owner, self._owner_schema
         owner_schema = await self.use_cache().method("users.get")
@@ -91,6 +126,7 @@ class API(SessionContainerMixin):
             self._owner_schema = User(owner_schema[0])
             self._token_owner = TokenOwner.USER
         else:
+
             owner_schema = await self.use_cache().method("groups.get_by_id")
             self._owner_schema = Group(owner_schema[0])
             self._token_owner = TokenOwner.GROUP
@@ -99,6 +135,10 @@ class API(SessionContainerMixin):
         return self._token_owner, self._owner_schema
 
     def _update_requests_delay(self) -> None:
+        """
+        Устанавливает необходимую задержку в секундах между
+        исполняемыми запросами
+        """
         if self._token_owner in {TokenOwner.USER, TokenOwner.UNKNOWN}:
             self._requests_delay = 1 / 3
         else:
@@ -107,8 +147,7 @@ class API(SessionContainerMixin):
     def __getattr__(self, attribute: str) -> API:
         """
         Используя `__gettattr__`, класс предоставляет возможность
-        вызывать методы API, как будто обращаясь к атрибутам.
-        Пример есть в описании класса
+        вызывать методы API, как будто бы обращаясь к атрибутам.
 
         Arguments:
             attribute: Имя/заголовок названия метода
@@ -125,16 +164,11 @@ class API(SessionContainerMixin):
     async def __call__(
         self,
         **request_params,
-    ) -> ty.Any:
+    ) -> typing.Any:
         """
-        Выполняет необходимый API запрос с нужным методом и параметрами,
-        добавляя к ним токен и версию (может быть перекрыто)
+        Вызывает метод `method` после обращения к имени метода через `__getattr__`
 
         Arguments:
-            allow_cache: Если `True` -- результат запроса
-                с подобными параметрами и методом будет получен из кэш-таблицы,
-                если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
-                просто выполнится по сети
             request_params: Параметры, принимаемы методом, которые описаны в документации API
 
         Returns:
@@ -144,17 +178,34 @@ class API(SessionContainerMixin):
         self._method_name = ""
         return await self.method(method_name, **request_params)
 
-    async def method(self, method_name: str, **request_params) -> ty.Any:
+    async def method(self, method_name: str, **request_params) -> typing.Any:
         """
         Выполняет необходимый API запрос с нужным методом и параметрами.
+        Вызов метода поддерживает конвертацию из snake_case в camelCase.
+
+        Перед вызовом этого метода может быть вызван `.use_cache()` для
+        включения возможности кэш-логики запроса
+
+        Каждый передаваемый параметр проходит специальный этап конвертации перед
+        передачей в запрос по следующему принципу:
+
+        * Все элементы списков, кортежей и множеств проходят конвертацию рекурсивно и
+            объединяются в строку через `,`
+        * Все словари автоматически дампятся в JSON-строку установленным JSON-парсером
+        * Все True/False значения становятся 1 и 0 соответственно (требуется для aiohttp)
+        * Если переданный объект имплементирует класс `APISerializableMixin`,
+            вызывается соответствующий метод класса для конвертации в желаемое
+            значение
+
+        К параметрам автоматически добавляются `access_token` (ключ доступа) и `v` (версия API),
+        переданные при инициализации, но каждый из этих полей может быть задан вручную для
+        конкретного запроса. Например, необходимо вызвать метод с другой версией API
+        или передать другой токен.
+
 
         Arguments:
             method_name: Имя вызываемого метода API
             request_params: Параметры, принимаемы методом, которые описаны в документации API.
-            allow_cache: Если `True` -- результат запроса
-                с подобными параметрами и методом будет получен из кэш-таблицы,
-                если отсутствует -- просто занесен в таблицу. Если `False` -- запрос
-                просто выполнится по сети.
 
         Returns:
             Пришедший от API ответ.
@@ -170,7 +221,7 @@ class API(SessionContainerMixin):
             use_cache=use_cache,
         )
 
-    async def execute(self, code: str, /) -> ty.Any:
+    async def execute(self, code: str, /) -> typing.Any:
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
@@ -188,16 +239,16 @@ class API(SessionContainerMixin):
     async def _make_api_request(
         self,
         method_name: str,
-        request_params: ty.Dict[str, ty.Any],
+        request_params: typing.Dict[str, typing.Any],
         use_cache: bool,
-    ) -> ty.Any:
+    ) -> typing.Any:
         """
         Выполняет API запрос на определенный метод с заданными параметрами
 
         Arguments:
             method_name: Имя метода API
             request_params: Параметры, переданные для метода
-            allow_cache: Использовать кэширование
+            use_cache: Использовать кэширование
 
         Raises:
             VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
@@ -242,25 +293,36 @@ class API(SessionContainerMixin):
             "Response is: {response}", response=lambda: pretty_view(response)
         )
 
+        # Обработка ошибки вызова запроса
         if "error" in response:
             error = response["error"].copy()
             exception_class = APIError[error["error_code"]][0]
             raise exception_class(
-                status_code=error.pop("error_code"),
-                description=error.pop("error_msg"),
-                request_params=error.pop("request_params"),
-                extra_fields=error,
+                status_code=error.pop("error_code"),  # noqa
+                description=error.pop("error_msg"),  # noqa
+                request_params=error.pop("request_params"),  # noqa
+                extra_fields=error,  # noqa
             )
         else:
             response = response["response"]
 
         # Если кэширование включено -- запрос добавится в таблицу
         if use_cache:
-            self._cache_table[cache_hash] = response
+            self._cache_table[cache_hash] = response  # noqa
 
         return response
 
     async def _send_api_request(self, method_name: str, params: dict) -> dict:
+        """
+        Выполняет сам API запрос с готовыми параметрами и именем метода
+
+        Arguments:
+            method_name: Имя метода
+            params: Словарь параметров
+
+        Returns:
+            Сырой ответ от API
+        """
         async with self.requests_session.post(
             self._requests_url + method_name, data=params
         ) as response:
@@ -273,7 +335,7 @@ class API(SessionContainerMixin):
         """
         if isinstance(photo, bytes):
             return photo
-        elif isinstance(photo, ty.BinaryIO):
+        elif isinstance(photo, typing.BinaryIO):
             return photo.read()
         elif isinstance(photo, str) and photo.startswith("http"):
             async with self.requests_session.get(photo) as response:
@@ -284,20 +346,34 @@ class API(SessionContainerMixin):
 
     async def upload_photos_to_message(
         self, *photos: PhotoEntityTyping, peer_id: int = 0
-    ) -> ty.List[Photo]:
+    ) -> typing.List[Photo]:
+        """
+        Загружает фотографию в сообщения
 
+        Arguments:
+            photos: Фотографии в виде ссылки/пути до файла/сырых байтов/
+                IO-хранилища/Path-like объекта
+            peer_id: ID диалога или беседы, куда загружаются фотографии. Если
+                не передавать, то фотографии загрузятся в скрытый альбом. Рекомендуется
+                исключительно для тестирования, т.к. такой альбом имеет лимиты
+        Returns:
+            Список врапперов загруженных фотографий, который можно напрямую
+            передать в поле `attachment` при отправке сообщения
+        """
         photo_bytes_coroutines = [
             self._fetch_photo_entity(photo) for photo in photos
         ]
         photo_bytes = await asyncio.gather(*photo_bytes_coroutines)
         result_photos = []
+        # TODO: concurrency between uploading
         for loading_step in itertools.count(0):
             data_storage = aiohttp.FormData()
 
-            # За один раз можно загрузить только 5 фотографий, поэтому необходимо разбить фотографии на части
+            # За один раз можно загрузить только 5 фотографий,
+            # поэтому необходимо разбить фотографии на части
             start_step = loading_step * 5
             end_step = start_step + 5
-            if len(photo_bytes) < end_step:
+            if len(photo_bytes) <= start_step and result_photos:
                 break
 
             for ind, photo in enumerate(photo_bytes[start_step:end_step]):
@@ -317,24 +393,49 @@ class API(SessionContainerMixin):
                     response, content_type=None
                 )
 
-            uploaded_photos = await self.method(
-                "photos.save_messages_photo", **response
-            )
-            result_photos.extend(
-                Photo(uploaded_photo) for uploaded_photo in uploaded_photos
-            )
+            try:
+                uploaded_photos = await self.method(
+                    "photos.save_messages_photo", **response
+                )
+            except APIError[error_codes.CODE_1_UNKNOWN]:
+                traceback.print_exc()
+                print(
+                    "(Вк пока что не позволяет загружать "
+                    "фотографии в беседу сообщества, "
+                    "что и является причиной ошибки)"
+                )
+            else:
+                result_photos.extend(
+                    Photo(uploaded_photo) for uploaded_photo in uploaded_photos
+                )
         return result_photos
 
     async def upload_doc_to_message(
         self,
-        content: ty.Union[str, bytes],
+        content: typing.Union[str, bytes],
         filename: str,
         *,
-        tags: ty.Optional[str] = None,
-        return_tags: ty.Optional[bool] = None,
-        type: ty.Literal["doc", "audio_message", "graffiti"] = "doc",
+        tags: typing.Optional[str] = None,
+        return_tags: typing.Optional[bool] = None,
+        type: typing.Literal["doc", "audio_message", "graffiti"] = "doc",
         peer_id: int = 0,
     ) -> Document:
+        """
+        Загружает документ для отправки в сообщение
+
+        Arguments:
+            content: Содержимое документа. Документ может быть
+                как текстовым, так и содержать сырые байты
+            filename: Имя файла
+            tags: Теги для файла, используемые при поиске
+            return_tags: Возвращать переданные теги при запросе
+            type: Тип документа: файл/голосовое сообщение/граффити
+            peer_id: ID диалога или беседы, куда загружается документ
+
+        Returns:
+            Враппер загруженного документа. Этот объект можно напрямую
+            передать в поле `attachment` при отправке сообщения
+        """
         if "." not in filename:
             filename = f"{filename}.txt"
         data_storage = aiohttp.FormData()
@@ -342,7 +443,7 @@ class API(SessionContainerMixin):
             f"file",
             content,
             content_type="multipart/form-data",
-            filename=filename or "file.txt",
+            filename=filename,
         )
 
         uploading_info = await self.method(
@@ -415,10 +516,6 @@ def _convert_param_value(value, /):
         new_value = value.represent_as_api_param()
         return _convert_param_value(new_value)
 
-    # Для корректного отображения в логах
-    elif isinstance(value, int):
-        return value
-
     else:
         return str(value)
 
@@ -444,7 +541,7 @@ def _convert_params_for_api(params: dict, /):
     return updated_params
 
 
-def _upper_zero_group(match: ty.Match, /) -> str:
+def _upper_zero_group(match: typing.Match, /) -> str:
     """
     Поднимает все символы в верхний
     регистр у captured-группы `let`. Используется

@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-import typing as ty
+import typing
 
 from vkquick.chatbot.exceptions import BadArgumentError
 from vkquick.chatbot.storages import NewMessage
 
-T = ty.TypeVar("T")
+T = typing.TypeVar("T")
 
 
-class CommandTextArgument(ty.NamedTuple):
+class CommandTextArgument(typing.NamedTuple):
     argument_name: str
     cutter: Cutter
     argument_settings: Argument
@@ -18,12 +18,9 @@ class CommandTextArgument(ty.NamedTuple):
 
 @dataclasses.dataclass
 class Argument:
-    description: ty.Optional[str] = None
-    callbacks: ty.List[
-        ty.Callable[[NewMessage], ty.Awaitable[ty.Any]]
-    ] = dataclasses.field(default_factory=list)
-    default: ty.Optional = None
-    default_factory: ty.Optional[ty.Callable[[], ty.Any]] = None
+    description: typing.Optional[str] = None
+    default: typing.Optional = None
+    default_factory: typing.Optional[typing.Callable[[], typing.Any]] = None
     cutter_preferences: dict = dataclasses.field(default_factory=dict)
 
     def setup_cutter(self, **kwargs) -> Argument:
@@ -34,7 +31,7 @@ class Argument:
 
 
 @dataclasses.dataclass
-class CutterParsingResponse(ty.Generic[T]):
+class CutterParsingResponse(typing.Generic[T]):
     parsed_part: T
     new_arguments_string: str
     extra: dict = dataclasses.field(default_factory=dict)
@@ -53,11 +50,11 @@ class Cutter(abc.ABC):
 
 
 def cut_part_via_regex(
-    regex: ty.Pattern,
+    regex: typing.Pattern,
     arguments_string: str,
     *,
-    group: ty.Union[str, int] = 0,
-    factory: ty.Optional[ty.Callable[[str], T]] = None,
+    group: typing.Union[str, int] = 0,
+    factory: typing.Optional[typing.Callable[[str], T]] = None,
 ) -> CutterParsingResponse[T]:
     matched = regex.match(arguments_string)
     if matched:

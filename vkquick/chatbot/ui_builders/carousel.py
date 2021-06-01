@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import typing as ty
+import typing
 
 from vkquick.chatbot.base.ui_builder import UIBuilder
 from vkquick.chatbot.ui_builders.button import InitializedButton
@@ -11,10 +11,10 @@ class Element(UIBuilder):
     def __init__(
         self,
         *,
-        buttons: ty.List[InitializedButton],
-        title: ty.Optional[str] = None,
-        description: ty.Optional[str] = None,
-        photo_id: ty.Optional[ty.Union[str, Photo]] = None
+        buttons: typing.List[InitializedButton],
+        title: typing.Optional[str] = None,
+        description: typing.Optional[str] = None,
+        photo_id: typing.Optional[typing.Union[str, Photo]] = None
     ) -> None:
         self.scheme = dict(buttons=[but.scheme for but in buttons])
         if title is not None:
@@ -36,7 +36,9 @@ class Element(UIBuilder):
 
 
 class Carousel(UIBuilder):
-    def __init__(self, gen: ty.Callable[..., ty.Iterator[Element]]) -> None:
+    def __init__(
+        self, gen: typing.Callable[..., typing.Iterator[Element]]
+    ) -> None:
         self._gen = gen
         self.scheme = {"type": "carousel", "elements": []}
 

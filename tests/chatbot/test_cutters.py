@@ -1,10 +1,10 @@
 import asyncio
+import typing
 import unittest.mock
-import typing as ty
 
 import pytest
-import vkquick as vq
 
+import vkquick as vq
 
 NOT_PARSED = object()
 
@@ -115,9 +115,9 @@ async def test_simple_cutters(cutter, string, expected):
 
 
 @pytest.mark.asyncio
-async def test_mention_with_wrapper(user_api):
+async def test_mention_with_wrapper(group_api):
     mocked_context = unittest.mock.Mock()
-    mocked_context.api = user_api
+    mocked_context.api = group_api
 
     cutter = vq.MentionCutter(vq.Page)
     call1 = await cutter.cut_part(mocked_context, "[id1|abc]")
@@ -149,7 +149,7 @@ async def test_mention_with_wrapper(user_api):
             mocked_context, "[id123123123123123123123123|abc]"
         )
 
-    cutter = vq.MentionCutter(vq.User[ty.Literal["bdate"]])
+    cutter = vq.MentionCutter(vq.User[typing.Literal["bdate"]])
     call = await cutter.cut_part(mocked_context, "[id1|abc]")
     assert "bdate" in call.parsed_part.entity.fields
 
@@ -191,20 +191,24 @@ async def test_mention_with_id():
         "http://vk.com/id1",
         "id1",
         "durov",
-        "1"
+        "1",
     ],
 )
 @pytest.mark.asyncio
-async def test_group_entity_by_string(input_string, user_api):
+async def test_group_entity_by_string(input_string, group_api):
     mocked_context = unittest.mock.Mock()
-    mocked_context.api = user_api
+    mocked_context.api = group_api
     page_cutter = vq.EntityCutter(vq.Page)
     user_cutter = vq.EntityCutter(vq.User)
     user_id_cutter = vq.EntityCutter(vq.User)
     result_page, result_user, result_user_id = await asyncio.gather(
         page_cutter.cut_part(mocked_context, input_string),
         user_cutter.cut_part(mocked_context, input_string),
-        user_id_cutter.cut_part(mocked_context, input_string)
+        user_id_cutter.cut_part(mocked_context, input_string),
     )
-    assert result_page.parsed_part.id == result_user.parsed_part.id == result_user_id.parsed_part.id == 1
-
+    assert (
+        result_page.parsed_part.id
+        == result_user.parsed_part.id
+        == result_user_id.parsed_part.id
+        == 1
+    )

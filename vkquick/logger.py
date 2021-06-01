@@ -1,23 +1,37 @@
+import dataclasses
 import sys
 
 from loguru import logger
 
+# Удаление настроек логгера по умолчанию
 logger.remove(0)
 
 
+@dataclasses.dataclass
 class LoggingLevel:
-    def __init__(self, level):
-        self.level = level
+    """
+    Вспомогательный класс для фильтрации
+    логов по их уровню
+    """
 
-    def __call__(self, record):
+    level: str
+
+    def __call__(self, record: dict) -> bool:
         level_no = logger.level(self.level).no
         return record["level"].no >= level_no
 
 
-def update_logging_level(level):
+def update_logging_level(level: str) -> None:
+    """
+    Обновляет уровень логов логгера
+
+    Arguments:
+        level: Новый уровень для логов
+    """
     level_handler.level = level
 
 
+# По умолчанию логгер выставлен в уровень INFO
 level_handler = LoggingLevel("INFO")
 logger_handler = logger.add(
     sys.stdout,

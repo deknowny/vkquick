@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as ty
+import typing
+
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.exceptions import FilterFailedError
+from vkquick.chatbot.utils import peer
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import NewMessage
 
 
 class OnlyMe(BaseFilter):
     async def make_decision(self, ctx: NewMessage):
-        # Для определения используется кэширование
-        _, owner_schema = await ctx.api.define_token_owner()
-        if ctx.msg.from_id != owner_schema.id:
+        if not ctx.msg.out:
             raise FilterFailedError()
 
 
@@ -23,9 +23,21 @@ class IgnoreBots(BaseFilter):
             raise FilterFailedError()
 
 
+class ChatOnly(BaseFilter):
+    async def make_decision(self, ctx: NewMessage):
+        if ctx.msg.peer_id < peer():
+            raise FilterFailedError()
+
+
+class DirectOnly(BaseFilter):
+    async def make_decision(self, ctx: NewMessage):
+        if ctx.msg.peer_id >= peer():
+            raise FilterFailedError()
+
+
 @dataclasses.dataclass
 class Dynamic(BaseFilter):
-    executable: ty.Callable[[NewMessage], ...]
+    executable: typing.Callable[[NewMessage], ...]
 
     async def make_decision(self, ctx: NewMessage):
         if not self.executable(ctx):

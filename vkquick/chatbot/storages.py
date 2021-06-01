@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as ty
+import functools
+import typing
 
-from vkquick.cached_property import cached_property
+from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
     Message,
@@ -11,9 +12,11 @@ from vkquick.chatbot.wrappers.message import (
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
     from vkquick.chatbot.application import Bot
+
+    SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
 
 @dataclasses.dataclass
@@ -30,9 +33,6 @@ class NewEvent:
         bot: Bot,
     ):
         return cls(event=event, bot=bot)
-
-
-SenderTypevar = ty.TypeVar("SenderTypevar", bound=Page)
 
 
 @dataclasses.dataclass
@@ -64,12 +64,32 @@ class NewMessage(NewEvent, SentMessage):
             truncated_message=extended_message,
         )
 
-    @cached_property
+    @functools.cached_property
     def msg(self) -> Message:
-        return ty.cast(Message, self.truncated_message)
+        return typing.cast(Message, self.truncated_message)
+
+    async def conquer_new_message(
+        self, *,
+        same_chat: bool = True,
+        same_user: bool = True
+    ) -> typing.Generator[NewMessage, None, None]:
+        async for new_event in self.bot.events_factory.listen(same_poll=True):
+            if new_event.type in {
+                "message_new",
+                "message_reply",
+                4,
+            }:
+                conquered_message = await NewMessage.from_event(
+                    event=new_event, bot=self.bot
+                )
+                if (
+                    (conquered_message.msg.peer_id == self.msg.peer_id or not same_chat)
+                    and (conquered_message.msg.from_id == self.msg.from_id or not same_user)
+                ):
+                    yield conquered_message
 
     async def fetch_sender(
-        self, typevar: ty.Type[SenderTypevar], /
+        self, typevar: typing.Type[SenderTypevar], /
     ) -> SenderTypevar:
         if self.msg.from_id > 0 and typevar in {Page, User}:
             return await User.fetch_one(self.api, self.msg.from_id)
@@ -85,7 +105,7 @@ class NewMessage(NewEvent, SentMessage):
 
 
 class CallbackButtonPressed(NewEvent):
-    @cached_property
+    @functools.cached_property
     def msg(self) -> CallbackButtonPressedMessage:
         return CallbackButtonPressedMessage(self.event.object)
 
@@ -105,8 +125,10 @@ class CallbackButtonPressed(NewEvent):
         return await self._call_action(link=link, type="open_link")
 
     async def open_app(
-        self, app_id: int, hash: str, owner_id: ty.Optional[int] = None
+        self, app_id: int, hash: str, owner_id: typing.Optional[int] = None
     ) -> dict:
         return await self._call_action(
             app_id=app_id, hash=hash, owner_id=owner_id, type="open_app"
         )
+
+

@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import inspect
 import re
-import typing as ty
+import typing
 import warnings
 
 from loguru import logger
@@ -15,16 +15,18 @@ from vkquick.chatbot.command.adapters import resolve_typing
 from vkquick.chatbot.exceptions import BadArgumentError, FilterFailedError
 from vkquick.chatbot.storages import NewMessage
 
-Handler = ty.TypeVar("Handler", bound=ty.Callable[..., ty.Awaitable])
+Handler = typing.TypeVar(
+    "Handler", bound=typing.Callable[..., typing.Awaitable]
+)
 
 
 @dataclasses.dataclass
 class Command(HandlerMixin):
-    prefixes: ty.List[str] = dataclasses.field(default_factory=list)
-    names: ty.List[str] = dataclasses.field(default_factory=list)
+    prefixes: typing.List[str] = dataclasses.field(default_factory=list)
+    names: typing.List[str] = dataclasses.field(default_factory=list)
     routing_re_flags: re.RegexFlag = re.IGNORECASE
-    filter: ty.Optional[BaseFilter] = None
-    description: ty.Optional[str] = None
+    filter: typing.Optional[BaseFilter] = None
+    description: typing.Optional[str] = None
     exclude_from_autodoc: bool = False
 
     def __post_init__(self):
@@ -33,10 +35,10 @@ class Command(HandlerMixin):
         if not self.names:
             self.names = self.handler.__name__
         self.handler = logger.catch(reraise=True)(self.handler)
-        self._routing_regex: ty.Pattern
+        self._routing_regex: typing.Pattern
         self._build_routing_regex()
 
-        self._text_arguments: ty.List[CommandTextArgument] = []
+        self._text_arguments: typing.List[CommandTextArgument] = []
         self._message_storage_argument_name = None
         self._message_storage_argument_name: str
         self._parse_handler_arguments()
@@ -51,7 +53,7 @@ class Command(HandlerMixin):
         return self.description
 
     @property
-    def text_arguments(self) -> ty.List[CommandTextArgument]:
+    def text_arguments(self) -> typing.List[CommandTextArgument]:
         return self._text_arguments
 
     def update_prefix(self, *prefixes: str) -> None:
@@ -88,7 +90,7 @@ class Command(HandlerMixin):
 
     async def _make_arguments(
         self, message_storage: NewMessage, arguments_string: str
-    ) -> ty.Optional[ty.Dict[str, ty.Any]]:
+    ) -> typing.Optional[typing.Dict[str, typing.Any]]:
         arguments = {}
         remain_string = arguments_string.lstrip()
         for argtype in self._text_arguments:

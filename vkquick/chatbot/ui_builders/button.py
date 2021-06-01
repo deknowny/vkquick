@@ -2,27 +2,27 @@ from __future__ import annotations
 
 import dataclasses
 import functools
-import typing as ty
+import typing
 
 from vkquick.json_parsers import json_parser_policy
 
-if ty.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import CallbackButtonPressed, NewMessage
 
 
 @dataclasses.dataclass
 class _ButtonHandler:
-    handler: ty.Callable
+    handler: typing.Callable
 
 
 @dataclasses.dataclass
 class ButtonOnclickHandler(_ButtonHandler):
-    handler: ty.Callable[[NewMessage, ...], ty.Awaitable]
+    handler: typing.Callable[[NewMessage, ...], typing.Awaitable]
 
 
 @dataclasses.dataclass
 class ButtonCallbackHandler(_ButtonHandler):
-    handler: ty.Callable[[CallbackButtonPressed, ...], ty.Awaitable]
+    handler: typing.Callable[[CallbackButtonPressed, ...], typing.Awaitable]
 
 
 class InitializedButton:
@@ -112,7 +112,10 @@ class Button:
     @classmethod
     @_convert_payload
     def text(
-        cls, label: str, *, payload: ty.Optional[ty.Union[str, dict]] = None
+        cls,
+        label: str,
+        *,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _ClickableColoredButton:
         """
         Кнопка типа `text`
@@ -128,7 +131,7 @@ class Button:
         label: str,
         *,
         link: str,
-        payload: ty.Optional[ty.Union[str, dict]] = None,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _UncoloredButton:
         """
         Кнопка типа `open_link`
@@ -143,7 +146,7 @@ class Button:
     @classmethod
     @_convert_payload
     def location(
-        cls, *, payload: ty.Optional[ty.Union[str, dict]] = None
+        cls, *, payload: typing.Optional[typing.Union[str, dict]] = None
     ) -> _UncoloredButton:
         """
         Кнопка типа `location`
@@ -153,7 +156,10 @@ class Button:
     @classmethod
     @_convert_payload
     def vkpay(
-        cls, *, hash_: str, payload: ty.Optional[ty.Union[str, dict]] = None
+        cls,
+        *,
+        hash_: str,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _UncoloredButton:
         """
         Кнопка типа `vkpay`
@@ -169,7 +175,7 @@ class Button:
         app_id: int,
         owner_id: int,
         hash_: str,
-        payload: ty.Optional[ty.Union[str, dict]] = None,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _UncoloredButton:
         """
         Кнопка типа `open_app`
@@ -186,7 +192,10 @@ class Button:
     @classmethod
     @_convert_payload
     def callback(
-        cls, label: str, *, payload: ty.Optional[ty.Union[str, dict]] = None
+        cls,
+        label: str,
+        *,
+        payload: typing.Optional[typing.Union[str, dict]] = None,
     ) -> _CallableColoredButton:
         """
         Кнопка типа `callback`

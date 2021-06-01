@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as ty
+import typing
 
 import huepy
+import jinja2
 import typing_extensions as tye
 
-exceptions_storage: ty.Dict[int, ty.Type[APIError]] = {}
+exceptions_storage: typing.Dict[int, typing.Type[APIError]] = {}
 
 
 class _ParamsScheme(tye.TypedDict):
@@ -20,6 +21,20 @@ class _ParamsScheme(tye.TypedDict):
 
     key: str
     value: str  # Даже если в запросе было передано число, значение будет строкой
+
+
+template_source = """
+[{{ huepy.red(status_code) }}] {{ description -}}
+{% for param in params %}
+# {{ huepy.yellow(param["key"]) }} = {{ huepy.cyan(param["value"]) -}}
+{% endfor %}
+
+{% if self.extra_fields %}
+{{- huepy.info("There are some extra fields:") }}
+{{ extra_fields -}}
+{% endif %}
+"""
+exception_text_template = jinja2.Template(template_source)
 
 
 @dataclasses.dataclass
@@ -37,12 +52,12 @@ class APIError(Exception):
 
     description: str
     status_code: int
-    request_params: ty.List[_ParamsScheme]
+    request_params: typing.List[_ParamsScheme]
     extra_fields: dict
 
     def __class_getitem__(
-        cls, code: ty.Union[int, ty.Tuple[int, ...]]
-    ) -> ty.Tuple[ty.Type[APIError]]:
+        cls, code: typing.Union[int, typing.Tuple[int, ...]]
+    ) -> typing.Tuple[typing.Type[APIError]]:
         result_classes = []
         codes = (code,) if isinstance(code, int) else code
         for code in codes:
@@ -56,7 +71,9 @@ class APIError(Exception):
         return tuple(result_classes)
 
     @classmethod
-    def destruct_response(cls, response: ty.Dict[str, ty.Any]) -> APIError:
+    def destruct_response(
+        cls, response: typing.Dict[str, typing.Any]
+    ) -> APIError:
         """Разбирает ответ от вк про некорректный API запрос
         на части и инициализирует сам объект исключения
 
@@ -67,24 +84,10 @@ class APIError(Exception):
         """
 
     def __str__(self) -> str:
-        pretty_exception_text = (
-            huepy.red(f"\n[{self.status_code}]")
-            + f" {self.description}\n\n"
-            + huepy.grey("Request params:")
+        return exception_text_template.render(
+            status_code=self.status_code,
+            description=self.description,
+            params=self.request_params,
+            extra_fields=self.extra_fields,
+            huepy=huepy,
         )
-
-        for param in self.request_params:
-            key = param["key"]
-            value = param["value"]
-            key = huepy.yellow(key)
-            value = huepy.cyan(value)
-            pretty_exception_text += f"\n{key} = {value}"
-
-        # Если остались дополнительные поля
-        if self.extra_fields:
-            pretty_exception_text += (
-                "\n\n"
-                + huepy.info("There are some extra fields:\n")
-                + str(self.extra_fields)
-            )
-        return pretty_exception_text

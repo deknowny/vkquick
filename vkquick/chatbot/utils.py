@@ -1,7 +1,7 @@
 import datetime
 import random
 import re
-import typing as ty
+import typing
 
 import aiohttp
 
@@ -28,7 +28,10 @@ def peer(chat_id: int = 0) -> int:
 
 
 async def download_file(
-    url: str, *, session: ty.Optional[aiohttp.ClientSession] = None, **kwargs
+    url: str,
+    *,
+    session: typing.Optional[aiohttp.ClientSession] = None,
+    **kwargs,
 ) -> bytes:
     """
     Скачивание файлов по их прямой ссылке
@@ -47,7 +50,7 @@ _registration_date_regex = re.compile('ya:created dc:date="(?P<date>.*?)"')
 
 
 async def get_user_registration_date(
-    id_: int, *, session: ty.Optional[aiohttp.ClientSession] = None
+    id_: int, *, session: typing.Optional[aiohttp.ClientSession] = None
 ) -> datetime.datetime:
     request_session = session or aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=False),
@@ -71,6 +74,6 @@ async def get_user_registration_date(
 
 
 def get_origin_typing(type):
-    if ty.get_args(type):
-        return ty.get_origin(type)
+    if typing.get_args(type):
+        return typing.get_origin(type)
     return type
