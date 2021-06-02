@@ -1,7 +1,8 @@
 import asyncio
 
-import vkquick as vq
 import pytest
+
+import vkquick as vq
 
 #
 # @pytest.mark.asyncio

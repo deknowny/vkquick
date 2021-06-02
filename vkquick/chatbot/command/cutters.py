@@ -540,37 +540,25 @@ class EntityCutter(MentionCutter):
 
 
 class BoolCutter(Cutter):
-    true_values = [
-        "1",
-        "да",
-        "+",
-        "on",
-        "вкл"
-    ]
-    false_values = [
-        "0",
-        "no",
-        "-",
-        "off",
-        "выкл"
-    ]
+    true_values = ["1", "да", "+", "on", "вкл"]
+    false_values = ["0", "no", "-", "off", "выкл"]
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[bool]:
         for true_value in self.true_values:
             if arguments_string.startswith(true_value):
-                new_arguments_string = arguments_string[len(true_value):]
+                new_arguments_string = arguments_string[len(true_value) :]
                 return CutterParsingResponse(
                     parsed_part=True,
-                    new_arguments_string=new_arguments_string
+                    new_arguments_string=new_arguments_string,
                 )
         for false_value in self.false_values:
             if arguments_string.startswith(false_value):
-                new_arguments_string = arguments_string[len(false_value):]
+                new_arguments_string = arguments_string[len(false_value) :]
                 return CutterParsingResponse(
                     parsed_part=False,
-                    new_arguments_string=new_arguments_string
+                    new_arguments_string=new_arguments_string,
                 )
 
         raise BadArgumentError("No bool value")

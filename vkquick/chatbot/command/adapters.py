@@ -5,6 +5,7 @@ import typing
 
 from vkquick.chatbot.base.cutter import Argument, CommandTextArgument, Cutter
 from vkquick.chatbot.command.cutters import (
+    BoolCutter,
     EntityCutter,
     FloatCutter,
     GroupCutter,
@@ -22,7 +23,7 @@ from vkquick.chatbot.command.cutters import (
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
     UserID,
-    WordCutter, BoolCutter,
+    WordCutter,
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
