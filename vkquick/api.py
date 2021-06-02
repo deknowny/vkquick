@@ -15,6 +15,7 @@ import aiohttp
 import cachetools
 from loguru import logger
 
+from vkquick import error_codes
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.chatbot.wrappers.attachment import Document, Photo
@@ -22,7 +23,6 @@ from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
 from vkquick.pretty_view import pretty_view
-from vkquick import error_codes
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.json_parser import BaseJSONParser
@@ -406,7 +406,8 @@ class API(SessionContainerMixin):
                 )
             else:
                 result_photos.extend(
-                    Photo(uploaded_photo) for uploaded_photo in uploaded_photos
+                    Photo(uploaded_photo)
+                    for uploaded_photo in uploaded_photos
                 )
         return result_photos
 

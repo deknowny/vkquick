@@ -35,14 +35,12 @@ class App(Package):
         if self.debug:
             update_logging_level("DEBUG")
 
-
         packages_gen = self.packages.copy()
         for package in packages_gen:
             for command in package.commands:
                 command.update_prefix(*self.prefixes)
 
         self.packages.append(self)
-
 
     async def route_event(self, new_event_storage) -> None:
         routing_coroutines = [

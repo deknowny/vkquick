@@ -22,7 +22,7 @@ from vkquick.chatbot.command.cutters import (
     UniqueImmutableSequenceCutter,
     UniqueMutableSequenceCutter,
     UserID,
-    WordCutter,
+    WordCutter, BoolCutter,
 )
 from vkquick.chatbot.wrappers.page import Group, Page, User
 
@@ -69,6 +69,8 @@ def _resolve_cutter(
         return IntegerCutter()
     elif arg_annotation is float:
         return FloatCutter()
+    elif arg_annotation is bool:
+        return BoolCutter()
     elif arg_annotation is str:
         if arg_kind == inspect.Parameter.KEYWORD_ONLY:
             return StringCutter()
