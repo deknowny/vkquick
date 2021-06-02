@@ -204,6 +204,8 @@ class Package:
             extra_arguments = {}
             if "args" in message_storage.msg.payload:
                 extra_arguments = message_storage.msg.payload.get("args")
+                if isinstance(extra_arguments, list):
+                    extra_arguments = {}
             handler = self.button_onclick_handlers[handler_name]
             if NewMessage in handler.handler.__annotations__.values():
                 response = await handler.handler(
