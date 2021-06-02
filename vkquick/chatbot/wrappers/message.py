@@ -131,6 +131,14 @@ class Message(TruncatedMessage):
     @property
     def expire_ttl(self) -> typing.Optional[int]:
         return self.fields.get("expire_ttl")
+    
+    @property
+    def admin_author_id(self) -> typing.Optional[int]:
+        return self.fields.get("admin_author_id")
+
+    @property
+    def is_cropped(self) -> typing.Optional[bool]:
+        return self.fields.get("is_cropped")
 
     @functools.cached_property
     def photos(self) -> typing.List[Photo]:
