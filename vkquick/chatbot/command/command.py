@@ -35,13 +35,14 @@ class Command(HandlerMixin):
         if not self.names:
             self.names = self.handler.__name__
         self.handler = logger.catch(reraise=True)(self.handler)
-        self._routing_regex: typing.Pattern
-        self._build_routing_regex()
 
         self._text_arguments: typing.List[CommandTextArgument] = []
         self._message_storage_argument_name = None
         self._message_storage_argument_name: str
         self._parse_handler_arguments()
+
+        self._routing_regex: typing.Pattern
+        self._build_routing_regex()
 
     @property
     def trusted_description(self) -> str:
@@ -170,6 +171,13 @@ class Command(HandlerMixin):
             prefixes_regex = f"(?:{prefixes_regex})"
 
         summary_regex = prefixes_regex + names_regex
+
+        # Если у команды есть аргументы,
+        # то при ее вызове после имени команды должны идти пробельные символы
+        # или аргументов не должно быть вовсе
+        if self._text_arguments:
+            summary_regex += r"(?:$|\s+)"
+
         self._routing_regex = re.compile(
             summary_regex,
             flags=self.routing_re_flags,
