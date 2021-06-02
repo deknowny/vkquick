@@ -4,7 +4,6 @@ import dataclasses
 import functools
 import typing
 
-from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
     Message,
@@ -15,6 +14,7 @@ from vkquick.chatbot.wrappers.page import Group, Page, User
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
     from vkquick.chatbot.application import Bot
+    from vkquick.chatbot.wrappers.attachment import Document, Photo
 
     SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
@@ -88,6 +88,12 @@ class NewMessage(NewEvent, SentMessage):
                     or not same_user
                 ):
                     yield conquered_message
+
+    async def fetch_photos(self) -> typing.List[Photo]:
+        return await self.msg.fetch_photos(self.api)
+
+    async def fetch_docs(self) -> typing.List[Document]:
+        return await self.msg.fetch_docs(self.api)
 
     async def fetch_sender(
         self, typevar: typing.Type[SenderTypevar], /
