@@ -36,7 +36,7 @@
                                     </code>
                                 </h2>
                                 <p>
-                                    {{ text_argument.argument_settings.description or text_argument.cutter.gen_doc() }}
+                                    {{ text_argument.argument_settings.description or text_argument.cutter.gen_doc().capitalize() }}
                                 </p>
                             {%- endfor -%}
                         </div>

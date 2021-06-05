@@ -26,7 +26,7 @@ class IntegerCutter(Cutter):
         )
 
     def gen_doc(self):
-        return "Целое положительное или отрицательное число"
+        return "целое положительное или отрицательное число"
 
 
 class FloatCutter(Cutter):
@@ -53,7 +53,7 @@ class FloatCutter(Cutter):
 
     def gen_doc(self):
         return (
-            "Дробное положительное или отрицательное число "
+            "дробное положительное или отрицательное число "
             "в десятичной форме (3.14, 2.718...). "
             "Число так же может быть записано в "
             "экспоненциальной форме (4e6, 3.5E-6...). "
@@ -71,7 +71,7 @@ class WordCutter(Cutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
     def gen_doc(self):
-        return "Любое слово (последовательность не пробельных символов)"
+        return "любое слово (последовательность не пробельных символов)"
 
 
 class StringCutter(Cutter):
@@ -83,7 +83,7 @@ class StringCutter(Cutter):
         return cut_part_via_regex(self._pattern, arguments_string)
 
     def gen_doc(self):
-        return "Любой текст"
+        return "абсолютно любой текст"
 
 
 class OptionalCutter(Cutter):
@@ -150,7 +150,7 @@ class UnionCutter(Cutter):
         raise BadArgumentError("Regexes didn't matched")
 
     def gen_doc(self):
-        header = "Любое из следующих:<br><ol>{elements}</ol>"
+        header = "любое из следующих:<br><ol>{elements}</ol>"
         elements_docs = [
             f"<li>{typevar.gen_doc()}</li>" for typevar in self._typevars
         ]
@@ -182,7 +182,7 @@ class GroupCutter(Cutter):
         )
 
     def gen_doc(self):
-        header = "Последовательность следующих аргументов без пробелов:<br><ol>{elements}</ol>"
+        header = "последовательность следующих аргументов без пробелов:<br><ol>{elements}</ol>"
         elements_docs = [
             f"<li>{typevar.gen_doc()}</li>" for typevar in self._typevars
         ]
@@ -259,7 +259,7 @@ class LiteralCutter(Cutter):
         raise BadArgumentError("Regex didn't match")
 
     def gen_doc(self):
-        header = "Любое из следующих значений:<br><ol>{elements}</ol>"
+        header = "любое из следующих значений:<br><ol>{elements}</ol>"
         elements_docs = [
             f"<li><code>{typevar.pattern}</code></li>"
             for typevar in self._container_values
@@ -387,11 +387,11 @@ class MentionCutter(Cutter):
 
     def gen_doc(self):
         if self._page_type in {User, UserID}:
-            who = "Пользователь"
+            who = "пользователь"
         elif self._page_type in {Group, GroupID}:
-            who = "Группа"
+            who = "группа"
         else:
-            who = "Пользователь или группа"
+            who = "пользователь или группа"
         return f"{who} в виде упоминания"
 
 

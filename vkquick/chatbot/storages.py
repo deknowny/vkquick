@@ -51,7 +51,7 @@ class NewMessage(NewEvent, SentMessage):
                 message_ids=event.content[1],
             )
             extended_message = extended_message["items"][0]
-            extended_message.text = extended_message.text.replace(
+            extended_message.text = extended_message["text"].replace(
                 "<br>", "\n"
             )
         elif "message" in event.object:
