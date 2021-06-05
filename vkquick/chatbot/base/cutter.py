@@ -75,7 +75,10 @@ def cut_part_via_regex(
 
 class InvalidArgumentConfig:
     prefix_sign = "💡"
-    invalid_argument_template = "{prefix_sign} Некорректное значение `{incorrect_value}`. {cutter_description}"
+    invalid_argument_template = (
+        "{prefix_sign} Некорректное значение "
+        "`{incorrect_value}`. Необходимо передать {cutter_description}"
+    )
 
     async def on_invalid_argument(
         self,
@@ -97,3 +100,12 @@ class InvalidArgumentConfig:
                 cutter_description=cutter_description,
             )
         )
+
+    async def on_laked_argument(
+        self,
+        *,
+        ctx: NewMessage,
+        argument: CommandTextArgument,
+        error: BadArgumentError,
+    ):
+        ...

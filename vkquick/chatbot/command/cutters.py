@@ -432,11 +432,11 @@ class EntityCutter(MentionCutter):
 
     def gen_doc(self):
         if self._page_type in {User, UserID}:
-            who = "Пользователь"
+            who = "пользователь"
         elif self._page_type in {Group, GroupID}:
-            who = "Группа"
+            who = "группа"
         else:
-            who = "Пользователь или группа"
+            who = "пользователь или группа"
         return (
             f"{who} в виде упоминания/ID/короткого имени/ссылки на страницу. "
             "Также можно просто переслать сообщение пользователя"
@@ -571,7 +571,7 @@ class BoolCutter(Cutter):
         raise BadArgumentError("No bool value")
 
     def gen_doc(self) -> str:
-        return "Булево значение: {} в качестве истины и {} для ложи".format(
+        return "булево значение: {} в качестве истины и {} для ложи".format(
             "/".join(self.true_values),
             "/".join(self.false_values),
         )
