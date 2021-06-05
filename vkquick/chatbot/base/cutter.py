@@ -48,6 +48,9 @@ class Cutter(abc.ABC):
     def gen_doc(self) -> str:
         ...
 
+    def gen_message_doc(self) -> str:
+        return self.gen_doc()
+
 
 def cut_part_via_regex(
     regex: typing.Pattern,
@@ -55,6 +58,7 @@ def cut_part_via_regex(
     *,
     group: typing.Union[str, int] = 0,
     factory: typing.Optional[typing.Callable[[str], T]] = None,
+    error_description: typing.Optional[str] = None
 ) -> CutterParsingResponse[T]:
     matched = regex.match(arguments_string)
     if matched:
@@ -66,4 +70,30 @@ def cut_part_via_regex(
             parsed_part, new_arguments_string, extra={"match_object": matched}
         )
 
-    raise BadArgumentError("Regex didn't matched")
+    raise BadArgumentError(error_description or "Regex didn't matched")
+
+
+class InvalidArgumentConfig:
+    prefix_sign = "💡"
+    invalid_argument_template = "{prefix_sign} Некорректное значение `{incorrect_value}`. {cutter_description}"
+
+    async def on_invalid_argument(
+        self,
+        *,
+        remain_string: str,
+        ctx: NewMessage,
+        argument: CommandTextArgument,
+        error: BadArgumentError,
+    ):
+        # TODO: mentions
+        incorrect_value = remain_string.split(maxsplit=1)[0]
+        cutter_description = (
+            argument.argument_settings.description or error.description
+        )
+        await ctx.reply(
+            self.invalid_argument_template.format(
+                prefix_sign=self.prefix_sign,
+                incorrect_value=incorrect_value,
+                cutter_description=cutter_description,
+            )
+        )

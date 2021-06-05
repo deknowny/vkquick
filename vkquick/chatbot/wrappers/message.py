@@ -35,7 +35,7 @@ class TruncatedMessage(Wrapper):
             extended_message = await api.method(
                 "messages.get_by_conversation_message_id",
                 conversation_message_ids=self.cmid,
-                peer_id=self.peer_id
+                peer_id=self.peer_id,
             )
         extended_message = extended_message["items"][0]
         return Message(extended_message)
@@ -146,7 +146,7 @@ class Message(TruncatedMessage):
     @property
     def expire_ttl(self) -> typing.Optional[int]:
         return self.fields.get("expire_ttl")
-    
+
     @property
     def admin_author_id(self) -> typing.Optional[int]:
         return self.fields.get("admin_author_id")

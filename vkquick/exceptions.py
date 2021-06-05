@@ -65,6 +65,7 @@ class APIError(Exception):
                 result_classes.append(exceptions_storage[code])
             else:
                 new_class = type(f"APIError{code}", (APIError,), {})
+                new_class = typing.cast(typing.Type[APIError], new_class)
                 exceptions_storage[code] = new_class
                 result_classes.append(new_class)
 

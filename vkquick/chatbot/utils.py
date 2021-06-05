@@ -1,6 +1,7 @@
 import datetime
 import random
 import re
+import ssl
 import typing
 
 import aiohttp
@@ -37,7 +38,7 @@ async def download_file(
     Скачивание файлов по их прямой ссылке
     """
     session = session or aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(ssl=False),
+        connector=aiohttp.TCPConnector(ssl=ssl.SSLContext()),
         skip_auto_headers={"User-Agent"},
         raise_for_status=True,
         json_serialize=json_parser_policy.dumps,

@@ -22,7 +22,7 @@ class IntegerCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[int]:
         return cut_part_via_regex(
-            self._pattern, arguments_string, factory=int
+            self._pattern, arguments_string, factory=int, error_description=self.gen_doc()
         )
 
     def gen_doc(self):
@@ -52,7 +52,14 @@ class FloatCutter(Cutter):
         )
 
     def gen_doc(self):
-        return "Дробное положительное или отрицательное число в десятичной форме (3.14, 2.718...). Число так же может быть записано в экспоненциальной форме (4e6, 3.5E-6...). Если целая часть равна нулю, то она может быть опущена: .45 это 0.45 "
+        return (
+            "Дробное положительное или отрицательное число "
+            "в десятичной форме (3.14, 2.718...). "
+            "Число так же может быть записано в "
+            "экспоненциальной форме (4e6, 3.5E-6...). "
+            "Если целая часть равна нулю, то она может быть опущена: "
+            ".45 это 0.45 "
+        )
 
 
 class WordCutter(Cutter):

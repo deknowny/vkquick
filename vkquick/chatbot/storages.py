@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import functools
 import typing
@@ -50,6 +51,9 @@ class NewMessage(NewEvent, SentMessage):
                 message_ids=event.content[1],
             )
             extended_message = extended_message["items"][0]
+            extended_message.text = extended_message.text.replace(
+                "<br>", "\n"
+            )
         elif "message" in event.object:
             extended_message = event.object["message"]
         else:
@@ -70,7 +74,7 @@ class NewMessage(NewEvent, SentMessage):
 
     async def conquer_new_message(
         self, *, same_chat: bool = True, same_user: bool = True
-    ) -> typing.Generator[NewMessage, None, None]:
+    ) -> typing.AsyncGenerator[NewMessage, None, None]:
         async for new_event in self.bot.events_factory.listen(same_poll=True):
             if new_event.type in {
                 "message_new",
@@ -94,6 +98,15 @@ class NewMessage(NewEvent, SentMessage):
 
     async def fetch_docs(self) -> typing.List[Document]:
         return await self.msg.fetch_docs(self.api)
+
+    async def download_photos(self) -> typing.List[bytes]:
+        photos = await self.fetch_photos()
+        download_coroutines = [
+            photo.download_max_size(session=self.api.requests_session)
+            for photo in photos
+        ]
+        downloaded_photos = await asyncio.gather(*download_coroutines)
+        return downloaded_photos
 
     async def fetch_sender(
         self, typevar: typing.Type[SenderTypevar], /

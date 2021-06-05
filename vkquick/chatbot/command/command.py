@@ -8,7 +8,7 @@ import warnings
 
 from loguru import logger
 
-from vkquick.chatbot.base.cutter import CommandTextArgument
+from vkquick.chatbot.base.cutter import CommandTextArgument, InvalidArgumentConfig
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.adapters import resolve_typing
@@ -28,6 +28,7 @@ class Command(HandlerMixin):
     filter: typing.Optional[BaseFilter] = None
     description: typing.Optional[str] = None
     exclude_from_autodoc: bool = False
+    invalid_argument_config: InvalidArgumentConfig = dataclasses.field(default_factory=InvalidArgumentConfig)
 
     def __post_init__(self):
         self.prefixes = list(self.prefixes)
@@ -100,9 +101,14 @@ class Command(HandlerMixin):
                 parsing_response = await argtype.cutter.cut_part(
                     message_storage, remain_string
                 )
-            except BadArgumentError:
-                if not remain_string:
-                    return None
+            except BadArgumentError as err:
+                await self.invalid_argument_config.on_invalid_argument(
+                    remain_string=remain_string,
+                    ctx=message_storage,
+                    argument=argtype,
+                    error=err
+                )
+                return None
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()
                 arguments[
