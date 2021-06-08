@@ -102,12 +102,14 @@ class Command(HandlerMixin):
                     message_storage, remain_string
                 )
             except BadArgumentError as err:
-                await self.invalid_argument_config.on_invalid_argument(
-                    remain_string=remain_string,
-                    ctx=message_storage,
-                    argument=argtype,
-                    error=err
-                )
+                if self.invalid_argument_config is not None:
+                    await self.invalid_argument_config.on_invalid_argument(
+                        remain_string=remain_string,
+                        ctx=message_storage,
+                        argument=argtype,
+                        error=err,
+                        laked=not remain_string
+                    )
                 return None
             else:
                 remain_string = parsing_response.new_arguments_string.lstrip()

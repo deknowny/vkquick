@@ -79,6 +79,9 @@ class InvalidArgumentConfig:
         "{prefix_sign} Некорректное значение "
         "`{incorrect_value}`. Необходимо передать {cutter_description}"
     )
+    laked_argument_template = (
+        "{prefix_sign} Необходимо передать {cutter_description}"
+    )
 
     async def on_invalid_argument(
         self,
@@ -87,25 +90,23 @@ class InvalidArgumentConfig:
         ctx: NewMessage,
         argument: CommandTextArgument,
         error: BadArgumentError,
+        laked: bool
     ):
         # TODO: mentions
-        incorrect_value = remain_string.split(maxsplit=1)[0]
         cutter_description = (
             argument.argument_settings.description or error.description
         )
-        await ctx.reply(
-            self.invalid_argument_template.format(
+        if laked:
+            tip_response = self.laked_argument_template.format(
+                prefix_sign=self.prefix_sign,
+                cutter_description=cutter_description
+            )
+        else:
+            incorrect_value = remain_string.split(maxsplit=1)[0]
+            tip_response = self.invalid_argument_template.format(
                 prefix_sign=self.prefix_sign,
                 incorrect_value=incorrect_value,
                 cutter_description=cutter_description,
             )
-        )
 
-    async def on_laked_argument(
-        self,
-        *,
-        ctx: NewMessage,
-        argument: CommandTextArgument,
-        error: BadArgumentError,
-    ):
-        ...
+        await ctx.reply(tip_response)
