@@ -8,7 +8,10 @@ import warnings
 
 from loguru import logger
 
-from vkquick.chatbot.base.cutter import CommandTextArgument, InvalidArgumentConfig
+from vkquick.chatbot.base.cutter import (
+    CommandTextArgument,
+    InvalidArgumentConfig,
+)
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.adapters import resolve_typing
@@ -28,7 +31,9 @@ class Command(HandlerMixin):
     filter: typing.Optional[BaseFilter] = None
     description: typing.Optional[str] = None
     exclude_from_autodoc: bool = False
-    invalid_argument_config: InvalidArgumentConfig = dataclasses.field(default_factory=InvalidArgumentConfig)
+    invalid_argument_config: InvalidArgumentConfig = dataclasses.field(
+        default_factory=InvalidArgumentConfig
+    )
 
     def __post_init__(self):
         self.prefixes = list(self.prefixes)
@@ -95,6 +100,8 @@ class Command(HandlerMixin):
     ) -> typing.Optional[typing.Dict[str, typing.Any]]:
         arguments = {}
         remain_string = arguments_string.lstrip()
+        # argtype is None после обработки, если у команды не было аргументов вовсе
+        argtype = None
         for argtype in self._text_arguments:
             remain_string = remain_string.lstrip()
             try:
@@ -107,8 +114,6 @@ class Command(HandlerMixin):
                         remain_string=remain_string,
                         ctx=message_storage,
                         argument=argtype,
-                        error=err,
-                        laked=not remain_string
                     )
                 return None
             else:
@@ -118,6 +123,12 @@ class Command(HandlerMixin):
                 ] = parsing_response.parsed_part
 
         if remain_string:
+            if argtype is not None:
+                await self.invalid_argument_config.on_invalid_argument(
+                    remain_string=remain_string,
+                    ctx=message_storage,
+                    argument=argtype,
+                )
             return None
         if self._message_storage_argument_name is not None:
             arguments[self._message_storage_argument_name] = message_storage

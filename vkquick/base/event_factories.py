@@ -103,7 +103,6 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
 
 
 class BaseLongPoll(BaseEventFactory):
-
     def __init__(
         self,
         *,

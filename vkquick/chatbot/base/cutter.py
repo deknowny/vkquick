@@ -38,6 +38,9 @@ class CutterParsingResponse(typing.Generic[T]):
 
 
 class Cutter(abc.ABC):
+
+    _html_to_message = False
+
     @abc.abstractmethod
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
@@ -49,7 +52,10 @@ class Cutter(abc.ABC):
         ...
 
     def gen_message_doc(self) -> str:
-        return self.gen_doc()
+        message = self.gen_doc()
+        if self._html_to_message:
+            message = html_list_to_message(message)
+        return message
 
 
 def cut_part_via_regex(
@@ -89,19 +95,12 @@ class InvalidArgumentConfig:
         remain_string: str,
         ctx: NewMessage,
         argument: CommandTextArgument,
-        error: BadArgumentError,
-        laked: bool
     ):
         # TODO: mentions
         cutter_description = (
-            argument.argument_settings.description or error.description
+            argument.argument_settings.description or argument.cutter.gen_message_doc()
         )
-        if laked:
-            tip_response = self.laked_argument_template.format(
-                prefix_sign=self.prefix_sign,
-                cutter_description=cutter_description
-            )
-        else:
+        if remain_string:
             incorrect_value = remain_string.split(maxsplit=1)[0]
             tip_response = self.invalid_argument_template.format(
                 prefix_sign=self.prefix_sign,
@@ -109,4 +108,14 @@ class InvalidArgumentConfig:
                 cutter_description=cutter_description,
             )
 
+        else:
+            tip_response = self.laked_argument_template.format(
+                prefix_sign=self.prefix_sign,
+                cutter_description=cutter_description,
+            )
+
         await ctx.reply(tip_response)
+
+
+def html_list_to_message(view: str) -> str:
+    return view.replace("<br>", "\n").replace("</ol>", "").replace("<ol><li>", "\n— ").replace("</li>\n<li>", "\n— ").replace("</li>", "").replace("<code>", "`").replace("</code>", "`")

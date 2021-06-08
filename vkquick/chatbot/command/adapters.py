@@ -65,7 +65,6 @@ def _resolve_cutter(
     arg_settings: Argument,
     arg_kind,
 ) -> Cutter:
-
     if arg_annotation is int:
         return IntegerCutter()
     elif arg_annotation is float:

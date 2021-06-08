@@ -7,6 +7,7 @@ from vkquick.chatbot.base.cutter import (
     Cutter,
     CutterParsingResponse,
     cut_part_via_regex,
+    html_list_to_message
 )
 from vkquick.chatbot.exceptions import BadArgumentError
 from vkquick.chatbot.storages import NewMessage
@@ -22,7 +23,10 @@ class IntegerCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[int]:
         return cut_part_via_regex(
-            self._pattern, arguments_string, factory=int, error_description=self.gen_doc()
+            self._pattern,
+            arguments_string,
+            factory=int,
+            error_description=self.gen_message_doc(),
         )
 
     def gen_doc(self):
@@ -48,7 +52,10 @@ class FloatCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[float]:
         return cut_part_via_regex(
-            self._pattern, arguments_string, factory=float
+            self._pattern,
+            arguments_string,
+            factory=float,
+            error_description=self.gen_message_doc(),
         )
 
     def gen_doc(self):
@@ -68,7 +75,9 @@ class WordCutter(Cutter):
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[str]:
-        return cut_part_via_regex(self._pattern, arguments_string)
+        return cut_part_via_regex(
+            self._pattern, arguments_string, error_description=self.gen_message_doc()
+        )
 
     def gen_doc(self):
         return "любое слово (последовательность не пробельных символов)"
@@ -80,7 +89,9 @@ class StringCutter(Cutter):
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[str]:
-        return cut_part_via_regex(self._pattern, arguments_string)
+        return cut_part_via_regex(
+            self._pattern, arguments_string, error_description=self.gen_message_doc()
+        )
 
     def gen_doc(self):
         return "абсолютно любой текст"
@@ -133,6 +144,9 @@ class OptionalCutter(Cutter):
 
 
 class UnionCutter(Cutter):
+
+    _html_to_message = True
+
     def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
@@ -147,18 +161,19 @@ class UnionCutter(Cutter):
             else:
                 return parsed_value
 
-        raise BadArgumentError("Regexes didn't matched")
+        raise BadArgumentError(self.gen_message_doc())
 
     def gen_doc(self):
-        header = "любое из следующих:<br><ol>{elements}</ol>"
+        header = "одно из следующих значений:<br><ol>{elements}</ol>"
         elements_docs = [
-            f"<li>{typevar.gen_doc()}</li>" for typevar in self._typevars
+            f"<li>{typevar.gen_doc().capitalize()}</li>" for typevar in self._typevars
         ]
         elements_docs = "\n".join(elements_docs)
         return header.format(elements=elements_docs)
 
 
 class GroupCutter(Cutter):
+    _html_to_message = True
     def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
@@ -170,7 +185,7 @@ class GroupCutter(Cutter):
             try:
                 parsed_value = await typevar.cut_part(ctx, arguments_string)
             except BadArgumentError as err:
-                raise BadArgumentError("Regexes didn't matched") from err
+                raise BadArgumentError(self.gen_message_doc()) from err
             else:
                 arguments_string = parsed_value.new_arguments_string
                 parsed_parts.append(parsed_value.parsed_part)
@@ -245,6 +260,7 @@ class UniqueImmutableSequenceCutter(_SequenceCutter):
 
 
 class LiteralCutter(Cutter):
+    _html_to_message = True
     def __init__(self, *container_values: str):
         self._container_values = tuple(map(re.compile, container_values))
 
@@ -256,7 +272,7 @@ class LiteralCutter(Cutter):
                 return cut_part_via_regex(typevar, arguments_string)
             except BadArgumentError:
                 continue
-        raise BadArgumentError("Regex didn't match")
+        raise BadArgumentError(self.gen_message_doc())
 
     def gen_doc(self):
         header = "любое из следующих значений:<br><ol>{elements}</ol>"
@@ -355,7 +371,7 @@ class MentionCutter(Cutter):
                 return await self._make_group(ctx, page_id)
 
         else:
-            raise BadArgumentError("Regex didn't match")
+            raise BadArgumentError(self.gen_doc())
 
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
@@ -456,7 +472,7 @@ class EntityCutter(MentionCutter):
             except BadArgumentError:
                 continue
 
-        raise BadArgumentError("Regexes didn't match, no user attached")
+        raise BadArgumentError(self.gen_doc())
 
     async def _mention_method(
         self, ctx: NewMessage, arguments_string: str
@@ -533,7 +549,7 @@ class EntityCutter(MentionCutter):
             try:
                 page_id = forwarded_pages[step].from_id
             except IndexError:
-                raise BadArgumentError("No user attached")
+                raise BadArgumentError(self.gen_doc())
 
         parsed_part = await self._cast_type(
             ctx,
@@ -568,7 +584,7 @@ class BoolCutter(Cutter):
                     new_arguments_string=new_arguments_string,
                 )
 
-        raise BadArgumentError("No bool value")
+        raise BadArgumentError(self.gen_doc())
 
     def gen_doc(self) -> str:
         return "булево значение: {} в качестве истины и {} для ложи".format(
