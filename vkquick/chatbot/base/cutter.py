@@ -64,7 +64,7 @@ def cut_part_via_regex(
     *,
     group: typing.Union[str, int] = 0,
     factory: typing.Optional[typing.Callable[[str], T]] = None,
-    error_description: typing.Optional[str] = None
+    error_description: typing.Optional[str] = None,
 ) -> CutterParsingResponse[T]:
     matched = regex.match(arguments_string)
     if matched:
@@ -98,7 +98,8 @@ class InvalidArgumentConfig:
     ):
         # TODO: mentions
         cutter_description = (
-            argument.argument_settings.description or argument.cutter.gen_message_doc()
+            argument.argument_settings.description
+            or argument.cutter.gen_message_doc()
         )
         if remain_string:
             incorrect_value = remain_string.split(maxsplit=1)[0]
@@ -118,4 +119,12 @@ class InvalidArgumentConfig:
 
 
 def html_list_to_message(view: str) -> str:
-    return view.replace("<br>", "\n").replace("</ol>", "").replace("<ol><li>", "\n— ").replace("</li>\n<li>", "\n— ").replace("</li>", "").replace("<code>", "`").replace("</code>", "`")
+    return (
+        view.replace("<br>", "\n")
+        .replace("</ol>", "")
+        .replace("<ol><li>", "\n— ")
+        .replace("</li>\n<li>", "\n— ")
+        .replace("</li>", "")
+        .replace("<code>", "`")
+        .replace("</code>", "`")
+    )

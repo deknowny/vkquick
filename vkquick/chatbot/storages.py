@@ -14,17 +14,31 @@ from vkquick.chatbot.wrappers.page import Group, Page, User
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
-    from vkquick.chatbot.application import Bot
+    from vkquick.base.event_factories import BaseEventFactory
+    from vkquick.chatbot.application import App, Bot
     from vkquick.chatbot.wrappers.attachment import Document, Photo
 
     SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
 
+NewEventPayloadFieldTypevar = typing.TypeVar("NewEventPayloadFieldTypevar")
+BotPayloadFieldTypevar = typing.TypeVar("BotPayloadFieldTypevar")
+AppPayloadFieldTypevar = typing.TypeVar("AppPayloadFieldTypevar")
+
+
 @dataclasses.dataclass
-class NewEvent:
+class NewEvent(
+    typing.Generic[
+        AppPayloadFieldTypevar,
+        BotPayloadFieldTypevar,
+        NewEventPayloadFieldTypevar,
+    ]
+):
     event: BaseEvent
-    bot: Bot
-    metadata: dict = dataclasses.field(default_factory=dict)
+    bot: Bot[BotPayloadFieldTypevar, AppPayloadFieldTypevar]
+    payload_factory: typing.Type[
+        NewEventPayloadFieldTypevar
+    ] = dataclasses.field(default=None)
 
     @classmethod
     async def from_event(
@@ -35,9 +49,28 @@ class NewEvent:
     ):
         return cls(event=event, bot=bot)
 
+    @functools.cached_property
+    def payload(self) -> NewEventPayloadFieldTypevar:
+        return self.payload_factory()
+
+    @property
+    def events_factory(self) -> BaseEventFactory:
+        return self.bot.events_factory
+
+    @property
+    def app(self) -> App[AppPayloadFieldTypevar]:
+        return self.bot.app
+
 
 @dataclasses.dataclass
-class NewMessage(NewEvent, SentMessage):
+class NewMessage(
+    NewEvent[
+        NewEventPayloadFieldTypevar,
+        BotPayloadFieldTypevar,
+        AppPayloadFieldTypevar,
+    ],
+    SentMessage,
+):
     @classmethod
     async def from_event(
         cls,
@@ -74,8 +107,8 @@ class NewMessage(NewEvent, SentMessage):
 
     async def conquer_new_message(
         self, *, same_chat: bool = True, same_user: bool = True
-    ) -> typing.AsyncGenerator[NewMessage, None, None]:
-        async for new_event in self.bot.events_factory.listen(same_poll=True):
+    ) -> typing.AsyncGenerator[NewMessage, None]:
+        async for new_event in self.bot.events_factory.listen():
             if new_event.type in {
                 "message_new",
                 "message_reply",

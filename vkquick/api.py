@@ -119,7 +119,10 @@ class API(SessionContainerMixin):
             сущности пользователя/группы, обернутая соответствующим враппером
         :rtype:
         """
-        if self._token_owner != TokenOwner.UNKNOWN:
+        if (
+            self._token_owner != TokenOwner.UNKNOWN
+            and self._owner_schema is not None
+        ):
             return self._token_owner, self._owner_schema
         owner_schema = await self.use_cache().method("users.get")
         if owner_schema:

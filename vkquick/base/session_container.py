@@ -45,7 +45,7 @@ class SessionContainerMixin:
         произойдет инициализация. Не рекомендуется использовать
         этот проперти вне корутин.
         """
-        if self.__session is None:
+        if self.__session is None or self.__session.closed:
             self.__session = self._init_aiohttp_session()
 
         return self.__session

@@ -40,7 +40,7 @@ class Command(HandlerMixin):
         self.names = list(self.names)
         if not self.names:
             self.names = self.handler.__name__
-        self.handler = logger.catch(reraise=True)(self.handler)
+        self.handler = logger.catch(self.handler)
 
         self._text_arguments: typing.List[CommandTextArgument] = []
         self._message_storage_argument_name = None
@@ -137,28 +137,23 @@ class Command(HandlerMixin):
     async def _call_handler(
         self, message_storage: NewMessage, arguments: dict
     ) -> None:
-        try:
-            handler_response = await self.handler(**arguments)
-            if handler_response is not None:
-                await message_storage.reply(handler_response)
-
-        except Exception:
-            ...
-        else:
-            logger.opt(colors=True).success(
-                "Called command <m>{com_name}</m><w>({args})</w>".format(
-                    com_name=self.handler.__name__,
-                    args=", ".join(
-                        f"<c>{key}</c>=<y>{value!r}</y>"
-                        for key, value in arguments.items()
-                    ),
-                )
+        logger.opt(colors=True).success(
+            "Call command <m>{com_name}</m><w>({args})</w>".format(
+                com_name=self.handler.__name__,
+                args=", ".join(
+                    f"<c>{key}</c>=<y>{value!r}</y>"
+                    for key, value in arguments.items()
+                ),
             )
+        )
+        handler_response = await self.handler(**arguments)
+        if handler_response is not None:
+            await message_storage.reply(handler_response)
 
     def _parse_handler_arguments(self) -> None:
         parameters = inspect.signature(self.handler).parameters
         for name, argument in parameters.items():
-            if argument.annotation is NewMessage:
+            if typing.get_origin(argument.annotation) == NewMessage:
                 self._message_storage_argument_name = argument.name
                 if self._text_arguments:
                     warnings.warn(

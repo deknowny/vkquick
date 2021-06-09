@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import functools
 import pathlib
 import shutil
 import typing
@@ -20,9 +21,11 @@ from vkquick.chatbot.storages import (
 from vkquick.logger import update_logging_level
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 
+AppPayloadFieldTypevar = typing.TypeVar("AppPayloadFieldTypevar")
+
 
 @dataclasses.dataclass
-class App(Package):
+class App(Package, typing.Generic[AppPayloadFieldTypevar]):
 
     packages: typing.List[Package] = dataclasses.field(default_factory=list)
     debug: bool = False
@@ -30,6 +33,9 @@ class App(Package):
     name: str = "VK Quick Бот"
     description: str = "Чат-бот для ВКонтакте, написанный на Python с использованием VK Quick"
     site_title: str = "Документация к чат-боту"
+    payload_factory: typing.Type[AppPayloadFieldTypevar] = dataclasses.field(
+        default=None
+    )
 
     def __post_init__(self):
         if self.debug:
@@ -41,6 +47,10 @@ class App(Package):
                 command.update_prefix(*self.prefixes)
 
         self.packages.append(self)
+
+    @functools.cached_property
+    def payload(self) -> AppPayloadFieldTypevar:
+        return self.payload_factory()
 
     async def route_event(self, new_event_storage) -> None:
         routing_coroutines = [
@@ -72,7 +82,10 @@ class App(Package):
 
     def run(
         self,
-        *tokens: str,
+        *tokens: typing.Union[str, API],
+        bot_payload_factory: typing.Optional[
+            typing.Type[BotPayloadFieldTypevar]
+        ] = None,
         build_autodoc: bool = True,
         docs_directory: str = "autodocs",
         docs_filename: str = "index.html"
@@ -80,6 +93,7 @@ class App(Package):
         asyncio.run(
             self.coroutine_run(
                 *tokens,
+                bot_payload_factory=bot_payload_factory,
                 build_autodoc=build_autodoc,
                 docs_directory=docs_directory,
                 docs_filename=docs_filename
@@ -89,7 +103,10 @@ class App(Package):
 
     async def coroutine_run(
         self,
-        *tokens,
+        *tokens: typing.Union[str, API],
+        bot_payload_factory: typing.Optional[
+            typing.Type[BotPayloadFieldTypevar]
+        ] = None,
         build_autodoc: bool = True,
         docs_directory: str = "autodocs",
         docs_filename: str = "index.html"
@@ -105,7 +122,10 @@ class App(Package):
             postfix="s" if len(tokens) > 1 else "",
         )
         bots_init_coroutines = [
-            Bot.via_token(token, self) for token in tokens
+            Bot.via_token(
+                token=token, app=self, payload_factory=bot_payload_factory
+            )
+            for token in tokens
         ]
         bots = await asyncio.gather(*bots_init_coroutines)
         await self._call_startup(*bots)
@@ -168,23 +188,48 @@ class App(Package):
         )
 
 
+BotPayloadFieldTypevar = typing.TypeVar("BotPayloadFieldTypevar")
+
+
 @dataclasses.dataclass
-class Bot:
-    app: App
+class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
+    app: App[AppPayloadFieldTypevar]
     api: API
     events_factory: BaseEventFactory
-    metadata: dict = dataclasses.field(default_factory=dict)
+    payload_factory: typing.Type[BotPayloadFieldTypevar] = dataclasses.field(
+        default=None
+    )
+
+    @functools.cached_property
+    def payload(self) -> BotPayloadFieldTypevar:
+        return self.payload_factory()
 
     @classmethod
-    async def via_token(cls, token: str, app: App) -> Bot:
-        api = API(token)
+    async def via_token(
+        cls,
+        *,
+        token: typing.Union[str, API],
+        app: App,
+        payload_factory: typing.Optional[
+            typing.Type[BotPayloadFieldTypevar]
+        ] = None
+    ) -> Bot:
+        if isinstance(token, API):
+            api = token
+        else:
+            api = API(token)
         token_owner, _ = await api.define_token_owner()
         events_factory: BaseEventFactory
         if token_owner == TokenOwner.USER:
             events_factory = UserLongPoll(api)
         else:
             events_factory = GroupLongPoll(api)
-        return cls(app=app, api=api, events_factory=events_factory)
+        return cls(
+            app=app,
+            api=api,
+            events_factory=events_factory,
+            payload_factory=payload_factory,
+        )
 
     async def run_polling(self):
         async for event in self.events_factory.listen():

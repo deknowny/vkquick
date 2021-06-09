@@ -7,7 +7,7 @@ from vkquick.chatbot.base.cutter import (
     Cutter,
     CutterParsingResponse,
     cut_part_via_regex,
-    html_list_to_message
+    html_list_to_message,
 )
 from vkquick.chatbot.exceptions import BadArgumentError
 from vkquick.chatbot.storages import NewMessage
@@ -76,7 +76,9 @@ class WordCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(
-            self._pattern, arguments_string, error_description=self.gen_message_doc()
+            self._pattern,
+            arguments_string,
+            error_description=self.gen_message_doc(),
         )
 
     def gen_doc(self):
@@ -90,7 +92,9 @@ class StringCutter(Cutter):
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse[str]:
         return cut_part_via_regex(
-            self._pattern, arguments_string, error_description=self.gen_message_doc()
+            self._pattern,
+            arguments_string,
+            error_description=self.gen_message_doc(),
         )
 
     def gen_doc(self):
@@ -166,7 +170,8 @@ class UnionCutter(Cutter):
     def gen_doc(self):
         header = "одно из следующих значений:<br><ol>{elements}</ol>"
         elements_docs = [
-            f"<li>{typevar.gen_doc().capitalize()}</li>" for typevar in self._typevars
+            f"<li>{typevar.gen_doc().capitalize()}</li>"
+            for typevar in self._typevars
         ]
         elements_docs = "\n".join(elements_docs)
         return header.format(elements=elements_docs)
@@ -174,6 +179,7 @@ class UnionCutter(Cutter):
 
 class GroupCutter(Cutter):
     _html_to_message = True
+
     def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
@@ -261,6 +267,7 @@ class UniqueImmutableSequenceCutter(_SequenceCutter):
 
 class LiteralCutter(Cutter):
     _html_to_message = True
+
     def __init__(self, *container_values: str):
         self._container_values = tuple(map(re.compile, container_values))
 
