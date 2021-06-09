@@ -206,7 +206,7 @@ class BaseLongPoll(BaseEventFactory):
         self._baked_request = asyncio.create_task(baked_request)
 
     async def close_session(self) -> None:
-        # await self._api.close_session()
+        await self._api.close_session()
         await BaseEventFactory.close_session(self)
 
     def stop(self) -> None:
