@@ -84,6 +84,11 @@ NOT_PARSED = object()
             [123, 456, 678, 901],
         ),
         (
+            vq.MutableSequenceCutter(vq.IntegerCutter()),
+            "abc",
+            [],
+        ),
+        (
             vq.ImmutableSequenceCutter(
                 vq.UnionCutter(vq.IntegerCutter(), vq.WordCutter())
             ),

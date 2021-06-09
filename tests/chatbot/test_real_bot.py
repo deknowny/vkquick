@@ -1,75 +1,64 @@
 import asyncio
+import dataclasses
+import typing
 
 import pytest
 
 import vkquick as vq
 
-#
-# @pytest.mark.asyncio
-# async def test_ping_bot(group_api, user_api):
-#     ponged = False
-#     peer_id = None
-#
-#     group_app = vq.App()
-#
-#     @group_app.on_startup()
-#     async def startup(bot: vq.Bot):
-#         nonlocal peer_id
-#         _, owner = await bot.api.define_token_owner()
-#         peer_id = owner.id
-#
-#     @group_app.command("ping")
-#     async def echo():
-#         return "pong"
-#
-#     @group_app.command("pong")
-#     async def echo():
-#         breakpoint()
-#         return "pong"
-#
-#     group_bot_run_task = asyncio.create_task(
-#         group_app.coroutine_run("$GROUP_TOKEN", build_autodoc=False)
-#     )
-#
-#     user_app = vq.App()
-#
-#     @user_app.on_startup()
-#     async def startup(bot: vq.Bot):
-#         # Setup group bot
-#         await asyncio.sleep(6)
-#         await bot.api.method(
-#             "messages.send",
-#             peer_id=-peer_id,
-#             message="ping",
-#             random_id=vq.random_id()
-#         )
-#     #
-#     # @user_app.command("pong")
-#     # async def pong():
-#     #     nonlocal ponged
-#     #     ponged = True
-#     #     group_bot_run_task.cancel()
-#     #     user_bot_run_task.cancel()
-#     #
-#     #     try:
-#     #         await group_bot_run_task
-#     #     except asyncio.CancelledError:
-#     #         pass
-#     #
-#     #     try:
-#     #         await user_bot_run_task
-#     #     except asyncio.CancelledError:
-#     #         pass
-#
-#     user_bot_run_task = asyncio.create_task(
-#         user_app.coroutine_run("$USER_TOKEN", build_autodoc=False)
-#     )
-#     try:
-#         await asyncio.gather(
-#             group_bot_run_task, user_bot_run_task
-#         )
-#     except asyncio.CancelledError:
-#         pass
-#
-#     assert ponged
-#
+
+@dataclasses.dataclass
+class AppMetadata:
+    group_ponged: bool = dataclasses.field(default=False)
+    user_ponged: bool = dataclasses.field(default=False)
+
+
+app: vq.App[AppMetadata] = vq.App(payload_factory=AppMetadata)
+
+
+@app.command("ping")
+async def ping(ctx: vq.NewMessage[AppMetadata, typing.Any, typing.Any]):
+    bot_type, _ = await ctx.api.define_token_owner()
+    if bot_type == vq.TokenOwner.USER:
+        ctx.app.payload.user_ponged = True
+    else:
+        ctx.app.payload.group_ponged = True
+    ctx.bot.events_factory.stop()
+    return "pong"
+
+
+@pytest.mark.asyncio
+async def test_ping_bot(group_api, user_api):
+    group = await group_api.define_token_owner()
+    group_schema = group[1]
+
+    group_bot_task = asyncio.create_task(
+        app.coroutine_run(group_api, build_autodoc=False)
+    )
+    user_bot_task = asyncio.create_task(
+        app.coroutine_run(user_api, build_autodoc=False)
+    )
+    # Setup the bot
+    await asyncio.sleep(1)
+
+    await user_api.method(
+        "messages.send",
+        random_id=vq.random_id(),
+        message="ping",
+        peer_id=-group_schema.id,
+    )
+
+    await group_bot_task
+    # Wait the answer
+    await asyncio.gather(group_bot_task, user_bot_task, asyncio.sleep(1))
+    last_message = await user_api.method(
+        "messages.get_history",
+        count=2,
+        peer_id=-group_schema.id,
+    )
+    assert (
+        last_message["items"][0]["text"]
+        == last_message["items"][1]["text"]
+        == "pong"
+    )
+    assert app.payload.user_ponged and app.payload.group_ponged
