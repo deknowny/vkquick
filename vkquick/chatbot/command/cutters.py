@@ -541,18 +541,18 @@ class EntityCutter(MentionCutter):
     ) -> CutterParsingResponse:
         if ctx.msg.reply_message is not None:
             page_id = ctx.msg.reply_message.from_id
-            if ctx.metadata.get("_replied_user_used") is None:
-                ctx.metadata["_replied_user_used"] = ...
+            if ctx.argument_processing_payload.get("_replied_user_used") is None:
+                ctx.argument_processing_payload["_replied_user_used"] = ...
             else:
                 raise BadArgumentError("No user attached")
         else:
             forwarded_pages = ctx.msg.fwd_messages
-            step = ctx.metadata.get("_forward_page_iter_step")
+            step = ctx.argument_processing_payload.get("_forward_page_iter_step")
             if step is None:
-                ctx.metadata["_forward_page_iter_step"] = 1
+                ctx.argument_processing_payload["_forward_page_iter_step"] = 1
                 step = 0
             else:
-                ctx.metadata["_forward_page_iter_step"] += 1
+                ctx.argument_processing_payload["_forward_page_iter_step"] += 1
             try:
                 page_id = forwarded_pages[step].from_id
             except IndexError:

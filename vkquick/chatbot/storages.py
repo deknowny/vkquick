@@ -73,6 +73,9 @@ class NewMessage(
     ],
     SentMessage,
 ):
+
+    argument_processing_payload: dict = dataclasses.field(default_factory=dict)
+
     @classmethod
     async def from_event(
         cls,
