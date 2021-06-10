@@ -16,13 +16,9 @@
 }
 
 .md-typeset a:hover {
-    color: #282C36!important;
+    color: var(--md-accent-fg-color)!important;
 }
 
-
-/*a {*/
-/*    color: #a4cac8!important;*/
-/*}*/
 
 /* Indentation for mkdocstrings items. */
 div.doc-contents:not(.first) {

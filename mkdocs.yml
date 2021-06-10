@@ -22,9 +22,7 @@ nav:
     - Установка: installation.md
     - Как работают боты: how-bots-work.md
     - Документация:
-        - api.py: docs/api.md
-        - bot.py: docs/bot.md
-        - event.py: docs/event.md
+        - Имена и префиксы: docs/names-and-prefixes.md
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
@@ -73,6 +71,8 @@ markdown_extensions:
     - pymdownx.superfences
     - pymdownx.tabbed
     - pymdownx.tasklist
+    - pymdownx.snippets
+    - pymdownx.inlinehilite
     - toc:
         permalink: true
 
