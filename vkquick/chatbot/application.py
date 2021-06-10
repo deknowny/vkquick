@@ -10,8 +10,10 @@ import typing
 import jinja2
 from loguru import logger
 
+from vkquick import BaseEvent
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
+from vkquick.chatbot.exceptions import StopStateHandling
 from vkquick.chatbot.package import Package
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
@@ -233,16 +235,20 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
 
     async def run_polling(self):
         async for event in self.events_factory.listen():
+            logger.opt(colors=True).info(
+                "New event: <y>{event_type}</y>",
+                event_type=event.type,
+            )
             new_event_storage = NewEvent(event=event, bot=self)
             asyncio.create_task(self.handle_event(new_event_storage))
 
-    async def handle_event(self, new_event_storage: NewEvent):
-        # Запуск обработки события
-        logger.opt(colors=True).info(
-            "New event: <y>{event_type}</y>",
-            event_type=new_event_storage.event.type,
-        )
-        asyncio.create_task(self.app.route_event(new_event_storage))
+    @logger.catch(exclude=StopStateHandling)
+    async def handle_event(self, new_event_storage: NewEvent, wrap_to_task: bool = True):
+        route_event_coroutine = self.app.route_event(new_event_storage)
+        if wrap_to_task:
+            asyncio.create_task(route_event_coroutine)
+        else:
+            await route_event_coroutine
 
         if new_event_storage.event.type in {
             "message_new",
@@ -250,18 +256,26 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             4,
         }:
             message_storage = await NewMessage.from_event(
-                event=new_event_storage.event, bot=new_event_storage.bot
+                event=new_event_storage.event,
+                bot=new_event_storage.bot,
+                payload_factory=new_event_storage.payload_factory
             )
 
-            asyncio.create_task(self.app.route_message(message_storage))
+            route_message_coroutine = self.app.route_message(message_storage)
+            if wrap_to_task:
+                asyncio.create_task(route_message_coroutine)
+            else:
+                await route_message_coroutine
 
         elif new_event_storage.event.type == "message_event":
             context = await CallbackButtonPressed.from_event(
                 event=new_event_storage.event, bot=new_event_storage.bot
             )
-            asyncio.create_task(
-                self.app.route_callback_button_pressing(context)
-            )
+            route_callback_button_pressing_coroutine = self.app.route_callback_button_pressing(context)
+            if wrap_to_task:
+                asyncio.create_task(route_callback_button_pressing_coroutine)
+            else:
+                await route_callback_button_pressing_coroutine
 
     async def close_sessions(self):
         await self.events_factory.close_session()

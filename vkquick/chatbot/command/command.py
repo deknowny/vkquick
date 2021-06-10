@@ -17,6 +17,7 @@ from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.adapters import resolve_typing
 from vkquick.chatbot.exceptions import BadArgumentError, FilterFailedError
 from vkquick.chatbot.storages import NewMessage
+from vkquick.chatbot.utils import get_origin_typing
 
 Handler = typing.TypeVar(
     "Handler", bound=typing.Callable[..., typing.Awaitable]
@@ -38,9 +39,6 @@ class Command(HandlerMixin):
     def __post_init__(self):
         self.prefixes = list(self.prefixes)
         self.names = list(self.names)
-        if not self.names:
-            self.names = self.handler.__name__
-        self.handler = logger.catch(self.handler)
 
         self._text_arguments: typing.List[CommandTextArgument] = []
         self._message_storage_argument_name = None
@@ -108,7 +106,7 @@ class Command(HandlerMixin):
                 parsing_response = await argtype.cutter.cut_part(
                     message_storage, remain_string
                 )
-            except BadArgumentError as err:
+            except BadArgumentError:
                 if self.invalid_argument_config is not None:
                     await self.invalid_argument_config.on_invalid_argument(
                         remain_string=remain_string,
@@ -153,7 +151,7 @@ class Command(HandlerMixin):
     def _parse_handler_arguments(self) -> None:
         parameters = inspect.signature(self.handler).parameters
         for name, argument in parameters.items():
-            if typing.get_origin(argument.annotation) == NewMessage:
+            if get_origin_typing(argument.annotation) == NewMessage:
                 self._message_storage_argument_name = argument.name
                 if self._text_arguments:
                     warnings.warn(
@@ -189,7 +187,7 @@ class Command(HandlerMixin):
         # Если у команды есть аргументы,
         # то при ее вызове после имени команды должны идти пробельные символы
         # или аргументов не должно быть вовсе
-        if self._text_arguments:
+        if self._text_arguments and summary_regex:
             summary_regex += r"(?:$|\s+)"
 
         self._routing_regex = re.compile(

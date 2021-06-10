@@ -5,6 +5,7 @@ import dataclasses
 import functools
 import typing
 
+from vkquick.chatbot.exceptions import StopStateHandling
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
     Message,
@@ -17,6 +18,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event_factories import BaseEventFactory
     from vkquick.chatbot.application import App, Bot
     from vkquick.chatbot.wrappers.attachment import Document, Photo
+    from vkquick.chatbot.package import Package
 
     SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
@@ -77,6 +79,9 @@ class NewMessage(
         *,
         event: BaseEvent,
         bot: Bot,
+        payload_factory: typing.Optional[typing.Type[
+            NewEventPayloadFieldTypevar
+        ]] = None
     ):
         if event.type == 4:
             extended_message = await bot.api.method(
@@ -99,6 +104,7 @@ class NewMessage(
             bot=bot,
             api=bot.api,
             truncated_message=extended_message,
+            payload_factory=payload_factory
         )
 
     @functools.cached_property
@@ -125,6 +131,27 @@ class NewMessage(
                     or not same_user
                 ):
                     yield conquered_message
+
+    async def run_state_handling(
+        self,
+        app: App, /,
+        payload: typing.Any = None
+    ) -> typing.Any:
+        # Цикличный импорт
+        from vkquick.chatbot.application import Bot
+
+        anonymous_bot = Bot(
+            app=app,
+            api=self.api,
+            events_factory=self.events_factory,
+            payload_factory=self.payload_factory
+        )
+        async for event in self.events_factory.listen():
+            new_event_storage = NewEvent(event=event, bot=anonymous_bot, payload_factory=lambda: payload)
+            try:
+                await anonymous_bot.handle_event(new_event_storage, wrap_to_task=False)
+            except StopStateHandling as err:
+                return err.payload
 
     async def fetch_photos(self) -> typing.List[Photo]:
         return await self.msg.fetch_photos(self.api)

@@ -6,11 +6,13 @@ import dataclasses
 import re
 import typing
 
+from loguru import logger
+
 from vkquick.base.event import EventType
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
-from vkquick.chatbot.exceptions import FilterFailedError
+from vkquick.chatbot.exceptions import FilterFailedError, StopStateHandling
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
     NewEvent,
@@ -232,7 +234,7 @@ class Package:
                 if isinstance(extra_arguments, list):
                     extra_arguments = {}
             handler = self.button_callback_handlers[handler_name]
-            if NewMessage in handler.handler.__annotations__.values():
+            if CallbackButtonPressed in handler.handler.__annotations__.values():
                 response = await handler.handler(ctx, **extra_arguments)
             else:
                 response = await handler.handler(**extra_arguments)
