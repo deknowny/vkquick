@@ -32,7 +32,8 @@
 --8<-- "docs/src/names_and_prefixes/code/ping.py"
 ```
 
-![Бот с командой ping](../src/names_and_prefixes/imgs/ping.png)
+??? note "Usage"
+    ![Бот с командой ping](../src/names_and_prefixes/imgs/ping.png)
 
 То есть для того, чтобы создать команду, реагирующую на `ping`, необходимо повесить декоратор на корутинную функцию (`#!python async def`) и указать соответствующее имя
 

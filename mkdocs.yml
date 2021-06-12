@@ -22,6 +22,7 @@ nav:
     - Установка: installation.md
     - Как работают боты: how-bots-work.md
     - Документация:
+        - Введение: docs/index.md
         - Имена и префиксы: docs/names-and-prefixes.md
     - Терминология: terminologies.md
     - CLI: cli.md
@@ -73,6 +74,7 @@ markdown_extensions:
     - pymdownx.tasklist
     - pymdownx.snippets
     - pymdownx.inlinehilite
+    - pymdownx.details
     - toc:
         permalink: true
 

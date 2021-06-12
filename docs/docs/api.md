@@ -1,3 +1,0 @@
-::: vkquick.bases
-
-::: vkquick.api
