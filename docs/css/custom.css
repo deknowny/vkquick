@@ -30,5 +30,5 @@ div.doc-contents:not(.first) {
 
 /* Images shape */
 img {
-    border-radius: 10px;
+    border-radius: 25px;
 }
