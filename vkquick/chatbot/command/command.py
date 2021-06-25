@@ -28,7 +28,7 @@ Handler = typing.TypeVar(
 class Command(HandlerMixin):
     prefixes: typing.List[str] = dataclasses.field(default_factory=list)
     names: typing.List[str] = dataclasses.field(default_factory=list)
-    routing_re_flags: re.RegexFlag = re.IGNORECASE
+    routing_re_flags: typing.Union[re.RegexFlag, int] = re.IGNORECASE
     filter: typing.Optional[BaseFilter] = None
     description: typing.Optional[str] = None
     exclude_from_autodoc: bool = False

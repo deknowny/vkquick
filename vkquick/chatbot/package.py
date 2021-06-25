@@ -86,7 +86,7 @@ class Package:
         self,
         *names: str,
         prefixes: typing.List[str] = None,
-        routing_re_flags: re.RegexFlag = re.IGNORECASE,
+        routing_re_flags: typing.Union[re.RegexFlag, int] = re.IGNORECASE,
         exclude_from_autodoc: bool = False,
         filter: typing.Optional[BaseFilter] = None
     ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
