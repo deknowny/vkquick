@@ -24,6 +24,10 @@ nav:
     - Документация:
         - Введение: docs/index.md
         - Имена и префиксы: docs/names-and-prefixes.md
+        - Команды с аргументами: docs/command-arguments.md
+        - Контекст обработки команды:
+            - Введение: docs/new-message-context/index.md
+            - Поля сообщения: docs/new-message-context/message-fields.md
     - Терминология: terminologies.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
