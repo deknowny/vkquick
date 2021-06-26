@@ -1,5 +1,3 @@
-import re
-
 import vkquick as vq
 
 
