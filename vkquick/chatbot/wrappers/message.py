@@ -25,7 +25,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class TruncatedMessage(Wrapper):
-    async def extend(self, api: API) -> Message:
+    async def extend(self, api: API) -> None:
         if self.id:
             extended_message = await api.method(
                 "messages.get_by_id",
@@ -37,8 +37,8 @@ class TruncatedMessage(Wrapper):
                 conversation_message_ids=self.cmid,
                 peer_id=self.peer_id,
             )
-        extended_message = extended_message["items"][0]
-        return Message(extended_message)
+        self._fields = extended_message["items"][0]
+        self.fields["is_cropped"] = False
 
     @property
     def id(self) -> int:
@@ -121,7 +121,7 @@ class Message(TruncatedMessage):
 
     @functools.cached_property
     def payload(self) -> typing.Optional[dict]:
-        if "payload" in self.fields:
+        if "payload" in self.fields and self.fields["payload"] is not None:
             return json_parser_policy.loads(self.fields["payload"])
         return None
 
@@ -159,17 +159,20 @@ class Message(TruncatedMessage):
     def is_cropped(self) -> bool:
         return bool(self.fields.get("is_cropped"))
 
+    async def fetch_attachments(self, api: API) -> list:
+
+        if self.is_cropped:
+            await self.extend(api)
+        return self.attachments
+
     async def fetch_photos(self, api: API) -> typing.List[Photo]:
         """
         Возвращает только фотографии из всего,
         что есть во вложениях, оборачивая их в обертку
         """
-        if self.is_cropped:
-            new_schema = await self.extend(api)
-            self._fields = new_schema.fields
         photos = [
             Photo(attachment["photo"])
-            for attachment in self.attachments
+            for attachment in await self.fetch_attachments(api)
             if attachment["type"] == "photo"
         ]
         return photos
@@ -180,11 +183,10 @@ class Message(TruncatedMessage):
         что есть во вложениях, оборачивая их в обертку
         """
         if self.is_cropped:
-            new_schema = await self.extend(api)
-            self._fields = new_schema.fields
+            await self.extend(api)
         docs = [
             Document(attachment["doc"])
-            for attachment in self.attachments
+            for attachment in await self.fetch_attachments(api)
             if attachment["type"] == "doc"
         ]
         return docs

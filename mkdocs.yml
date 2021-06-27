@@ -25,10 +25,13 @@ nav:
         - Введение: docs/index.md
         - Имена и префиксы: docs/names-and-prefixes.md
         - Команды с аргументами: docs/command-arguments.md
+        - Фильтры для сообщений: docs/filters.md
         - Контекст обработки команды:
             - Введение: docs/new-message-context/index.md
             - Поля сообщения: docs/new-message-context/message-fields.md
-    - Терминология: terminologies.md
+        - Дополнительно:
+              - Кастомный JSON-парсер: docs/advanced/custom-json-parser.md
+              - Настройка логирования: docs/advanced/setup-logging.md
     - CLI: cli.md
     - Устройство VK Quick: vkquick-struct.md
     - Заметки по релизам: releases.md

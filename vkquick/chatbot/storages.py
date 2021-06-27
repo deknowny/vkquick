@@ -6,6 +6,7 @@ import functools
 import typing
 
 from vkquick.chatbot.exceptions import StopStateHandling
+from vkquick.chatbot.utils import peer
 from vkquick.chatbot.wrappers.message import (
     CallbackButtonPressedMessage,
     Message,
@@ -87,26 +88,33 @@ class NewMessage(
         ]] = None
     ):
         if event.type == 4:
-            extended_message = await bot.api.method(
-                "messages.get_by_id",
-                message_ids=event.content[1],
+            message = dict(
+                id=event.content[1],
+                peer_id=event.content[3],
+                date=event.content[4],
+                text=event.content[5],
+                from_id=event.content[3] if event.content[3] < peer() else event.content[6]["from"],
+                keyboard=event.content[6].get("keyboard"),
+                payload=event.content[6].get("payload"),
+                random_id=event.content[8],
+                conversation_message_id=event.content[9] if len(event.content) == 10 else None,
+                is_cropped=True
             )
-            extended_message = extended_message["items"][0]
-            extended_message["text"] = extended_message["text"].replace(
+            message["text"] = message["text"].replace(
                 "<br>", "\n"
             )
         elif "message" in event.object:
-            extended_message = event.object["message"]
+            message = event.object["message"]
         else:
-            extended_message = event.object
+            message = event.object
 
-        extended_message = Message(extended_message)
+        message = Message(message)
 
         return cls(
             event=event,
             bot=bot,
             api=bot.api,
-            truncated_message=extended_message,
+            truncated_message=message,
             payload_factory=payload_factory
         )
 

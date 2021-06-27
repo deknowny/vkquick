@@ -539,6 +539,8 @@ class EntityCutter(MentionCutter):
     async def _attached_method(
         self, ctx: NewMessage, arguments_string: str
     ) -> CutterParsingResponse:
+        if ctx.msg.is_cropped:
+            await ctx.msg.extend(ctx.api)
         if ctx.msg.reply_message is not None:
             page_id = ctx.msg.reply_message.from_id
             if ctx.argument_processing_payload.get("_replied_user_used") is None:

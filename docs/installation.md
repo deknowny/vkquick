@@ -1,25 +1,5 @@
-Перед установкой необходимо удостовериться, что версия Python выше `3.7`:
-
-<div class="termy">
-```console
-$ python -V
-Python 3.7.0
-```
-</div>
-
-***
-
-Если необходимая версия есть, можно переходить к установке:
-
-> До релиза 1.0: `python -m pip install -U https://github.com/deknowny/vkquick/archive/1.0.zip`
-
-=== "PyPI"
-    <div class="termy">
-    ```console
-    $ python -m pip install vkquick
-    ---> 100%
-    ```
-    </div>
+# Установка
+Установить фреймворк можно следующей командой
 
 === "GitHub"
     <div class="termy">
@@ -29,6 +9,47 @@ Python 3.7.0
     ```
     </div>
 
+
+=== "PyPI"
+    На `PyPI` будет загружена стабильная версия. Сейчас продукт все еще в разработке
+    <!--
+    <div class="termy">
+    ```console
+    $ python -m pip install -U https://github.com/deknowny/vkquick/archive/1.0.zip
+    ---> 100%
+    ```
+    </div>-->
+    
+***
+
+## Ошибки при установке
+Если у вас появляются ошибки при установке, попробуйте следующее
+***
+Проверьте, версия вашего `python` выше `3.8`
+<div class="termy">
+```console
+$ python -V
+Python 3.8.2
+```
+</div>
+
+***
+Обновите версию `pip` до последней
+<div class="termy">
+```console
+$ python -m pip install --upgrade pip
+---> 100%
+```
+</div>
+
+***
+Установите `poetry` самостоятельно
+<div class="termy">
+```console
+$ python -m pip install poetry
+---> 100%
+```
+</div>
 ***
 
 Проверьте, чтобы VK Quick установился корректно:
@@ -43,19 +64,4 @@ Version: ...
 </div>
 
 ***
-
-Вместе с фреймворком устанавливается `vq` — терминальная утилита (CLI), немного упрощающая создание ботов. Проверим и ее:
-
-<div class="termy">
-```console
-$ vq --help
-Usage: vq [OPTIONS] COMMAND [ARGS]...
-
-Options:
-...
-...
-```
-</div>
-
-!!! Tip
-    CLI всегда можно запустить через вызов пакета: `python -m vkquick --help`
+Процесс установки производится единожды. Теперь все необходимые зависимости установлены и готовы к использованию
