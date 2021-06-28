@@ -48,7 +48,7 @@ from .chatbot.ui_builders.button import (
     ButtonOnclickHandler,
     InitializedButton,
 )
-from .chatbot.ui_builders.carousel import Carousel
+from .chatbot.ui_builders.carousel import Carousel, Element
 from .chatbot.ui_builders.keyboard import Keyboard
 from .chatbot.utils import (
     download_file,

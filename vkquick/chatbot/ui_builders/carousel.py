@@ -40,15 +40,11 @@ class Carousel(UIBuilder):
         self, gen: typing.Callable[..., typing.Iterator[Element]]
     ) -> None:
         self._gen = gen
-        self.scheme = {"type": "carousel", "elements": []}
-
-    def __call__(self, *args, **kwargs) -> Carousel:
-        self.scheme["elements"] = [
-            elem.scheme for elem in self._gen(*args, **kwargs)
-        ]
-        return self
+        self.scheme = {"type": "carousel", "elements": [
+            elem.scheme for elem in self._gen()
+        ]}
 
     @classmethod
     def build(cls, *elements: Element) -> Carousel:
         self = cls(elements.__iter__)
-        return self()
+        return self

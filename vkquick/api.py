@@ -51,6 +51,7 @@ class API(SessionContainerMixin):
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
         cache_table: typing.Optional[cachetools.Cache] = None,
+        proxies: typing.Optional[typing.List[str]] = None
     ):
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser
@@ -63,6 +64,7 @@ class API(SessionContainerMixin):
         self._token_owner = token_owner
         self._owner_schema = None
         self._requests_url = requests_url
+        self._proxies = proxies
         self._cache_table = cache_table or cachetools.TTLCache(
             ttl=7200, maxsize=2 ** 12
         )
@@ -326,8 +328,13 @@ class API(SessionContainerMixin):
         Returns:
             Сырой ответ от API
         """
+        if self._proxies is not None:
+            current_proxy = self._proxies.pop(0)
+            self._proxies.append(current_proxy)
+        else:
+            current_proxy = None
         async with self.requests_session.post(
-            self._requests_url + method_name, data=params
+            self._requests_url + method_name, data=params, proxy=current_proxy
         ) as response:
             loaded_response = await self.parse_json_body(response)
             return loaded_response

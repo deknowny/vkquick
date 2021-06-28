@@ -4,6 +4,7 @@ import dataclasses
 import functools
 import typing
 
+from vkquick.types import DecoratorFunction
 from vkquick.json_parsers import json_parser_policy
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -43,29 +44,32 @@ class InitializedButton:
         return self
 
 
+ClickableOrCallable = typing.TypeVar("ClickableOrCallable")
+
+
 class _ColoredButton(InitializedButton):
-    def positive(self) -> _ColoredButton:
+    def positive(self: ClickableOrCallable) -> ClickableOrCallable:
         """
         Зеленая кнопка (для обеих тем)
         """
         self.scheme["color"] = "positive"
         return self
 
-    def negative(self) -> _ColoredButton:
+    def negative(self: ClickableOrCallable) -> ClickableOrCallable:
         """
         Розовая (красная) кнопка (для обеих тем)
         """
         self.scheme["color"] = "negative"
         return self
 
-    def primary(self) -> _ColoredButton:
+    def primary(self: ClickableOrCallable) -> ClickableOrCallable:
         """
         Синяя кнопка для белой, белая для темной
         """
         self.scheme["color"] = "primary"
         return self
 
-    def secondary(self) -> _ColoredButton:
+    def secondary(self: ClickableOrCallable) -> ClickableOrCallable:
         """
         Белая кнопка для светлой темы, серая для темной
         """
@@ -89,7 +93,7 @@ class _UncoloredButton(InitializedButton):
     ...
 
 
-def _convert_payload(func):
+def _convert_payload(func: DecoratorFunction) -> DecoratorFunction:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if "payload" in kwargs:
