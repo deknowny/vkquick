@@ -121,7 +121,7 @@ class Command(HandlerMixin):
                 ] = parsing_response.parsed_part
 
         if remain_string:
-            if argtype is not None:
+            if argtype is not None and self.invalid_argument_config is not None:
                 await self.invalid_argument_config.on_invalid_argument(
                     remain_string=remain_string,
                     ctx=message_storage,
