@@ -63,7 +63,8 @@ class App(Package, typing.Generic[AppPayloadFieldTypevar]):
 
     async def route_message(self, message_storage: NewMessage):
         try:
-            await self.filter.make_decision(message_storage)
+            if self.filter is not None:
+                await self.filter.make_decision(message_storage)
         except FilterFailedError:
             return
         else:
