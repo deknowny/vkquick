@@ -9,6 +9,7 @@ import typing
 from loguru import logger
 
 from vkquick.base.event import EventType
+from vkquick.chatbot.base.cutter import InvalidArgumentConfig
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
@@ -22,6 +23,8 @@ from vkquick.chatbot.ui_builders.button import (
     ButtonCallbackHandler,
     ButtonOnclickHandler,
 )
+
+unset = object()
 
 
 @dataclasses.dataclass
@@ -88,10 +91,11 @@ class Package:
         prefixes: typing.List[str] = None,
         routing_re_flags: typing.Union[re.RegexFlag, int] = re.IGNORECASE,
         exclude_from_autodoc: bool = False,
-        filter: typing.Optional[BaseFilter] = None
+        filter: typing.Optional[BaseFilter] = None,
+        invalid_argument_config: typing.Optional[InvalidArgumentConfig] = unset
     ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
-            command = Command(
+            command_init_vars = dict(
                 handler=func,
                 names=list(names),
                 prefixes=prefixes or self.prefixes,
@@ -99,6 +103,11 @@ class Package:
                 exclude_from_autodoc=exclude_from_autodoc,
                 filter=filter,
             )
+            if invalid_argument_config != unset:
+                command_init_vars.update(
+                    invalid_argument_config=invalid_argument_config
+                )
+            command = Command(**command_init_vars)
             self.commands.append(command)
             return command
 
