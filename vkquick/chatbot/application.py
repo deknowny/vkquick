@@ -13,7 +13,7 @@ from loguru import logger
 from vkquick import BaseEvent
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
-from vkquick.chatbot.exceptions import StopStateHandling
+from vkquick.chatbot.exceptions import StopStateHandling, FilterFailedError
 from vkquick.chatbot.package import Package
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
@@ -62,11 +62,16 @@ class App(Package, typing.Generic[AppPayloadFieldTypevar]):
         await asyncio.gather(*routing_coroutines)
 
     async def route_message(self, message_storage: NewMessage):
-        routing_coroutines = [
-            package.handle_message(message_storage)
-            for package in self.packages
-        ]
-        await asyncio.gather(*routing_coroutines)
+        try:
+            await self.filter.make_decision(message_storage)
+        except FilterFailedError:
+            return
+        else:
+            routing_coroutines = [
+                package.handle_message(message_storage)
+                for package in self.packages
+            ]
+            await asyncio.gather(*routing_coroutines)
 
     async def route_callback_button_pressing(
         self, ctx: CallbackButtonPressed
