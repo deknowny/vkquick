@@ -455,13 +455,13 @@ class EntityCutter(MentionCutter):
 
     def gen_doc(self):
         if self._page_type in {User, UserID}:
-            who = "пользователь"
+            who = "пользователя"
         elif self._page_type in {Group, GroupID}:
-            who = "группа"
+            who = "группы"
         else:
-            who = "пользователь или группа"
+            who = "пользователя или группы"
         return (
-            f"{who} в виде упоминания/ID/короткого имени/ссылки на страницу. "
+            f"Упоминание/ID/короткое имя/ссылка на страницу {who}. "
             "Также можно просто переслать сообщение пользователя"
         )
 

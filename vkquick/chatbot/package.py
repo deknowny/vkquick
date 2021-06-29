@@ -92,6 +92,7 @@ class Package:
         routing_re_flags: typing.Union[re.RegexFlag, int] = re.IGNORECASE,
         exclude_from_autodoc: bool = False,
         filter: typing.Optional[BaseFilter] = None,
+        description: typing.Optional[str] = None,
         invalid_argument_config: typing.Optional[InvalidArgumentConfig] = unset
     ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
@@ -102,6 +103,7 @@ class Package:
                 routing_re_flags=routing_re_flags,
                 exclude_from_autodoc=exclude_from_autodoc,
                 filter=filter,
+                description=description
             )
             if invalid_argument_config != unset:
                 command_init_vars.update(
