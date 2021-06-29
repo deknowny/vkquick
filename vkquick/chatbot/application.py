@@ -10,7 +10,7 @@ import typing
 import jinja2
 from loguru import logger
 
-from vkquick import BaseEvent
+from vkquick.base.event import BaseEvent
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
 from vkquick.chatbot.exceptions import StopStateHandling, FilterFailedError
