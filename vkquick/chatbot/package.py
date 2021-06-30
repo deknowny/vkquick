@@ -13,7 +13,7 @@ from vkquick.chatbot.base.cutter import InvalidArgumentConfig
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
-from vkquick.chatbot.exceptions import FilterFailedError, StopStateHandling
+from vkquick.chatbot.exceptions import StopCurrentHandling, StopStateHandling
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
     NewEvent,
@@ -187,47 +187,47 @@ class Package:
         ]
         await asyncio.gather(*handle_coroutines)
 
-    async def handle_message(self, message_storage: NewMessage):
+    async def handle_message(self, ctx: NewMessage):
         if self.filter is not None:
             try:
-                await self.filter.make_decision(message_storage)
-            except FilterFailedError:
+                await self.filter.run_making_decision(ctx)
+            except StopCurrentHandling:
                 return
         command_coroutines = [
-            command.handle_message(message_storage)
+            command.handle_message(ctx)
             for command in self.commands
         ]
         message_handler_coroutines = [
-            message_handler.handler(message_storage)
+            message_handler.handler(ctx)
             for message_handler in self.message_handlers
         ]
         await asyncio.gather(
-            self.routing_payload(message_storage),
+            self.routing_payload(ctx),
             *command_coroutines,
             *message_handler_coroutines
         )
 
-    async def routing_payload(self, message_storage: NewMessage):
+    async def routing_payload(self, ctx: NewMessage):
         if (
-            message_storage.msg.payload is not None
-            and message_storage.msg.payload.get("command")
+            ctx.msg.payload is not None
+            and ctx.msg.payload.get("command")
             in self.button_onclick_handlers
         ):
-            handler_name = message_storage.msg.payload.get("command")
+            handler_name = ctx.msg.payload.get("command")
             extra_arguments = {}
-            if "args" in message_storage.msg.payload:
-                extra_arguments = message_storage.msg.payload.get("args")
+            if "args" in ctx.msg.payload:
+                extra_arguments = ctx.msg.payload.get("args")
                 if isinstance(extra_arguments, list):
                     extra_arguments = {}
             handler = self.button_onclick_handlers[handler_name]
             if NewMessage in handler.handler.__annotations__.values():
                 response = await handler.handler(
-                    message_storage, **extra_arguments
+                    ctx, **extra_arguments
                 )
             else:
                 response = await handler.handler(**extra_arguments)
             if response is not None:
-                await message_storage.reply(str(response))
+                await ctx.reply(str(response))
 
     async def handle_callback_button_pressing(
         self, ctx: CallbackButtonPressed

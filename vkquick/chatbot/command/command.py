@@ -15,7 +15,8 @@ from vkquick.chatbot.base.cutter import (
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.adapters import resolve_typing
-from vkquick.chatbot.exceptions import BadArgumentError, FilterFailedError
+from vkquick.chatbot.dependency import DependencyMixin, Depends
+from vkquick.chatbot.exceptions import BadArgumentError, StopCurrentHandling
 from vkquick.chatbot.storages import NewMessage
 from vkquick.chatbot.utils import get_origin_typing
 
@@ -37,16 +38,20 @@ class Command(HandlerMixin):
     )
 
     def __post_init__(self):
+        self._dependency_mixin = DependencyMixin()
+
         self.prefixes = list(self.prefixes)
         self.names = list(self.names)
 
         self._text_arguments: typing.List[CommandTextArgument] = []
-        self._message_storage_argument_name = None
-        self._message_storage_argument_name: str
+        self._ctx_argument_name = None
+        self._ctx_argument_name: str
         self._parse_handler_arguments()
 
         self._routing_regex: typing.Pattern
         self._build_routing_regex()
+
+
 
     @property
     def trusted_description(self) -> str:
@@ -66,35 +71,35 @@ class Command(HandlerMixin):
             self.prefixes = list(set(prefixes))
             self._build_routing_regex()
 
-    async def handle_message(self, message_storage: NewMessage) -> None:
+    async def handle_message(self, ctx: NewMessage) -> None:
         is_routing_matched = self._routing_regex.match(
-            message_storage.msg.text
+            ctx.msg.text
         )
         if is_routing_matched:
             arguments = await self._make_arguments(
-                message_storage,
-                message_storage.msg.text[is_routing_matched.end() :],
+                ctx,
+                ctx.msg.text[is_routing_matched.end() :],
             )
             if arguments is not None:
                 passed_filter = await self._run_through_filters(
-                    message_storage
+                    ctx
                 )
                 # Were built correctly
                 if passed_filter:
-                    await self._call_handler(message_storage, arguments)
+                    await self._call_handler(ctx, arguments)
 
-    async def _run_through_filters(self, message_storage: NewMessage) -> bool:
+    async def _run_through_filters(self, ctx: NewMessage) -> bool:
         if self.filter is not None:
             try:
-                await self.filter.make_decision(message_storage)
-            except FilterFailedError:
+                await self.filter.run_making_decision(ctx)
+            except StopCurrentHandling:
                 return False
             else:
                 return True
         return True
 
     async def _make_arguments(
-        self, message_storage: NewMessage, arguments_string: str
+        self, ctx: NewMessage, arguments_string: str
     ) -> typing.Optional[typing.Dict[str, typing.Any]]:
         arguments = {}
         remain_string = arguments_string.lstrip()
@@ -104,13 +109,13 @@ class Command(HandlerMixin):
             remain_string = remain_string.lstrip()
             try:
                 parsing_response = await argtype.cutter.cut_part(
-                    message_storage, remain_string
+                    ctx, remain_string
                 )
             except BadArgumentError:
                 if self.invalid_argument_config is not None:
                     await self.invalid_argument_config.on_invalid_argument(
                         remain_string=remain_string,
-                        ctx=message_storage,
+                        ctx=ctx,
                         argument=argtype,
                     )
                 return None
@@ -124,16 +129,16 @@ class Command(HandlerMixin):
             if argtype is not None and self.invalid_argument_config is not None:
                 await self.invalid_argument_config.on_invalid_argument(
                     remain_string=remain_string,
-                    ctx=message_storage,
+                    ctx=ctx,
                     argument=argtype,
                 )
             return None
-        if self._message_storage_argument_name is not None:
-            arguments[self._message_storage_argument_name] = message_storage
+        if self._ctx_argument_name is not None:
+            arguments[self._ctx_argument_name] = ctx
         return arguments
 
     async def _call_handler(
-        self, message_storage: NewMessage, arguments: dict
+        self, ctx: NewMessage, arguments: dict
     ) -> None:
         logger.opt(colors=True).success(
             "Call command <m>{com_name}</m><w>({args})</w>".format(
@@ -144,24 +149,30 @@ class Command(HandlerMixin):
                 ),
             )
         )
-        handler_response = await self.handler(**arguments)
+        dependency_mapping = await self._dependency_mixin.make_dependency_arguments(ctx)
+        handler_response = await self.handler(**arguments, **dependency_mapping)
         if handler_response is not None:
-            await message_storage.reply(handler_response)
+            await ctx.reply(handler_response)
 
     def _parse_handler_arguments(self) -> None:
         parameters = inspect.signature(self.handler).parameters
         for name, argument in parameters.items():
             if get_origin_typing(argument.annotation) == NewMessage:
-                self._message_storage_argument_name = argument.name
+                self._ctx_argument_name = argument.name
                 if self._text_arguments:
                     warnings.warn(
                         "Set `NewMessage` argument the first "
                         "in the function (style recommendation)"
                     )
 
+            elif isinstance(argument.default, Depends):
+                continue
+
             else:
                 text_argument = resolve_typing(argument)
                 self._text_arguments.append(text_argument)
+
+        self._dependency_mixin.parse_dependency_arguments(self.handler)
 
     def _build_routing_regex(self) -> None:
         """

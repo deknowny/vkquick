@@ -16,12 +16,12 @@ async def test_and_filter():
     await filter.make_decision(mock)
 
     mock.msg.out = False
-    with pytest.raises(vq.FilterFailedError):
+    with pytest.raises(vq.StopCurrentHandling):
         await filter.make_decision(mock)
 
     mock.msg.out = True
     mock.msg.from_id = -100
-    with pytest.raises(vq.FilterFailedError):
+    with pytest.raises(vq.StopCurrentHandling):
         await filter.make_decision(mock)
 
 
@@ -43,7 +43,7 @@ async def test_or_filter():
     await filter.make_decision(mock)
 
     mock.msg.out = False
-    with pytest.raises(vq.FilterFailedError):
+    with pytest.raises(vq.StopCurrentHandling):
         await filter.make_decision(mock)
 
 
@@ -80,5 +80,5 @@ async def test_or_filter(filter, fields, passed):
     if passed:
         await filter.make_decision(mock)
     else:
-        with pytest.raises(vq.FilterFailedError):
+        with pytest.raises(vq.StopCurrentHandling):
             await filter.make_decision(mock)

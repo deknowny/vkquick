@@ -13,7 +13,7 @@ from loguru import logger
 from vkquick.base.event import BaseEvent
 from vkquick.api import API, TokenOwner
 from vkquick.base.event_factories import BaseEventFactory
-from vkquick.chatbot.exceptions import StopStateHandling, FilterFailedError
+from vkquick.chatbot.exceptions import StopStateHandling, StopCurrentHandling
 from vkquick.chatbot.package import Package
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
@@ -61,15 +61,15 @@ class App(Package, typing.Generic[AppPayloadFieldTypevar]):
         ]
         await asyncio.gather(*routing_coroutines)
 
-    async def route_message(self, message_storage: NewMessage):
+    async def route_message(self, ctx: NewMessage):
         try:
             if self.filter is not None:
-                await self.filter.make_decision(message_storage)
-        except FilterFailedError:
+                await self.filter.run_making_decision(ctx)
+        except StopCurrentHandling:
             return
         else:
             routing_coroutines = [
-                package.handle_message(message_storage)
+                package.handle_message(ctx)
                 for package in self.packages
             ]
             await asyncio.gather(*routing_coroutines)
@@ -261,13 +261,13 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             "message_reply",
             4,
         }:
-            message_storage = await NewMessage.from_event(
+            ctx = await NewMessage.from_event(
                 event=new_event_storage.event,
                 bot=new_event_storage.bot,
                 payload_factory=new_event_storage.payload_factory
             )
 
-            route_message_coroutine = self.app.route_message(message_storage)
+            route_message_coroutine = self.app.route_message(ctx)
             if wrap_to_task:
                 asyncio.create_task(route_message_coroutine)
             else:

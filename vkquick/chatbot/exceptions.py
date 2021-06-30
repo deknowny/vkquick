@@ -7,7 +7,7 @@ class BadArgumentError(Exception):
     description: str
 
 
-class FilterFailedError(Exception):
+class StopCurrentHandling(Exception):
     ...
 
 

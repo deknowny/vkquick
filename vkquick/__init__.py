@@ -40,7 +40,7 @@ from .chatbot.command.cutters import (
     UserID,
     WordCutter,
 )
-from .chatbot.exceptions import BadArgumentError, FilterFailedError, StopStateHandling
+from .chatbot.exceptions import BadArgumentError, StopCurrentHandling, StopStateHandling
 from .chatbot.package import Package
 from .chatbot.storages import CallbackButtonPressed, NewEvent, NewMessage
 from .chatbot.ui_builders.button import (
@@ -73,6 +73,7 @@ from .logger import LoggingLevel, update_logging_level
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .types import DecoratorFunction
+from .chatbot.dependency import Depends, DependencyMixin
 
 __all__ = [var for var in locals().keys() if not var.startswith("_")]
 __version__ = importlib.metadata.version(__name__)
