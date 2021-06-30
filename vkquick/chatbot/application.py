@@ -10,10 +10,10 @@ import typing
 import jinja2
 from loguru import logger
 
-from vkquick.base.event import BaseEvent
 from vkquick.api import API, TokenOwner
+from vkquick.base.event import BaseEvent
 from vkquick.base.event_factories import BaseEventFactory
-from vkquick.chatbot.exceptions import StopStateHandling, StopCurrentHandling
+from vkquick.chatbot.exceptions import StopCurrentHandling, StopStateHandling
 from vkquick.chatbot.package import Package
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
@@ -69,8 +69,7 @@ class App(Package, typing.Generic[AppPayloadFieldTypevar]):
             return
         else:
             routing_coroutines = [
-                package.handle_message(ctx)
-                for package in self.packages
+                package.handle_message(ctx) for package in self.packages
             ]
             await asyncio.gather(*routing_coroutines)
 
@@ -249,7 +248,9 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             asyncio.create_task(self.handle_event(new_event_storage))
 
     @logger.catch(exclude=StopStateHandling)
-    async def handle_event(self, new_event_storage: NewEvent, wrap_to_task: bool = True):
+    async def handle_event(
+        self, new_event_storage: NewEvent, wrap_to_task: bool = True
+    ):
         route_event_coroutine = self.app.route_event(new_event_storage)
         if wrap_to_task:
             asyncio.create_task(route_event_coroutine)
@@ -264,7 +265,7 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             ctx = await NewMessage.from_event(
                 event=new_event_storage.event,
                 bot=new_event_storage.bot,
-                payload_factory=new_event_storage.payload_factory
+                payload_factory=new_event_storage.payload_factory,
             )
 
             route_message_coroutine = self.app.route_message(ctx)
@@ -277,7 +278,9 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             context = await CallbackButtonPressed.from_event(
                 event=new_event_storage.event, bot=new_event_storage.bot
             )
-            route_callback_button_pressing_coroutine = self.app.route_callback_button_pressing(context)
+            route_callback_button_pressing_coroutine = (
+                self.app.route_callback_button_pressing(context)
+            )
             if wrap_to_task:
                 asyncio.create_task(route_callback_button_pressing_coroutine)
             else:

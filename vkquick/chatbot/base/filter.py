@@ -4,7 +4,7 @@ import abc
 import dataclasses
 import typing
 
-from vkquick.chatbot.dependency import Depends, DependencyMixin
+from vkquick.chatbot.dependency import DependencyMixin, Depends
 from vkquick.chatbot.exceptions import StopCurrentHandling
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -14,14 +14,15 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 class BaseFilter(abc.ABC):
-
     def __init__(self):
         self._on_error: typing.Optional[OnErrorCallback] = None
         self._dependency_mixin = DependencyMixin()
         self._dependency_mixin.parse_dependency_arguments(self.make_decision)
 
     async def run_making_decision(self, ctx: NewMessage):
-        dependency_mapping = await self._dependency_mixin.make_dependency_arguments(ctx)
+        dependency_mapping = (
+            await self._dependency_mixin.make_dependency_arguments(ctx)
+        )
         try:
             return await self.make_decision(ctx, **dependency_mapping)
         except StopCurrentHandling as err:

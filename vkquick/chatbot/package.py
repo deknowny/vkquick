@@ -93,7 +93,9 @@ class Package:
         exclude_from_autodoc: bool = False,
         filter: typing.Optional[BaseFilter] = None,
         description: typing.Optional[str] = None,
-        invalid_argument_config: typing.Optional[InvalidArgumentConfig] = unset
+        invalid_argument_config: typing.Optional[
+            InvalidArgumentConfig
+        ] = unset
     ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
             command_init_vars = dict(
@@ -103,7 +105,7 @@ class Package:
                 routing_re_flags=routing_re_flags,
                 exclude_from_autodoc=exclude_from_autodoc,
                 filter=filter,
-                description=description
+                description=description,
             )
             if invalid_argument_config != unset:
                 command_init_vars.update(
@@ -194,8 +196,7 @@ class Package:
             except StopCurrentHandling:
                 return
         command_coroutines = [
-            command.handle_message(ctx)
-            for command in self.commands
+            command.handle_message(ctx) for command in self.commands
         ]
         message_handler_coroutines = [
             message_handler.handler(ctx)
@@ -210,8 +211,7 @@ class Package:
     async def routing_payload(self, ctx: NewMessage):
         if (
             ctx.msg.payload is not None
-            and ctx.msg.payload.get("command")
-            in self.button_onclick_handlers
+            and ctx.msg.payload.get("command") in self.button_onclick_handlers
         ):
             handler_name = ctx.msg.payload.get("command")
             extra_arguments = {}
@@ -221,9 +221,7 @@ class Package:
                     extra_arguments = {}
             handler = self.button_onclick_handlers[handler_name]
             if NewMessage in handler.handler.__annotations__.values():
-                response = await handler.handler(
-                    ctx, **extra_arguments
-                )
+                response = await handler.handler(ctx, **extra_arguments)
             else:
                 response = await handler.handler(**extra_arguments)
             if response is not None:
@@ -245,7 +243,10 @@ class Package:
                 if isinstance(extra_arguments, list):
                     extra_arguments = {}
             handler = self.button_callback_handlers[handler_name]
-            if CallbackButtonPressed in handler.handler.__annotations__.values():
+            if (
+                CallbackButtonPressed
+                in handler.handler.__annotations__.values()
+            ):
                 response = await handler.handler(ctx, **extra_arguments)
             else:
                 response = await handler.handler(**extra_arguments)

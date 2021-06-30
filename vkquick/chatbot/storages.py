@@ -18,8 +18,8 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.base.event import BaseEvent
     from vkquick.base.event_factories import BaseEventFactory
     from vkquick.chatbot.application import App, Bot
-    from vkquick.chatbot.wrappers.attachment import Document, Photo
     from vkquick.chatbot.package import Package
+    from vkquick.chatbot.wrappers.attachment import Document, Photo
 
     SenderTypevar = typing.TypeVar("SenderTypevar", bound=Page)
 
@@ -75,7 +75,9 @@ class NewMessage(
     SentMessage,
 ):
 
-    argument_processing_payload: dict = dataclasses.field(default_factory=dict)
+    argument_processing_payload: dict = dataclasses.field(
+        default_factory=dict
+    )
 
     @classmethod
     async def from_event(
@@ -83,9 +85,9 @@ class NewMessage(
         *,
         event: BaseEvent,
         bot: Bot,
-        payload_factory: typing.Optional[typing.Type[
-            NewEventPayloadFieldTypevar
-        ]] = None
+        payload_factory: typing.Optional[
+            typing.Type[NewEventPayloadFieldTypevar]
+        ] = None,
     ):
         if event.type == 4:
             message = dict(
@@ -93,16 +95,18 @@ class NewMessage(
                 peer_id=event.content[3],
                 date=event.content[4],
                 text=event.content[5],
-                from_id=event.content[3] if event.content[3] < peer() else event.content[6]["from"],
+                from_id=event.content[3]
+                if event.content[3] < peer()
+                else event.content[6]["from"],
                 keyboard=event.content[6].get("keyboard"),
                 payload=event.content[6].get("payload"),
                 random_id=event.content[8],
-                conversation_message_id=event.content[9] if len(event.content) == 10 else None,
-                is_cropped=True
+                conversation_message_id=event.content[9]
+                if len(event.content) == 10
+                else None,
+                is_cropped=True,
             )
-            message["text"] = message["text"].replace(
-                "<br>", "\n"
-            )
+            message["text"] = message["text"].replace("<br>", "\n")
         elif "message" in event.object:
             message = event.object["message"]
         else:
@@ -115,7 +119,7 @@ class NewMessage(
             bot=bot,
             api=bot.api,
             truncated_message=message,
-            payload_factory=payload_factory
+            payload_factory=payload_factory,
         )
 
     @functools.cached_property
@@ -144,9 +148,7 @@ class NewMessage(
                     yield conquered_message
 
     async def run_state_handling(
-        self,
-        app: App, /,
-        payload: typing.Any = None
+        self, app: App, /, payload: typing.Any = None
     ) -> typing.Any:
         # Цикличный импорт
         from vkquick.chatbot.application import Bot
@@ -155,12 +157,18 @@ class NewMessage(
             app=app,
             api=self.api,
             events_factory=self.events_factory,
-            payload_factory=self.payload_factory
+            payload_factory=self.payload_factory,
         )
         async for event in self.events_factory.listen():
-            new_event_storage = NewEvent(event=event, bot=anonymous_bot, payload_factory=lambda: payload)
+            new_event_storage = NewEvent(
+                event=event,
+                bot=anonymous_bot,
+                payload_factory=lambda: payload,
+            )
             try:
-                await anonymous_bot.handle_event(new_event_storage, wrap_to_task=False)
+                await anonymous_bot.handle_event(
+                    new_event_storage, wrap_to_task=False
+                )
             except StopStateHandling as err:
                 return err.payload
 

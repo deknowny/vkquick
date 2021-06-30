@@ -51,8 +51,6 @@ class Command(HandlerMixin):
         self._routing_regex: typing.Pattern
         self._build_routing_regex()
 
-
-
     @property
     def trusted_description(self) -> str:
         if self.description is None:
@@ -72,18 +70,14 @@ class Command(HandlerMixin):
             self._build_routing_regex()
 
     async def handle_message(self, ctx: NewMessage) -> None:
-        is_routing_matched = self._routing_regex.match(
-            ctx.msg.text
-        )
+        is_routing_matched = self._routing_regex.match(ctx.msg.text)
         if is_routing_matched:
             arguments = await self._make_arguments(
                 ctx,
                 ctx.msg.text[is_routing_matched.end() :],
             )
             if arguments is not None:
-                passed_filter = await self._run_through_filters(
-                    ctx
-                )
+                passed_filter = await self._run_through_filters(ctx)
                 # Were built correctly
                 if passed_filter:
                     await self._call_handler(ctx, arguments)
@@ -126,7 +120,10 @@ class Command(HandlerMixin):
                 ] = parsing_response.parsed_part
 
         if remain_string:
-            if argtype is not None and self.invalid_argument_config is not None:
+            if (
+                argtype is not None
+                and self.invalid_argument_config is not None
+            ):
                 await self.invalid_argument_config.on_invalid_argument(
                     remain_string=remain_string,
                     ctx=ctx,
@@ -137,9 +134,7 @@ class Command(HandlerMixin):
             arguments[self._ctx_argument_name] = ctx
         return arguments
 
-    async def _call_handler(
-        self, ctx: NewMessage, arguments: dict
-    ) -> None:
+    async def _call_handler(self, ctx: NewMessage, arguments: dict) -> None:
         logger.opt(colors=True).success(
             "Call command <m>{com_name}</m><w>({args})</w>".format(
                 com_name=self.handler.__name__,
@@ -149,8 +144,12 @@ class Command(HandlerMixin):
                 ),
             )
         )
-        dependency_mapping = await self._dependency_mixin.make_dependency_arguments(ctx)
-        handler_response = await self.handler(**arguments, **dependency_mapping)
+        dependency_mapping = (
+            await self._dependency_mixin.make_dependency_arguments(ctx)
+        )
+        handler_response = await self.handler(
+            **arguments, **dependency_mapping
+        )
         if handler_response is not None:
             await ctx.reply(handler_response)
 

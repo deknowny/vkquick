@@ -51,7 +51,7 @@ class API(SessionContainerMixin):
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
         cache_table: typing.Optional[cachetools.Cache] = None,
-        proxies: typing.Optional[typing.List[str]] = None
+        proxies: typing.Optional[typing.List[str]] = None,
     ):
         SessionContainerMixin.__init__(
             self, requests_session=requests_session, json_parser=json_parser

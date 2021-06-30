@@ -4,8 +4,8 @@ import dataclasses
 import functools
 import typing
 
-from vkquick.types import DecoratorFunction
 from vkquick.json_parsers import json_parser_policy
+from vkquick.types import DecoratorFunction
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from vkquick.chatbot.storages import CallbackButtonPressed, NewMessage
