@@ -82,7 +82,7 @@ class WordCutter(Cutter):
         )
 
     def gen_doc(self):
-        return "любое слово (последовательность не пробельных символов)"
+        return "любое слово (последовательность непробельных символов)"
 
 
 class StringCutter(Cutter):
@@ -596,7 +596,7 @@ class BoolCutter(Cutter):
         raise BadArgumentError(self.gen_doc())
 
     def gen_doc(self) -> str:
-        return "булево значение: {} в качестве истины и {} для ложи".format(
+        return "булево значение: {} в качестве истины и {} для лжи".format(
             "/".join(self.true_values),
             "/".join(self.false_values),
         )
