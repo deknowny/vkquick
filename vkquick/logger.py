@@ -3,8 +3,12 @@ import sys
 
 from loguru import logger
 
-# Удаление настроек логгера по умолчанию
-logger.remove(0)
+# Если есть логгер по умолчанию
+try:
+    logger.remove(0)
+# Если такого нет
+except ValueError:
+    pass
 
 
 @dataclasses.dataclass
