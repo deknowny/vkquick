@@ -80,14 +80,17 @@ def cut_part_via_regex(
 
 
 class InvalidArgumentConfig:
-    prefix_sign = "💡"
-    invalid_argument_template = (
+    prefix_sign: str = "💡"
+    invalid_argument_template: str = (
         "{prefix_sign} Некорректное значение "
         "`{incorrect_value}`. Необходимо передать {cutter_description}"
     )
-    laked_argument_template = (
+    laked_argument_template: str = (
         "{prefix_sign} Необходимо передать {cutter_description}"
     )
+    prefix_sign_used: bool = True
+    incorrect_value_used: bool = True
+    cutter_description_used: bool = True
 
     async def on_invalid_argument(
         self,
@@ -97,21 +100,25 @@ class InvalidArgumentConfig:
         argument: CommandTextArgument,
     ):
         # TODO: mentions
+
+        prefix_sign = self.prefix_sign if self.prefix_sign_used else ""
         cutter_description = (
             argument.argument_settings.description
             or argument.cutter.gen_message_doc()
-        )
+        ) if self.cutter_description_used else ""
+
         if remain_string:
             incorrect_value = remain_string.split(maxsplit=1)[0]
+            incorrect_value = incorrect_value if self.incorrect_value_used else ""
             tip_response = self.invalid_argument_template.format(
-                prefix_sign=self.prefix_sign,
+                prefix_sign=prefix_sign,
                 incorrect_value=incorrect_value,
                 cutter_description=cutter_description,
             )
 
         else:
             tip_response = self.laked_argument_template.format(
-                prefix_sign=self.prefix_sign,
+                prefix_sign=prefix_sign,
                 cutter_description=cutter_description,
             )
 

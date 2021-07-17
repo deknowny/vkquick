@@ -11,7 +11,7 @@ from .chatbot.base.cutter import (
     CommandTextArgument,
     Cutter,
     CutterParsingResponse,
-    cut_part_via_regex,
+    cut_part_via_regex, InvalidArgumentConfig,
 )
 from .chatbot.base.filter import AndFilter, BaseFilter, OrFilter
 from .chatbot.base.ui_builder import UIBuilder
