@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import enum
+import io
 import itertools
 import os
 import re
@@ -18,6 +19,7 @@ from loguru import logger
 from vkquick import error_codes
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
+from vkquick.chatbot.utils import download_file
 from vkquick.chatbot.wrappers.attachment import Document, Photo
 from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
@@ -345,14 +347,19 @@ class API(SessionContainerMixin):
         """
         if isinstance(photo, bytes):
             return photo
-        elif isinstance(photo, typing.BinaryIO):
-            return photo.read()
+        elif isinstance(photo, io.BytesIO):
+            return photo.getvalue()
         elif isinstance(photo, str) and photo.startswith("http"):
-            async with self.requests_session.get(photo) as response:
-                return await response.read()
+            return await download_file(photo, session=self.requests_session)
         elif isinstance(photo, (str, os.PathLike)):
             async with aiofiles.open(photo, "rb") as file:
                 return await file.read()
+        else:
+            raise TypeError(
+                "Can't recognize photo entity. "
+                "Accept only bytes, BytesIO, "
+                "URL-like string and Path-like object or string"
+            )
 
     async def upload_photos_to_message(
         self, *photos: PhotoEntityTyping, peer_id: int = 0

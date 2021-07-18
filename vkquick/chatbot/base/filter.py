@@ -13,8 +13,9 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     OnErrorCallback = typing.Callable[[NewMessage], typing.Any]
 
 
+@dataclasses.dataclass
 class BaseFilter(abc.ABC):
-    def __init__(self):
+    def __post_init__(self):
         self._on_error: typing.Optional[OnErrorCallback] = None
         self._dependency_mixin = DependencyMixin()
         self._dependency_mixin.parse_dependency_arguments(self.make_decision)
@@ -56,11 +57,11 @@ class OrFilter(BaseFilter):
     filter1: BaseFilter
     filter2: BaseFilter
 
-    async def make_decision(self, ctx: NewMessage):
+    async def make_decision(self, ctx: NewMessage, **kwargs):
         try:
-            await self.filter1.make_decision(ctx)
+            await self.filter1.run_making_decision(ctx)
         except StopCurrentHandling:
-            await self.filter2.make_decision(ctx)
+            await self.filter2.run_making_decision(ctx)
 
 
 @dataclasses.dataclass
@@ -68,6 +69,6 @@ class AndFilter(BaseFilter):
     filter1: BaseFilter
     filter2: BaseFilter
 
-    async def make_decision(self, ctx: NewMessage):
-        await self.filter1.make_decision(ctx)
-        await self.filter2.make_decision(ctx)
+    async def make_decision(self, ctx: NewMessage, **kwargs):
+        await self.filter1.run_making_decision(ctx)
+        await self.filter2.run_making_decision(ctx)

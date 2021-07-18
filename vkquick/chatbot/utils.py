@@ -37,14 +37,19 @@ async def download_file(
     """
     Скачивание файлов по их прямой ссылке
     """
-    session = session or aiohttp.ClientSession(
+    used_session = session or aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=ssl.SSLContext()),
         skip_auto_headers={"User-Agent"},
         raise_for_status=True,
         json_serialize=json_parser_policy.dumps,
     )
-    async with session.get(url, **kwargs) as response:
-        return await response.read()
+    async with used_session.get(url, **kwargs) as response:
+        downloaded_file = await response.read()
+
+    if session is None:
+        await used_session.close()
+
+    return downloaded_file
 
 
 _registration_date_regex = re.compile('ya:created dc:date="(?P<date>.*?)"')
@@ -75,6 +80,7 @@ async def get_user_registration_date(
 
 
 def get_origin_typing(type):
+    # If generic
     if typing.get_args(type):
         return typing.get_origin(type)
     return type
