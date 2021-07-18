@@ -8,6 +8,7 @@ import warnings
 
 from loguru import logger
 
+from vkquick.logger import format_mapping
 from vkquick.chatbot.base.cutter import (
     CommandTextArgument,
     InvalidArgumentConfig,
@@ -136,13 +137,13 @@ class Command(HandlerMixin):
 
     async def _call_handler(self, ctx: NewMessage, arguments: dict) -> None:
         logger.opt(colors=True).success(
-            "Call command <m>{com_name}</m><w>({args})</w>".format(
-                com_name=self.handler.__name__,
-                args=", ".join(
-                    f"<c>{key}</c>=<y>{value!r}</y>"
-                    for key, value in arguments.items()
-                ),
-            )
+            **format_mapping(
+                "Called command <m>{com_name}</m><w>({params})</w>",
+                "<c>{key}</c>=<y>{value!r}</y>",
+                arguments
+            ),
+            com_name=self.handler.__name__,
+
         )
         dependency_mapping = (
             await self._dependency_mixin.make_dependency_arguments(ctx)

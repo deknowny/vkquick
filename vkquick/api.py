@@ -17,6 +17,7 @@ import cachetools
 from loguru import logger
 
 from vkquick import error_codes
+from vkquick.logger import format_mapping
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.chatbot.utils import download_file
@@ -288,13 +289,12 @@ class API(SessionContainerMixin):
             real_method_name, extra_request_params
         )
         logger.opt(colors=True).info(
-            "Called method <m>{method_name}</m>({method_params})".format(
-                method_name=real_method_name,
-                method_params=", ".join(
-                    f"<c>{key}</c>=<y>{value!r}</y>"
-                    for key, value in real_request_params.items()
-                ),
-            )
+            **format_mapping(
+                "Called method <m>{method_name}</m>({params})",
+                "<c>{key}</c>=<y>{value!r}</y>",
+                real_request_params
+            ),
+            method_name=real_method_name,
         )
         logger.opt(lazy=True).debug(
             "Response is: {response}", response=lambda: pretty_view(response)

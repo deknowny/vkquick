@@ -74,7 +74,7 @@ from .json_parsers import (
     UjsonParser,
     json_parser_policy,
 )
-from .logger import LoggingLevel, update_logging_level
+from .logger import LoggingLevel, update_logging_level, format_mapping
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .types import DecoratorFunction

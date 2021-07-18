@@ -1,5 +1,7 @@
 import dataclasses
 import sys
+import typing
+import uuid
 
 from loguru import logger
 
@@ -49,3 +51,40 @@ logger_handler = logger.add(
     filter=level_handler,
     level=0,
 )
+
+
+class SafeDict(dict):
+    def __missing__(self, key):
+        return "{" + key + "}"
+
+
+def format_mapping(
+    message: str,
+    pair_spec: str,
+    mapping: typing.Mapping,
+    pair_join_string: str = ", ",
+    mapping_reference_name: str = "params",
+) -> dict:
+    prepared_mapping = {}
+    prepared_formatting_strings = []
+    for ind, pair in enumerate(mapping.items()):
+        key, value = pair
+        key_formatting_name = uuid.uuid1().hex
+        value_formatting_name = uuid.uuid1().hex
+        prepared_mapping[key_formatting_name] = key
+        prepared_mapping[value_formatting_name] = value
+        prepared_formatting_strings.append(
+            pair_spec.format(
+                key=f"{{{key_formatting_name}}}",
+                value=f"{{{value_formatting_name}}}"
+            )
+        )
+
+    updated_mapping_param = SafeDict(
+        {mapping_reference_name: pair_join_string.join(prepared_formatting_strings)}
+    )
+    return dict(
+        # Logging message
+        _Logger__message=message.format_map(updated_mapping_param),
+        **prepared_mapping
+    )
