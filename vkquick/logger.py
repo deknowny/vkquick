@@ -67,8 +67,7 @@ def format_mapping(
 ) -> dict:
     prepared_mapping = {}
     prepared_formatting_strings = []
-    for ind, pair in enumerate(mapping.items()):
-        key, value = pair
+    for key, value in mapping.items():
         key_formatting_name = uuid.uuid1().hex
         value_formatting_name = uuid.uuid1().hex
         prepared_mapping[key_formatting_name] = key
