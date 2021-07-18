@@ -106,7 +106,19 @@ class NewMessage(
                 else None,
                 is_cropped=True,
             )
-            message["text"] = message["text"].replace("<br>", "\n")
+            # User texts spec
+            message["text"] = message["text"].replace(
+                "<br>", "\n"
+            ).replace(
+                "&lt;", "<"
+            ).replace(
+                "&gt;", ">"
+            ).replace(
+                "&amp;", "&"
+            ).replace(
+                "&quot;", '"'
+            )
+
         elif "message" in event.object:
             message = event.object["message"]
         else:
