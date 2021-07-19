@@ -506,7 +506,7 @@ class EntityCutter(MentionCutter):
 
         if resolved_screen_name["type"] == "user":
             page_type = PageType.USER
-        elif resolved_screen_name["type"] == "user":
+        elif resolved_screen_name["type"] == "group":
             page_type = PageType.GROUP
         else:
             raise BadArgumentError("Invalid screen name")
