@@ -102,13 +102,20 @@ class NewMessage(
                 if len(event.content) == 10
                 else None,
                 is_cropped=True,
+                out=event.content[2] & 2
             )
 
+            _, sender_schema = await bot.events_factory.api.define_token_owner()
             if "from" in event.content[6]:
                 message["from_id"] = int(event.content[6]["from"])
             else:
-                _, sender_schema = await bot.events_factory.api.define_token_owner()
-                message["from_id"] = sender_schema.id
+                if message["out"]:
+                    _, sender_schema = await bot.events_factory.api.define_token_owner()
+                    message["from_id"] = sender_schema.id
+                else:
+                    message["from_id"] = message["peer_id"]
+
+
             # User texts spec
             message["text"] = message["text"].replace(
                 "<br>", "\n"
