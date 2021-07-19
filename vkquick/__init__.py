@@ -1,6 +1,6 @@
 import importlib.metadata
 
-from .api import API, TokenOwner
+from .api import API, TokenOwner, CallMethod
 from .base.api_serializable import APISerializableMixin
 from .base.event import BaseEvent
 from .base.event_factories import BaseEventFactory, BaseLongPoll
@@ -78,6 +78,7 @@ from .logger import LoggingLevel, update_logging_level, format_mapping
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .types import DecoratorFunction
+
 
 __all__ = [var for var in locals().keys() if not var.startswith("_")]
 __version__ = importlib.metadata.version(__name__)

@@ -14,6 +14,7 @@ import urllib.parse
 import aiofiles
 import aiohttp
 import cachetools
+import param as param
 from loguru import logger
 
 from vkquick import error_codes
@@ -229,7 +230,7 @@ class API(SessionContainerMixin):
             use_cache=use_cache,
         )
 
-    async def execute(self, code: str, /) -> typing.Any:
+    async def execute(self, *code: typing.Union[str, CallMethod]) -> typing.Any:
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
@@ -242,6 +243,10 @@ class API(SessionContainerMixin):
         Raises:
             VKAPIError: В случае ошибки, пришедшей от некорректного вызова запроса.
         """
+        if not isinstance(code[0], str):
+            code = "return [{}];".format(
+                ", ".join(call.to_execute() for call in code)
+            )
         return await self.method("execute", code=code)
 
     async def _make_api_request(
@@ -552,7 +557,7 @@ def _convert_params_for_api(params: dict, /):
 
     """
     updated_params = {
-        (key[:-1] if key.endswith("_") else key): _convert_param_value(value)
+        key: _convert_param_value(value)
         for key, value in params.items()
         if value is not None
     }
@@ -587,3 +592,20 @@ def _convert_method_name(name: str, /) -> str:
 
     """
     return re.sub(r"_(?P<let>[a-z])", _upper_zero_group, name)
+
+
+class CallMethod:
+
+    pattern = "API.{name}({{{params}}})"
+    param_pattern = "{key!r}: {value!r}"
+
+    def __init__(self, name: str, **params):
+        self.name = name
+        self.params = params
+
+    def to_execute(self) -> str:
+        params_string = ", ".join(
+            self.param_pattern.format(key=key, value=_convert_param_value(value))
+            for key, value in self.params.items()
+        )
+        return self.pattern.format(name=self.name, params=params_string)
