@@ -95,9 +95,6 @@ class NewMessage(
                 peer_id=event.content[3],
                 date=event.content[4],
                 text=event.content[5],
-                from_id=event.content[3]
-                if event.content[3] < peer()
-                else event.content[6]["from"],
                 keyboard=event.content[6].get("keyboard"),
                 payload=event.content[6].get("payload"),
                 random_id=event.content[8],
@@ -106,6 +103,12 @@ class NewMessage(
                 else None,
                 is_cropped=True,
             )
+
+            if "from" in event.content[6]:
+                message["from_id"] = int(event.content[6]["from"])
+            else:
+                _, sender_schema = await bot.events_factory.api.define_token_owner()
+                message["from_id"] = sender_schema.id
             # User texts spec
             message["text"] = message["text"].replace(
                 "<br>", "\n"

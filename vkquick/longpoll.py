@@ -38,7 +38,7 @@ class GroupLongPoll(BaseLongPoll):
 
     async def _setup(self) -> None:
         await self._define_group_id()
-        new_lp_settings = await self._api.groups.get_long_poll_server(
+        new_lp_settings = await self.api.groups.get_long_poll_server(
             group_id=self._group_id
         )
         self._server_url = new_lp_settings.pop("server")
@@ -48,7 +48,7 @@ class GroupLongPoll(BaseLongPoll):
 
     async def _define_group_id(self) -> None:
         if self._group_id is None:
-            token_owner, owner_schema = await self._api.define_token_owner()
+            token_owner, owner_schema = await self.api.define_token_owner()
             if token_owner != TokenOwner.GROUP:
                 raise ValueError(
                     "Can't use `GroupLongPoll` with user token without `group_id`"
@@ -83,7 +83,7 @@ class UserLongPoll(BaseLongPoll):
         self._mode = mode
 
     async def _setup(self) -> None:
-        new_lp_settings = await self._api.messages.get_long_poll_server(
+        new_lp_settings = await self.api.messages.get_long_poll_server(
             lp_version=self._version
         )
         server_url = new_lp_settings.pop("server")

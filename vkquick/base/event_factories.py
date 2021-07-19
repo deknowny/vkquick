@@ -21,7 +21,7 @@ EventsCallback = typing.Callable[[BaseEvent], typing.Awaitable[None]]
 
 class BaseEventFactory(SessionContainerMixin, abc.ABC):
 
-    _api: API
+    api: API
     _new_event_callbacks: typing.List[EventsCallback]
 
     def __init__(
@@ -34,7 +34,7 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         requests_session: typing.Optional[aiohttp.ClientSession] = None,
         json_parser: typing.Optional[BaseJSONParser] = None,
     ):
-        self._api = api
+        self.api = api
         self._run = False
         self._new_event_callbacks = new_event_callbacks or []
         SessionContainerMixin.__init__(
@@ -206,7 +206,7 @@ class BaseLongPoll(BaseEventFactory):
         self._baked_request = asyncio.create_task(baked_request)
 
     async def close_session(self) -> None:
-        await self._api.close_session()
+        await self.api.close_session()
         await BaseEventFactory.close_session(self)
 
     def stop(self) -> None:
