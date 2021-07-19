@@ -103,8 +103,6 @@ class Message(TruncatedMessage):
 
     @property
     def out(self) -> bool:
-        if "out" not in self.fields:
-            return True
         return bool(self.fields["out"])
 
     @functools.cached_property
