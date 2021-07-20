@@ -1,0 +1,1 @@
+poetry run pytest tests docs/src --cov=vkquick --cov-report=html

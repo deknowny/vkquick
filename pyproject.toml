@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "vkquick"
-version = "1.0.0rc3"
+version = "1.0.0rc4"
 description = "VK API Framework for chat bots"
 license = "MIT"
 homepage = "https://github.com/Rhinik/vkquick"
