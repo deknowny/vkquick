@@ -14,7 +14,6 @@ import urllib.parse
 import aiofiles
 import aiohttp
 import cachetools
-import param as param
 from loguru import logger
 
 from vkquick import error_codes
