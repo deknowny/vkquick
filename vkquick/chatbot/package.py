@@ -6,14 +6,13 @@ import dataclasses
 import re
 import typing
 
-from loguru import logger
-
 from vkquick.base.event import EventType
 from vkquick.chatbot.base.cutter import InvalidArgumentConfig
 from vkquick.chatbot.base.filter import BaseFilter
 from vkquick.chatbot.base.handler_container import HandlerMixin
 from vkquick.chatbot.command.command import Command
-from vkquick.chatbot.exceptions import StopCurrentHandling, StopStateHandling
+from vkquick.chatbot.command.cutters import UserID, PageID
+from vkquick.chatbot.exceptions import StopCurrentHandling
 from vkquick.chatbot.storages import (
     CallbackButtonPressed,
     NewEvent,
@@ -27,24 +26,81 @@ from vkquick.chatbot.ui_builders.button import (
 unset = object()
 
 
-@dataclasses.dataclass
-class MessageHandler(HandlerMixin):
-    handler: typing.Callable[[NewMessage], typing.Awaitable]
+class MessageHandler(
+    HandlerMixin[typing.Callable[[NewMessage], typing.Awaitable]]
+):
+    pass
 
 
-@dataclasses.dataclass
-class SignalHandler(HandlerMixin):
-    handler: typing.Callable[[Bot], typing.Awaitable]
+class UserAddedHandler(
+    HandlerMixin[
+        # Context, New member, Inviter,
+        typing.Callable[[NewMessage, PageID, UserID], typing.Awaitable]
+    ]
+):
+    async def run_handling(self, ctx: NewMessage):
+        if (
+            ctx.msg.action is not None
+            and ctx.msg.action["type"] == "chat_invite_user"
+            and ctx.msg.from_id
+            != int(
+                invited_user := (
+                    ctx.msg.action.get("member_id")
+                    or ctx.msg.action.get("source_mid")
+                )
+            )
+        ):
+            await self.handler(
+                ctx, PageID(invited_user), UserID(ctx.msg.from_id)
+            )
 
 
-@dataclasses.dataclass
-class EventHandler(HandlerMixin):
-    handler: typing.Callable[[NewEvent], typing.Awaitable]
+class UserJoinedByLinkHandler(
+    HandlerMixin[
+        typing.Callable[[NewMessage, UserID], typing.Awaitable]
+    ]
+):
+    async def run_handling(self, ctx: NewMessage):
+        if (
+            ctx.msg.action is not None
+            and ctx.msg.action["type"] == "chat_invite_user_by_link"
+        ):
+            await self.handler(ctx, UserID(ctx.msg.from_id))
+
+
+class UserReturnedHandler(
+    HandlerMixin[
+        typing.Callable[[NewMessage, UserID], typing.Awaitable]
+    ]
+):
+    async def run_handling(self, ctx: NewMessage):
+        if (
+                ctx.msg.action is not None
+                and ctx.msg.action["type"] == "chat_invite_user"
+                and ctx.msg.from_id
+                == int(
+                    ctx.msg.action.get("member_id")
+                    or ctx.msg.action.get("source_mid")
+                )
+        ):
+
+            await self.handler(
+                ctx, UserID(ctx.msg.from_id)
+            )
+
+
+class SignalHandler(HandlerMixin[typing.Callable[["Bot"], typing.Awaitable]]):
+    pass
+
+
+class EventHandler(
+    HandlerMixin[typing.Callable[[NewEvent], typing.Awaitable]]
+):
+    pass
 
 
 if typing.TYPE_CHECKING:  # pragma: no cover
 
-    from vkquick.chatbot.application import Bot
     from vkquick.types import DecoratorFunction
 
     SignalHandlerTypevar = typing.TypeVar(
@@ -85,6 +141,37 @@ class Package:
         str, ButtonCallbackHandler
     ] = dataclasses.field(default_factory=dict)
 
+    inviting_handlers: typing.List[
+        typing.Union[UserReturnedHandler, UserJoinedByLinkHandler, UserAddedHandler]
+    ] = dataclasses.field(default_factory=list)
+
+    def on_returned_user(self) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
+        def wrapper(func):
+            self.inviting_handlers.append(
+                UserReturnedHandler(func)
+            )
+            return func
+
+        return wrapper
+
+    def on_user_joined_by_link(self) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
+        def wrapper(func):
+            self.inviting_handlers.append(
+                UserJoinedByLinkHandler(func)
+            )
+            return func
+
+        return wrapper
+
+    def on_added_page(self) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
+        def wrapper(func):
+            self.inviting_handlers.append(
+                UserAddedHandler(func)
+            )
+            return func
+
+        return wrapper
+
     def command(
         self,
         *names: str,
@@ -95,7 +182,7 @@ class Package:
         description: typing.Optional[str] = None,
         invalid_argument_config: typing.Optional[
             InvalidArgumentConfig
-        ] = unset
+        ] = unset,
     ) -> typing.Callable[[DecoratorFunction], Command[DecoratorFunction]]:
         def wrapper(func):
             command_init_vars = dict(
@@ -202,10 +289,15 @@ class Package:
             message_handler.handler(ctx)
             for message_handler in self.message_handlers
         ]
+        inviting_handler_coroutines = [
+            inviting_handler.run_handling(ctx)
+            for inviting_handler in self.inviting_handlers
+        ]
         await asyncio.gather(
             self.routing_payload(ctx),
             *command_coroutines,
-            *message_handler_coroutines
+            *message_handler_coroutines,
+            *inviting_handler_coroutines
         )
 
     async def routing_payload(self, ctx: NewMessage):

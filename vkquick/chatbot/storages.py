@@ -65,6 +65,60 @@ class NewEvent(
         return self.bot.app
 
 
+async def dump_user_lp_fields(
+    event: BaseEvent,
+    bot: Bot,
+) -> dict:
+    message = dict(
+        id=event.content[1],
+        peer_id=event.content[3],
+        date=event.content[4],
+        text=event.content[5],
+        keyboard=event.content[6].get("keyboard"),
+        payload=event.content[6].get("payload"),
+        random_id=event.content[8],
+        conversation_message_id=event.content[9]
+        if len(event.content) == 10
+        else None,
+        is_cropped=True,
+        out=event.content[2] & 2,
+    )
+
+    _, sender_schema = await bot.events_factory.api.define_token_owner()
+    if "from" in event.content[6]:
+        message["from_id"] = int(event.content[6]["from"])
+    else:
+        if message["out"]:
+            (
+                _,
+                sender_schema,
+            ) = await bot.events_factory.api.define_token_owner()
+            message["from_id"] = sender_schema.id
+        else:
+            message["from_id"] = message["peer_id"]
+
+    # User texts spec
+    message["text"] = (
+        message["text"]
+        .replace("<br>", "\n")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+        .replace("&quot;", '"')
+    )
+
+    # Actions
+    if "source_act" in event.content[6]:
+        action_map = {"type": event.content[6]["source_act"]}
+        for key, value in event.content[6].items():
+            if key.startswith("source") and key != "source_act":
+                action_map[key] = value
+
+        message["action"] = action_map
+
+    return message
+
+
 @dataclasses.dataclass
 class NewMessage(
     NewEvent[
@@ -90,44 +144,7 @@ class NewMessage(
         ] = None,
     ):
         if event.type == 4:
-            message = dict(
-                id=event.content[1],
-                peer_id=event.content[3],
-                date=event.content[4],
-                text=event.content[5],
-                keyboard=event.content[6].get("keyboard"),
-                payload=event.content[6].get("payload"),
-                random_id=event.content[8],
-                conversation_message_id=event.content[9]
-                if len(event.content) == 10
-                else None,
-                is_cropped=True,
-                out=event.content[2] & 2
-            )
-
-            _, sender_schema = await bot.events_factory.api.define_token_owner()
-            if "from" in event.content[6]:
-                message["from_id"] = int(event.content[6]["from"])
-            else:
-                if message["out"]:
-                    _, sender_schema = await bot.events_factory.api.define_token_owner()
-                    message["from_id"] = sender_schema.id
-                else:
-                    message["from_id"] = message["peer_id"]
-
-
-            # User texts spec
-            message["text"] = message["text"].replace(
-                "<br>", "\n"
-            ).replace(
-                "&lt;", "<"
-            ).replace(
-                "&gt;", ">"
-            ).replace(
-                "&amp;", "&"
-            ).replace(
-                "&quot;", '"'
-            )
+            message = await dump_user_lp_fields(event, bot)
 
         elif "message" in event.object:
             message = event.object["message"]

@@ -17,7 +17,6 @@ import cachetools
 from loguru import logger
 
 from vkquick import error_codes
-from vkquick.logger import format_mapping
 from vkquick.base.api_serializable import APISerializableMixin
 from vkquick.base.session_container import SessionContainerMixin
 from vkquick.chatbot.utils import download_file
@@ -25,6 +24,7 @@ from vkquick.chatbot.wrappers.attachment import Document, Photo
 from vkquick.chatbot.wrappers.page import Group, Page, User
 from vkquick.exceptions import APIError
 from vkquick.json_parsers import json_parser_policy
+from vkquick.logger import format_mapping
 from vkquick.pretty_view import pretty_view
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -229,7 +229,9 @@ class API(SessionContainerMixin):
             use_cache=use_cache,
         )
 
-    async def execute(self, *code: typing.Union[str, CallMethod]) -> typing.Any:
+    async def execute(
+        self, *code: typing.Union[str, CallMethod]
+    ) -> typing.Any:
         """
         Исполняет API метод `execute` с переданным VKScript-кодом.
 
@@ -296,7 +298,7 @@ class API(SessionContainerMixin):
             **format_mapping(
                 "Called method <m>{method_name}</m>({params})",
                 "<c>{key}</c>=<y>{value!r}</y>",
-                real_request_params
+                real_request_params,
             ),
             method_name=real_method_name,
         )
@@ -604,7 +606,9 @@ class CallMethod:
 
     def to_execute(self) -> str:
         params_string = ", ".join(
-            self.param_pattern.format(key=key, value=_convert_param_value(value))
+            self.param_pattern.format(
+                key=key, value=_convert_param_value(value)
+            )
             for key, value in self.params.items()
         )
         return self.pattern.format(name=self.name, params=params_string)

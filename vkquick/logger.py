@@ -75,15 +75,19 @@ def format_mapping(
         prepared_formatting_strings.append(
             pair_spec.format(
                 key=f"{{{key_formatting_name}}}",
-                value=f"{{{value_formatting_name}}}"
+                value=f"{{{value_formatting_name}}}",
             )
         )
 
     updated_mapping_param = SafeDict(
-        {mapping_reference_name: pair_join_string.join(prepared_formatting_strings)}
+        {
+            mapping_reference_name: pair_join_string.join(
+                prepared_formatting_strings
+            )
+        }
     )
     return dict(
         # Logging message
         _Logger__message=message.format_map(updated_mapping_param),
-        **prepared_mapping
+        **prepared_mapping,
     )

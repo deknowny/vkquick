@@ -1,6 +1,6 @@
 import importlib.metadata
 
-from .api import API, TokenOwner, CallMethod
+from .api import API, CallMethod, TokenOwner
 from .base.api_serializable import APISerializableMixin
 from .base.event import BaseEvent
 from .base.event_factories import BaseEventFactory, BaseLongPoll
@@ -11,7 +11,8 @@ from .chatbot.base.cutter import (
     CommandTextArgument,
     Cutter,
     CutterParsingResponse,
-    cut_part_via_regex, InvalidArgumentConfig,
+    InvalidArgumentConfig,
+    cut_part_via_regex,
 )
 from .chatbot.base.filter import AndFilter, BaseFilter, OrFilter
 from .chatbot.base.ui_builder import UIBuilder
@@ -74,11 +75,10 @@ from .json_parsers import (
     UjsonParser,
     json_parser_policy,
 )
-from .logger import LoggingLevel, update_logging_level, format_mapping
+from .logger import LoggingLevel, format_mapping, update_logging_level
 from .longpoll import GroupLongPoll, UserLongPoll
 from .pretty_view import pretty_view
 from .types import DecoratorFunction
-
 
 __all__ = [var for var in locals().keys() if not var.startswith("_")]
 __version__ = importlib.metadata.version(__name__)

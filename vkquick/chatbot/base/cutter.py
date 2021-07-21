@@ -103,13 +103,19 @@ class InvalidArgumentConfig:
 
         prefix_sign = self.prefix_sign if self.prefix_sign_used else ""
         cutter_description = (
-            argument.argument_settings.description
-            or argument.cutter.gen_message_doc()
-        ) if self.cutter_description_used else ""
+            (
+                argument.argument_settings.description
+                or argument.cutter.gen_message_doc()
+            )
+            if self.cutter_description_used
+            else ""
+        )
 
         if remain_string:
             incorrect_value = remain_string.split(maxsplit=1)[0]
-            incorrect_value = incorrect_value if self.incorrect_value_used else ""
+            incorrect_value = (
+                incorrect_value if self.incorrect_value_used else ""
+            )
             tip_response = self.invalid_argument_template.format(
                 prefix_sign=prefix_sign,
                 incorrect_value=incorrect_value,
