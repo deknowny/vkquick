@@ -27,7 +27,7 @@ Handler = typing.TypeVar(
 
 
 @dataclasses.dataclass
-class Command(HandlerMixin):
+class Command(HandlerMixin[Handler]):
     prefixes: typing.List[str] = dataclasses.field(default_factory=list)
     names: typing.List[str] = dataclasses.field(default_factory=list)
     routing_re_flags: typing.Union[re.RegexFlag, int] = re.IGNORECASE
