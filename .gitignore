@@ -33,4 +33,6 @@ penv/
 .tox/
 .benchmarks/
 
+.drafts/
+
 autodocs/
