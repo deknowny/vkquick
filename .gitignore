@@ -1,6 +1,7 @@
 # MacOS's
 .DS_Store
 
+.venv/
 env/
 env3.7/
 __pycache__/
