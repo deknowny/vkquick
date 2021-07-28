@@ -26,10 +26,19 @@ from vkquick.chatbot.ui_builders.button import (
 unset = object()
 
 
+@dataclasses.dataclass
 class MessageHandler(
     HandlerMixin[typing.Callable[[NewMessage], typing.Awaitable]]
 ):
-    pass
+    filter: typing.Optional[BaseFilter] = None
+
+    async def run_handling(self, ctx: NewMessage):
+        if self.filter is not None:
+            try:
+                await self.filter.run_making_decision(ctx)
+            except StopCurrentHandling:
+                return
+        await self.handler(ctx)
 
 
 class UserAddedHandler(
@@ -240,10 +249,10 @@ class Package:
         return wrapper
 
     def on_message(
-        self,
+        self, filter: BaseFilter
     ) -> typing.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
         def wrapper(func):
-            handler = MessageHandler(func)
+            handler = MessageHandler(handler=func, filter=filter)
             self.message_handlers.append(handler)
             return func
 
@@ -286,7 +295,7 @@ class Package:
             command.handle_message(ctx) for command in self.commands
         ]
         message_handler_coroutines = [
-            message_handler.handler(ctx)
+            message_handler.run_handling(ctx)
             for message_handler in self.message_handlers
         ]
         inviting_handler_coroutines = [
