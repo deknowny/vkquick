@@ -38,9 +38,6 @@ class CutterParsingResponse(typing.Generic[T]):
 
 
 class Cutter(abc.ABC):
-
-    _html_to_message = False
-
     @abc.abstractmethod
     async def cut_part(
         self, ctx: NewMessage, arguments_string: str
@@ -53,8 +50,7 @@ class Cutter(abc.ABC):
 
     def gen_message_doc(self) -> str:
         message = self.gen_doc()
-        if self._html_to_message:
-            message = html_list_to_message(message)
+        message = html_list_to_message(message)
         return message
 
 

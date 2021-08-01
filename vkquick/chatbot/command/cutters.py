@@ -149,8 +149,6 @@ class OptionalCutter(Cutter):
 
 class UnionCutter(Cutter):
 
-    _html_to_message = True
-
     def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
@@ -178,8 +176,6 @@ class UnionCutter(Cutter):
 
 
 class GroupCutter(Cutter):
-    _html_to_message = True
-
     def __init__(self, *typevars: Cutter):
         self._typevars = typevars
 
@@ -266,7 +262,6 @@ class UniqueImmutableSequenceCutter(_SequenceCutter):
 
 
 class LiteralCutter(Cutter):
-    _html_to_message = True
 
     def __init__(self, *container_values: str):
         self._container_values = tuple(map(re.compile, container_values))

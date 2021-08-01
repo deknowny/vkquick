@@ -1,6 +1,7 @@
 # MacOS's
 .DS_Store
 
+.drafts/
 .venv/
 env/
 env3.7/
