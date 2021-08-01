@@ -143,7 +143,7 @@ class OptionalCutter(Cutter):
         )
         return (
             typevar_docstring
-            + f". Аргумент опционален и может быть опущен {default}"
+            + f"\nАргумент опционален и может быть опущен {default}"
         )
 
 
