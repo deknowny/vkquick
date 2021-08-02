@@ -441,7 +441,7 @@ class API(SessionContainerMixin):
         *,
         tags: typing.Optional[str] = None,
         return_tags: typing.Optional[bool] = None,
-        type: typing.Literal["doc", "audio_message"] = "doc",
+        type: typing.Literal["doc", "audio_message", "graffiti"] = "doc",
         peer_id: int = 0,
     ) -> Document:
         """
