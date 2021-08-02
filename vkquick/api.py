@@ -441,7 +441,7 @@ class API(SessionContainerMixin):
         *,
         tags: typing.Optional[str] = None,
         return_tags: typing.Optional[bool] = None,
-        type: typing.Literal["doc", "audio_message", "graffiti"] = "doc",
+        type: typing.Literal["doc", "audio_message"] = "doc",
         peer_id: int = 0,
     ) -> Document:
         """
@@ -471,7 +471,9 @@ class API(SessionContainerMixin):
         )
 
         uploading_info = await self.method(
-            "docs.get_messages_upload_server", peer_id=peer_id
+            "docs.get_messages_upload_server",
+            peer_id=peer_id,
+            type=type
         )
         async with self.requests_session.post(
             uploading_info["upload_url"], data=data_storage
