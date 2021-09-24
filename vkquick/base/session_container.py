@@ -103,7 +103,7 @@ class SessionContainerMixin:
             json_serialize=self.__json_parser.dumps,
         )
 
-    def refresh_session(self) -> None:
+    async def refresh_session(self) -> None:
         if not self.__session.closed:
             with contextlib.suppress(Exception):
                 await self.__session.close()
