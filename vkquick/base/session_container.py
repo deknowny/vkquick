@@ -47,7 +47,7 @@ class SessionContainerMixin:
         этот проперти вне корутин.
         """
         if self.__session is None or self.__session.closed:
-            self.refresh_session()
+            self.__session = self._init_aiohttp_session()
 
         return self.__session
 
