@@ -161,7 +161,7 @@ class BaseLongPoll(BaseEventFactory):
                 continue
 
             except aiohttp.client_exceptions.ClientOSError:
-                self.refresh_session()
+                await self.refresh_session()
                 self._update_baked_request()
                 continue
 
