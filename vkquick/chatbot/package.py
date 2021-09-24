@@ -249,7 +249,7 @@ class Package:
         return wrapper
 
     def on_message(
-        self, filter: BaseFilter
+        self, filter: typing.Optional[BaseFilter] = None
     ) -> typing.Callable[[MessageHandlerTypevar], MessageHandlerTypevar]:
         def wrapper(func):
             handler = MessageHandler(handler=func, filter=filter)
