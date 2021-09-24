@@ -5,6 +5,7 @@ import asyncio
 import typing
 
 import aiohttp
+import aiohttp.client_exceptions
 from loguru import logger
 
 from vkquick.base.event import BaseEvent
@@ -156,6 +157,11 @@ class BaseLongPoll(BaseEventFactory):
             try:
                 response = await self._baked_request
             except asyncio.TimeoutError:
+                self._update_baked_request()
+                continue
+
+            except aiohttp.client_exceptions.ClientOSError:
+                self.refresh_session()
                 self._update_baked_request()
                 continue
 

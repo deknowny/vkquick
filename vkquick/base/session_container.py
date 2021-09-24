@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import ssl
 import typing
 
@@ -46,7 +47,7 @@ class SessionContainerMixin:
         этот проперти вне корутин.
         """
         if self.__session is None or self.__session.closed:
-            self.__session = self._init_aiohttp_session()
+            self.refresh_session()
 
         return self.__session
 
@@ -101,3 +102,9 @@ class SessionContainerMixin:
             raise_for_status=True,
             json_serialize=self.__json_parser.dumps,
         )
+
+    def refresh_session(self) -> None:
+        if not self.__session.closed:
+            with contextlib.suppress(Exception):
+                await self.__session.close()
+        self.__session = self._init_aiohttp_session()
