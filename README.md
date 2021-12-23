@@ -36,7 +36,7 @@ python -m pip install vkquick
 > До релиза 1.0: `python -m pip install https://github.com/deknowny/vkquick/archive/master.zip`
 
 
-Вместе с фреймворком устанавливается треминальная утилита — `kwik`:
+Вместе с фреймворком устанавливается терминальная утилита — `kwik`:
 
 ```shell script
 kwik --help
