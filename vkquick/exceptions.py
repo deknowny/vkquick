@@ -71,19 +71,6 @@ class APIError(Exception):
 
         return tuple(result_classes)
 
-    @classmethod
-    def destruct_response(
-        cls, response: typing.Dict[str, typing.Any]
-    ) -> APIError:
-        """Разбирает ответ от вк про некорректный API запрос
-        на части и инициализирует сам объект исключения
-
-        Arguments:
-            response: Ответ с ошибкой, полученный от API
-        Returns:
-            Новый объект исключения
-        """
-
     def __str__(self) -> str:
         return exception_text_template.render(
             status_code=self.status_code,
