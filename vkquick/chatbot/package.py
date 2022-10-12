@@ -311,7 +311,7 @@ class Package:
 
     async def routing_payload(self, ctx: NewMessage):
         if (
-            ctx.msg.payload is not None
+            isinstance(ctx.msg.payload, dict)
             and ctx.msg.payload.get("command") in self.button_onclick_handlers
         ):
             handler_name = ctx.msg.payload.get("command")
