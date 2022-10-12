@@ -348,16 +348,29 @@ class API(SessionContainerMixin):
                 async with self.requests_session.post(
                     self._requests_url + method_name, data=params, proxy=current_proxy
                 ) as response:
-                    return await self.parse_json_body(response)
-            except aiohttp.client_exceptions.ClientResponseError as error:
+                    response = await self.parse_json_body(response)
+                    if "error" in response and response["error"]["error_code"] == 10:
+                        logger.opt(colors=True).warning(
+                            **format_mapping(
+                                "VK Internal server error occured while calling <m>{method_name}</m>({params}): {error_message}. Retrying in 10 seconds...",
+                                "<c>{key}</c>=<y>{value!r}</y>",
+                                params,
+                            ),
+                            method_name=method_name,
+                            error_message=response["error"]["error_msg"]
+                        )
+                        await asyncio.sleep(10)
+                    else:
+                        return response
+            except aiohttp.ClientResponseError as error:
                 if error.status >= 500:
                     logger.opt(colors=True).warning(
                         **format_mapping(
-                            "Server error occured while calling <m>{method_name}</m>({params}): {error_message}. Trying again in 10 seconds...",
+                            "Server error occured while calling <m>{method_name}</m>({params}): {error_message}. Retrying in 10 seconds...",
                             "<c>{key}</c>=<y>{value!r}</y>",
-                            real_request_params,
+                            params,
                         ),
-                        method_name=real_method_name,
+                        method_name=method_name,
                         error_message=error.message
                     )
                     await asyncio.sleep(10)
