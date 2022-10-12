@@ -362,7 +362,7 @@ class API(SessionContainerMixin):
                     )
                     await asyncio.sleep(10)
                 else:
-                    raise from error
+                    raise error
 
     async def _fetch_photo_entity(self, photo: PhotoEntityTyping) -> bytes:
         """
