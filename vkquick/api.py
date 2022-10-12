@@ -13,6 +13,7 @@ import urllib.parse
 
 import aiofiles
 import aiohttp
+import aiohttp.client_exceptions
 import cachetools
 from loguru import logger
 
@@ -341,11 +342,27 @@ class API(SessionContainerMixin):
             self._proxies.append(current_proxy)
         else:
             current_proxy = None
-        async with self.requests_session.post(
-            self._requests_url + method_name, data=params, proxy=current_proxy
-        ) as response:
-            loaded_response = await self.parse_json_body(response)
-            return loaded_response
+
+        while True:
+            try:
+                async with self.requests_session.post(
+                    self._requests_url + method_name, data=params, proxy=current_proxy
+                ) as response:
+                    return await self.parse_json_body(response)
+            except aiohttp.client_exceptions.ClientResponseError as error:
+                if error.status > 500:
+                    logger.opt(colors=True).warning(
+                        **format_mapping(
+                            "Server error occured while calling <m>{method_name}</m>({params}): {error_message}. Try again after 10 seonds...",
+                            "<c>{key}</c>=<y>{value!r}</y>",
+                            real_request_params,
+                        ),
+                        method_name=real_method_name,
+                        error_message=error.message
+                    )
+                    await asyncio.sleep(10)
+                else:
+                    raise from error
 
     async def _fetch_photo_entity(self, photo: PhotoEntityTyping) -> bytes:
         """
