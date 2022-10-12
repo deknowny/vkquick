@@ -350,10 +350,10 @@ class API(SessionContainerMixin):
                 ) as response:
                     return await self.parse_json_body(response)
             except aiohttp.client_exceptions.ClientResponseError as error:
-                if error.status > 500:
+                if error.status >= 500:
                     logger.opt(colors=True).warning(
                         **format_mapping(
-                            "Server error occured while calling <m>{method_name}</m>({params}): {error_message}. Try again after 10 seonds...",
+                            "Server error occured while calling <m>{method_name}</m>({params}): {error_message}. Trying again in 10 seconds...",
                             "<c>{key}</c>=<y>{value!r}</y>",
                             real_request_params,
                         ),
