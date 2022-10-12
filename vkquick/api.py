@@ -360,6 +360,8 @@ class API(SessionContainerMixin):
                             error_message=response["error"]["error_msg"]
                         )
                         await asyncio.sleep(10)
+                    else:
+                        return response
             except aiohttp.ClientResponseError as error:
                 if error.status >= 500:
                     logger.opt(colors=True).warning(
