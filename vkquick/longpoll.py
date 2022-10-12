@@ -39,7 +39,7 @@ class GroupLongPoll(BaseLongPoll):
     async def _setup(self) -> None:
         await self._define_group_id()
         new_lp_settings = await self.api.method(
-            "groups.getLongPollServer"
+            "groups.getLongPollServer",
             group_id=self._group_id
         )
         self._server_url = new_lp_settings.pop("server")
@@ -85,7 +85,7 @@ class UserLongPoll(BaseLongPoll):
 
     async def _setup(self) -> None:
         new_lp_settings = await self.api.method(
-            "messages.getLongPollServer"
+            "messages.getLongPollServer",
             lp_version=self._version
         )
         server_url = new_lp_settings.pop("server")
