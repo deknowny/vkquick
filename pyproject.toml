@@ -30,6 +30,7 @@ python = "^3.8"
 pygments = "^2.6.1"
 huepy = "^1.2.1"
 aiohttp = "^3.7.2"
+typing-extensions = "4.4.0"
 cachetools = "^4.1.1"
 better-exceptions = "^0.3.3"
 
