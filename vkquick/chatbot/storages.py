@@ -227,12 +227,16 @@ class NewMessage(
         return downloaded_photos
 
     async def fetch_sender(
-        self, typevar: typing.Type[SenderTypevar], /
+        self, typevar: typing.Type[SenderTypevar],
+        /,
+        *,
+        fields: typing.Optional[typing.List[str]] = None,
+        name_case: typing.Optional[str] = None,
     ) -> SenderTypevar:
         if self.msg.from_id > 0 and typevar in {Page, User}:
-            return await User.fetch_one(self.api, self.msg.from_id)
+            return await User.fetch_one(self.api, self.msg.from_id, fields=fields, name_case=name_case)
         elif self.msg.from_id < 0 and typevar in {Page, Group}:
-            return await Group.fetch_one(self.api, self.msg.from_id)
+            return await Group.fetch_one(self.api, self.msg.from_id, fields=fields, name_case=name_case)
         else:
             raise ValueError(
                 f"Can't make wrapper with typevar `{typevar}` and from_id `{self.msg.from_id}`"
