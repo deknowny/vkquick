@@ -20,6 +20,7 @@ from vkquick.chatbot.storages import (
     NewEvent,
     NewMessage,
 )
+from vkquick.event import GroupEvent
 from vkquick.logger import update_logging_level
 from vkquick.longpoll import GroupLongPoll, UserLongPoll
 
@@ -261,7 +262,7 @@ class Bot(typing.Generic[AppPayloadFieldTypevar, BotPayloadFieldTypevar]):
             "message_new",
             "message_reply",
             4,
-        }:
+        } and (len(new_event_storage.event.content) > 3 or isinstance(new_event_storage.event, GroupEvent)):
             ctx = await NewMessage.from_event(
                 event=new_event_storage.event,
                 bot=new_event_storage.bot,
