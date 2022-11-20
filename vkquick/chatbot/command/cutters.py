@@ -423,7 +423,40 @@ class EntityCutter(MentionCutter):
         (?: vk\.com/ )?
 
         # Screen name of user or group
-        (?P<screen_name> (?: \w+ | \.)+ )
+
+
+        (?P<screen_name> 
+            (?:
+                [a-z](?=[\d_\.a-z]) |
+                \d{1,2}(?=[a-z])
+            )
+
+            # First character can be either a digit or a letter
+            # Cannot start with more than two consecutive digits
+
+            (?:
+                [a-z](?=[\d_\.a-z]) | 
+                # Rules for a letter
+
+                \d(?=[a-z\d_]) | 
+                # Rules for a digit
+
+                \.(?=[a-z])|
+                # Rules for a dot
+
+                _(?=[_\da-z])
+                # Rules for an underscore
+
+            ){,30}
+            # Length check (up to 32)
+
+            (?<!\.[a-z_\d]{2})(?<!\.[a-z_\d]{1})(?<!\.)
+            # If possible, check separately the last four characters in the string,
+            # Because there must be 4 or more characters after a dot.
+
+            [a-z\d](?![a-z_\.\d:])
+            # Last character can be either a digit or a letter
+        )
 
         # URL path part
         /?
@@ -433,7 +466,7 @@ class EntityCutter(MentionCutter):
         # vk.com/id100
         # https://vk.com/eee
         """,
-        flags=re.X,
+        flags=re.X | re.IGNORECASE,
     )
     raw_id_regex = re.compile(
         r"""
