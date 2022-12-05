@@ -39,7 +39,7 @@ class OrjsonParser(BaseJSONParser):
 
     @staticmethod
     def dumps(data: typing.Dict[str, typing.Any]) -> typing.Union[str, bytes]:
-        return orjson.dumps(data)  # pragma: no cover
+        return orjson.dumps(data).decode("utf8")  # pragma: no cover
 
     @staticmethod
     def loads(string: typing.Union[str, bytes]) -> typing.Any:
