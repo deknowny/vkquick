@@ -143,16 +143,6 @@ class API(SessionContainerMixin):
         self._update_requests_delay()
         return self._token_owner, self._owner_schema
 
-    def _update_requests_delay(self) -> None:
-        """
-        Устанавливает необходимую задержку в секундах между
-        исполняемыми запросами
-        """
-        if self._token_owner in {TokenOwner.USER, TokenOwner.UNKNOWN}:
-            self._requests_delay = 1 / 3
-        else:
-            self._requests_delay = 1 / 20
-
     def __getattr__(self, attribute: str) -> API:
         """
         Используя `__getattr__`, класс предоставляет возможность
@@ -286,10 +276,6 @@ class API(SessionContainerMixin):
             cache_hash = f"{method_name}#{cache_hash}"
             if cache_hash in self._cache_table:
                 return self._cache_table[cache_hash]
-
-        # Задержка между запросами необходима по правилам API
-        api_request_delay = self._get_waiting_time()
-        await asyncio.sleep(api_request_delay)
 
         # Отправка запроса с последующей проверкой ответа
         response = await self._send_api_request(
@@ -518,25 +504,6 @@ class API(SessionContainerMixin):
             return_tags=return_tags,
         )
         return Document(document[type])
-
-    def _get_waiting_time(self) -> float:
-        """
-        Рассчитывает обязательное время задержки после
-        последнего API запроса. Для групп -- 0.05s,
-        для пользователей/сервисных токенов -- 0.333s
-
-        Returns:
-            Время, необходимое для ожидания.
-        """
-        now = time.time()
-        diff = now - self._last_request_timestamp
-        if diff < self._requests_delay:
-            wait_time = self._requests_delay - diff
-            self._last_request_timestamp += wait_time
-            return wait_time
-        else:
-            self._last_request_timestamp = now
-            return 0.0
 
 
 def _convert_param_value(value, /):
