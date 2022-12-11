@@ -376,6 +376,8 @@ class API(SessionContainerMixin):
                     await asyncio.sleep(10)
                 else:
                     raise error
+            except aiohttp.ServerDisconnectedError:
+                await self.refresh_session()
 
     async def _fetch_photo_entity(self, photo: PhotoEntityTyping) -> bytes:
         """
