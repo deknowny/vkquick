@@ -55,6 +55,7 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         try:
             self.add_event_callback(events_queue.put)
             if not self._run:
+                self._run = True
                 asyncio.create_task(self.coroutine_run_polling())
             while True:
                 # Таска ожидания события заносится в атрибут, чтобы остановка поулчения новых событий могла
@@ -81,7 +82,6 @@ class BaseEventFactory(SessionContainerMixin, abc.ABC):
         return func
 
     async def coroutine_run_polling(self) -> None:
-        self._run = True
         logger.info(
             "Run {polling_type} polling", polling_type=self.__class__.__name__
         )
