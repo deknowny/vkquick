@@ -22,6 +22,12 @@ class IgnoreBots(BaseFilter):
         if ctx.msg.from_id < 0:
             raise StopCurrentHandling()
 
+            
+class IsReplyOrForward(vq.BaseFilter):
+    async def make_decision(self, ctx: vq.NewMessage, **kwargs):
+        if "fwd" not in ctx.event.content[7]:
+            raise vq.StopCurrentHandling()
+            
 
 class ChatOnly(BaseFilter):
     async def make_decision(self, ctx: NewMessage, **kwargs):
