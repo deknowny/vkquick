@@ -38,7 +38,7 @@ class DependencyMixin:
         for dependency in self._dependencies:
             argument_value = dependency.handler.callback(ctx)
             if inspect.isawaitable(argument_value):
-                await argument_value
+                argument_value = await argument_value
             if dependency.name is not None:
                 prepared_mapping[dependency.name] = argument_value
 
