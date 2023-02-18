@@ -199,7 +199,9 @@ class Command(HandlerMixin[Handler]):
         # или аргументов не должно быть вовсе
         if self._text_arguments and summary_regex:
             summary_regex += r"(?:$|\s+)"
-
+        else:
+            summary_regex += r"$"
+            
         self._routing_regex = re.compile(
             summary_regex,
             flags=self.routing_re_flags,
